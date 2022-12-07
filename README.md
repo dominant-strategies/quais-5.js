@@ -2,7 +2,7 @@ The Quais Project
 ==================
 
 [![npm (tag)](https://img.shields.io/npm/v/ethers)](https://www.npmjs.com/package/ethers)
-[![Node.js CI](https://github.com/ethers-io/quais.js/workflows/Node.js%20CI/badge.svg?branch=ethers-v5-beta)](https://github.com/ethers-io/quais.js/actions?query=workflow%3A%22Node.js+CI%22)
+[![Node.js CI](https://github.com/dominant-strategies/quais.js/actions/workflows/nodejs.yml/badge.svg)](https://github.com/dominant-strategies/quais.js/actions/workflows/nodejs.yml)
 
 A complete Quai wallet implementation and utilities in JavaScript (and TypeScript). Quais is a downstream fork of Ethers v5.7.2.
 
