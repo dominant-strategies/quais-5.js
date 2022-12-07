@@ -1,35 +1,24 @@
 {
-  "author": "Richard Moore <me@ricmoo.com>",
+  "author": "",
   "dependencies": {
-    "@quais/abstract-signer": "^5.7.0",
-    "@quais/address": "^5.7.0",
-    "@quais/bytes": "^5.7.0",
-    "@quais/hdnode": "^5.7.0",
-    "@quais/keccak256": "^5.7.0",
-    "@quais/logger": "^5.7.0",
-    "@quais/pbkdf2": "^5.7.0",
-    "@quais/properties": "^5.7.0",
-    "@quais/random": "^5.7.0",
-    "@quais/strings": "^5.7.0",
-    "@quais/transactions": "^5.7.0",
+    "@quais/abstract-signer": "^0.1.0",
+    "@quais/address": "^0.1.0",
+    "@quais/bytes": "^0.1.0",
+    "@quais/hdnode": "^0.1.0",
+    "@quais/keccak256": "^0.1.0",
+    "@quais/logger": "^0.1.0",
+    "@quais/pbkdf2": "^0.1.0",
+    "@quais/properties": "^0.1.0",
+    "@quais/random": "^0.1.0",
+    "@quais/strings": "^0.1.0",
+    "@quais/transactions": "^0.1.0",
     "aes-js": "3.0.0",
     "scrypt-js": "3.0.1"
   },
   "description": "Wallet management utilities for KeyStore and Crowdsale JSON wallets.",
-  "ethereum": "donations.quais.eth",
-  "funding": [
-    {
-      "type": "individual",
-      "url": "https://gitcoin.co/grants/13/ethersjs-complete-simple-and-tiny-2"
-    },
-    {
-      "type": "individual",
-      "url": "https://www.buymeacoffee.com/ricmoo"
-    }
-  ],
   "keywords": [
-    "Ethereum",
-    "ethers"
+    "Quai",
+    "quais"
   ],
   "license": "MIT",
   "main": "./lib/index.js",
@@ -49,5 +38,5 @@
   "sideEffects": false,
   "tarballHash": "0x5fdee49e317ed39fd61f164ae5ee21dce0011a86a12f6eb6f58618fa2b2a3a5e",
   "types": "./lib/index.d.ts",
-  "version": "5.7.0"
+  "version": "0.1.0"
 }

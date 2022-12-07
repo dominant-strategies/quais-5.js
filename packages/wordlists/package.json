@@ -5,29 +5,18 @@
   "_quais.alias": {
     "wordlists.js": "browser-wordlists.js"
   },
-  "author": "Richard Moore <me@ricmoo.com>",
+  "author": "",
   "dependencies": {
-    "@quais/bytes": "^5.7.0",
-    "@quais/hash": "^5.7.0",
-    "@quais/logger": "^5.7.0",
-    "@quais/properties": "^5.7.0",
-    "@quais/strings": "^5.7.0"
+    "@quais/bytes": "^0.1.0",
+    "@quais/hash": "^0.1.0",
+    "@quais/logger": "^0.1.0",
+    "@quais/properties": "^0.1.0",
+    "@quais/strings": "^0.1.0"
   },
   "description": "Word lists for BIP39 wallets.",
-  "ethereum": "donations.quais.eth",
-  "funding": [
-    {
-      "type": "individual",
-      "url": "https://gitcoin.co/grants/13/ethersjs-complete-simple-and-tiny-2"
-    },
-    {
-      "type": "individual",
-      "url": "https://www.buymeacoffee.com/ricmoo"
-    }
-  ],
   "keywords": [
-    "Ethereum",
-    "ethers"
+    "Quai",
+    "quais"
   ],
   "license": "MIT",
   "main": "./lib/index.js",
@@ -47,5 +36,5 @@
   "sideEffects": false,
   "tarballHash": "0x7f753c8f34ec57f7fe3d96c39b7787d3d543b398a152fcb5b2548ef20098d3e1",
   "types": "./lib/index.d.ts",
-  "version": "5.7.0"
+  "version": "0.1.0"
 }

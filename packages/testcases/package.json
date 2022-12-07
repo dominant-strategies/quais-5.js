@@ -11,33 +11,22 @@
   "_quais.alias": {
     "disk-utils.js": "browser-disk-utils.js"
   },
-  "author": "Richard Moore <me@ricmoo.com>",
+  "author": "",
   "browser": {
     "./lib/disk-utils": "./lib/browser-disk-utils.js"
   },
   "dependencies": {
-    "@quais/bignumber": "^5.7.0",
-    "@quais/bytes": "^5.7.0",
-    "@quais/keccak256": "^5.7.0",
-    "@quais/strings": "^5.7.0",
-    "quais": "^5.7.0",
+    "@quais/bignumber": "^0.1.0",
+    "@quais/bytes": "^0.1.0",
+    "@quais/keccak256": "^0.1.0",
+    "@quais/strings": "^0.1.0",
+    "quais": "^0.1.0",
     "tiny-inflate": "1.0.3"
   },
   "description": "Testcases for Ethereum and scripts to generate testcases.",
-  "ethereum": "donations.quais.eth",
-  "funding": [
-    {
-      "type": "individual",
-      "url": "https://gitcoin.co/grants/13/ethersjs-complete-simple-and-tiny-2"
-    },
-    {
-      "type": "individual",
-      "url": "https://www.buymeacoffee.com/ricmoo"
-    }
-  ],
   "keywords": [
-    "Ethereum",
-    "ethers"
+    "Quai",
+    "quais"
   ],
   "license": "MIT",
   "main": "./lib/index.js",
@@ -56,5 +45,5 @@
   },
   "tarballHash": "0x9b0292441ce7f36612f41f9d697f93793daa7a2bde85855fb088c4df874d58df",
   "types": "./lib/index.d.ts",
-  "version": "5.7.0"
+  "version": "0.1.0"
 }

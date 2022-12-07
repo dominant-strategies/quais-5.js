@@ -6,9 +6,9 @@ export declare type AccessList = Array<{
 }>;
 export declare type AccessListish = AccessList | Array<[string, Array<string>]> | Record<string, Array<string>>;
 export declare enum TransactionTypes {
-    legacy = 0,
-    eip2930 = 1,
-    eip1559 = 2
+    standard = 0,
+    etx = 1,
+    standardETx = 2
 }
 export declare type UnsignedTransaction = {
     to?: string;
@@ -22,6 +22,11 @@ export declare type UnsignedTransaction = {
     accessList?: AccessListish;
     maxPriorityFeePerGas?: BigNumberish;
     maxFeePerGas?: BigNumberish;
+    externalGasLimit?: BigNumber;
+    externalGasPrice?: BigNumber;
+    externalGasTip?: BigNumber;
+    externalData?: string;
+    externalAccessList?: AccessListish;
 };
 export interface Transaction {
     hash?: string;
@@ -30,6 +35,8 @@ export interface Transaction {
     nonce: number;
     gasLimit: BigNumber;
     gasPrice?: BigNumber;
+    maxPriorityFeePerGas?: BigNumber;
+    maxFeePerGas?: BigNumber;
     data: string;
     value: BigNumber;
     chainId: number;
@@ -38,8 +45,11 @@ export interface Transaction {
     v?: number;
     type?: number | null;
     accessList?: AccessList;
-    maxPriorityFeePerGas?: BigNumber;
-    maxFeePerGas?: BigNumber;
+    externalGasLimit?: BigNumber;
+    externalGasPrice?: BigNumber;
+    externalGasTip?: BigNumber;
+    externalData?: string;
+    externalAccessList?: AccessList;
 }
 export declare function computeAddress(key: BytesLike | string): string;
 export declare function recoverAddress(digest: BytesLike, signature: SignatureLike): string;

@@ -75,6 +75,7 @@ export declare class BaseProvider extends Provider implements EnsProvider {
         reqTime: number;
         respTime: number;
     }>;
+    _context: number;
     readonly anyNetwork: boolean;
     disableCcipRead: boolean;
     /**
@@ -116,6 +117,7 @@ export declare class BaseProvider extends Provider implements EnsProvider {
     }): Promise<TransactionReceipt>;
     getBlockNumber(): Promise<number>;
     getGasPrice(): Promise<BigNumber>;
+    getMaxPriorityFeePerGas(): Promise<BigNumber>;
     getBalance(addressOrName: string | Promise<string>, blockTag?: BlockTag | Promise<BlockTag>): Promise<BigNumber>;
     getTransactionCount(addressOrName: string | Promise<string>, blockTag?: BlockTag | Promise<BlockTag>): Promise<number>;
     getCode(addressOrName: string | Promise<string>, blockTag?: BlockTag | Promise<BlockTag>): Promise<string>;

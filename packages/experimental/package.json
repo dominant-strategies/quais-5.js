@@ -1,25 +1,14 @@
 {
-  "author": "Richard Moore <me@ricmoo.com>",
+  "author": "",
   "dependencies": {
-    "@quais/web": "^5.7.0",
-    "quais": "^5.7.0",
+    "@quais/web": "^0.1.0",
+    "quais": "^0.1.0",
     "scrypt-js": "3.0.1"
   },
   "description": "Experimental libraries for quais. These should not be considered stable.",
-  "ethereum": "donations.quais.eth",
-  "funding": [
-    {
-      "type": "individual",
-      "url": "https://gitcoin.co/grants/13/ethersjs-complete-simple-and-tiny-2"
-    },
-    {
-      "type": "individual",
-      "url": "https://www.buymeacoffee.com/ricmoo"
-    }
-  ],
   "keywords": [
-    "Ethereum",
-    "ethers"
+    "Quai",
+    "quais"
   ],
   "license": "MIT",
   "main": "./lib/index.js",
@@ -39,5 +28,5 @@
   "sideEffects": false,
   "tarballHash": "0x2e22ad88dbfc8169dacbf2628add0eb539a5077b67bffac8b70877dbde8657f3",
   "types": "./lib/index.d.ts",
-  "version": "5.7.0"
+  "version": "0.1.0"
 }

@@ -20,7 +20,6 @@ import { defineReadOnly, getStatic, resolveProperties } from "@quais/properties"
 import { sha256 } from "@quais/sha2";
 import { toUtf8Bytes, toUtf8String } from "@quais/strings";
 import { fetchJson, poll } from "@quais/web";
-import bech32 from "bech32";
 import { Logger } from "@quais/logger";
 import { version } from "./_version";
 const logger = new Logger(version);
@@ -109,17 +108,17 @@ function stall(duration) {
 //////////////////////////////
 // Provider Object
 /**
- *  EventType
- *   - "block"
- *   - "poll"
- *   - "didPoll"
- *   - "pending"
- *   - "error"
- *   - "network"
- *   - filter
- *   - topics array
- *   - transaction hash
- */
+*  EventType
+*   - "block"
+*   - "poll"
+*   - "didPoll"
+*   - "pending"
+*   - "error"
+*   - "network"
+*   - filter
+*   - topics array
+*   - transaction hash
+*/
 const PollableEvents = ["block", "network", "pending", "poll"];
 export class Event {
     constructor(tag, listener, once) {
@@ -371,11 +370,6 @@ export class Resolver {
             }
             else {
                 version = -1;
-            }
-            if (version >= 0 && bytes.length === 2 + length && length >= 1 && length <= 75) {
-                const words = bech32.toWords(bytes.slice(2));
-                words.unshift(version);
-                return bech32.encode(coinInfo.prefix, words);
             }
         }
         return null;
@@ -1249,6 +1243,21 @@ export class BaseProvider extends Provider {
             }
         });
     }
+    getMaxPriorityFeePerGas() {
+        return __awaiter(this, void 0, void 0, function* () {
+            yield this.getNetwork();
+            const result = yield this.perform("getMaxPriorityFeePerGas", {});
+            try {
+                return BigNumber.from(result);
+            }
+            catch (error) {
+                return logger.throwError("bad result from backend", Logger.errors.SERVER_ERROR, {
+                    method: "getMaxPriorityFeePerGas",
+                    result, error
+                });
+            }
+        });
+    }
     getBalance(addressOrName, blockTag) {
         return __awaiter(this, void 0, void 0, function* () {
             yield this.getNetwork();
@@ -1642,7 +1651,7 @@ export class BaseProvider extends Provider {
                     blockWithTxs.transactions = blockWithTxs.transactions.map((tx) => this._wrapTransaction(tx));
                     return blockWithTxs;
                 }
-                return this.formatter.block(block);
+                return this.formatter.block(block, this._context);
             }), { oncePoll: this });
         });
     }

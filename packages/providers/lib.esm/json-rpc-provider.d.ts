@@ -31,10 +31,11 @@ export declare class JsonRpcProvider extends BaseProvider {
     _nextId: number;
     _eventLoopCache: Record<string, Promise<any>>;
     get _cache(): Record<string, Promise<any>>;
-    constructor(url?: ConnectionInfo | string, network?: Networkish);
+    constructor(url?: ConnectionInfo | string, network?: Networkish, context?: number);
     static defaultUrl(): string;
     detectNetwork(): Promise<Network>;
     _uncachedDetectNetwork(): Promise<Network>;
+    detectContext(): Promise<number>;
     getSigner(addressOrIndex?: string | number): JsonRpcSigner;
     getUncheckedSigner(addressOrIndex?: string | number): UncheckedJsonRpcSigner;
     listAccounts(): Promise<Array<string>>;

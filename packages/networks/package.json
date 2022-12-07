@@ -1,23 +1,12 @@
 {
-  "author": "Richard Moore <me@ricmoo.com>",
+  "author": "",
   "dependencies": {
-    "@quais/logger": "^5.7.0"
+    "@quais/logger": "^0.1.0"
   },
   "description": "Network definitions for quais.",
-  "ethereum": "donations.quais.eth",
-  "funding": [
-    {
-      "type": "individual",
-      "url": "https://gitcoin.co/grants/13/ethersjs-complete-simple-and-tiny-2"
-    },
-    {
-      "type": "individual",
-      "url": "https://www.buymeacoffee.com/ricmoo"
-    }
-  ],
   "keywords": [
-    "Ethereum",
-    "ethers"
+    "Quai",
+    "quais"
   ],
   "license": "MIT",
   "main": "./lib/index.js",
@@ -37,5 +26,5 @@
   "sideEffects": false,
   "tarballHash": "0x7d5f9d59cb0cbfaba26d9dc4d43610a2d647ee7ce211f07b180a8c5e347f5724",
   "types": "./lib/index.d.ts",
-  "version": "5.7.1"
+  "version": "0.1.0"
 }

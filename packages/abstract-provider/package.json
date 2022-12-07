@@ -1,29 +1,18 @@
 {
-  "author": "Richard Moore <me@ricmoo.com>",
+  "author": "",
   "dependencies": {
-    "@quais/bignumber": "^5.7.0",
-    "@quais/bytes": "^5.7.0",
-    "@quais/logger": "^5.7.0",
-    "@quais/networks": "^5.7.0",
-    "@quais/properties": "^5.7.0",
-    "@quais/transactions": "^5.7.0",
-    "@quais/web": "^5.7.0"
+    "@quais/bignumber": "^0.1.0",
+    "@quais/bytes": "^0.1.0",
+    "@quais/logger": "^0.1.0",
+    "@quais/networks": "^0.1.0",
+    "@quais/properties": "^0.1.0",
+    "@quais/transactions": "^0.1.0",
+    "@quais/web": "^0.1.0"
   },
   "description": "An Abstract Class for describing an Ethereum Provider for quais.",
-  "ethereum": "donations.quais.eth",
-  "funding": [
-    {
-      "type": "individual",
-      "url": "https://gitcoin.co/grants/13/ethersjs-complete-simple-and-tiny-2"
-    },
-    {
-      "type": "individual",
-      "url": "https://www.buymeacoffee.com/ricmoo"
-    }
-  ],
   "keywords": [
-    "Ethereum",
-    "ethers"
+    "Quai",
+    "quais"
   ],
   "license": "MIT",
   "main": "./lib/index.js",
@@ -43,5 +32,5 @@
   "sideEffects": false,
   "tarballHash": "0x952cf2ca65f6e38799386cab1c8595e8f849360128bc61fb28de2b595bbfaad9",
   "types": "./lib/index.d.ts",
-  "version": "5.7.0"
+  "version": "0.1.0"
 }

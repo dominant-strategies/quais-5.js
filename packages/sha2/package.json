@@ -2,30 +2,19 @@
   "_quais.alias": {
     "sha2.js": "browser-sha2.js"
   },
-  "author": "Richard Moore <me@ricmoo.com>",
+  "author": "",
   "browser": {
     "./lib/sha2": "./lib/browser-sha2.js"
   },
   "dependencies": {
-    "@quais/bytes": "^5.7.0",
-    "@quais/logger": "^5.7.0",
+    "@quais/bytes": "^0.1.0",
+    "@quais/logger": "^0.1.0",
     "hash.js": "1.1.7"
   },
   "description": "The SHA2 family hash functions and HMAC functions for quais.",
-  "ethereum": "donations.quais.eth",
-  "funding": [
-    {
-      "type": "individual",
-      "url": "https://gitcoin.co/grants/13/ethersjs-complete-simple-and-tiny-2"
-    },
-    {
-      "type": "individual",
-      "url": "https://www.buymeacoffee.com/ricmoo"
-    }
-  ],
   "keywords": [
-    "Ethereum",
-    "ethers"
+    "Quai",
+    "quais"
   ],
   "license": "MIT",
   "main": "./lib/index.js",
@@ -45,5 +34,5 @@
   "sideEffects": false,
   "tarballHash": "0xf4e98e42d47de50b1a899374350f5257d0ea9a604d59546ab0acbed6d89eceb6",
   "types": "./lib/index.d.ts",
-  "version": "5.7.0"
+  "version": "0.1.0"
 }

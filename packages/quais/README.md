@@ -1,18 +1,19 @@
-The Ethers Project
+The Quais Project
 ==================
 
 [![npm (tag)](https://img.shields.io/npm/v/quais)](https://www.npmjs.com/package/quais)
-[![Node.js CI](https://github.com/quais-io/quais.js/workflows/Node.js%20CI/badge.svg?branch=quais-v5-beta)](https://github.com/quais-io/quais.js/actions?query=workflow%3A%22Node.js+CI%22)
+[![Node.js CI](https://github.com/dominant-strategies/quais.js/actions/workflows/nodejs.yml/badge.svg)](https://github.com/dominant-strategies/quais.js/actions/workflows/nodejs.yml)
 
-A complete Ethereum wallet implementation and utilities in JavaScript (and TypeScript).
+A complete Quai wallet implementation and utilities in JavaScript (and TypeScript). Quais is a downstream fork of Ethers v5.7.2.
 
 **Features:**
+IMPORTANT: These features are in beta and may not be 1:1 compatible with Quai Network as it stands.
 
 - Keep your private keys in your client, **safe** and sound
 - Import and export **JSON wallets** (Geth, Parity and crowdsale)
 - Import and export BIP 39 **mnemonic phrases** (12 word backup phrases) and **HD Wallets** (English as well as Czech, French, Italian, Japanese, Korean, Simplified Chinese, Spanish, Traditional Chinese)
 - Meta-classes create JavaScript objects from any contract ABI, including **ABIv2** and **Human-Readable ABI**
-- Connect to Ethereum nodes over [JSON-RPC](https://github.com/ethereum/wiki/wiki/JSON-RPC), [INFURA](https://infura.io), [Etherscan](https://etherscan.io), [Alchemy](https://alchemyapi.io) or [MetaMask](https://metamask.io)
+- Connect to Ethereum nodes over [JSON-RPC](https://github.com/ethereum/wiki/wiki/JSON-RPC), [INFURA](https://infura.io), [Etherscan](https://etherscan.io), [Alchemy](https://alchemyapi.io), [Ankr](https://ankr.com) or [MetaMask](https://metamask.io)
 - **ENS names** are first-class citizens; they can be used anywhere an Ethereum addresses can be used
 - **Tiny** (~104kb compressed; 322kb uncompressed)
 - **Modular** packages; include only what you need
@@ -26,10 +27,12 @@ A complete Ethereum wallet implementation and utilities in JavaScript (and TypeS
 Keep Updated
 ------------
 
-For the latest news and advisories, please follow the [@quais](https://twitter.com/quaisproject)
-on Twitter (low-traffic, non-marketing, important information only) as well as watch this GitHub project.
+For the latest news and advisories, please follow the
+[@quainetwork](https://twitter.com/quainetwork) on Twitter (low-traffic,
+non-marketing, important information only) as well as watch this GitHub project.
 
-For the latest changes, see the [CHANGELOG](https://github.com/quais-io/quais.js/blob/master/CHANGELOG.md).
+For the latest changes, see the
+[CHANGELOG](https://github.com/ethers-io/quais.js/blob/master/CHANGELOG.md).
 
 
 Installing
@@ -38,13 +41,13 @@ Installing
 **node.js**
 
 ```
-/home/ricmoo/some_project> npm install --save quais
+/home/ricmoo/some_project> npm install --save ethers
 ```
 
 **browser (UMD)**
 
 ```
-<script src="https://cdn.quais.io/lib/quais-5.0.umd.min.js" type="text/javascript">
+<script src="https://cdn.quais.io/lib/ethers-5.6.umd.min.js" type="text/javascript">
 </script>
 ```
 
@@ -52,7 +55,7 @@ Installing
 
 ```
 <script type="module">
-    import { quais } from "https://cdn.quais.io/lib/quais-5.0.umd.min.js";
+    import { ethers } from "https://cdn.quais.io/lib/ethers-5.6.esm.min.js";
 </script>
 ```
 
@@ -66,13 +69,40 @@ Browse the [documentation](https://docs.ethers.io/v5/) online:
 - [Full API Documentation](https://docs.ethers.io/v5/api/)
 - [Various Ethereum Articles](https://blog.ricmoo.com/)
 
-Or browse the entire documentation as a [single page](https://docs.ethers.io/v5/single-page/) to make searching easier.
+
+Providers
+---------
+
+Ethers works closely with an ever-growing list of third-party providers
+to ensure getting started is quick and easy, by providing default keys
+to each service.
+
+These built-in keys mean you can use `quais.getDefaultProvider()` and
+start developing right away.
+
+However, the API keys provided to ethers are also shared and are
+intentionally throttled to encourage developers to eventually get
+their own keys, which unlock many other features, such as faster
+responses, more capacity, analytics and other features like archival
+data.
+
+When you are ready to sign up and start using for your own keys, please
+check out the [Provider API Keys](https://docs.ethers.io/v5/api-keys/) in
+the documentation.
+
+A special thanks to these services for providing community resources:
+
+- [Ankr](https://www.ankr.com/)
+- [Etherscan](https://etherscan.io/)
+- [INFURA](https://infura.io/)
+- [Alchemy](https://dashboard.alchemyapi.io/signup?referral=55a35117-028e-4b7c-9e47-e275ad0acc6d)
+- [Pocket](https://pokt.network/pocket-gateway-ethereum-mainnet/)
 
 
 Ancillary Packages
 ------------------
 
-These are a number of packages not included in the umbrella `quais` npm package, and
+These are a number of packages not included in the umbrella `ethers` npm package, and
 additional packages are always being added. Often these packages are for specific
 use-cases, so rather than adding them to the umbrella package, they are added as
 ancillary packages, which can be included by those who need them, while not bloating
@@ -80,25 +110,12 @@ everyone else with packages they do not need.
 
 We will keep a list of useful packages here.
 
-- `@quais/experimental` ([documentation](https://docs.ethers.io))
-- `@quais/cli` ([documentation](https://docs.ethers.io))
-- `@quais/hardware-wallets` ([documentation](https://docs.ethers.io))
-
-
-Sponsors
---------
-
-Support the quais project by [becoming a sponsor](https://quais.org/sponsoring.html).
-Get your logo added below with a link to your website (Gold and Unobtainium tiers)
-and on the [quais.org](https://quais.org) website.
-
-Huge thanks to our sponsors! `<3 <3`
-
-<a href="https://quais.org/sponsors/tally-link" target="_blank"><img src="https://quais.org/sponsors/tally-readme.svg"></a>
+- `@quais/experimental` ([documentation](https://docs.ethers.io/v5/api/experimental/))
+- `@quais/cli` ([documentation](https://docs.ethers.io/v5/cli/))
+- `@quais/hardware-wallets` ([documentation](https://docs.ethers.io/v5/api/other/hardware/))
 
 
 License
 -------
 
 MIT License (including **all** dependencies).
-

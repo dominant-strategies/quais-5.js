@@ -1,9 +1,9 @@
 {
-  "author": "Richard Moore <me@ricmoo.com>",
+  "author": "",
   "dependencies": {
-    "@quais/bytes": "^5.7.0",
-    "@quais/constants": "^5.7.0",
-    "@quais/logger": "^5.7.0"
+    "@quais/bytes": "^0.1.0",
+    "@quais/constants": "^0.1.0",
+    "@quais/logger": "^0.1.0"
   },
   "description": "String utility functions.",
   "ethereum": "donations.quais.eth",
@@ -41,5 +41,5 @@
   "sideEffects": false,
   "tarballHash": "0xbde9a4dad59a25a6b1956cf36146ddcceb251b39b2761ac4899b24876656c496",
   "types": "./lib/index.d.ts",
-  "version": "5.7.0"
+  "version": "0.1.0"
 }

@@ -26,7 +26,7 @@ padded parsed parsing passed payload placeholder processing properties prototypi
 recommended recovered recursively redacted remaining replaced repriced required reverted
 serializes shared signed signing skipped stats stored supported tagging targetted
 throttled transactions typed uninstall unstake unsubscribe untyped
-using verifies verifying website
+using verifies verifying website quai
 
 // Overly Specific Words
 bech BIP BIP39 BIP44 btc bzz crypto eip etc hashes hmac icap
@@ -66,7 +66,7 @@ apikey asc endblock startblock
 alchemyapi ankr arbitrum Cloudflare com Etherscan INFURA IPFS IPNS MetaMask Nodesmith
 Trezor ledgerhq axic bitcoinjs browserify easyseed ethereumjs
 goerli homestead kotti kovan mainnet morden mordor rinkeby kintsugi
-ropsten skynet testnet lb maticmum
+ropsten skynet testnet lb maticmum quai Quai
 
 // Demo words
 args foo eth foo foobar ll localhost passwd ricmoo tx xxx yna

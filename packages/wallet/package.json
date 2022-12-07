@@ -1,37 +1,26 @@
 {
-  "author": "Richard Moore <me@ricmoo.com>",
+  "author": "",
   "dependencies": {
-    "@quais/abstract-provider": "^5.7.0",
-    "@quais/abstract-signer": "^5.7.0",
-    "@quais/address": "^5.7.0",
-    "@quais/bignumber": "^5.7.0",
-    "@quais/bytes": "^5.7.0",
-    "@quais/hash": "^5.7.0",
-    "@quais/hdnode": "^5.7.0",
-    "@quais/json-wallets": "^5.7.0",
-    "@quais/keccak256": "^5.7.0",
-    "@quais/logger": "^5.7.0",
-    "@quais/properties": "^5.7.0",
-    "@quais/random": "^5.7.0",
-    "@quais/signing-key": "^5.7.0",
-    "@quais/transactions": "^5.7.0",
-    "@quais/wordlists": "^5.7.0"
+    "@quais/abstract-provider": "^0.1.0",
+    "@quais/abstract-signer": "^0.1.0",
+    "@quais/address": "^0.1.0",
+    "@quais/bignumber": "^0.1.0",
+    "@quais/bytes": "^0.1.0",
+    "@quais/hash": "^0.1.0",
+    "@quais/hdnode": "^0.1.0",
+    "@quais/json-wallets": "^0.1.0",
+    "@quais/keccak256": "^0.1.0",
+    "@quais/logger": "^0.1.0",
+    "@quais/properties": "^0.1.0",
+    "@quais/random": "^0.1.0",
+    "@quais/signing-key": "^0.1.0",
+    "@quais/transactions": "^0.1.0",
+    "@quais/wordlists": "^0.1.0"
   },
   "description": "Classes for managing, encrypting and decrypting Ethereum private keys as a Signer for quais.",
-  "ethereum": "donations.quais.eth",
-  "funding": [
-    {
-      "type": "individual",
-      "url": "https://gitcoin.co/grants/13/ethersjs-complete-simple-and-tiny-2"
-    },
-    {
-      "type": "individual",
-      "url": "https://www.buymeacoffee.com/ricmoo"
-    }
-  ],
   "keywords": [
-    "Ethereum",
-    "ethers"
+    "Quai",
+    "quais"
   ],
   "license": "MIT",
   "main": "./lib/index.js",
@@ -51,5 +40,5 @@
   "sideEffects": false,
   "tarballHash": "0x9f0366a56a1e73f4f47b37c7167c0491792f347492688f07f964e12fc10b5a1a",
   "types": "./lib/index.d.ts",
-  "version": "5.7.0"
+  "version": "0.1.0"
 }

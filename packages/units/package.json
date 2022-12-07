@@ -1,9 +1,9 @@
 {
-  "author": "Richard Moore <me@ricmoo.com>",
+  "author": "",
   "dependencies": {
-    "@quais/bignumber": "^5.7.0",
-    "@quais/constants": "^5.7.0",
-    "@quais/logger": "^5.7.0"
+    "@quais/bignumber": "^0.1.0",
+    "@quais/constants": "^0.1.0",
+    "@quais/logger": "^0.1.0"
   },
   "description": "Unit conversion functions for Ethereum.",
   "ethereum": "donations.quais.eth",
@@ -41,5 +41,5 @@
   "sideEffects": false,
   "tarballHash": "0x213811ac8c90bcf07e0baff3a6e583b9a25bbda6f0e8372773d7c1c85d894fa8",
   "types": "./lib/index.d.ts",
-  "version": "5.7.0"
+  "version": "0.1.0"
 }

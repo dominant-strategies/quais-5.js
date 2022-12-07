@@ -1,27 +1,16 @@
 {
-  "author": "Richard Moore <me@ricmoo.com>",
+  "author": "",
   "dependencies": {
-    "@quais/abstract-provider": "^5.7.0",
-    "@quais/bignumber": "^5.7.0",
-    "@quais/bytes": "^5.7.0",
-    "@quais/logger": "^5.7.0",
-    "@quais/properties": "^5.7.0"
+    "@quais/abstract-provider": "^0.1.0",
+    "@quais/bignumber": "^0.1.0",
+    "@quais/bytes": "^0.1.0",
+    "@quais/logger": "^0.1.0",
+    "@quais/properties": "^0.1.0"
   },
   "description": "An Abstract Class for desribing an Ethereum Signer for quais.",
-  "ethereum": "donations.quais.eth",
-  "funding": [
-    {
-      "type": "individual",
-      "url": "https://gitcoin.co/grants/13/ethersjs-complete-simple-and-tiny-2"
-    },
-    {
-      "type": "individual",
-      "url": "https://www.buymeacoffee.com/ricmoo"
-    }
-  ],
   "keywords": [
-    "Ethereum",
-    "ethers"
+    "Quai",
+    "quais"
   ],
   "license": "MIT",
   "main": "./lib/index.js",
@@ -41,5 +30,5 @@
   "sideEffects": false,
   "tarballHash": "0x10e5007f2b6467e86fa36292984b8e74bfcd18e6dc1748cf0f62b36c4e4e228a",
   "types": "./lib/index.d.ts",
-  "version": "5.7.0"
+  "version": "0.1.0"
 }

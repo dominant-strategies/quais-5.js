@@ -2,30 +2,19 @@
   "_quais.alias": {
     "elliptic.js": "browser-elliptic.js"
   },
-  "author": "Richard Moore <me@ricmoo.com>",
+  "author": "",
   "dependencies": {
-    "@quais/bytes": "^5.7.0",
-    "@quais/logger": "^5.7.0",
-    "@quais/properties": "^5.7.0",
+    "@quais/bytes": "^0.1.0",
+    "@quais/logger": "^0.1.0",
+    "@quais/properties": "^0.1.0",
     "bn.js": "^5.2.1",
     "elliptic": "6.5.4",
     "hash.js": "1.1.7"
   },
   "description": "Elliptic curve library functions for the secp256k1 curve.",
-  "ethereum": "donations.quais.eth",
-  "funding": [
-    {
-      "type": "individual",
-      "url": "https://gitcoin.co/grants/13/ethersjs-complete-simple-and-tiny-2"
-    },
-    {
-      "type": "individual",
-      "url": "https://www.buymeacoffee.com/ricmoo"
-    }
-  ],
   "keywords": [
-    "Ethereum",
-    "ethers"
+    "Quai",
+    "quais"
   ],
   "license": "MIT",
   "main": "./lib/index.js",
@@ -45,5 +34,5 @@
   "sideEffects": false,
   "tarballHash": "0xff1f808724833f5688798be9713ffc54260b28d51d001eda774f11d6babc4f35",
   "types": "./lib/index.d.ts",
-  "version": "5.7.0"
+  "version": "0.1.0"
 }

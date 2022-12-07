@@ -1,24 +1,13 @@
 {
-  "author": "Richard Moore <me@ricmoo.com>",
+  "author": "",
   "dependencies": {
-    "@quais/bytes": "^5.7.0",
-    "@quais/properties": "^5.7.0"
+    "@quais/bytes": "^0.1.0",
+    "@quais/properties": "^0.1.0"
   },
   "description": "Base-X without Buffer.",
-  "ethereum": "donations.quais.eth",
-  "funding": [
-    {
-      "type": "individual",
-      "url": "https://gitcoin.co/grants/13/ethersjs-complete-simple-and-tiny-2"
-    },
-    {
-      "type": "individual",
-      "url": "https://www.buymeacoffee.com/ricmoo"
-    }
-  ],
   "keywords": [
-    "Ethereum",
-    "ethers"
+    "Quai",
+    "quais"
   ],
   "license": "MIT",
   "main": "./lib/index.js",
@@ -38,5 +27,5 @@
   "sideEffects": false,
   "tarballHash": "0xa3450b5ccf02165bd79e235cc6803751f8194a7680cfc165c62ff3ee3fa6def5",
   "types": "./lib/index.d.ts",
-  "version": "5.7.0"
+  "version": "0.1.0"
 }

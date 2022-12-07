@@ -1,32 +1,21 @@
 {
-  "author": "Richard Moore <me@ricmoo.com>",
+  "author": "",
   "dependencies": {
-    "@quais/abi": "^5.7.0",
-    "@quais/abstract-provider": "^5.7.0",
-    "@quais/abstract-signer": "^5.7.0",
-    "@quais/address": "^5.7.0",
-    "@quais/bignumber": "^5.7.0",
-    "@quais/bytes": "^5.7.0",
-    "@quais/constants": "^5.7.0",
-    "@quais/logger": "^5.7.0",
-    "@quais/properties": "^5.7.0",
-    "@quais/transactions": "^5.7.0"
+    "@quais/abi": "^0.1.0",
+    "@quais/abstract-provider": "^0.1.0",
+    "@quais/abstract-signer": "^0.1.0",
+    "@quais/address": "^0.1.0",
+    "@quais/bignumber": "^0.1.0",
+    "@quais/bytes": "^0.1.0",
+    "@quais/constants": "^0.1.0",
+    "@quais/logger": "^0.1.0",
+    "@quais/properties": "^0.1.0",
+    "@quais/transactions": "^0.1.0"
   },
   "description": "Contract abstraction meta-class for quais.",
-  "ethereum": "donations.quais.eth",
-  "funding": [
-    {
-      "type": "individual",
-      "url": "https://gitcoin.co/grants/13/ethersjs-complete-simple-and-tiny-2"
-    },
-    {
-      "type": "individual",
-      "url": "https://www.buymeacoffee.com/ricmoo"
-    }
-  ],
   "keywords": [
-    "Ethereum",
-    "ethers"
+    "Quai",
+    "quais"
   ],
   "license": "MIT",
   "main": "./lib/index.js",
@@ -46,5 +35,5 @@
   "sideEffects": false,
   "tarballHash": "0x186a0093d358545fe0bf9282147dc719ccce205447b02766489e395d0b8af9fc",
   "types": "./lib/index.d.ts",
-  "version": "5.7.0"
+  "version": "0.1.0"
 }

@@ -19,6 +19,11 @@ export declare type TransactionRequest = {
     maxFeePerGas?: BigNumberish;
     customData?: Record<string, any>;
     ccipReadEnabled?: boolean;
+    externalGasLimit?: BigNumberish;
+    externalGasPrice?: BigNumberish;
+    externalGasTip?: BigNumberish;
+    externalData?: BytesLike;
+    externalAccessList?: AccessListish;
 };
 export interface TransactionResponse extends Transaction {
     hash: string;
@@ -44,6 +49,9 @@ export interface _Block {
     miner: string;
     extraData: string;
     baseFeePerGas?: null | BigNumber;
+    stateRoot: string;
+    transactionsRoot: string;
+    receiptsRoot: string;
 }
 export interface Block extends _Block {
     transactions: Array<string>;
@@ -124,6 +132,7 @@ export declare abstract class Provider implements OnceBlockable {
     abstract getNetwork(): Promise<Network>;
     abstract getBlockNumber(): Promise<number>;
     abstract getGasPrice(): Promise<BigNumber>;
+    abstract getMaxPriorityFeePerGas(): Promise<BigNumber>;
     getFeeData(): Promise<FeeData>;
     abstract getBalance(addressOrName: string | Promise<string>, blockTag?: BlockTag | Promise<BlockTag>): Promise<BigNumber>;
     abstract getTransactionCount(addressOrName: string | Promise<string>, blockTag?: BlockTag | Promise<BlockTag>): Promise<number>;

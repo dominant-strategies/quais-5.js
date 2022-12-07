@@ -3591,7 +3591,7 @@ var bn = createCommonjsModule(function (module) {
 })('object' === 'undefined' || module, commonjsGlobal);
 });
 
-const version = "logger/5.7.0";
+const version = "logger/0.1.0";
 
 "use strict";
 let _permanentCensorErrors = false;
@@ -3947,7 +3947,7 @@ class Logger {
 Logger.errors = ErrorCode;
 Logger.levels = LogLevel;
 
-const version$1 = "bytes/5.7.0";
+const version$1 = "bytes/0.1.0";
 
 "use strict";
 const logger = new Logger(version$1);
@@ -4356,7 +4356,7 @@ function joinSignature(signature) {
     ]));
 }
 
-const version$2 = "bignumber/5.7.0";
+const version$2 = "bignumber/0.1.0";
 
 "use strict";
 var BN = bn.BN;
@@ -5009,7 +5009,7 @@ class FixedNumber {
 const ONE = FixedNumber.from(1);
 const BUMP = FixedNumber.from("0.5");
 
-const version$3 = "properties/5.7.0";
+const version$3 = "properties/0.1.0";
 
 "use strict";
 var __awaiter = (commonjsGlobal && commonjsGlobal.__awaiter) || function (thisArg, _arguments, P, generator) {
@@ -5135,7 +5135,7 @@ class Description {
     }
 }
 
-const version$4 = "abi/5.7.0";
+const version$4 = "abi/0.1.0";
 
 "use strict";
 const logger$4 = new Logger(version$4);
@@ -6794,7 +6794,7 @@ function keccak256(data) {
     return '0x' + sha3.keccak_256(arrayify(data));
 }
 
-const version$5 = "rlp/5.7.0";
+const version$5 = "rlp/0.1.0";
 
 "use strict";
 const logger$6 = new Logger(version$5);
@@ -6918,7 +6918,7 @@ var index = /*#__PURE__*/Object.freeze({
 	decode: decode
 });
 
-const version$6 = "address/5.7.0";
+const version$6 = "address/0.1.0";
 
 "use strict";
 const logger$7 = new Logger(version$6);
@@ -7451,7 +7451,7 @@ class NumberCoder extends Coder {
     }
 }
 
-const version$7 = "strings/5.7.0";
+const version$7 = "strings/0.1.0";
 
 "use strict";
 const logger$9 = new Logger(version$7);
@@ -8067,7 +8067,7 @@ function id(text) {
     return keccak256(toUtf8Bytes(text));
 }
 
-const version$8 = "hash/5.7.0";
+const version$8 = "hash/0.1.0";
 
 "use strict";
 function decode$1(textData) {
@@ -9629,7 +9629,7 @@ class Interface {
 
 "use strict";
 
-const version$9 = "abstract-provider/5.7.0";
+const version$9 = "abstract-provider/0.1.0";
 
 "use strict";
 var __awaiter$2 = (commonjsGlobal && commonjsGlobal.__awaiter) || function (thisArg, _arguments, P, generator) {
@@ -9737,7 +9737,7 @@ class Provider {
     }
 }
 
-const version$a = "abstract-signer/5.7.0";
+const version$a = "abstract-signer/0.1.0";
 
 "use strict";
 var __awaiter$3 = (commonjsGlobal && commonjsGlobal.__awaiter) || function (thisArg, _arguments, P, generator) {
@@ -9751,7 +9751,7 @@ var __awaiter$3 = (commonjsGlobal && commonjsGlobal.__awaiter) || function (this
 };
 const logger$f = new Logger(version$a);
 const allowedTransactionKeys = [
-    "accessList", "ccipReadEnabled", "chainId", "customData", "data", "from", "gasLimit", "gasPrice", "maxFeePerGas", "maxPriorityFeePerGas", "nonce", "to", "type", "value"
+    "accessList", "ccipReadEnabled", "chainId", "customData", "data", "from", "gasLimit", "gasPrice", "maxFeePerGas", "maxPriorityFeePerGas", "nonce", "to", "type", "value", "externalGasLimit", "externalGasPrice", "externalGasTip", "externalAccessList", "externalData"
 ];
 const forwardErrors = [
     Logger.errors.INSUFFICIENT_FUNDS,
@@ -9817,6 +9817,12 @@ class Signer {
         return __awaiter$3(this, void 0, void 0, function* () {
             this._checkProvider("getGasPrice");
             return yield this.provider.getGasPrice();
+        });
+    }
+    getMaxPriorityFeePerGas() {
+        return __awaiter$3(this, void 0, void 0, function* () {
+            this._checkProvider("getMaxPriorityFeePerGas");
+            return yield this.provider.getMaxPriorityFeePerGas();
         });
     }
     getFeeData() {
@@ -9888,24 +9894,10 @@ class Signer {
                 // Prevent this error from causing an UnhandledPromiseException
                 tx.to.catch((error) => { });
             }
-            // Do not allow mixing pre-eip-1559 and eip-1559 properties
-            const hasEip1559 = (tx.maxFeePerGas != null || tx.maxPriorityFeePerGas != null);
-            if (tx.gasPrice != null && (tx.type === 2 || hasEip1559)) {
-                logger$f.throwArgumentError("eip-1559 transaction do not support gasPrice", "transaction", transaction);
-            }
-            else if ((tx.type === 0 || tx.type === 1) && hasEip1559) {
-                logger$f.throwArgumentError("pre-eip-1559 transaction do not support maxFeePerGas/maxPriorityFeePerGas", "transaction", transaction);
-            }
-            if ((tx.type === 2 || tx.type == null) && (tx.maxFeePerGas != null && tx.maxPriorityFeePerGas != null)) {
-                // Fully-formed EIP-1559 transaction (skip getFeeData)
-                tx.type = 2;
-            }
-            else if (tx.type === 0 || tx.type === 1) {
-                // Explicit Legacy or EIP-2930 transaction
-                // Populate missing gasPrice
-                if (tx.gasPrice == null) {
-                    tx.gasPrice = this.getGasPrice();
-                }
+            const hasExternal = (tx.externalGasLimit != null || tx.externalGasPrice != null || tx.externalGasTip != null || tx.externalData != null || tx.externalAccessList != null);
+            if ((tx.type === 0 || tx.type == null) && (tx.maxFeePerGas != null && tx.maxPriorityFeePerGas != null) && !hasExternal) {
+                // Fully-formed standard transaction (skip getFeeData), no external data.
+                tx.type = 0;
             }
             else {
                 // We need to get fee data to determine things
@@ -9914,56 +9906,39 @@ class Signer {
                     // We need to auto-detect the intended type of this transaction...
                     if (feeData.maxFeePerGas != null && feeData.maxPriorityFeePerGas != null) {
                         // The network supports EIP-1559!
-                        // Upgrade transaction from null to eip-1559
-                        tx.type = 2;
-                        if (tx.gasPrice != null) {
-                            // Using legacy gasPrice property on an eip-1559 network,
-                            // so use gasPrice as both fee properties
-                            const gasPrice = tx.gasPrice;
-                            delete tx.gasPrice;
-                            tx.maxFeePerGas = gasPrice;
-                            tx.maxPriorityFeePerGas = gasPrice;
+                        // Upgrade transaction from null to standard
+                        if (!hasExternal) {
+                            tx.type = 0;
                         }
                         else {
-                            // Populate missing fee data
-                            if (tx.maxFeePerGas == null) {
-                                tx.maxFeePerGas = feeData.maxFeePerGas;
+                            tx.type = 2;
+                            // Populate missing fee data, assume the receiving context is operating in similar 
+                            if (tx.externalGasLimit == null || tx.externalGasPrice == null || tx.externalGasTip == null) {
+                                // Missing external fields
+                                logger$f.throwError("attempting to send an external transaction without all necessary data fields", Logger.errors.UNSUPPORTED_OPERATION, {
+                                    operation: "populateTransaction"
+                                });
                             }
-                            if (tx.maxPriorityFeePerGas == null) {
-                                tx.maxPriorityFeePerGas = feeData.maxPriorityFeePerGas;
-                            }
+                        }
+                        // Populate missing fee data
+                        if (tx.maxFeePerGas == null) {
+                            tx.maxFeePerGas = feeData.maxFeePerGas;
+                        }
+                        if (tx.maxPriorityFeePerGas == null) {
+                            tx.maxPriorityFeePerGas = feeData.maxPriorityFeePerGas;
                         }
                     }
                     else if (feeData.gasPrice != null) {
                         // Network doesn't support EIP-1559...
-                        // ...but they are trying to use EIP-1559 properties
-                        if (hasEip1559) {
-                            logger$f.throwError("network does not support EIP-1559", Logger.errors.UNSUPPORTED_OPERATION, {
-                                operation: "populateTransaction"
-                            });
-                        }
-                        // Populate missing fee data
-                        if (tx.gasPrice == null) {
-                            tx.gasPrice = feeData.gasPrice;
-                        }
-                        // Explicitly set untyped transaction to legacy
-                        tx.type = 0;
+                        logger$f.throwError("network does not support EIP-1559", Logger.errors.UNSUPPORTED_OPERATION, {
+                            operation: "populateTransaction"
+                        });
                     }
                     else {
                         // getFeeData has failed us.
                         logger$f.throwError("failed to get consistent fee data", Logger.errors.UNSUPPORTED_OPERATION, {
                             operation: "signer.getFeeData"
                         });
-                    }
-                }
-                else if (tx.type === 2) {
-                    // Explicitly using EIP-1559
-                    // Populate missing fee data
-                    if (tx.maxFeePerGas == null) {
-                        tx.maxFeePerGas = feeData.maxFeePerGas;
-                    }
-                    if (tx.maxPriorityFeePerGas == null) {
-                        tx.maxPriorityFeePerGas = feeData.maxPriorityFeePerGas;
                     }
                 }
             }
@@ -9975,7 +9950,7 @@ class Signer {
                     if (forwardErrors.indexOf(error.code) >= 0) {
                         throw error;
                     }
-                    return logger$f.throwError("cannot estimate gas; transaction may fail or may require manual gas limit", Logger.errors.UNPREDICTABLE_GAS_LIMIT, {
+                    return logger$f.throwError("abstract-signer: cannot estimate gas; transaction may fail or may require manual gas limit", Logger.errors.UNPREDICTABLE_GAS_LIMIT, {
                         error: error,
                         tx: tx
                     });
@@ -13843,7 +13818,7 @@ elliptic.eddsa = /*RicMoo:quais:require(./elliptic/eddsa)*/(null);
 
 var EC$1 = elliptic_1.ec;
 
-const version$b = "signing-key/5.7.0";
+const version$b = "signing-key/0.1.0";
 
 "use strict";
 const logger$g = new Logger(version$b);
@@ -13922,15 +13897,15 @@ function computePublicKey(key, compressed) {
     return logger$g.throwArgumentError("invalid public or private key", "key", "[REDACTED]");
 }
 
-const version$c = "transactions/5.7.0";
+const version$c = "transactions/0.1.0";
 
 "use strict";
 const logger$h = new Logger(version$c);
 var TransactionTypes;
 (function (TransactionTypes) {
-    TransactionTypes[TransactionTypes["legacy"] = 0] = "legacy";
-    TransactionTypes[TransactionTypes["eip2930"] = 1] = "eip2930";
-    TransactionTypes[TransactionTypes["eip1559"] = 2] = "eip1559";
+    TransactionTypes[TransactionTypes["standard"] = 0] = "standard";
+    TransactionTypes[TransactionTypes["etx"] = 1] = "etx";
+    TransactionTypes[TransactionTypes["standardETx"] = 2] = "standardETx";
 })(TransactionTypes || (TransactionTypes = {}));
 ;
 ///////////////////////////////
@@ -13946,18 +13921,6 @@ function handleNumber(value) {
     }
     return BigNumber.from(value);
 }
-// Legacy Transaction Fields
-const transactionFields = [
-    { name: "nonce", maxLength: 32, numeric: true },
-    { name: "gasPrice", maxLength: 32, numeric: true },
-    { name: "gasLimit", maxLength: 32, numeric: true },
-    { name: "to", length: 20 },
-    { name: "value", maxLength: 32, numeric: true },
-    { name: "data" },
-];
-const allowedTransactionKeys$1 = {
-    chainId: true, data: true, gasLimit: true, gasPrice: true, nonce: true, to: true, type: true, value: true
-};
 function computeAddress(key) {
     const publicKey = computePublicKey(key);
     return getAddress(hexDataSlice(keccak256(hexDataSlice(publicKey, 1)), 12));
@@ -14008,7 +13971,7 @@ function accessListify(value) {
 function formatAccessList(value) {
     return accessListify(value).map((set) => [set.address, set.storageKeys]);
 }
-function _serializeEip1559(transaction, signature) {
+function _serialize(transaction, signature) {
     // If there is an explicit gasPrice, make sure it matches the
     // EIP-1559 fees; otherwise they may not understand what they
     // think they are setting in terms of fee.
@@ -14038,18 +14001,24 @@ function _serializeEip1559(transaction, signature) {
         fields.push(stripZeros(sig.r));
         fields.push(stripZeros(sig.s));
     }
-    return hexConcat(["0x02", encode(fields)]);
+    return hexConcat(["0x00", encode(fields)]);
 }
-function _serializeEip2930(transaction, signature) {
+function _serializeStandardETx(transaction, signature) {
     const fields = [
         formatNumber(transaction.chainId || 0, "chainId"),
         formatNumber(transaction.nonce || 0, "nonce"),
-        formatNumber(transaction.gasPrice || 0, "gasPrice"),
+        formatNumber(transaction.maxPriorityFeePerGas || 0, "maxPriorityFeePerGas"),
+        formatNumber(transaction.maxFeePerGas || 0, "maxFeePerGas"),
         formatNumber(transaction.gasLimit || 0, "gasLimit"),
         ((transaction.to != null) ? getAddress(transaction.to) : "0x"),
         formatNumber(transaction.value || 0, "value"),
         (transaction.data || "0x"),
-        (formatAccessList(transaction.accessList || []))
+        (formatAccessList(transaction.accessList || [])),
+        formatNumber(transaction.externalGasPrice || 0, "externalGasPrice"),
+        formatNumber(transaction.externalGasLimit || 0, "externalGasLimit"),
+        formatNumber(transaction.externalGasTip || 0, "externalGasTip"),
+        (transaction.externalData || "0x"),
+        (formatAccessList(transaction.externalAccessList || [])),
     ];
     if (signature) {
         const sig = splitSignature(signature);
@@ -14057,91 +14026,15 @@ function _serializeEip2930(transaction, signature) {
         fields.push(stripZeros(sig.r));
         fields.push(stripZeros(sig.s));
     }
-    return hexConcat(["0x01", encode(fields)]);
-}
-// Legacy Transactions and EIP-155
-function _serialize(transaction, signature) {
-    checkProperties(transaction, allowedTransactionKeys$1);
-    const raw = [];
-    transactionFields.forEach(function (fieldInfo) {
-        let value = transaction[fieldInfo.name] || ([]);
-        const options = {};
-        if (fieldInfo.numeric) {
-            options.hexPad = "left";
-        }
-        value = arrayify(hexlify(value, options));
-        // Fixed-width field
-        if (fieldInfo.length && value.length !== fieldInfo.length && value.length > 0) {
-            logger$h.throwArgumentError("invalid length for " + fieldInfo.name, ("transaction:" + fieldInfo.name), value);
-        }
-        // Variable-width (with a maximum)
-        if (fieldInfo.maxLength) {
-            value = stripZeros(value);
-            if (value.length > fieldInfo.maxLength) {
-                logger$h.throwArgumentError("invalid length for " + fieldInfo.name, ("transaction:" + fieldInfo.name), value);
-            }
-        }
-        raw.push(hexlify(value));
-    });
-    let chainId = 0;
-    if (transaction.chainId != null) {
-        // A chainId was provided; if non-zero we'll use EIP-155
-        chainId = transaction.chainId;
-        if (typeof (chainId) !== "number") {
-            logger$h.throwArgumentError("invalid transaction.chainId", "transaction", transaction);
-        }
-    }
-    else if (signature && !isBytesLike(signature) && signature.v > 28) {
-        // No chainId provided, but the signature is signing with EIP-155; derive chainId
-        chainId = Math.floor((signature.v - 35) / 2);
-    }
-    // We have an EIP-155 transaction (chainId was specified and non-zero)
-    if (chainId !== 0) {
-        raw.push(hexlify(chainId)); // @TODO: hexValue?
-        raw.push("0x");
-        raw.push("0x");
-    }
-    // Requesting an unsigned transaction
-    if (!signature) {
-        return encode(raw);
-    }
-    // The splitSignature will ensure the transaction has a recoveryParam in the
-    // case that the signTransaction function only adds a v.
-    const sig = splitSignature(signature);
-    // We pushed a chainId and null r, s on for hashing only; remove those
-    let v = 27 + sig.recoveryParam;
-    if (chainId !== 0) {
-        raw.pop();
-        raw.pop();
-        raw.pop();
-        v += chainId * 2 + 8;
-        // If an EIP-155 v (directly or indirectly; maybe _vs) was provided, check it!
-        if (sig.v > 28 && sig.v !== v) {
-            logger$h.throwArgumentError("transaction.chainId/signature.v mismatch", "signature", signature);
-        }
-    }
-    else if (sig.v !== v) {
-        logger$h.throwArgumentError("transaction.chainId/signature.v mismatch", "signature", signature);
-    }
-    raw.push(hexlify(v));
-    raw.push(stripZeros(arrayify(sig.r)));
-    raw.push(stripZeros(arrayify(sig.s)));
-    return encode(raw);
+    return hexConcat(["0x02", encode(fields)]);
 }
 function serialize(transaction, signature) {
-    // Legacy and EIP-155 Transactions
-    if (transaction.type == null || transaction.type === 0) {
-        if (transaction.accessList != null) {
-            logger$h.throwArgumentError("untyped transactions do not support accessList; include type: 1", "transaction", transaction);
-        }
-        return _serialize(transaction, signature);
-    }
-    // Typed Transactions (EIP-2718)
+    // Typed Transactions (standard and ETx)
     switch (transaction.type) {
-        case 1:
-            return _serializeEip2930(transaction, signature);
+        case 0:
+            return _serialize(transaction, signature);
         case 2:
-            return _serializeEip1559(transaction, signature);
+            return _serializeStandardETx(transaction, signature);
         default:
             break;
     }
@@ -14169,15 +14062,15 @@ function _parseEipSignature(tx, fields, serialize) {
     }
     catch (error) { }
 }
-function _parseEip1559(payload) {
+function _parse(payload) {
     const transaction = decode(payload.slice(1));
     if (transaction.length !== 9 && transaction.length !== 12) {
-        logger$h.throwArgumentError("invalid component count for transaction type: 2", "payload", hexlify(payload));
+        logger$h.throwArgumentError("invalid component count for transaction type: 0", "payload", hexlify(payload));
     }
     const maxPriorityFeePerGas = handleNumber(transaction[2]);
     const maxFeePerGas = handleNumber(transaction[3]);
     const tx = {
-        type: 2,
+        type: 0,
         chainId: handleNumber(transaction[0]).toNumber(),
         nonce: handleNumber(transaction[1]).toNumber(),
         maxPriorityFeePerGas: maxPriorityFeePerGas,
@@ -14194,102 +14087,50 @@ function _parseEip1559(payload) {
         return tx;
     }
     tx.hash = keccak256(payload);
-    _parseEipSignature(tx, transaction.slice(9), _serializeEip1559);
+    _parseEipSignature(tx, transaction.slice(9), _serialize);
     return tx;
 }
-function _parseEip2930(payload) {
+function _parseStandardETx(payload) {
     const transaction = decode(payload.slice(1));
-    if (transaction.length !== 8 && transaction.length !== 11) {
+    if (transaction.length !== 8 && transaction.length !== 17) {
         logger$h.throwArgumentError("invalid component count for transaction type: 1", "payload", hexlify(payload));
     }
+    const maxPriorityFeePerGas = handleNumber(transaction[2]);
+    const maxFeePerGas = handleNumber(transaction[3]);
     const tx = {
-        type: 1,
+        type: 2,
         chainId: handleNumber(transaction[0]).toNumber(),
         nonce: handleNumber(transaction[1]).toNumber(),
-        gasPrice: handleNumber(transaction[2]),
-        gasLimit: handleNumber(transaction[3]),
-        to: handleAddress(transaction[4]),
-        value: handleNumber(transaction[5]),
-        data: transaction[6],
-        accessList: accessListify(transaction[7])
+        maxPriorityFeePerGas: maxPriorityFeePerGas,
+        maxFeePerGas: maxFeePerGas,
+        gasPrice: null,
+        gasLimit: handleNumber(transaction[4]),
+        to: handleAddress(transaction[5]),
+        value: handleNumber(transaction[6]),
+        data: transaction[7],
+        accessList: accessListify(transaction[8]),
+        externalGasLimit: handleNumber(transaction[9]),
+        externalGasPrice: handleNumber(transaction[10]),
+        externalGasTip: handleNumber(transaction[11]),
+        externalData: transaction[12],
+        externalAccessList: accessListify(transaction[13])
     };
     // Unsigned EIP-2930 Transaction
     if (transaction.length === 8) {
         return tx;
     }
     tx.hash = keccak256(payload);
-    _parseEipSignature(tx, transaction.slice(8), _serializeEip2930);
-    return tx;
-}
-// Legacy Transactions and EIP-155
-function _parse(rawTransaction) {
-    const transaction = decode(rawTransaction);
-    if (transaction.length !== 9 && transaction.length !== 6) {
-        logger$h.throwArgumentError("invalid raw transaction", "rawTransaction", rawTransaction);
-    }
-    const tx = {
-        nonce: handleNumber(transaction[0]).toNumber(),
-        gasPrice: handleNumber(transaction[1]),
-        gasLimit: handleNumber(transaction[2]),
-        to: handleAddress(transaction[3]),
-        value: handleNumber(transaction[4]),
-        data: transaction[5],
-        chainId: 0
-    };
-    // Legacy unsigned transaction
-    if (transaction.length === 6) {
-        return tx;
-    }
-    try {
-        tx.v = BigNumber.from(transaction[6]).toNumber();
-    }
-    catch (error) {
-        // @TODO: What makes snese to do? The v is too big
-        return tx;
-    }
-    tx.r = hexZeroPad(transaction[7], 32);
-    tx.s = hexZeroPad(transaction[8], 32);
-    if (BigNumber.from(tx.r).isZero() && BigNumber.from(tx.s).isZero()) {
-        // EIP-155 unsigned transaction
-        tx.chainId = tx.v;
-        tx.v = 0;
-    }
-    else {
-        // Signed Transaction
-        tx.chainId = Math.floor((tx.v - 35) / 2);
-        if (tx.chainId < 0) {
-            tx.chainId = 0;
-        }
-        let recoveryParam = tx.v - 27;
-        const raw = transaction.slice(0, 6);
-        if (tx.chainId !== 0) {
-            raw.push(hexlify(tx.chainId));
-            raw.push("0x");
-            raw.push("0x");
-            recoveryParam -= tx.chainId * 2 + 8;
-        }
-        const digest = keccak256(encode(raw));
-        try {
-            tx.from = recoverAddress(digest, { r: hexlify(tx.r), s: hexlify(tx.s), recoveryParam: recoveryParam });
-        }
-        catch (error) { }
-        tx.hash = keccak256(rawTransaction);
-    }
-    tx.type = null;
+    _parseEipSignature(tx, transaction.slice(14), _serializeStandardETx);
     return tx;
 }
 function parse(rawTransaction) {
     const payload = arrayify(rawTransaction);
-    // Legacy and EIP-155 Transactions
-    if (payload[0] > 0x7f) {
-        return _parse(payload);
-    }
     // Typed Transaction (EIP-2718)
     switch (payload[0]) {
-        case 1:
-            return _parseEip2930(payload);
+        case 0:
+            return _parse(payload);
         case 2:
-            return _parseEip1559(payload);
+            return _parseStandardETx(payload);
         default:
             break;
     }
@@ -14299,7 +14140,7 @@ function parse(rawTransaction) {
     });
 }
 
-const version$d = "contracts/5.7.0";
+const version$d = "contracts/0.1.0";
 
 "use strict";
 var __awaiter$4 = (commonjsGlobal && commonjsGlobal.__awaiter) || function (thisArg, _arguments, P, generator) {
@@ -14315,7 +14156,7 @@ const logger$i = new Logger(version$d);
 ;
 ;
 ///////////////////////////////
-const allowedTransactionKeys$2 = {
+const allowedTransactionKeys$1 = {
     chainId: true, data: true, from: true, gasLimit: true, gasPrice: true, nonce: true, to: true, value: true,
     type: true, accessList: true,
     maxFeePerGas: true, maxPriorityFeePerGas: true,
@@ -15231,7 +15072,7 @@ class ContractFactory {
         if (args.length === this.interface.deploy.inputs.length + 1 && typeof (args[args.length - 1]) === "object") {
             tx = shallowCopy(args.pop());
             for (const key in tx) {
-                if (!allowedTransactionKeys$2[key]) {
+                if (!allowedTransactionKeys$1[key]) {
                     throw new Error("unknown transaction override " + key);
                 }
             }
@@ -15442,7 +15283,7 @@ var SupportedAlgorithm;
 })(SupportedAlgorithm || (SupportedAlgorithm = {}));
 ;
 
-const version$e = "sha2/5.7.0";
+const version$e = "sha2/0.1.0";
 
 "use strict";
 const logger$j = new Logger(version$e);
@@ -15507,7 +15348,7 @@ function pbkdf2(password, salt, iterations, keylen, hashAlgorithm) {
     return hexlify(DK);
 }
 
-const version$f = "wordlists/5.7.0";
+const version$f = "wordlists/0.1.0";
 
 "use strict";
 // This gets overridden by rollup
@@ -15595,7 +15436,7 @@ const wordlists = {
 
 "use strict";
 
-const version$g = "hdnode/5.7.0";
+const version$g = "hdnode/0.1.0";
 
 "use strict";
 const logger$l = new Logger(version$g);
@@ -15915,7 +15756,7 @@ function getAccountPath(index) {
     return `m/44'/60'/${index}'/0/0`;
 }
 
-const version$h = "random/5.7.0";
+const version$h = "random/0.1.0";
 
 "use strict";
 const logger$m = new Logger(version$h);
@@ -16772,7 +16613,7 @@ var aesJs = createCommonjsModule(function (module, exports) {
 })(commonjsGlobal);
 });
 
-const version$i = "json-wallets/5.7.0";
+const version$i = "json-wallets/0.1.0";
 
 "use strict";
 function looseArrayify(hexString) {
@@ -17742,7 +17583,7 @@ function decryptJsonWalletSync(json, password) {
     throw new Error("invalid JSON wallet");
 }
 
-const version$j = "wallet/5.7.0";
+const version$j = "wallet/0.1.0";
 
 "use strict";
 var __awaiter$6 = (commonjsGlobal && commonjsGlobal.__awaiter) || function (thisArg, _arguments, P, generator) {
@@ -17906,7 +17747,7 @@ function verifyTypedData(domain, types, value, signature) {
     return recoverAddress(TypedDataEncoder.hash(domain, types, value), signature);
 }
 
-const version$k = "networks/5.7.1";
+const version$k = "networks/0.1.0";
 
 "use strict";
 const logger$q = new Logger(version$k);
@@ -18154,7 +17995,7 @@ function getNetwork(network) {
     };
 }
 
-const version$l = "web/5.7.1";
+const version$l = "web/0.1.0";
 
 "use strict";
 var __awaiter$7 = (commonjsGlobal && commonjsGlobal.__awaiter) || function (thisArg, _arguments, P, generator) {
@@ -18621,193 +18462,11 @@ function poll(func, options) {
     });
 }
 
-'use strict';
-var ALPHABET = 'qpzry9x8gf2tvdw0s3jn54khce6mua7l';
-
-// pre-compute lookup table
-var ALPHABET_MAP = {};
-for (var z = 0; z < ALPHABET.length; z++) {
-  var x = ALPHABET.charAt(z);
-
-  if (ALPHABET_MAP[x] !== undefined) throw new TypeError(x + ' is ambiguous')
-  ALPHABET_MAP[x] = z;
-}
-
-function polymodStep (pre) {
-  var b = pre >> 25;
-  return ((pre & 0x1FFFFFF) << 5) ^
-    (-((b >> 0) & 1) & 0x3b6a57b2) ^
-    (-((b >> 1) & 1) & 0x26508e6d) ^
-    (-((b >> 2) & 1) & 0x1ea119fa) ^
-    (-((b >> 3) & 1) & 0x3d4233dd) ^
-    (-((b >> 4) & 1) & 0x2a1462b3)
-}
-
-function prefixChk (prefix) {
-  var chk = 1;
-  for (var i = 0; i < prefix.length; ++i) {
-    var c = prefix.charCodeAt(i);
-    if (c < 33 || c > 126) return 'Invalid prefix (' + prefix + ')'
-
-    chk = polymodStep(chk) ^ (c >> 5);
-  }
-  chk = polymodStep(chk);
-
-  for (i = 0; i < prefix.length; ++i) {
-    var v = prefix.charCodeAt(i);
-    chk = polymodStep(chk) ^ (v & 0x1f);
-  }
-  return chk
-}
-
-function encode$2 (prefix, words, LIMIT) {
-  LIMIT = LIMIT || 90;
-  if ((prefix.length + 7 + words.length) > LIMIT) throw new TypeError('Exceeds length limit')
-
-  prefix = prefix.toLowerCase();
-
-  // determine chk mod
-  var chk = prefixChk(prefix);
-  if (typeof chk === 'string') throw new Error(chk)
-
-  var result = prefix + '1';
-  for (var i = 0; i < words.length; ++i) {
-    var x = words[i];
-    if ((x >> 5) !== 0) throw new Error('Non 5-bit word')
-
-    chk = polymodStep(chk) ^ x;
-    result += ALPHABET.charAt(x);
-  }
-
-  for (i = 0; i < 6; ++i) {
-    chk = polymodStep(chk);
-  }
-  chk ^= 1;
-
-  for (i = 0; i < 6; ++i) {
-    var v = (chk >> ((5 - i) * 5)) & 0x1f;
-    result += ALPHABET.charAt(v);
-  }
-
-  return result
-}
-
-function __decode (str, LIMIT) {
-  LIMIT = LIMIT || 90;
-  if (str.length < 8) return str + ' too short'
-  if (str.length > LIMIT) return 'Exceeds length limit'
-
-  // don't allow mixed case
-  var lowered = str.toLowerCase();
-  var uppered = str.toUpperCase();
-  if (str !== lowered && str !== uppered) return 'Mixed-case string ' + str
-  str = lowered;
-
-  var split = str.lastIndexOf('1');
-  if (split === -1) return 'No separator character for ' + str
-  if (split === 0) return 'Missing prefix for ' + str
-
-  var prefix = str.slice(0, split);
-  var wordChars = str.slice(split + 1);
-  if (wordChars.length < 6) return 'Data too short'
-
-  var chk = prefixChk(prefix);
-  if (typeof chk === 'string') return chk
-
-  var words = [];
-  for (var i = 0; i < wordChars.length; ++i) {
-    var c = wordChars.charAt(i);
-    var v = ALPHABET_MAP[c];
-    if (v === undefined) return 'Unknown character ' + c
-    chk = polymodStep(chk) ^ v;
-
-    // not in the checksum?
-    if (i + 6 >= wordChars.length) continue
-    words.push(v);
-  }
-
-  if (chk !== 1) return 'Invalid checksum for ' + str
-  return { prefix: prefix, words: words }
-}
-
-function decodeUnsafe () {
-  var res = __decode.apply(null, arguments);
-  if (typeof res === 'object') return res
-}
-
-function decode$2 (str) {
-  var res = __decode.apply(null, arguments);
-  if (typeof res === 'object') return res
-
-  throw new Error(res)
-}
-
-function convert (data, inBits, outBits, pad) {
-  var value = 0;
-  var bits = 0;
-  var maxV = (1 << outBits) - 1;
-
-  var result = [];
-  for (var i = 0; i < data.length; ++i) {
-    value = (value << inBits) | data[i];
-    bits += inBits;
-
-    while (bits >= outBits) {
-      bits -= outBits;
-      result.push((value >> bits) & maxV);
-    }
-  }
-
-  if (pad) {
-    if (bits > 0) {
-      result.push((value << (outBits - bits)) & maxV);
-    }
-  } else {
-    if (bits >= inBits) return 'Excess padding'
-    if ((value << (outBits - bits)) & maxV) return 'Non-zero padding'
-  }
-
-  return result
-}
-
-function toWordsUnsafe (bytes) {
-  var res = convert(bytes, 8, 5, true);
-  if (Array.isArray(res)) return res
-}
-
-function toWords (bytes) {
-  var res = convert(bytes, 8, 5, true);
-  if (Array.isArray(res)) return res
-
-  throw new Error(res)
-}
-
-function fromWordsUnsafe (words) {
-  var res = convert(words, 5, 8, false);
-  if (Array.isArray(res)) return res
-}
-
-function fromWords (words) {
-  var res = convert(words, 5, 8, false);
-  if (Array.isArray(res)) return res
-
-  throw new Error(res)
-}
-
-var bech32 = {
-  decodeUnsafe: decodeUnsafe,
-  decode: decode$2,
-  encode: encode$2,
-  toWordsUnsafe: toWordsUnsafe,
-  toWords: toWords,
-  fromWordsUnsafe: fromWordsUnsafe,
-  fromWords: fromWords
-};
-
-const version$m = "providers/5.7.2";
+const version$m = "providers/0.1.0";
 
 "use strict";
 const logger$s = new Logger(version$m);
+const HIERARCHY_DEPTH = 3;
 class Formatter {
     constructor() {
         this.formats = this.getDefaultFormats();
@@ -18815,10 +18474,13 @@ class Formatter {
     getDefaultFormats() {
         const formats = ({});
         const address = this.address.bind(this);
+        const addressArray = this.addressArray.bind(this);
         const bigNumber = this.bigNumber.bind(this);
+        const bigNumberArray = this.bigNumberArray.bind(this);
         const blockTag = this.blockTag.bind(this);
         const data = this.data.bind(this);
         const hash = this.hash.bind(this);
+        const hashArray = this.hashArray.bind(this);
         const hex = this.hex.bind(this);
         const number = this.number.bind(this);
         const type = this.type.bind(this);
@@ -18860,6 +18522,10 @@ class Formatter {
             data: Formatter.allowNull(strictData),
             type: Formatter.allowNull(number),
             accessList: Formatter.allowNull(this.accessList.bind(this), null),
+            externalGasPrice: Formatter.allowNull(bigNumber),
+            externalMaxPriorityFeePerGas: Formatter.allowNull(bigNumber),
+            externalGasTip: Formatter.allowNull(bigNumber),
+            externalAccessList: Formatter.allowNull(this.accessList.bind(this), null),
         };
         formats.receiptLog = {
             transactionIndex: number,
@@ -18892,17 +18558,20 @@ class Formatter {
         };
         formats.block = {
             hash: Formatter.allowNull(hash),
-            parentHash: hash,
-            number: number,
+            parentHash: hashArray,
+            number: bigNumberArray,
             timestamp: number,
             nonce: Formatter.allowNull(hex),
-            difficulty: this.difficulty.bind(this),
-            gasLimit: bigNumber,
-            gasUsed: bigNumber,
-            miner: Formatter.allowNull(address),
+            difficulty: bigNumberArray,
+            gasLimit: bigNumberArray,
+            gasUsed: bigNumberArray,
+            miner: addressArray,
             extraData: data,
+            stateRoot: hashArray,
+            transactionsRoot: hashArray,
+            receiptsRoot: hashArray,
             transactions: Formatter.allowNull(Formatter.arrayOf(hash)),
-            baseFeePerGas: Formatter.allowNull(bigNumber)
+            baseFeePerGas: bigNumberArray
         };
         formats.blockWithTransactions = shallowCopy(formats.block);
         formats.blockWithTransactions.transactions = Formatter.allowNull(Formatter.arrayOf(this.transactionResponse.bind(this)));
@@ -18947,6 +18616,10 @@ class Formatter {
     bigNumber(value) {
         return BigNumber.from(value);
     }
+    // Strict! Used on input.
+    bigNumberArray(value) {
+        return Array.from(value);
+    }
     // Requires a boolean, "true" or  "false"; returns a boolean
     boolean(value) {
         if (typeof (value) === "boolean") {
@@ -18985,6 +18658,16 @@ class Formatter {
     // Strict! Used on input.
     address(value) {
         return getAddress(value);
+    }
+    addressArray(value) {
+        if (value.length != HIERARCHY_DEPTH) {
+            return logger$s.throwArgumentError("invalid address array", "value", value);
+        }
+        let results = [];
+        for (const addr of value) {
+            results.push(getAddress(addr));
+        }
+        return results;
     }
     callAddress(value) {
         if (!isHexString(value, 32)) {
@@ -19025,6 +18708,21 @@ class Formatter {
         }
         return result;
     }
+    // Requires a hash array, optionally requires 0x prefix; returns prefixed lowercase hash.
+    hashArray(value, strict) {
+        if (value.length != HIERARCHY_DEPTH) {
+            return logger$s.throwArgumentError("invalid hash array", "value", value);
+        }
+        let results = [];
+        for (const hash of value) {
+            const result = this.hex(hash, strict);
+            if (hexDataLength(result) !== 32) {
+                return logger$s.throwArgumentError("invalid hash", "value", value);
+            }
+            results.push(result);
+        }
+        return results;
+    }
     // Returns the difficulty as a number, or if too large (i.e. PoA network) null
     difficulty(value) {
         if (value == null) {
@@ -19043,21 +18741,44 @@ class Formatter {
         }
         return hexZeroPad(value, 32);
     }
-    _block(value, format) {
+    _block(value, format, context) {
         if (value.author != null && value.miner == null) {
             value.miner = value.author;
         }
         // The difficulty may need to come from _difficulty in recursed blocks
         const difficulty = (value._difficulty != null) ? value._difficulty : value.difficulty;
         const result = Formatter.check(format, value);
-        result._difficulty = ((difficulty == null) ? null : BigNumber.from(difficulty));
+        result._difficulty = ((difficulty == null) ? null : difficulty);
+        if (context) {
+            return this.contextBlock(result, context);
+        }
         return result;
     }
-    block(value) {
-        return this._block(value, this.formats.block);
+    block(value, context) {
+        return this._block(value, this.formats.block, context);
     }
     blockWithTransactions(value) {
         return this._block(value, this.formats.blockWithTransactions);
+    }
+    contextBlock(value, context) {
+        let contextBlock = {
+            number: value.number[context],
+            transactions: value.transactions,
+            hash: value.hash,
+            parentHash: value.parentHash[context],
+            timestamp: value.timestamp,
+            nonce: value.nonce,
+            difficulty: value.difficulty[context],
+            _difficulty: value._difficulty[context],
+            gasLimit: value.gasLimit[context],
+            gasUsed: value.gasUsed[context],
+            miner: value.miner[context],
+            extraData: value.data,
+            transactionsRoot: value.transactionsRoot[context],
+            stateRoot: value.stateRoot[context],
+            receiptsRoot: value.receiptsRoot[context]
+        };
+        return contextBlock;
     }
     // Strict! Used on input.
     transactionRequest(value) {
@@ -19340,17 +19061,17 @@ function stall(duration) {
 //////////////////////////////
 // Provider Object
 /**
- *  EventType
- *   - "block"
- *   - "poll"
- *   - "didPoll"
- *   - "pending"
- *   - "error"
- *   - "network"
- *   - filter
- *   - topics array
- *   - transaction hash
- */
+*  EventType
+*   - "block"
+*   - "poll"
+*   - "didPoll"
+*   - "pending"
+*   - "error"
+*   - "network"
+*   - filter
+*   - topics array
+*   - transaction hash
+*/
 const PollableEvents = ["block", "network", "pending", "poll"];
 class Event {
     constructor(tag, listener, once) {
@@ -19602,11 +19323,6 @@ class Resolver {
             }
             else {
                 version = -1;
-            }
-            if (version >= 0 && bytes.length === 2 + length && length >= 1 && length <= 75) {
-                const words = bech32.toWords(bytes.slice(2));
-                words.unshift(version);
-                return bech32.encode(coinInfo.prefix, words);
             }
         }
         return null;
@@ -20480,6 +20196,21 @@ class BaseProvider extends Provider {
             }
         });
     }
+    getMaxPriorityFeePerGas() {
+        return __awaiter$9(this, void 0, void 0, function* () {
+            yield this.getNetwork();
+            const result = yield this.perform("getMaxPriorityFeePerGas", {});
+            try {
+                return BigNumber.from(result);
+            }
+            catch (error) {
+                return logger$t.throwError("bad result from backend", Logger.errors.SERVER_ERROR, {
+                    method: "getMaxPriorityFeePerGas",
+                    result, error
+                });
+            }
+        });
+    }
     getBalance(addressOrName, blockTag) {
         return __awaiter$9(this, void 0, void 0, function* () {
             yield this.getNetwork();
@@ -20873,7 +20604,7 @@ class BaseProvider extends Provider {
                     blockWithTxs.transactions = blockWithTxs.transactions.map((tx) => this._wrapTransaction(tx));
                     return blockWithTxs;
                 }
-                return this.formatter.block(block);
+                return this.formatter.block(block, this._context);
             }), { oncePoll: this });
         });
     }
@@ -21300,7 +21031,7 @@ function checkError(method, error, params) {
         }
         // Found "reverted", this is a CALL_EXCEPTION
         if (result) {
-            logger$u.throwError("cannot estimate gas; transaction may fail or may require manual gas limit", Logger.errors.UNPREDICTABLE_GAS_LIMIT, {
+            logger$u.throwError("json-rpc-provider: cannot estimate gas; transaction may fail or may require manual gas limit", Logger.errors.UNPREDICTABLE_GAS_LIMIT, {
                 reason: result.message, method, transaction, error
             });
         }
@@ -21404,7 +21135,7 @@ class JsonRpcSigner extends Signer {
         if (this._address) {
             return Promise.resolve(this._address);
         }
-        return this.provider.send("eth_accounts", []).then((accounts) => {
+        return this.provider.send("quai_accounts", []).then((accounts) => {
             if (accounts.length <= this._index) {
                 logger$u.throwError("unknown account #" + this._index, Logger.errors.UNSUPPORTED_OPERATION, {
                     operation: "getAddress"
@@ -21421,7 +21152,7 @@ class JsonRpcSigner extends Signer {
             }
             return address;
         });
-        // The JSON-RPC for eth_sendTransaction uses 90000 gas; if the user
+        // The JSON-RPC for quai_sendTransaction uses 90000 gas; if the user
         // wishes to use this, it is easy to specify explicitly, otherwise
         // we look it up for them.
         if (transaction.gasLimit == null) {
@@ -21454,7 +21185,7 @@ class JsonRpcSigner extends Signer {
                 tx.from = sender;
             }
             const hexTx = this.provider.constructor.hexlifyTransaction(tx, { from: true });
-            return this.provider.send("eth_sendTransaction", [hexTx]).then((hash) => {
+            return this.provider.send("quai_sendTransaction", [hexTx]).then((hash) => {
                 return hash;
             }, (error) => {
                 if (typeof (error.message) === "string" && error.message.match(/user denied/i)) {
@@ -21520,8 +21251,8 @@ class JsonRpcSigner extends Signer {
             const data = ((typeof (message) === "string") ? toUtf8Bytes(message) : message);
             const address = yield this.getAddress();
             try {
-                // https://github.com/ethereum/wiki/wiki/JSON-RPC#eth_sign
-                return yield this.provider.send("eth_sign", [address.toLowerCase(), hexlify(data)]);
+                // https://github.com/ethereum/wiki/wiki/JSON-RPC#quai_sign
+                return yield this.provider.send("quai_sign", [address.toLowerCase(), hexlify(data)]);
             }
             catch (error) {
                 if (typeof (error.message) === "string" && error.message.match(/user denied/i)) {
@@ -21543,7 +21274,7 @@ class JsonRpcSigner extends Signer {
             });
             const address = yield this.getAddress();
             try {
-                return yield this.provider.send("eth_signTypedData_v4", [
+                return yield this.provider.send("quai_signTypedData_v4", [
                     address.toLowerCase(),
                     JSON.stringify(TypedDataEncoder.getPayload(populated.domain, types, populated.value))
                 ]);
@@ -21586,13 +21317,14 @@ class UncheckedJsonRpcSigner extends JsonRpcSigner {
         });
     }
 }
-const allowedTransactionKeys$3 = {
+const allowedTransactionKeys$2 = {
     chainId: true, data: true, gasLimit: true, gasPrice: true, nonce: true, to: true, value: true,
     type: true, accessList: true,
-    maxFeePerGas: true, maxPriorityFeePerGas: true
+    maxFeePerGas: true, maxPriorityFeePerGas: true,
+    externalGasLimit: true, externalGasPrice: true, externalGasTip: true, externalData: true, externalAccessList: true,
 };
 class JsonRpcProvider extends BaseProvider {
-    constructor(url, network) {
+    constructor(url, network, context) {
         let networkOrReady = network;
         // The network is unknown, query the JSON-RPC for it
         if (networkOrReady == null) {
@@ -21606,6 +21338,15 @@ class JsonRpcProvider extends BaseProvider {
                 }, 0);
             });
         }
+        new Promise((resolve, reject) => {
+            setTimeout(() => {
+                this.detectContext().then((context) => {
+                    resolve(context);
+                }, (error) => {
+                    reject(error);
+                });
+            }, 0);
+        });
         super(networkOrReady);
         // Default URL
         if (!url) {
@@ -21645,7 +21386,7 @@ class JsonRpcProvider extends BaseProvider {
             yield timer(0);
             let chainId = null;
             try {
-                chainId = yield this.send("eth_chainId", []);
+                chainId = yield this.send("quai_chainId", []);
             }
             catch (error) {
                 try {
@@ -21671,6 +21412,24 @@ class JsonRpcProvider extends BaseProvider {
             });
         });
     }
+    detectContext() {
+        return __awaiter$a(this, void 0, void 0, function* () {
+            yield timer(0);
+            let location = null;
+            try {
+                location = yield this.send("quai_nodeLocation", []);
+            }
+            catch (error) {
+            }
+            if (location != null) {
+                this._context = location.length;
+                return this._context;
+            }
+            return logger$u.throwError("could not detect context", Logger.errors.NETWORK_ERROR, {
+                event: "noNetwork"
+            });
+        });
+    }
     getSigner(addressOrIndex) {
         return new JsonRpcSigner(_constructorGuard$4, this, addressOrIndex);
     }
@@ -21678,7 +21437,7 @@ class JsonRpcProvider extends BaseProvider {
         return this.getSigner(addressOrIndex).connectUnchecked();
     }
     listAccounts() {
-        return this.send("eth_accounts", []).then((accounts) => {
+        return this.send("quai_accounts", []).then((accounts) => {
             return accounts.map((a) => this.formatter.address(a));
         });
     }
@@ -21696,7 +21455,7 @@ class JsonRpcProvider extends BaseProvider {
         });
         // We can expand this in the future to any call, but for now these
         // are the biggest wins and do not require any serializing parameters.
-        const cache = (["eth_chainId", "eth_blockNumber"].indexOf(method) >= 0);
+        const cache = (["quai_chainId", "quai_blockNumber"].indexOf(method) >= 0);
         if (cache && this._cache[method]) {
             return this._cache[method];
         }
@@ -21729,44 +21488,46 @@ class JsonRpcProvider extends BaseProvider {
     prepareRequest(method, params) {
         switch (method) {
             case "getBlockNumber":
-                return ["eth_blockNumber", []];
+                return ["quai_blockNumber", []];
             case "getGasPrice":
-                return ["eth_gasPrice", []];
+                return ["quai_gasPrice", []];
+            case "getMaxPriorityFeePerGas":
+                return ["quai_maxPriorityFeePerGas", []];
             case "getBalance":
-                return ["eth_getBalance", [getLowerCase(params.address), params.blockTag]];
+                return ["quai_getBalance", [getLowerCase(params.address), params.blockTag]];
             case "getTransactionCount":
-                return ["eth_getTransactionCount", [getLowerCase(params.address), params.blockTag]];
+                return ["quai_getTransactionCount", [getLowerCase(params.address), params.blockTag]];
             case "getCode":
-                return ["eth_getCode", [getLowerCase(params.address), params.blockTag]];
+                return ["quai_getCode", [getLowerCase(params.address), params.blockTag]];
             case "getStorageAt":
-                return ["eth_getStorageAt", [getLowerCase(params.address), hexZeroPad(params.position, 32), params.blockTag]];
+                return ["quai_getStorageAt", [getLowerCase(params.address), hexZeroPad(params.position, 32), params.blockTag]];
             case "sendTransaction":
-                return ["eth_sendRawTransaction", [params.signedTransaction]];
+                return ["quai_sendRawTransaction", [params.signedTransaction]];
             case "getBlock":
                 if (params.blockTag) {
-                    return ["eth_getBlockByNumber", [params.blockTag, !!params.includeTransactions]];
+                    return ["quai_getBlockByNumber", [params.blockTag, !!params.includeTransactions]];
                 }
                 else if (params.blockHash) {
-                    return ["eth_getBlockByHash", [params.blockHash, !!params.includeTransactions]];
+                    return ["quai_getBlockByHash", [params.blockHash, !!params.includeTransactions]];
                 }
                 return null;
             case "getTransaction":
-                return ["eth_getTransactionByHash", [params.transactionHash]];
+                return ["quai_getTransactionByHash", [params.transactionHash]];
             case "getTransactionReceipt":
-                return ["eth_getTransactionReceipt", [params.transactionHash]];
+                return ["quai_getTransactionReceipt", [params.transactionHash]];
             case "call": {
                 const hexlifyTransaction = getStatic(this.constructor, "hexlifyTransaction");
-                return ["eth_call", [hexlifyTransaction(params.transaction, { from: true }), params.blockTag]];
+                return ["quai_call", [hexlifyTransaction(params.transaction, { from: true }), params.blockTag]];
             }
             case "estimateGas": {
                 const hexlifyTransaction = getStatic(this.constructor, "hexlifyTransaction");
-                return ["eth_estimateGas", [hexlifyTransaction(params.transaction, { from: true })]];
+                return ["quai_estimateGas", [hexlifyTransaction(params.transaction, { from: true })]];
             }
             case "getLogs":
                 if (params.filter && params.filter.address != null) {
                     params.filter.address = getLowerCase(params.filter.address);
                 }
-                return ["eth_getLogs", [params.filter]];
+                return ["quai_getLogs", [params.filter]];
             default:
                 break;
         }
@@ -21814,11 +21575,11 @@ class JsonRpcProvider extends BaseProvider {
             return;
         }
         const self = this;
-        const pendingFilter = this.send("eth_newPendingTransactionFilter", []);
+        const pendingFilter = this.send("quai_newPendingTransactionFilter", []);
         this._pendingFilter = pendingFilter;
         pendingFilter.then(function (filterId) {
             function poll() {
-                self.send("eth_getFilterChanges", [filterId]).then(function (hashes) {
+                self.send("quai_getFilterChanges", [filterId]).then(function (hashes) {
                     if (self._pendingFilter != pendingFilter) {
                         return null;
                     }
@@ -21838,7 +21599,7 @@ class JsonRpcProvider extends BaseProvider {
                     });
                 }).then(function () {
                     if (self._pendingFilter != pendingFilter) {
-                        self.send("eth_uninstallFilter", [filterId]);
+                        self.send("quai_uninstallFilter", [filterId]);
                         return;
                     }
                     setTimeout(function () { poll(); }, 0);
@@ -21855,7 +21616,7 @@ class JsonRpcProvider extends BaseProvider {
         }
         super._stopEvent(event);
     }
-    // Convert an quais.js transaction into a JSON-RPC transaction
+    // Convert an ethers.js transaction into a JSON-RPC transaction
     //  - gasLimit => gas
     //  - All values hexlified
     //  - All numeric values zero-striped
@@ -21866,7 +21627,7 @@ class JsonRpcProvider extends BaseProvider {
     //        will be the preferred method for this.
     static hexlifyTransaction(transaction, allowExtra) {
         // Check only allowed properties are given
-        const allowed = shallowCopy(allowedTransactionKeys$3);
+        const allowed = shallowCopy(allowedTransactionKeys$2);
         if (allowExtra) {
             for (const key in allowExtra) {
                 if (allowExtra[key]) {
@@ -23960,7 +23721,7 @@ var index$3 = /*#__PURE__*/Object.freeze({
 	Formatter: Formatter
 });
 
-const version$n = "solidity/5.7.0";
+const version$n = "solidity/0.1.0";
 
 "use strict";
 const regexBytes = new RegExp("^bytes([0-9]+)$");
@@ -24046,7 +23807,7 @@ function sha256$2(types, values) {
     return sha256$1(pack$1(types, values));
 }
 
-const version$o = "units/5.7.0";
+const version$o = "units/0.1.0";
 
 "use strict";
 const logger$I = new Logger(version$o);
@@ -24234,7 +23995,7 @@ var utils$1 = /*#__PURE__*/Object.freeze({
 	Indexed: Indexed
 });
 
-const version$p = "quais/5.7.2";
+const version$p = "quais/0.1.0";
 
 "use strict";
 const logger$J = new Logger(version$p);

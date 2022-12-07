@@ -2,32 +2,21 @@
   "_quais.alias": {
     "geturl.js": "browser-geturl.js"
   },
-  "author": "Richard Moore <me@ricmoo.com>",
+  "author": "",
   "browser": {
     "./lib/geturl": "./lib/browser-geturl.js"
   },
   "dependencies": {
-    "@quais/base64": "^5.7.0",
-    "@quais/bytes": "^5.7.0",
-    "@quais/logger": "^5.7.0",
-    "@quais/properties": "^5.7.0",
-    "@quais/strings": "^5.7.0"
+    "@quais/base64": "^0.1.0",
+    "@quais/bytes": "^0.1.0",
+    "@quais/logger": "^0.1.0",
+    "@quais/properties": "^0.1.0",
+    "@quais/strings": "^0.1.0"
   },
   "description": "Utility fucntions for managing web requests for quais.",
-  "ethereum": "donations.quais.eth",
-  "funding": [
-    {
-      "type": "individual",
-      "url": "https://gitcoin.co/grants/13/ethersjs-complete-simple-and-tiny-2"
-    },
-    {
-      "type": "individual",
-      "url": "https://www.buymeacoffee.com/ricmoo"
-    }
-  ],
   "keywords": [
-    "Ethereum",
-    "ethers"
+    "Quai",
+    "quais"
   ],
   "license": "MIT",
   "main": "./lib/index.js",
@@ -47,5 +36,5 @@
   "sideEffects": false,
   "tarballHash": "0x37945bd0bcbf905a641db7e631bb538570042dbe6513e1e4cdd088f25b4ec274",
   "types": "./lib/index.d.ts",
-  "version": "5.7.1"
+  "version": "0.1.0"
 }

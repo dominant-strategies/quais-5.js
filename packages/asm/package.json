@@ -1,7 +1,7 @@
 {
-  "author": "Richard Moore <me@ricmoo.com>",
+  "author": "",
   "dependencies": {
-    "quais": "^5.7.0"
+    "quais": "^0.1.0"
   },
   "description": "ASM libraries and tools for the Ethereum EVM.",
   "ethereum": "donations.quais.eth",
@@ -38,5 +38,5 @@
   },
   "tarballHash": "0x66d57d00b6a8b039209e081aa5482b1f737570441d220f0906700cf1478437b6",
   "types": "./lib/index.d.ts",
-  "version": "5.7.0"
+  "version": "0.1.0"
 }

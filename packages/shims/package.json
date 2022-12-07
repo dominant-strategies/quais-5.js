@@ -1,6 +1,6 @@
 {
   "_quais_nobuild": true,
-  "author": "Richard Moore <me@ricmoo.com>",
+  "author": "",
   "browser": "./dist/index.min.js",
   "dependencies": {},
   "description": "Shims required for quais in constrained environments.",
@@ -34,5 +34,5 @@
   },
   "tarballHash": "0xb200c84f283c7e23ca714da0071e5043234a622c0bd34e33f683fdfd9f69e9cd",
   "types": "./lib/index.d.ts",
-  "version": "5.7.0"
+  "version": "0.1.0"
 }

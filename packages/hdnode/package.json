@@ -1,34 +1,23 @@
 {
-  "author": "Richard Moore <me@ricmoo.com>",
+  "author": "",
   "dependencies": {
-    "@quais/abstract-signer": "^5.7.0",
-    "@quais/basex": "^5.7.0",
-    "@quais/bignumber": "^5.7.0",
-    "@quais/bytes": "^5.7.0",
-    "@quais/logger": "^5.7.0",
-    "@quais/pbkdf2": "^5.7.0",
-    "@quais/properties": "^5.7.0",
-    "@quais/sha2": "^5.7.0",
-    "@quais/signing-key": "^5.7.0",
-    "@quais/strings": "^5.7.0",
-    "@quais/transactions": "^5.7.0",
-    "@quais/wordlists": "^5.7.0"
+    "@quais/abstract-signer": "^0.1.0",
+    "@quais/basex": "^0.1.0",
+    "@quais/bignumber": "^0.1.0",
+    "@quais/bytes": "^0.1.0",
+    "@quais/logger": "^0.1.0",
+    "@quais/pbkdf2": "^0.1.0",
+    "@quais/properties": "^0.1.0",
+    "@quais/sha2": "^0.1.0",
+    "@quais/signing-key": "^0.1.0",
+    "@quais/strings": "^0.1.0",
+    "@quais/transactions": "^0.1.0",
+    "@quais/wordlists": "^0.1.0"
   },
   "description": "BIP32 Hierarchal Deterministic Node operations.",
-  "ethereum": "donations.quais.eth",
-  "funding": [
-    {
-      "type": "individual",
-      "url": "https://gitcoin.co/grants/13/ethersjs-complete-simple-and-tiny-2"
-    },
-    {
-      "type": "individual",
-      "url": "https://www.buymeacoffee.com/ricmoo"
-    }
-  ],
   "keywords": [
-    "Ethereum",
-    "ethers"
+    "Quai",
+    "quais"
   ],
   "license": "MIT",
   "main": "./lib/index.js",
@@ -48,5 +37,5 @@
   "sideEffects": false,
   "tarballHash": "0xca4bad80837378d07524f450188a449b1a6578b8bbc733dea50146488c8143e0",
   "types": "./lib/index.d.ts",
-  "version": "5.7.0"
+  "version": "0.1.0"
 }
