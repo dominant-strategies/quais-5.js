@@ -5,7 +5,7 @@ with Ethereum and is available in all major Ethereum node implementations
 (e.g. [[link-geth]] and [[link-parity]]) as well as many
 third-party web services (e.g. [[link-infura]])
 
-_property: new ethers.providers.JsonRpcProvider([ urlOrConnectionInfo [ , networkish ] ])  @SRC<providers:constructor.JsonRpcProvider>
+_property: new quais.providers.JsonRpcProvider([ urlOrConnectionInfo [ , networkish ] ])  @SRC<providers:constructor.JsonRpcProvider>
 Connect to a JSON-RPC HTTP API using the URL or [[ConnectionInfo]] //urlOrConnectionInfo//
 connected to the //networkish// network.
 
@@ -60,7 +60,7 @@ Request the node unlock the account (if locked) using //password//.
 
 _subsection: JsonRpcUncheckedSigner  @<UncheckedJsonRpcSigner> @INHERIT<[[Signer]]> @SRC<providers:class.UncheckedJsonRpcSigner>
 The JSON-RPC API only provides a transaction hash as the response when a
-transaction is sent, but the ethers Provider requires populating all details
+transaction is sent, but the quais Provider requires populating all details
 of a transaction before returning it. For example, the gas price and gas limit
 may be adjusted by the node or the nonce automatically included, in which case
 the opaque transaction hash has discarded this.
@@ -80,7 +80,7 @@ transaction hash quickly, if that is all that is required.
 
 _subsection: StaticJsonRpcProvider @<StaticJsonRpcProvider> @INHERIT<[[JsonRpcProvider]]> @SRC<providers:class.StaticJsonRpcProvider>
 
-An ethers Provider will execute frequent ``getNetwork`` calls to ensure
+An quais Provider will execute frequent ``getNetwork`` calls to ensure
 the network calls and network being communicated with are consistent.
 
 In the case of a client like MetaMask, this is desired as the network

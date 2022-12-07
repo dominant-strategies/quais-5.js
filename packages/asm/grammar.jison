@@ -191,8 +191,8 @@ function getLoc(yy, start, end, statement) {
         };
     }
 
-    if (yy._ethersLocation) {
-        return yy._ethersLocation(result);
+    if (yy._quaisLocation) {
+        return yy._quaisLocation(result);
     }
 
     return result;

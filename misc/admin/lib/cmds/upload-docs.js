@@ -141,7 +141,7 @@ function getFiles(basedir) {
 }
 (function () {
     return __awaiter(this, void 0, void 0, function* () {
-        const bucket = "docs.ethers.io";
+        const bucket = "docs.quais.io";
         const awsAccessId = yield config_1.config.get("aws-upload-docs-accesskey");
         const awsSecretKey = yield config_1.config.get("aws-upload-docs-secretkey");
         const s3 = new aws_sdk_1.default.S3({

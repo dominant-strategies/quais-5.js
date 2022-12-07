@@ -62,7 +62,7 @@ function getPackage(name, version) {
             name: info.name,
             tarballHash: info.tarballHash,
             version: info.version,
-            _ethers_nobuild: !!info._ethers_nobuild,
+            _quais_nobuild: !!info._quais_nobuild,
         };
     });
 }

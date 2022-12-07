@@ -57,16 +57,16 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.encrypt = exports.decrypt = exports.decryptSync = exports.KeystoreAccount = void 0;
 var aes_js_1 = __importDefault(require("aes-js"));
 var scrypt_js_1 = __importDefault(require("scrypt-js"));
-var address_1 = require("@ethersproject/address");
-var bytes_1 = require("@ethersproject/bytes");
-var hdnode_1 = require("@ethersproject/hdnode");
-var keccak256_1 = require("@ethersproject/keccak256");
-var pbkdf2_1 = require("@ethersproject/pbkdf2");
-var random_1 = require("@ethersproject/random");
-var properties_1 = require("@ethersproject/properties");
-var transactions_1 = require("@ethersproject/transactions");
+var address_1 = require("@quais/address");
+var bytes_1 = require("@quais/bytes");
+var hdnode_1 = require("@quais/hdnode");
+var keccak256_1 = require("@quais/keccak256");
+var pbkdf2_1 = require("@quais/pbkdf2");
+var random_1 = require("@quais/random");
+var properties_1 = require("@quais/properties");
+var transactions_1 = require("@quais/transactions");
 var utils_1 = require("./utils");
-var logger_1 = require("@ethersproject/logger");
+var logger_1 = require("@quais/logger");
 var _version_1 = require("./_version");
 var logger = new logger_1.Logger(_version_1.version);
 // Exported Types
@@ -122,14 +122,14 @@ function _getAccount(data, key) {
         address: address,
         privateKey: (0, bytes_1.hexlify)(privateKey)
     };
-    // Version 0.1 x-ethers metadata must contain an encrypted mnemonic phrase
-    if ((0, utils_1.searchPath)(data, "x-ethers/version") === "0.1") {
-        var mnemonicCiphertext = (0, utils_1.looseArrayify)((0, utils_1.searchPath)(data, "x-ethers/mnemonicCiphertext"));
-        var mnemonicIv = (0, utils_1.looseArrayify)((0, utils_1.searchPath)(data, "x-ethers/mnemonicCounter"));
+    // Version 0.1 x-quais metadata must contain an encrypted mnemonic phrase
+    if ((0, utils_1.searchPath)(data, "x-quais/version") === "0.1") {
+        var mnemonicCiphertext = (0, utils_1.looseArrayify)((0, utils_1.searchPath)(data, "x-quais/mnemonicCiphertext"));
+        var mnemonicIv = (0, utils_1.looseArrayify)((0, utils_1.searchPath)(data, "x-quais/mnemonicCounter"));
         var mnemonicCounter = new aes_js_1.default.Counter(mnemonicIv);
         var mnemonicAesCtr = new aes_js_1.default.ModeOfOperation.ctr(mnemonicKey, mnemonicCounter);
-        var path = (0, utils_1.searchPath)(data, "x-ethers/path") || hdnode_1.defaultPath;
-        var locale = (0, utils_1.searchPath)(data, "x-ethers/locale") || "en";
+        var path = (0, utils_1.searchPath)(data, "x-quais/path") || hdnode_1.defaultPath;
+        var locale = (0, utils_1.searchPath)(data, "x-quais/locale") || "en";
         var entropy = (0, bytes_1.arrayify)(mnemonicAesCtr.decrypt(mnemonicCiphertext));
         try {
             var mnemonic = (0, hdnode_1.entropyToMnemonic)(entropy, locale);
@@ -266,7 +266,7 @@ function encrypt(account, password, options, progressCallback) {
     }
     var client = options.client;
     if (!client) {
-        client = "ethers.js";
+        client = "quais.js";
     }
     // Check/generate the salt
     var salt = null;
@@ -363,7 +363,7 @@ function encrypt(account, password, options, progressCallback) {
                 (0, utils_1.zpad)(now.getUTCHours(), 2) + "-" +
                 (0, utils_1.zpad)(now.getUTCMinutes(), 2) + "-" +
                 (0, utils_1.zpad)(now.getUTCSeconds(), 2) + ".0Z");
-            data["x-ethers"] = {
+            data["x-quais"] = {
                 client: client,
                 gethFilename: ("UTC--" + timestamp + "--" + data.address),
                 mnemonicCounter: (0, bytes_1.hexlify)(mnemonicIv).substring(2),

@@ -14,7 +14,7 @@ The supports ABI types are:
 
 _subsection: Human-Readable ABI @<abi-formats--human-readable-abi>
 
-The **Human-Readable ABI** was [introduced early by ethers](link-ricmoo-humanreadableabi),
+The **Human-Readable ABI** was [introduced early by quais](link-ricmoo-humanreadableabi),
 which allows for a Solidity signatures to be used to describe each
 method, event and error.
 
@@ -242,8 +242,8 @@ code size.
 
 _code: Converting to Full Human-Readable ABI @lang<javascript>
 
-//_hide: const Interface = ethers.utils.Interface;
-//_hide: const FormatTypes = ethers.utils.FormatTypes;
+//_hide: const Interface = quais.utils.Interface;
+//_hide: const FormatTypes = quais.utils.FormatTypes;
 //_hide: jsonAbi = _page.jsonAbi;
 
 // Using the "full" format will ensure the Result objects
@@ -255,8 +255,8 @@ iface.format(FormatTypes.full);
 
 _code: Converting to Minimal Human-Readable ABI @lang<javascript>
 
-//_hide: const Interface = ethers.utils.Interface;
-//_hide: const FormatTypes = ethers.utils.FormatTypes;
+//_hide: const Interface = quais.utils.Interface;
+//_hide: const FormatTypes = quais.utils.FormatTypes;
 //_hide: jsonAbi = _page.jsonAbi;
 
 // Using the "minimal" format will save a small amount of
@@ -269,8 +269,8 @@ iface.format(FormatTypes.minimal);
 
 _code: Converting to JSON ABI @lang<javascript>
 
-//_hide: const Interface = ethers.utils.Interface;
-//_hide: const FormatTypes = ethers.utils.FormatTypes;
+//_hide: const Interface = quais.utils.Interface;
+//_hide: const FormatTypes = quais.utils.FormatTypes;
 //_hide: humanReadableAbi = _page.humanReadableAbi;
 
 // Sometimes you may need to export a Human-Readable ABI to

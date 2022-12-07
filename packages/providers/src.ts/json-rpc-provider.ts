@@ -2,18 +2,18 @@
 
 // See: https://github.com/ethereum/wiki/wiki/JSON-RPC
 
-import { Provider, TransactionRequest, TransactionResponse } from "@ethersproject/abstract-provider";
-import { Signer, TypedDataDomain, TypedDataField, TypedDataSigner } from "@ethersproject/abstract-signer";
-import { BigNumber } from "@ethersproject/bignumber";
-import { Bytes, hexlify, hexValue, hexZeroPad, isHexString } from "@ethersproject/bytes";
-import { _TypedDataEncoder } from "@ethersproject/hash";
-import { Network, Networkish } from "@ethersproject/networks";
-import { checkProperties, deepCopy, Deferrable, defineReadOnly, getStatic, resolveProperties, shallowCopy } from "@ethersproject/properties";
-import { toUtf8Bytes } from "@ethersproject/strings";
-import { AccessList, accessListify } from "@ethersproject/transactions";
-import { ConnectionInfo, fetchJson, poll } from "@ethersproject/web";
+import { Provider, TransactionRequest, TransactionResponse } from "@quais/abstract-provider";
+import { Signer, TypedDataDomain, TypedDataField, TypedDataSigner } from "@quais/abstract-signer";
+import { BigNumber } from "@quais/bignumber";
+import { Bytes, hexlify, hexValue, hexZeroPad, isHexString } from "@quais/bytes";
+import { _TypedDataEncoder } from "@quais/hash";
+import { Network, Networkish } from "@quais/networks";
+import { checkProperties, deepCopy, Deferrable, defineReadOnly, getStatic, resolveProperties, shallowCopy } from "@quais/properties";
+import { toUtf8Bytes } from "@quais/strings";
+import { AccessList, accessListify } from "@quais/transactions";
+import { ConnectionInfo, fetchJson, poll } from "@quais/web";
 
-import { Logger } from "@ethersproject/logger";
+import { Logger } from "@quais/logger";
 import { version } from "./_version";
 const logger = new Logger(version);
 
@@ -698,7 +698,7 @@ export class JsonRpcProvider extends BaseProvider {
         super._stopEvent(event);
     }
 
-    // Convert an ethers.js transaction into a JSON-RPC transaction
+    // Convert an quais.js transaction into a JSON-RPC transaction
     //  - gasLimit => gas
     //  - All values hexlified
     //  - All numeric values zero-striped

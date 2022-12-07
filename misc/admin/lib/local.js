@@ -18,7 +18,7 @@ function getPackage(name) {
         location: "local",
         tarballHash: (value.tarballHash || null),
         gitHead: (value.gitHead || null),
-        _ethers_nobuild: !!value._ethers_nobuild,
+        _quais_nobuild: !!value._quais_nobuild,
     };
 }
 exports.getPackage = getPackage;

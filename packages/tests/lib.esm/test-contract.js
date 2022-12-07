@@ -9,14 +9,14 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 import assert from "assert";
-import { ethers } from "ethers";
+import { quais } from "quais";
 import { sendTransaction } from "./utils";
 import contractData from "./test-contract.json";
-const provider = new ethers.providers.InfuraProvider("goerli", "49a0efa3aaee4fd99797bfa94d8ce2f1");
-//const provider = ethers.getDefaultProvider("rinkeby");
+const provider = new quais.providers.InfuraProvider("goerli", "49a0efa3aaee4fd99797bfa94d8ce2f1");
+//const provider = quais.getDefaultProvider("rinkeby");
 const TIMEOUT_PERIOD = 120000;
 const contract = (function () {
-    return new ethers.Contract(contractData.contractAddress, contractData.interface, provider);
+    return new quais.Contract(contractData.contractAddress, contractData.interface, provider);
 })();
 function equals(name, actual, expected) {
     if (Array.isArray(expected)) {
@@ -28,7 +28,7 @@ function equals(name, actual, expected) {
     }
     if (typeof (actual) === 'object') {
         if (expected.indexed) {
-            assert.ok(ethers.Contract.isIndexed(actual), 'index property has index - ' + name);
+            assert.ok(quais.Contract.isIndexed(actual), 'index property has index - ' + name);
             if (expected.hash) {
                 assert.equal(actual.hash, expected.hash, 'index property with known hash matches - ' + name);
             }
@@ -161,8 +161,8 @@ describe("Test Contract Transaction Population", function () {
     const testAddress = "0xdeadbeef00deadbeef01deadbeef02deadbeef03";
     const testAddressCheck = "0xDEAdbeeF00deAdbeEF01DeAdBEEF02DeADBEEF03";
     const fireflyAddress = "0x8ba1f109551bD432803012645Ac136ddd64DBA72";
-    const contract = new ethers.Contract(testAddress, abi);
-    const contractConnected = contract.connect(ethers.getDefaultProvider());
+    const contract = new quais.Contract(testAddress, abi);
+    const contractConnected = contract.connect(quais.getDefaultProvider());
     it("standard population", function () {
         return __awaiter(this, void 0, void 0, function* () {
             const tx = yield contract.populateTransaction.balanceOf(testAddress);

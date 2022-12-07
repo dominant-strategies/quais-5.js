@@ -1,14 +1,13 @@
 {
-  "_ethers_nobuild": true,
+  "_quais_nobuild": true,
   "author": "Richard Moore <me@ricmoo.com>",
   "browser": "./dist/index.min.js",
   "dependencies": {},
-  "description": "Shims required for ethers in constrained environments.",
-  "ethereum": "donations.ethers.eth",
+  "description": "Shims required for quais in constrained environments.",
   "funding": [
     {
       "type": "individual",
-      "url": "https://gitcoin.co/grants/13/ethersjs-complete-simple-and-tiny-2"
+      "url": "https://gitcoin.co/grants/13/quaisjs-complete-simple-and-tiny-2"
     },
     {
       "type": "individual",
@@ -16,19 +15,19 @@
     }
   ],
   "keywords": [
-    "Ethereum",
-    "ethers"
+    "Quai",
+    "quais"
   ],
   "license": "MIT",
   "main": "./src/index.js",
-  "name": "@ethersproject/shims",
+  "name": "@quais/shims",
   "publishConfig": {
     "access": "public"
   },
   "repository": {
     "directory": "packages/shims",
     "type": "git",
-    "url": "git://github.com/ethers-io/ethers.js.git"
+    "url": "git://github.com:dominant-strategies/quais.js.git"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"

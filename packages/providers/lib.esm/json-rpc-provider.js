@@ -8,15 +8,15 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-import { Signer } from "@ethersproject/abstract-signer";
-import { BigNumber } from "@ethersproject/bignumber";
-import { hexlify, hexValue, hexZeroPad, isHexString } from "@ethersproject/bytes";
-import { _TypedDataEncoder } from "@ethersproject/hash";
-import { checkProperties, deepCopy, defineReadOnly, getStatic, resolveProperties, shallowCopy } from "@ethersproject/properties";
-import { toUtf8Bytes } from "@ethersproject/strings";
-import { accessListify } from "@ethersproject/transactions";
-import { fetchJson, poll } from "@ethersproject/web";
-import { Logger } from "@ethersproject/logger";
+import { Signer } from "@quais/abstract-signer";
+import { BigNumber } from "@quais/bignumber";
+import { hexlify, hexValue, hexZeroPad, isHexString } from "@quais/bytes";
+import { _TypedDataEncoder } from "@quais/hash";
+import { checkProperties, deepCopy, defineReadOnly, getStatic, resolveProperties, shallowCopy } from "@quais/properties";
+import { toUtf8Bytes } from "@quais/strings";
+import { accessListify } from "@quais/transactions";
+import { fetchJson, poll } from "@quais/web";
+import { Logger } from "@quais/logger";
 import { version } from "./_version";
 const logger = new Logger(version);
 import { BaseProvider } from "./base-provider";
@@ -628,7 +628,7 @@ export class JsonRpcProvider extends BaseProvider {
         }
         super._stopEvent(event);
     }
-    // Convert an ethers.js transaction into a JSON-RPC transaction
+    // Convert an quais.js transaction into a JSON-RPC transaction
     //  - gasLimit => gas
     //  - All values hexlified
     //  - All numeric values zero-striped

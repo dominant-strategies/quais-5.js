@@ -2,29 +2,29 @@
 
 import EventEmitter from "events";
 
-import { ethers } from "ethers";
+import { quais } from "quais";
 
 import { version } from "./_version";
 
-const logger = new ethers.utils.Logger(version);
+const logger = new quais.utils.Logger(version);
 /*
 function getBlockTag(tag) {
     if (tag == null) { return "latest"; }
     if (tag === "earliest" || tag === "latest" || tag === "pending") {
         return tag;
     }
-    return ethers.utils.hexValue(tag)
+    return quais.utils.hexValue(tag)
 }
 */
 
 export class Eip1193Bridge extends EventEmitter {
-     readonly signer: ethers.Signer;
-     readonly provider: ethers.providers.Provider;
+     readonly signer: quais.Signer;
+     readonly provider: quais.providers.Provider;
 
-     constructor(signer: ethers.Signer, provider?: ethers.providers.Provider) {
+     constructor(signer: quais.Signer, provider?: quais.providers.Provider) {
          super();
-         ethers.utils.defineReadOnly(this, "signer", signer);
-         ethers.utils.defineReadOnly(this, "provider", provider || null);
+         quais.utils.defineReadOnly(this, "signer", signer);
+         quais.utils.defineReadOnly(this, "provider", provider || null);
      }
 
      request(request: { method: string, params?: Array<any>}): Promise<any> {
@@ -33,7 +33,7 @@ export class Eip1193Bridge extends EventEmitter {
 
      async send(method: string, params?: Array<any>): Promise<any> {
          function throwUnsupported(message: string): never {
-             return logger.throwError(message, ethers.utils.Logger.errors.UNSUPPORTED_OPERATION, {
+             return logger.throwError(message, quais.utils.Logger.errors.UNSUPPORTED_OPERATION, {
                  method: method,
                  params: params
              });
@@ -59,7 +59,7 @@ export class Eip1193Bridge extends EventEmitter {
              }
              case "eth_chainId": {
                  const result = await this.provider.getNetwork();
-                 return ethers.utils.hexValue(result.chainId);
+                 return quais.utils.hexValue(result.chainId);
              }
              case "eth_getBalance": {
                  const result = await this.provider.getBalance(params[0], params[1]);
@@ -70,12 +70,12 @@ export class Eip1193Bridge extends EventEmitter {
              }
              case "eth_getTransactionCount": {
                  const result = await this.provider.getTransactionCount(params[0], params[1]);
-                 return ethers.utils.hexValue(result);
+                 return quais.utils.hexValue(result);
              }
              case "eth_getBlockTransactionCountByHash":
              case "eth_getBlockTransactionCountByNumber": {
                  const result = await this.provider.getBlock(params[0]);
-                 return ethers.utils.hexValue(result.transactions.length);
+                 return quais.utils.hexValue(result.transactions.length);
              }
              case "eth_getCode": {
                  const result = await this.provider.getCode(params[0], params[1]);
@@ -85,7 +85,7 @@ export class Eip1193Bridge extends EventEmitter {
                  return await this.provider.sendTransaction(params[0]);
              }
              case "eth_call": {
-                 const req = ethers.providers.JsonRpcProvider.hexlifyTransaction(params[0]);
+                 const req = quais.providers.JsonRpcProvider.hexlifyTransaction(params[0]);
                  return await this.provider.call(req, params[1]);
              }
              case "estimateGas": {
@@ -93,7 +93,7 @@ export class Eip1193Bridge extends EventEmitter {
                      throwUnsupported("estimateGas does not support blockTag");
                  }
 
-                 const req = ethers.providers.JsonRpcProvider.hexlifyTransaction(params[0]);
+                 const req = quais.providers.JsonRpcProvider.hexlifyTransaction(params[0]);
                  const result = await this.provider.estimateGas(req);
                  return result.toHexString();
              }
@@ -120,11 +120,11 @@ export class Eip1193Bridge extends EventEmitter {
                  }
 
                  const address = await this.signer.getAddress();
-                 if (address !== ethers.utils.getAddress(params[0])) {
+                 if (address !== quais.utils.getAddress(params[0])) {
                      logger.throwArgumentError("account mismatch or account not found", "params[0]", params[0]);
                  }
 
-                 return this.signer.signMessage(ethers.utils.arrayify(params[1]));
+                 return this.signer.signMessage(quais.utils.arrayify(params[1]));
              }
 
              case "eth_sendTransaction": {
@@ -132,7 +132,7 @@ export class Eip1193Bridge extends EventEmitter {
                      return throwUnsupported("eth_sendTransaction requires an account");
                  }
 
-                 const req = ethers.providers.JsonRpcProvider.hexlifyTransaction(params[0]);
+                 const req = quais.providers.JsonRpcProvider.hexlifyTransaction(params[0]);
                  const tx = await this.signer.sendTransaction(req);
                  return tx.hash;
              }
@@ -140,7 +140,7 @@ export class Eip1193Bridge extends EventEmitter {
              case "eth_getUncleCountByBlockHash":
              case "eth_getUncleCountByBlockNumber":
              {
-                 coerce = ethers.utils.hexValue;
+                 coerce = quais.utils.hexValue;
                  break;
              }
 

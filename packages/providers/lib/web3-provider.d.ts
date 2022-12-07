@@ -1,4 +1,4 @@
-import { Networkish } from "@ethersproject/networks";
+import { Networkish } from "@quais/networks";
 import { JsonRpcProvider } from "./json-rpc-provider";
 export declare type ExternalProvider = {
     isMetaMask?: boolean;

@@ -1,5 +1,5 @@
-import { BigNumber, BigNumberish } from "@ethersproject/bignumber";
-import { BytesLike, SignatureLike } from "@ethersproject/bytes";
+import { BigNumber, BigNumberish } from "@quais/bignumber";
+import { BytesLike, SignatureLike } from "@quais/bytes";
 export declare type AccessList = Array<{
     address: string;
     storageKeys: Array<string>;

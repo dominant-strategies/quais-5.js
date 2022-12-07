@@ -1,6 +1,6 @@
 _section: Contributing and Hacking @<contributing>
 
-The ethers.js library is something that I've written out of necessity,
+The quais.js library is something that I've written out of necessity,
 and has grown somewhat organically over time.
 
 Many things are the way they are for good (at the time, at least) reasons,
@@ -13,7 +13,7 @@ Pull requests are always welcome, but please keep a few points in mind:
   considered for the next major version
 - Security is important; adding dependencies require fairly convincing
   arguments as to why
-- The library aims to be lean, so keep an eye on the dist/ethers.min.js
+- The library aims to be lean, so keep an eye on the dist/quais.min.js
   file size before and after your changes
 - Keep the PR simple and readable; only modify files in the ``docs.wrm/``
   and ``packages/*/src.ts/`` folders, as this allows the changes to be easily
@@ -30,7 +30,7 @@ have a public discussion and figure out the best way to address the problem/feat
 
 _subsection: Building @<contributing--building>
 
-The build process for ethers is unfortunatly not super trivial, but
+The build process for quais is unfortunatly not super trivial, but
 I have attempted to make it as straightforward as possible.
 
 It is a mono-repo which attempts to be compatibile with a large
@@ -39,15 +39,15 @@ there are a some weird things it must do.
 
 There are several custom scripts in the ``misc/admin`` folder
 to help manage the monorepo. Developers working on contributing
-to ethers should not generally need to worry about those, since
+to quais should not generally need to worry about those, since
 they are wrapped up behind ``npm run SCRIPT`` operations.
 
 _code: Installing @lang<shell>
 
 # Clone the repository
-/home/ricmoo> git clone https://github.com/ethers-io/ethers.js.git
+/home/ricmoo> git clone https://github.com/quais-io/quais.js.git
 
-/home/ricmoo> cd ethers.js
+/home/ricmoo> cd quais.js
 
 # Install all dependencies:
 # - Hoists all sub-package dependencies in the package.json (preinstall)
@@ -55,7 +55,7 @@ _code: Installing @lang<shell>
 # - Build the rat-nests (in .package_node_modules) (postinstall)
 # - Create a dependency graph for the TypeScript (postinstall)
 # - Link the rat-nets into each project (postinstall)
-/home/ricmoo/ethers.js> npm install
+/home/ricmoo/quais.js> npm install
 
 _heading: Making Changes @<contributing--updating>
 
@@ -66,15 +66,15 @@ TypeScript source.
 _code: Watching and Building @lang<shell>
 
 # Begin watching the files and re-building whenever they change
-/home/ricmoo/ethers.js> npm run auto-build
+/home/ricmoo/quais.js> npm run auto-build
 
 # Or if you do not want to watch and just build
-/home/ricmoo/ethers.js> npm run build
+/home/ricmoo/quais.js> npm run build
 
 _heading: Creating Browser-Ready Files
 
 To create files for use directly in a browser, the distribution
-files (located in ``packages/ethers/dist``) need to be built
+files (located in ``packages/quais/dist``) need to be built
 which requires several intermediate builds, scripts and for
 various rollup scripts to execute.
 
@@ -82,25 +82,25 @@ _code: Building Distribution Files @lang<shell>
 
 # If you need to rebuild all the libs (esm + cjs) and dist files
 # Note: this requires node 10 or newer
-/home/ricmoo/ethers.js> npm run build-all
+/home/ricmoo/quais.js> npm run build-all
 
 _heading: Testing
 
 _code: Testing @lang<shell>
 
 # Rebuilds all files (npm run build-all) and bundles testcases up for testing
-/home/ricmoo/ethers.js> npm test
+/home/ricmoo/quais.js> npm test
 
 # Often you don't need the full CI experience
-/home/ricmoo/ethers.js> npm run test-node
+/home/ricmoo/quais.js> npm run test-node
 
 _heading: Distribution
 
 Most developers should not ever require this step, but for people
-forking ethers and creating alternates (for example if you have
+forking quais and creating alternates (for example if you have
 a non-EVM compatible chain but are trying to reuse this package).
 
-This script will rebuild the entire ethers project, compare it
+This script will rebuild the entire quais project, compare it
 against npm, re-write package versions, update internal hashes,
 re-write various TypeScript files (to get around some ES+TS
 limitations for Tree Shaking and linking), re-write map files,
@@ -119,7 +119,7 @@ _code: Preparing the Distribution @lang<shell>
 # - Compare local with npm, bumping the version if changed
 # - Build everything again (with the updated versions)
 # - Update the CHANGELOG.md with the git history since the last change
-/home/ricmoo/ethers.js> npm run update-version
+/home/ricmoo/quais.js> npm run update-version
 
 _note: Do NOT check in dist files in a PR
 
@@ -157,14 +157,14 @@ _code: Preparing the Distribution @lang<shell>
 # - Create a release on GitHub with the latest CHANGELOG.md description
 # - Upload the bundled files the the CDN
 # - Flush the CDN edge caches
-/home/ricmoo/ethers.js> npm run publish-all
+/home/ricmoo/quais.js> npm run publish-all
 
 
 _subsection: Documentation @<contributing--documentation>
 
 The documents are generated using [Flatworm](flatworm) documentation
 generation tool, which was written for the purpose of writing the documentation
-for ethers.
+for quais.
 
 Style Guide (this section will have much more coming):
 
@@ -179,7 +179,7 @@ Style Guide (this section will have much more coming):
 _heading: Building
 
 To build the documentation, you should first follow the
-[above steps](contributing--building) to build the ethers library.
+[above steps](contributing--building) to build the quais library.
 
 Building the docs will generate several types of output:
 
@@ -191,7 +191,7 @@ Building the docs will generate several types of output:
 
 _code: Building the Documentations @lang<shell>
 
-/home/ricmoo/ethers.js> npm run build-docs
+/home/ricmoo/quais.js> npm run build-docs
 
 
 _heading: Evaluation
@@ -207,7 +207,7 @@ inject the code directly.
 
 _code: Build docs skipping evaluation @lang<shell>
 
-/home/ricmoo/ethers.js> npm run build-docs -- --skip-eval
+/home/ricmoo/quais.js> npm run build-docs -- --skip-eval
 
 
 _heading: Previewing Changes
@@ -220,4 +220,4 @@ caches after changing (and re-building) the docs.
 
 _code: Running a webserver @lang<shell>
 
-/home/ricmoo/ethers.js> npm run serve-docs
+/home/ricmoo/quais.js> npm run serve-docs

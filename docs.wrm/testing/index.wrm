@@ -28,9 +28,9 @@ cases were created.
 _subsection: Supported Platforms @<testing-supported>
 
 While web technologies move quite fast, especially in the Web3 universe, we try
-to keep ethers as accessible as possible.
+to keep quais as accessible as possible.
 
-Currently ethers should work on almost any ES3 or better environment and tests
+Currently quais should work on almost any ES3 or better environment and tests
 are run against:
 
 - node.js 8.x
@@ -44,7 +44,7 @@ If there is an environment you feel has been overlooked or have suggestions, ple
 free to reach out by opening an [issue on Github](link-github-issues).
 
 We would like to add a test build for Expo and React as those developers often seem
-to encounter pain points when using ethers, so if you have experience or ideas on this,
+to encounter pain points when using quais, so if you have experience or ideas on this,
 [bug us](link-github-issues).
 
 The next Major version (probably summer 2021) will likely drop support for node 8.x
@@ -60,7 +60,7 @@ Basically, the moral of the story is "be inclusive and don't drop people needles
 _subsection: Test Suites @<testing-suites>
 
 The test suites are available as gzipped JSON files in the
-``@ethersproject/testcases``, which makes it easy to install and import
+``@quais/testcases``, which makes it easy to install and import
 (both GZIP and JSON are quite easy to consume from most languages). Each
 test suite also has its schema available in this package.
 

@@ -1,20 +1,20 @@
 _section: Sandbox Utility
 
 The sandbox utility provides a simple way to use the most common
-ethers utilities required during learning, debugging and managing
+quais utilities required during learning, debugging and managing
 interactions with the Ethereum network.
 
 If no command is given, it will enter a REPL interface with many
-of the ethers utilities already exposed.
+of the quais utilities already exposed.
 
 _subsection: Help
 
 _code: @lang<text>
 Usage:
-   ethers [ COMMAND ] [ ARGS ] [ OPTIONS ]
+   quais [ COMMAND ] [ ARGS ] [ OPTIONS ]
 
 COMMANDS (default: sandbox)
-   sandbox                    Run a REPL VM environment with ethers
+   sandbox                    Run a REPL VM environment with quais
    init FILENAME              Create a new JSON wallet
       [ --force ]                Overwrite any existing files
    fund TARGET                Fund TARGET with testnet ether
@@ -25,8 +25,8 @@ COMMANDS (default: sandbox)
    sweep TARGET               Send all ether from accounts[0] to TARGET
    sign-message MESSAGE       Sign a MESSAGE with accounts[0]
       [ --hex ]                  The message content is hex encoded
-   eval CODE                  Run CODE in a VM with ethers
-   run FILENAME               Run FILENAME in a VM with ethers
+   eval CODE                  Run CODE in a VM with quais
+   run FILENAME               Run FILENAME in a VM with quais
    wait HASH                  Wait for a transaction HASH to be mined
    wrap-ether VALUE           Deposit VALUE into Wrapped Ether (WETH)
    unwrap-ether VALUE         Withdraw VALUE from Wrapped Ether (WETH)
@@ -80,7 +80,7 @@ _subsection: Examples
 
 _code: Creating New Wallets @lang<shell> @<cliex-init>
 
-/home/ethers> ethers init wallet.json
+/home/quais> quais init wallet.json
 Creating a new JSON Wallet - wallet.json
 Keep this password and file SAFE!! If lost or forgotten
 it CANNOT be recovered, by ANYone, EVER.
@@ -92,14 +92,14 @@ Saved:               wallet.json
 
 
 # If you are planning to try out the Ropsten testnet...
-/home/ethers> ethers --network ropsten fund 0x485bcC23ae2E5038ec7ec9b8DCB2A6A6291cC003
+/home/quais> quais --network ropsten fund 0x485bcC23ae2E5038ec7ec9b8DCB2A6A6291cC003
 Transaction Hash: 0x8dc55b8f8dc8076acded97f9e3ed7d6162460c0221e2769806006b6d7d1156e0
 
 
 _code: Sending Ether and Tokens  @<cliex-send> @lang<shell>
 
 # Sending ether
-/home/ricmoo> ethers --account wallet.json send ricmoo.firefly.eth 0.123
+/home/ricmoo> quais --account wallet.json send ricmoo.firefly.eth 0.123
 Password (wallet.json): ******
 Decrypting... 100%
 Transaction:
@@ -120,8 +120,8 @@ Response:
 # Sending a token (SAI)
 # NOTE: the contract address could be used instead but
 #       popular token contract addresses are also managed
-#       by ethers
-/home/ricmoo> ethers --account wallet.json send-token sai.tokens.ethers.eth ricmoo.firefly.eth 1.0
+#       by quais
+/home/ricmoo> quais --account wallet.json send-token sai.tokens.quais.eth ricmoo.firefly.eth 1.0
 Sending Tokens:
   To:              0x8ba1f109551bD432803012645Ac136ddd64DBA72
   Token Contract:  0x89d24A6b4CcB1B6fAA2625fE562bDD9a23260359
@@ -145,7 +145,7 @@ Response:
 
 _code: Signing Messages  @<cliex-signing> @lang<shell>
 
-/home/ethers> ethers --account wallet.json sign-message 'Hello World'
+/home/quais> quais --account wallet.json sign-message 'Hello World'
 Password (wallet.json): ******
 Decrypting... 100%
 Message:
@@ -168,19 +168,19 @@ the command line to be passed into other commands or stored in script
 environment variables.
 
 _code: Get the formatted balance of an account  @lang<shell>
-/home/ethers> ethers --network ropsten \
+/home/quais> quais --network ropsten \
                --account wallet.json \
                eval \
                'accounts[0].getBalance().then(b => formatEther(b))'
 3.141592653589793238
 
 _code: Get the current block number  @lang<shell>
-/home/ethers> ethers --network rinkeby \
+/home/quais> quais --network rinkeby \
                eval "provider.getBlockNumber()"
 5761009
 
 _code: Convert a Solidity signature to JSON  @lang<shell>
-/home/ethers> ethers eval 'utils.Fragment.from(
+/home/quais> quais eval 'utils.Fragment.from(
                "function balanceOf(address) view returns (uint)"
               ).format("json")' | json_pp
 {
@@ -204,11 +204,11 @@ _code: Convert a Solidity signature to JSON  @lang<shell>
 
 
 _code: Compute a topic hash  @lang<shell>
-/home/ricmoo> ethers eval 'id("Transfer(address,address,uint256)")'
+/home/ricmoo> quais eval 'id("Transfer(address,address,uint256)")'
 0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef
 
 _code: Create a random mnemonic  @lang<shell>
-/home/ricmoo> ethers eval 'Wallet.createRandom().mnemonic'
+/home/ricmoo> quais eval 'Wallet.createRandom().mnemonic'
 useful pond inch knock ritual matrix giggle attend dilemma convince coach amazing
 
 
@@ -221,7 +221,7 @@ use to decrypt the account.
 
 _code: @lang<shell>
 
-/home/ricmoo> ethers --account mnemonic.txt --mnemonic-password
+/home/ricmoo> quais --account mnemonic.txt --mnemonic-password
 Password (mnemonic): ******
 network: homestead (chainId: 1)
 homestead> accounts[0].getAddress()
@@ -240,7 +240,7 @@ a brute-force attack far more difficult.
 
 _code: @lang<shell>
 
-/home/ricmoo> ethers --account mnemonic.txt --xxx-mnemonic-password
+/home/ricmoo> quais --account mnemonic.txt --xxx-mnemonic-password
 Password (mnemonic; experimental - hard): ******
 Decrypting... 100%
 network: homestead (chainId: 1)

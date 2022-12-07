@@ -29,7 +29,7 @@
  */
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ens_normalize = exports.ens_normalize_post_check = void 0;
-var strings_1 = require("@ethersproject/strings");
+var strings_1 = require("@quais/strings");
 var include_js_1 = require("./include.js");
 var r = (0, include_js_1.getData)();
 var decoder_js_1 = require("./decoder.js");

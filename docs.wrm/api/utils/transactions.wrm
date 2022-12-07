@@ -115,7 +115,7 @@ used to encode the chain ID into the serialized transaction.
 
 _subsection: Functions  @<transactions--functions>
 
-_property: ethers.utils.accessListify(anAcceslistish) => [[providers-AccessList]]  @<utils-accessListify> @SRC<transactions:accessListify>
+_property: quais.utils.accessListify(anAcceslistish) => [[providers-AccessList]]  @<utils-accessListify> @SRC<transactions:accessListify>
 Normalizes the [[providers-AccessListish]] //anAccessListish// into
 an [[providers-AccessList]].
 
@@ -124,10 +124,10 @@ flexible as to the input parameter for access lists, such as
 when creating a [[Signer]] which needs to manipulate a possibly
 typed transaction envelope.
 
-_property: ethers.utils.parseTransaction(aBytesLike) => [[Transaction]]  @<utils-parseTransaction> @SRC<transactions:parse>
+_property: quais.utils.parseTransaction(aBytesLike) => [[Transaction]]  @<utils-parseTransaction> @SRC<transactions:parse>
 Parses the transaction properties from a serialized transaction.
 
-_property: ethers.utils.serializeTransaction(tx [ , signature ]) => string<[[DataHexString]]>  @<utils-serializeTransaction> @SRC<transactions:serialize>
+_property: quais.utils.serializeTransaction(tx [ , signature ]) => string<[[DataHexString]]>  @<utils-serializeTransaction> @SRC<transactions:serialize>
 Computes the serialized //transaction//, optionally serialized with
 the a //signature//. If //signature// is not present, the unsigned
 serialized transaction is returned, which can be used to compute the

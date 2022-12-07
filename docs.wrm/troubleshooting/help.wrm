@@ -21,7 +21,7 @@ public information, such as:
 - GitHub Discussions
 - GitHub Issues (including closed issues)
 
-There are several types of issues tracked by ethers. Using the correct
+There are several types of issues tracked by quais. Using the correct
 one helps you receive feedback quicker and helps us keep the right
 person 
 
@@ -31,13 +31,13 @@ _heading: Feature Requests
 
 _heading: Bugs
 
-This type of issue is for anything you you believe to be a bug in ethers.
+This type of issue is for anything you you believe to be a bug in quais.
 
-Keep in mind that ethers is used extensively by thousands of people every
+Keep in mind that quais is used extensively by thousands of people every
 day, so while chances are possible you found a bug, please make sure to
 do your due diligence to rule out user error.
 
-If you are new to ethers, or are doing a fairly common operation, it is
+If you are new to quais, or are doing a fairly common operation, it is
 quite likely what you are experiencing is a misunderstanding of how to
 use a function, method or class. You should consider opening a discussion first.
 

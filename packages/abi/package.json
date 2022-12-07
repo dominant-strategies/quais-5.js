@@ -1,18 +1,18 @@
 {
   "author": "Richard Moore <me@ricmoo.com>",
   "dependencies": {
-    "@ethersproject/address": "^5.7.0",
-    "@ethersproject/bignumber": "^5.7.0",
-    "@ethersproject/bytes": "^5.7.0",
-    "@ethersproject/constants": "^5.7.0",
-    "@ethersproject/hash": "^5.7.0",
-    "@ethersproject/keccak256": "^5.7.0",
-    "@ethersproject/logger": "^5.7.0",
-    "@ethersproject/properties": "^5.7.0",
-    "@ethersproject/strings": "^5.7.0"
+    "@quais/address": "^5.7.0",
+    "@quais/bignumber": "^5.7.0",
+    "@quais/bytes": "^5.7.0",
+    "@quais/constants": "^5.7.0",
+    "@quais/hash": "^5.7.0",
+    "@quais/keccak256": "^5.7.0",
+    "@quais/logger": "^5.7.0",
+    "@quais/properties": "^5.7.0",
+    "@quais/strings": "^5.7.0"
   },
   "description": "Utilities and Classes for parsing, formatting and managing Ethereum ABIs.",
-  "ethereum": "donations.ethers.eth",
+  "ethereum": "donations.quais.eth",
   "funding": [
     {
       "type": "individual",
@@ -30,14 +30,14 @@
   "license": "MIT",
   "main": "./lib/index.js",
   "module": "./lib.esm/index.js",
-  "name": "@ethersproject/abi",
+  "name": "@quais/abi",
   "publishConfig": {
     "access": "public"
   },
   "repository": {
     "directory": "packages/abi",
     "type": "git",
-    "url": "git://github.com/ethers-io/ethers.js.git"
+    "url": "git://github.com:dominant-strategies/quais.js.git"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"

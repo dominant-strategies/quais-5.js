@@ -3,7 +3,7 @@ _section: Other Providers
 _subsection: FallbackProvider  @<FallbackProvider> @INHERIT<[[BaseProvider]]> @SRC<providers/fallback-provider:class.FallbackProvider>
 
 The **FallbackProvider** is the most advanced [[Provider]] available in
-ethers.
+quais.
 
 It uses a quorum and connects to multiple [Providers](Provider) as backends,
 each configured with a //priority// and a //weight// .
@@ -16,7 +16,7 @@ result be accepted and returned to the caller.
 By default the quorum requires 50% (rounded up) of the backends to agree. The //weight//
 can be used to give a backend Provider more influence.
 
-_property: new ethers.providers.FallbackProvider(providers [ , quorum ])
+_property: new quais.providers.FallbackProvider(providers [ , quorum ])
 Creates a new instance of a FallbackProvider connected to //providers//. If
 quorum is not specified, half of the total sum of the provider weights is
 used.
@@ -87,7 +87,7 @@ simplifies creating a [[Provider]] where a normal [[JsonRpcProvider]]
 would suffice, with a little extra effort needed to generate the JSON-RPC
 URL.
 
-_property: new ethers.providers.UrlJsonRpcProvider([ network [ , apiKey ] ])
+_property: new quais.providers.UrlJsonRpcProvider([ network [ , apiKey ] ])
 Sub-classes do not need to override this. Instead they should override the
 static method ``getUrl`` and optionally ``getApiKey``.
 
@@ -106,14 +106,14 @@ The URL to use for the JsonRpcProvider instance.
 _subsection: Web3Provider @<Web3Provider> @INHERIT<[[JsonRpcProvider]]> @SRC<providers:class.Web3Provider>
 
 The Web3Provider is meant to ease moving from a [web3.js based](link-web3)
-application to ethers by wrapping an existing Web3-compatible (such as a
+application to quais by wrapping an existing Web3-compatible (such as a
 [Web3HttpProvider](link-web3-http), [Web3IpcProvider](link-web3-ipc) or
-[Web3WsProvider](link-web3-ws)) and exposing it as an ethers.js [[Provider]]
+[Web3WsProvider](link-web3-ws)) and exposing it as an quais.js [[Provider]]
 which can then be used with the rest of the library.
 
 This may also be used to wrap a standard [EIP-1193 Provider](link-eip-1193).
 
-_property: new ethers.providers.Web3Provider(externalProvider [, network ])
+_property: new quais.providers.Web3Provider(externalProvider [, network ])
 Create a new **Web3Provider**, which wraps an [EIP-1193 Provider](link-eip-1193) or
 Web3Provider-compatible Provider.
 
@@ -166,7 +166,7 @@ WebSockets are much more intensive on your server resources, as they must manage
 and maintain the state for each client. For this reason, many services may also
 charge additional fees for using their WebSocket endpoints.
 
-_property: new ethers.providers.WebSocketProvider([ url [ , network ] ])
+_property: new quais.providers.WebSocketProvider([ url [ , network ] ])
 Returns a new [[WebSocketProvider]] connected to //url// as the //network//.
 
 If //url// is unspecified, the default ``"ws:/\/localhost:8546"`` will be used.

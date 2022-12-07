@@ -1596,8 +1596,8 @@ var curve = exports;
 
 curve.base = base;
 curve.short = short_1;
-curve.mont = /*RicMoo:ethers:require(./mont)*/(null);
-curve.edwards = /*RicMoo:ethers:require(./edwards)*/(null);
+curve.mont = /*RicMoo:quais:require(./mont)*/(null);
+curve.edwards = /*RicMoo:quais:require(./edwards)*/(null);
 });
 
 var curves_1 = createCommonjsModule(function (module, exports) {
@@ -1771,7 +1771,7 @@ defineCurve('ed25519', {
 
 var pre;
 try {
-  pre = /*RicMoo:ethers:require(./precomputed/secp256k1)*/(null).crash();
+  pre = /*RicMoo:quais:require(./precomputed/secp256k1)*/(null).crash();
 } catch (e) {
   pre = undefined;
 }
@@ -2218,7 +2218,7 @@ Signature.prototype.toDER = function toDER(enc) {
 
 
 
-var rand = /*RicMoo:ethers:require(brorand)*/(function() { throw new Error('unsupported'); });
+var rand = /*RicMoo:quais:require(brorand)*/(function() { throw new Error('unsupported'); });
 var assert$5 = utils_1$1.assert;
 
 
@@ -2461,15 +2461,15 @@ var elliptic_1 = createCommonjsModule(function (module, exports) {
 
 var elliptic = exports;
 
-elliptic.version = /*RicMoo:ethers*/{ version: "6.5.4" }.version;
+elliptic.version = /*RicMoo:quais*/{ version: "6.5.4" }.version;
 elliptic.utils = utils_1$1;
-elliptic.rand = /*RicMoo:ethers:require(brorand)*/(function() { throw new Error('unsupported'); });
+elliptic.rand = /*RicMoo:quais:require(brorand)*/(function() { throw new Error('unsupported'); });
 elliptic.curve = curve_1;
 elliptic.curves = curves_1;
 
 // Protocols
 elliptic.ec = ec;
-elliptic.eddsa = /*RicMoo:ethers:require(./elliptic/eddsa)*/(null);
+elliptic.eddsa = /*RicMoo:quais:require(./elliptic/eddsa)*/(null);
 });
 
 var EC$1 = elliptic_1.ec;

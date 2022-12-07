@@ -50,12 +50,12 @@ _subsection: Functions @<display-logic--functions>
 
 _heading: Formatting @<display-logic--formatting>
 
-_property: ethers.utils.commify(value) => string  @<utils-commify> @SRC<units>
+_property: quais.utils.commify(value) => string  @<utils-commify> @SRC<units>
 Returns a string with value grouped by 3 digits, separated by ``,``.
 
 _code: @lang<javascript>
 
-//_hide: const commify = ethers.utils.commify;
+//_hide: const commify = quais.utils.commify;
 
 //_result:
 commify("-1000.3000");
@@ -63,14 +63,14 @@ commify("-1000.3000");
 
 _heading: Conversion @<unit-conversion>
 
-_property: ethers.utils.formatUnits(value [ , unit = "ether" ] ) => string  @<utils-formatUnits> @SRC<units>
+_property: quais.utils.formatUnits(value [ , unit = "ether" ] ) => string  @<utils-formatUnits> @SRC<units>
 Returns a string representation of //value// formatted with //unit//
 digits (if it is a number) or to the unit specified (if a string).
 
 _code: @lang<javascript>
 
-//_hide: const formatUnits = ethers.utils.formatUnits;
-//_hide: const BigNumber = ethers.BigNumber;
+//_hide: const formatUnits = quais.utils.formatUnits;
+//_hide: const BigNumber = quais.BigNumber;
 
 const oneGwei = BigNumber.from("1000000000");
 const oneEther = BigNumber.from("1000000000000000000");
@@ -95,13 +95,13 @@ formatUnits(oneEther);
 formatUnits(oneEther, 18);
 //_log:
 
-_property: ethers.utils.formatEther(value) => string  @<utils-formatEther> @SRC<units>
+_property: quais.utils.formatEther(value) => string  @<utils-formatEther> @SRC<units>
 The equivalent to calling ``formatUnits(value, "ether")``.
 
 _code: @lang<javascript>
 
-//_hide: const formatEther = ethers.utils.formatEther;
-//_hide: const BigNumber = ethers.BigNumber;
+//_hide: const formatEther = quais.utils.formatEther;
+//_hide: const BigNumber = quais.BigNumber;
 
 const value = BigNumber.from("1000000000000000000");
 
@@ -109,14 +109,14 @@ const value = BigNumber.from("1000000000000000000");
 formatEther(value);
 //_log:
 
-_property: ethers.utils.parseUnits(value [ , unit = "ether" ] ) => [BigNumber](BigNumber)  @<utils-parseUnits> @SRC<units>
+_property: quais.utils.parseUnits(value [ , unit = "ether" ] ) => [BigNumber](BigNumber)  @<utils-parseUnits> @SRC<units>
 Returns a [BigNumber](BigNumber) representation of //value//, parsed with
 //unit// digits (if it is a number) or from the unit specified (if
 a string).
 
 _code: @lang<javascript>
 
-//_hide: const parseUnits = ethers.utils.parseUnits;
+//_hide: const parseUnits = quais.utils.parseUnits;
 
 //_result:
 parseUnits("1.0");
@@ -138,12 +138,12 @@ parseUnits("121.0", "gwei");
 parseUnits("121.0", 9);
 //_log:
 
-_property: ethers.utils.parseEther(value) => [BigNumber](BigNumber)  @<utils-parseEther> @SRC<units>
+_property: quais.utils.parseEther(value) => [BigNumber](BigNumber)  @<utils-parseEther> @SRC<units>
 The equivalent to calling ``parseUnits(value, "ether")``.
 
 _code: @lang<javascript>
 
-//_hide: const parseEther = ethers.utils.parseEther;
+//_hide: const parseEther = quais.utils.parseEther;
 
 //_result:
 parseEther("1.0");

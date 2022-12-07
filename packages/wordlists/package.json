@@ -2,19 +2,19 @@
   "_browser-all": {
     "./lib/wordlists": "./lib/wordlists.js"
   },
-  "_ethers.alias": {
+  "_quais.alias": {
     "wordlists.js": "browser-wordlists.js"
   },
   "author": "Richard Moore <me@ricmoo.com>",
   "dependencies": {
-    "@ethersproject/bytes": "^5.7.0",
-    "@ethersproject/hash": "^5.7.0",
-    "@ethersproject/logger": "^5.7.0",
-    "@ethersproject/properties": "^5.7.0",
-    "@ethersproject/strings": "^5.7.0"
+    "@quais/bytes": "^5.7.0",
+    "@quais/hash": "^5.7.0",
+    "@quais/logger": "^5.7.0",
+    "@quais/properties": "^5.7.0",
+    "@quais/strings": "^5.7.0"
   },
   "description": "Word lists for BIP39 wallets.",
-  "ethereum": "donations.ethers.eth",
+  "ethereum": "donations.quais.eth",
   "funding": [
     {
       "type": "individual",
@@ -32,14 +32,14 @@
   "license": "MIT",
   "main": "./lib/index.js",
   "module": "./lib.esm/index.js",
-  "name": "@ethersproject/wordlists",
+  "name": "@quais/wordlists",
   "publishConfig": {
     "access": "public"
   },
   "repository": {
     "directory": "packages/wordlists",
     "type": "git",
-    "url": "git://github.com/ethers-io/ethers.js.git"
+    "url": "git://github.com:dominant-strategies/quais.js.git"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"

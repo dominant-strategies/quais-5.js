@@ -10,19 +10,19 @@ _subsection: Cryptographic Hash Functions @<cryptographic-hash-functions>
 The [Cryptographic Hash Functions](link-wiki-cryptographichash)
 are a specific family of hash functions.
 
-_property: ethers.utils.id(text) => string<[[DataHexString]]<32>>  @<utils-id> @SRC<hash>
+_property: quais.utils.id(text) => string<[[DataHexString]]<32>>  @<utils-id> @SRC<hash>
 The Ethereum Identity function computes the [KECCAK256](link-wiki-sha3) hash of the //text// bytes.
 
-_property:  ethers.utils.keccak256(aBytesLike) => string<[[DataHexString]]<32>>  @<utils-keccak256> @SRC<keccak256>
+_property:  quais.utils.keccak256(aBytesLike) => string<[[DataHexString]]<32>>  @<utils-keccak256> @SRC<keccak256>
 Returns the [KECCAK256](link-wiki-sha3) digest //aBytesLike//.
 
-_property: ethers.utils.ripemd160(aBytesLike) => string<[[DataHexString]]<20>>  @<utils-ripemd160> @SRC<sha2>
+_property: quais.utils.ripemd160(aBytesLike) => string<[[DataHexString]]<20>>  @<utils-ripemd160> @SRC<sha2>
 Returns the [RIPEMD-160](link-wiki-ripemd) digest of //aBytesLike//.
 
-_property: ethers.utils.sha256(aBytesLike) => string<[[DataHexString]]<32>>  @<utils-sha256> @SRC<sha2:function.sha256>
+_property: quais.utils.sha256(aBytesLike) => string<[[DataHexString]]<32>>  @<utils-sha256> @SRC<sha2:function.sha256>
 Returns the [SHA2-256](link-wiki-sha2) digest of //aBytesLike//.
 
-_property: ethers.utils.sha512(aBytesLike) => string<[[DataHexString]]<64>>  @<utils-sha512> @SRC<sha2:function.sha512>
+_property: quais.utils.sha512(aBytesLike) => string<[[DataHexString]]<64>>  @<utils-sha512> @SRC<sha2:function.sha512>
 Returns the [SHA2-512](link-wiki-sha2) digest of //aBytesLike//.
 
 _code: KECCAK256 @lang<javascript>
@@ -121,16 +121,16 @@ utils.sha512("0x1234")
 
 _subsection: HMAC @<utils--hmac>
 
-_property: ethers.utils.computeHmac(algorithm, key, data) => string<[[DataHexString]]>  @<utils-computeHmac> @SRC<sha2>
+_property: quais.utils.computeHmac(algorithm, key, data) => string<[[DataHexString]]>  @<utils-computeHmac> @SRC<sha2>
 Returns the [HMAC](link-wiki-hmac) of //data// with //key//
 using the [Algorithm](utils--hmac-supported-algorithm) //algorithm//.
 
 _heading: **HMAC Supported Algorithms** @<utils--hmac-supported-algorithm> @SRC<sha2:enum.SupportedAlgorithm>
 
-_property: ethers.utils.SupportedAlgorithm.sha256 => string
+_property: quais.utils.SupportedAlgorithm.sha256 => string
 Use the [SHA2-256](link-wiki-sha2) hash algorithm.
 
-_property: ethers.utils.SupportedAlgorithm.sha512 => string
+_property: quais.utils.SupportedAlgorithm.sha512 => string
 Use the [SHA2-512](link-wiki-sha2) hash algorithm.
 
 _code: HMAC  @lang<javascript>
@@ -144,7 +144,7 @@ utils.computeHmac("sha256", key, data)
 
 _subsection: Hashing Helpers @<utils--hashing-helpers>
 
-_property: ethers.utils.hashMessage(message) => string<[[DataHexString]]<32>>  @<utils-hashMessage> @SRC<hash>
+_property: quais.utils.hashMessage(message) => string<[[DataHexString]]<32>>  @<utils-hashMessage> @SRC<hash>
 Computes the [[link-eip-191]] personal message digest of //message//. Personal messages are
 converted to UTF-8 bytes and prefixed with ``\\x19Ethereum Signed Message:``
 and the length of //message//.
@@ -185,7 +185,7 @@ utils.hashMessage(utils.arrayify("0x42"))
 //_log:
 
 
-_property: ethers.utils.namehash(name) => string<[[DataHexString]]<32>>  @<utils-namehash> @SRC<hash>
+_property: quais.utils.namehash(name) => string<[[DataHexString]]<32>>  @<utils-namehash> @SRC<hash>
 Returns the [ENS Namehash](link-namehash) of //name//.
 
 _code: Namehash  @lang<javascript>
@@ -223,11 +223,11 @@ property unless it is required as a child structure of another.
 
 _note: Experimental Feature (this exported class name will change)
 This is still an experimental feature. If using it, please specify the **exact**
-version of ethers you are using (e.g. spcify ``"5.0.18"``, **not** ``"^5.0.18"``) as
+version of quais you are using (e.g. spcify ``"5.0.18"``, **not** ``"^5.0.18"``) as
 the exported class name will be renamed from ``_TypedDataEncoder`` to ``TypedDataEncoder`` once
 it has been used in the field a bit.
 
-_property: ethers.utils._TypedDataEncoder.from(types) => [TypedDataEncoder] @<TypedDataEncoder-from> @SRC<hash:TypedDataEncoder.from>
+_property: quais.utils._TypedDataEncoder.from(types) => [TypedDataEncoder] @<TypedDataEncoder-from> @SRC<hash:TypedDataEncoder.from>
 
 Creates a new **TypedDataEncoder** for //types//. This object is a fairly
 low-level object that most developers should not require using instances
@@ -268,7 +268,7 @@ been recursively replacedwith the value of calling //resolveName// with that val
 
 _code: Typed Data Example @lang<javascript>
 
-//_hide: TypedDataEncoder = ethers.utils._TypedDataEncoder
+//_hide: TypedDataEncoder = quais.utils._TypedDataEncoder
 
 domain = {
     name: 'Ether Mail',
@@ -330,15 +330,15 @@ When using the Solidity ``abi.encodePacked(...)`` function, a non-standard
 //tightly packed// version of encoding is used. These functions implement
 the tightly packing algorithm.
 
-_property: ethers.utils.solidityPack(types, values) => string<[[DataHexString]]>  @<utils-solidityPack> @SRC<solidity:pack>
+_property: quais.utils.solidityPack(types, values) => string<[[DataHexString]]>  @<utils-solidityPack> @SRC<solidity:pack>
 Returns the non-standard encoded //values// packed according to
 their respective type in //types//.
 
-_property: ethers.utils.solidityKeccak256(types, values) => string<[[DataHexString]]<32>>  @<utils-solidityKeccak256> @SRC<solidity:keccak256>
+_property: quais.utils.solidityKeccak256(types, values) => string<[[DataHexString]]<32>>  @<utils-solidityKeccak256> @SRC<solidity:keccak256>
 Returns the [KECCAK256](link-wiki-sha3) of the non-standard encoded //values// packed
 according to their respective type in //types//.
 
-_property: ethers.utils.soliditySha256(types, values) => string<[[DataHexString]]<32>>  @<utils-soliditySha256> @SRC<solidity:sha256>
+_property: quais.utils.soliditySha256(types, values) => string<[[DataHexString]]<32>>  @<utils-soliditySha256> @SRC<solidity:sha256>
 Returns the [SHA2-256](link-wiki-sha2) of the non-standard encoded //values// packed
 according to their respective type in //types//.
 

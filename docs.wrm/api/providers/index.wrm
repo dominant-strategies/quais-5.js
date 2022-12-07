@@ -4,7 +4,7 @@ A **Provider** is an abstraction of a connection to the
 Ethereum network, providing a concise, consistent interface
 to standard Ethereum node functionality.
 
-The ethers.js library provides several options which should
+The quais.js library provides several options which should
 cover the vast majority of use-cases, but also includes the
 necessary functions and classes for sub-classing if a more
 custom configuration is necessary.
@@ -29,7 +29,7 @@ This ensures that if a backend has become out-of-sync, or if it
 has been compromised that its responses are dropped in favor of
 responses that match the majority.
 
-_property: ethers.getDefaultProvider([ network, [ options ] ]) => [[Provider]]
+_property: quais.getDefaultProvider([ network, [ options ] ]) => [[Provider]]
 Returns a new Provider, backed by multiple services, connected
 to //network//. If no //network// is provided, **homestead**
 (i.e. mainnet) is used.
@@ -60,7 +60,7 @@ _note: Note: API Keys
 It is highly recommended for production services to acquire
 and specify an API Key for each service.
 
-The default API Keys used by ethers are shared across all users,
+The default API Keys used by quais are shared across all users,
 so services may throttle all services that are using the default
 API Keys during periods of load without realizing it.
 
@@ -81,7 +81,7 @@ Any API that accept a [[providers-Networkish]] can be passed a common
 name (such as ``"mainnet"`` or ``"ropsten"``) or chain ID to use that
 network definition or may specify custom parameters.
 
-_property: ethers.providers.getNetwork(aNetworkish) => [[providers-Network]]
+_property: quais.providers.getNetwork(aNetworkish) => [[providers-Network]]
 
 Returns the full [[providers-Network]] for the given standard
 //aNetworkish// [[providers-Networkish]].
@@ -91,7 +91,7 @@ as an input parameter.
 
 _code: @lang<javascript>
 
-//_hide: const getNetwork = ethers.providers.getNetwork;
+//_hide: const getNetwork = quais.providers.getNetwork;
 
 // By Chain Name
 //_result:

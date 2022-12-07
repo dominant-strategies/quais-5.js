@@ -37,7 +37,7 @@ function getConfig(project, minify) {
       output: {
         file: `packages/${ project }/dist/hardware-wallets.${ suffix.join(".") }.js`,
         format: "esm",
-        name: "_ethersAncillary",
+        name: "_quaisAncillary",
         exports: "named"
       },
       context: "window",

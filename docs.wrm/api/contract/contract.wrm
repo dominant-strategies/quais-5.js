@@ -8,7 +8,7 @@ to be run with the input of the transaction data.
 
 _subsection: Creating Instances @<Contract--creating>
 
-_property: new ethers.Contract(address, abi, signerOrProvider) @src<contracts:class.Contract>
+_property: new quais.Contract(address, abi, signerOrProvider) @src<contracts:class.Contract>
 
 _property: contract.attach(addressOrName) => [[Contract]]  @<Contract-attach> @SRC<contracts:BaseContract.attach>
 Returns a new instance of the **Contract** attached to a new

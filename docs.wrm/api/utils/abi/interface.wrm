@@ -14,7 +14,7 @@ expect so they can interoperate with each other.
 
 _subsection: Creating Instances @<Interface--creating>
 
-_property: new ethers.utils.Interface(abi) @SRC<abi/interface:constructor.Interface>
+_property: new quais.utils.Interface(abi) @SRC<abi/interface:constructor.Interface>
 Create a new **Interface** from a JSON string or object representing
 //abi//.
 
@@ -28,7 +28,7 @@ within the same source file.
 
 _code: Creating an Interface instance @lang<javascript>
 
-//_hide: const Interface = ethers.utils.Interface;
+//_hide: const Interface = quais.utils.Interface;
 
 // This interface is used for the below examples
 
@@ -88,7 +88,7 @@ _code: @lang<javascript>
 
 //_hide: const iface = _page.iface;
 
-const FormatTypes = ethers.utils.FormatTypes;
+const FormatTypes = quais.utils.FormatTypes;
 
 //_result:
 iface.format(FormatTypes.json)
@@ -222,7 +222,7 @@ constructor.
 _code: @lang<javascript>
 
 //_hide: const iface = _page.iface;
-//_hide: const parseEther = ethers.utils.parseEther;
+//_hide: const parseEther = quais.utils.parseEther;
 
 // The data that should be appended to the bytecode to pass
 // parameters to the constructor during deployment
@@ -241,7 +241,7 @@ a mock blockchain.
 _code: @lang<javascript>
 
 //_hide: const iface = _page.iface;
-//_hide: const parseEther = ethers.utils.parseEther;
+//_hide: const parseEther = quais.utils.parseEther;
 
 // Encoding result data (like is returned by eth_call during a revert)
 //_result:
@@ -260,7 +260,7 @@ Each //topic// is a 32 byte (64 nibble) [[DataHexString]].
 _code: @lang<javascript>
 
 //_hide: const iface = _page.iface;
-//_hide: const parseEther = ethers.utils.parseEther;
+//_hide: const parseEther = quais.utils.parseEther;
 
 // Filter that matches all Transfer events
 //_result:
@@ -289,7 +289,7 @@ Returns the encoded data, which can be used as the data for a transaction for
 _code: @lang<javascript>
 
 //_hide: const iface = _page.iface;
-//_hide: const parseEther = ethers.utils.parseEther;
+//_hide: const parseEther = quais.utils.parseEther;
 
 // Encoding data for the tx.data of a call or transaction
 //_result:
@@ -328,7 +328,7 @@ Most developers will not need this method, but may be useful for authors of a mo
 _code: @lang<javascript>
 
 //_hide: const iface = _page.iface;
-//_hide: const parseEther = ethers.utils.parseEther;
+//_hide: const parseEther = quais.utils.parseEther;
 
 // Encoding result data (like is returned by eth_call)
 //_result:
@@ -496,7 +496,7 @@ and parse the transaction properties.
 _code: @lang<javascript>
 
 //_hide: const iface = _page.iface;
-//_hide: const parseEther = ethers.utils.parseEther;
+//_hide: const parseEther = quais.utils.parseEther;
 
 const data = "0x23b872dd0000000000000000000000008ba1f109551bd432803012645ac136ddd64dba72000000000000000000000000ab7c8803962c0f2f5bbbe3fa8bf41cd82aa1923c0000000000000000000000000000000000000000000000000de0b6b3a7640000";
 const value = parseEther("1.0");

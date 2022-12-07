@@ -7,7 +7,7 @@ When using a [[Provider]] backed by an API service (such as [[link-alchemy]],
 which allows each service to track individual projects and their usage and
 permissions.
 
-The ethers library offers default API keys for each service, so that each
+The quais library offers default API keys for each service, so that each
 [[Provider]] works out-of-the-box.
 
 These API keys are provided as a community resource by the backend services
@@ -148,7 +148,7 @@ const network = "homestead";
 // Specify your own API keys
 // Each is optional, and if you omit it the default
 // API key for that service will be used.
-const provider = ethers.getDefaultProvider(network, {
+const provider = quais.getDefaultProvider(network, {
     etherscan: YOUR_ETHERSCAN_API_KEY,
     infura: YOUR_INFURA_PROJECT_ID,
     // Or if using a project secret:

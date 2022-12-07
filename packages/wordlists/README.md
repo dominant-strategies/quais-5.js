@@ -1,7 +1,7 @@
 BIP39 Wordlists
 ===============
 
-This sub-module is part of the [ethers project](https://github.com/ethers-io/ethers.js).
+This sub-module is part of the [quais project](https://github.com/quais-io/quais.js).
 
 Supported Languages:
 
@@ -14,15 +14,15 @@ Supported Languages:
 - **zh_cn** - Chinese (simplified)
 - **zh_tw** - Chinese (traditional)
 
-For more information, see the [documentation](https://docs.ethers.io/v5/api/utils/wordlists/).
+For more information, see the [documentation](https://docs.quais.io/v5/api/utils/wordlists/).
 
 
 Browser
 -------
 
 In the browser distribution file, only the English word list is included in the
-root `ethers` pacakge. To include additional word lists, they must be added using
-additional `<script>` tags, **after** the root `ethers` library has been included.
+root `quais` pacakge. To include additional word lists, they must be added using
+additional `<script>` tags, **after** the root `quais` library has been included.
 
 
 License

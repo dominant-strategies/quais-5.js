@@ -14,20 +14,20 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 // - When checking name collisions, verify no collision in javascript
 import { dirname, resolve } from "path";
 import vm from "vm";
-import { ethers } from "ethers";
+import { quais } from "quais";
 import { Opcode } from "./opcodes";
 import { parse as _parse, parser as _parser } from "./_parser";
 import { version } from "./_version";
-const logger = new ethers.utils.Logger(version);
+const logger = new quais.utils.Logger(version);
 const Guard = {};
 function hexConcat(values) {
-    return ethers.utils.hexlify(ethers.utils.concat(values.map((v) => {
+    return quais.utils.hexlify(quais.utils.concat(values.map((v) => {
         if (v instanceof Opcode) {
             return [v.value];
         }
         if (typeof (v) === "number") {
             if (v >= 0 && v <= 255 && !(v % 1)) {
-                return ethers.utils.hexlify(v);
+                return quais.utils.hexlify(v);
             }
             else {
                 throw new Error("invalid number: " + v);
@@ -45,9 +45,9 @@ function repeat(char, length) {
 }
 class Script {
     constructor(filename, callback) {
-        ethers.utils.defineReadOnly(this, "filename", filename);
-        ethers.utils.defineReadOnly(this, "contextObject", this._baseContext(callback));
-        ethers.utils.defineReadOnly(this, "context", vm.createContext(this.contextObject));
+        quais.utils.defineReadOnly(this, "filename", filename);
+        quais.utils.defineReadOnly(this, "contextObject", this._baseContext(callback));
+        quais.utils.defineReadOnly(this, "context", vm.createContext(this.contextObject));
     }
     _baseContext(callback) {
         return new Proxy({
@@ -55,36 +55,36 @@ class Script {
             __dirname: dirname(this.filename),
             console: console,
             Uint8Array: Uint8Array,
-            ethers: ethers,
-            utils: ethers.utils,
-            BigNumber: ethers.BigNumber,
-            arrayify: ethers.utils.arrayify,
+            quais: quais,
+            utils: quais.utils,
+            BigNumber: quais.BigNumber,
+            arrayify: quais.utils.arrayify,
             concat: hexConcat,
-            hexlify: ethers.utils.hexlify,
+            hexlify: quais.utils.hexlify,
             zeroPad: function (value, length) {
-                return ethers.utils.hexlify(ethers.utils.zeroPad(value, length));
+                return quais.utils.hexlify(quais.utils.zeroPad(value, length));
             },
-            id: ethers.utils.id,
-            keccak256: ethers.utils.keccak256,
-            namehash: ethers.utils.namehash,
-            sha256: ethers.utils.sha256,
-            parseEther: ethers.utils.parseEther,
-            formatEther: ethers.utils.formatEther,
-            parseUnits: ethers.utils.parseUnits,
-            formatUnits: ethers.utils.formatUnits,
+            id: quais.utils.id,
+            keccak256: quais.utils.keccak256,
+            namehash: quais.utils.namehash,
+            sha256: quais.utils.sha256,
+            parseEther: quais.utils.parseEther,
+            formatEther: quais.utils.formatEther,
+            parseUnits: quais.utils.parseUnits,
+            formatUnits: quais.utils.formatUnits,
             randomBytes: function (length) {
-                return ethers.utils.hexlify(ethers.utils.randomBytes(length));
+                return quais.utils.hexlify(quais.utils.randomBytes(length));
             },
-            toUtf8Bytes: ethers.utils.toUtf8Bytes,
-            toUtf8String: ethers.utils.toUtf8String,
-            formatBytes32String: ethers.utils.formatBytes32String,
-            parseBytes32String: ethers.utils.parseBytes32String,
+            toUtf8Bytes: quais.utils.toUtf8Bytes,
+            toUtf8String: quais.utils.toUtf8String,
+            formatBytes32String: quais.utils.formatBytes32String,
+            parseBytes32String: quais.utils.parseBytes32String,
             Opcode: Opcode,
             sighash: function (signature) {
-                return ethers.utils.id(ethers.utils.FunctionFragment.from(signature).format()).substring(0, 10);
+                return quais.utils.id(quais.utils.FunctionFragment.from(signature).format()).substring(0, 10);
             },
             topichash: function (signature) {
-                return ethers.utils.id(ethers.utils.EventFragment.from(signature).format());
+                return quais.utils.id(quais.utils.EventFragment.from(signature).format());
             },
             assemble: assemble,
             disassemble: disassemble,
@@ -129,10 +129,10 @@ export class Node {
             throwError("cannot instantiate class", location);
         }
         logger.checkAbstract(new.target, Node);
-        ethers.utils.defineReadOnly(this, "location", Object.freeze(location));
-        ethers.utils.defineReadOnly(this, "tag", `node-${nextTag++}-${this.constructor.name}`);
+        quais.utils.defineReadOnly(this, "location", Object.freeze(location));
+        quais.utils.defineReadOnly(this, "tag", `node-${nextTag++}-${this.constructor.name}`);
         for (const key in options) {
-            ethers.utils.defineReadOnly(this, key, options[key]);
+            quais.utils.defineReadOnly(this, key, options[key]);
         }
     }
     // Note: EVERY node must call assemble with `this`, even if only with
@@ -181,12 +181,12 @@ export class ValueNode extends Node {
     }
     getPushLiteral(value) {
         // Convert value into a hexstring
-        const hex = ethers.utils.hexlify(value);
+        const hex = quais.utils.hexlify(value);
         if (hex === "0x") {
             throwError("invalid literal: 0x", this.location);
         }
         // Make sure it will fit into a push
-        const length = ethers.utils.hexDataLength(hex);
+        const length = quais.utils.hexDataLength(hex);
         if (length === 0 || length > 32) {
             throwError(`literal out of range: ${hex}`, this.location);
         }
@@ -205,11 +205,11 @@ export class LiteralNode extends ValueNode {
                     visit(this, this.value);
                 }
                 else {
-                    visit(this, ethers.BigNumber.from(this.value).toHexString());
+                    visit(this, quais.BigNumber.from(this.value).toHexString());
                 }
             }
             else {
-                visit(this, this.getPushLiteral(ethers.BigNumber.from(this.value)));
+                visit(this, this.getPushLiteral(quais.BigNumber.from(this.value)));
             }
             assembler.end(this);
         });
@@ -276,8 +276,8 @@ export class LinkNode extends ValueNode {
                             throwError("jump too large!", this.location);
                         }
                         literal = this.getPushLiteral(here - value + w);
-                        if (ethers.utils.hexDataLength(literal) <= w) {
-                            literal = ethers.utils.hexZeroPad(literal, w);
+                        if (quais.utils.hexDataLength(literal) <= w) {
+                            literal = quais.utils.hexZeroPad(literal, w);
                             break;
                         }
                     }
@@ -322,7 +322,7 @@ export class OpcodeNode extends ValueNode {
                 yield this.operands[i].assemble(assembler, visit);
             }
             // Append this opcode
-            visit(this, ethers.utils.hexlify(this.opcode.value));
+            visit(this, quais.utils.hexlify(this.opcode.value));
             assembler.end(this);
         });
     }
@@ -356,7 +356,7 @@ export class OpcodeNode extends ValueNode {
 export class LabelledNode extends Node {
     constructor(guard, location, name, values) {
         logger.checkAbstract(new.target, LabelledNode);
-        values = ethers.utils.shallowCopy(values || {});
+        values = quais.utils.shallowCopy(values || {});
         values.name = name;
         super(guard, location, values);
     }
@@ -365,7 +365,7 @@ export class LabelNode extends LabelledNode {
     assemble(assembler, visit) {
         return __awaiter(this, void 0, void 0, function* () {
             assembler.start(this);
-            visit(this, ethers.utils.hexlify(Opcode.from("JUMPDEST").value));
+            visit(this, quais.utils.hexlify(Opcode.from("JUMPDEST").value));
             assembler.end(this);
         });
     }
@@ -389,7 +389,7 @@ export class PaddingNode extends ValueNode {
             assembler.start(this);
             const padding = new Uint8Array(this._length);
             padding.fill(0);
-            visit(this, ethers.utils.hexlify(padding));
+            visit(this, quais.utils.hexlify(padding));
             assembler.end(this);
         });
     }
@@ -397,7 +397,7 @@ export class PaddingNode extends ValueNode {
 export class DataNode extends LabelledNode {
     constructor(guard, location, name, data) {
         super(guard, location, name, { data });
-        ethers.utils.defineReadOnly(this, "padding", new PaddingNode(Guard, this.location));
+        quais.utils.defineReadOnly(this, "padding", new PaddingNode(Guard, this.location));
     }
     assemble(assembler, visit) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -411,7 +411,7 @@ export class DataNode extends LabelledNode {
             // We pad data if is contains PUSH opcodes that would overrun
             // the data, which could eclipse valid operations (since the
             // VM won't execute or jump within PUSH operations)
-            const bytecode = ethers.utils.concat(this.data.map((d) => assembler.getBytecode(d)));
+            const bytecode = quais.utils.concat(this.data.map((d) => assembler.getBytecode(d)));
             // Replay the data as bytecode, skipping PUSH data
             let i = 0;
             while (i < bytecode.length) {
@@ -448,10 +448,10 @@ export class EvaluationNode extends ValueNode {
             const result = yield assembler.evaluate(this.script, this);
             if (this.verbatim) {
                 if (typeof (result) === "number") {
-                    visit(this, ethers.BigNumber.from(result).toHexString());
+                    visit(this, quais.BigNumber.from(result).toHexString());
                 }
                 else {
-                    visit(this, ethers.utils.hexlify(result));
+                    visit(this, quais.utils.hexlify(result));
                 }
             }
             else {
@@ -512,13 +512,13 @@ export class ScopeNode extends LabelledNode {
 export function disassemble(bytecode) {
     const ops = [];
     const offsets = {};
-    const bytes = ethers.utils.arrayify(bytecode, { allowMissingPrefix: true });
+    const bytes = quais.utils.arrayify(bytecode, { allowMissingPrefix: true });
     let i = 0;
     let oob = false;
     while (i < bytes.length) {
         let opcode = Opcode.from(bytes[i]);
         if (!opcode) {
-            opcode = new Opcode(`unknown (${ethers.utils.hexlify(bytes[i])})`, bytes[i], 0, 0);
+            opcode = new Opcode(`unknown (${quais.utils.hexlify(bytes[i])})`, bytes[i], 0, 0);
         }
         else if (oob && opcode.mnemonic === "JUMPDEST") {
             opcode = new Opcode(`JUMPDEST (invalid; OOB!!)`, bytes[i], 0, 0);
@@ -533,8 +533,8 @@ export function disassemble(bytecode) {
         i++;
         const push = opcode.isPush();
         if (push) {
-            const data = ethers.utils.hexlify(bytes.slice(i, i + push));
-            if (ethers.utils.hexDataLength(data) === push) {
+            const data = quais.utils.hexlify(bytes.slice(i, i + push));
+            if (quais.utils.hexDataLength(data) === push) {
                 op.pushValue = data;
                 op.length += push;
                 i += push;
@@ -566,7 +566,7 @@ export function disassemble(bytecode) {
         if (offset < bytes.length) {
             result.set(bytes.slice(offset));
         }
-        return ethers.utils.arrayify(result);
+        return quais.utils.arrayify(result);
     };
     ops.byteLength = bytes.length;
     return ops;
@@ -575,7 +575,7 @@ export function formatBytecode(bytecode) {
     const lines = [];
     bytecode.forEach((op) => {
         const opcode = op.opcode;
-        let offset = ethers.utils.hexZeroPad(ethers.utils.hexlify(op.offset), 2);
+        let offset = quais.utils.hexZeroPad(quais.utils.hexlify(op.offset), 2);
         if (opcode.isValidJumpDest()) {
             offset += "*";
         }
@@ -598,8 +598,8 @@ export function formatBytecode(bytecode) {
 }
 class Assembler {
     constructor(root, positionIndependentCode) {
-        ethers.utils.defineReadOnly(this, "root", root);
-        ethers.utils.defineReadOnly(this, "positionIndependentCode", !!positionIndependentCode);
+        quais.utils.defineReadOnly(this, "root", root);
+        quais.utils.defineReadOnly(this, "positionIndependentCode", !!positionIndependentCode);
         const nodes = {};
         const labels = {};
         const parents = {};
@@ -613,7 +613,7 @@ class Assembler {
             if (node instanceof LabelledNode) {
                 // Check for duplicate labels
                 if (labels[node.name]) {
-                    logger.throwError(("duplicate label: " + node.name), ethers.utils.Logger.errors.UNSUPPORTED_OPERATION, {});
+                    logger.throwError(("duplicate label: " + node.name), quais.utils.Logger.errors.UNSUPPORTED_OPERATION, {});
                 }
                 labels[node.name] = node;
             }
@@ -623,7 +623,7 @@ class Assembler {
             if (node instanceof LinkNode) {
                 const target = labels[node.label];
                 if (!target) {
-                    logger.throwError(("missing label: " + node.label), ethers.utils.Logger.errors.UNSUPPORTED_OPERATION, {});
+                    logger.throwError(("missing label: " + node.label), quais.utils.Logger.errors.UNSUPPORTED_OPERATION, {});
                 }
             }
             // Build the parent structure
@@ -631,9 +631,9 @@ class Assembler {
                 parents[child.tag] = node;
             });
         });
-        ethers.utils.defineReadOnly(this, "labels", Object.freeze(labels));
-        ethers.utils.defineReadOnly(this, "nodes", Object.freeze(nodes));
-        ethers.utils.defineReadOnly(this, "_parents", Object.freeze(parents));
+        quais.utils.defineReadOnly(this, "labels", Object.freeze(labels));
+        quais.utils.defineReadOnly(this, "nodes", Object.freeze(nodes));
+        quais.utils.defineReadOnly(this, "_parents", Object.freeze(parents));
     }
     // Link operations
     getTarget(label) {
@@ -684,9 +684,9 @@ class Assembler {
         }
         const info = this.nodes[target.tag];
         // Return the offset is relative to its scope
-        const bytes = Array.prototype.slice.call(ethers.utils.arrayify(info.bytecode));
-        ethers.utils.defineReadOnly(bytes, "ast", target);
-        ethers.utils.defineReadOnly(bytes, "source", target.location.source);
+        const bytes = Array.prototype.slice.call(quais.utils.arrayify(info.bytecode));
+        quais.utils.defineReadOnly(bytes, "ast", target);
+        quais.utils.defineReadOnly(bytes, "source", target.location.source);
         if (!((target instanceof DataNode) || (target instanceof ScopeNode))) {
             throwError("invalid link value lookup", source.location);
         }
@@ -704,19 +704,19 @@ class Assembler {
             Object.defineProperty(bytes, "offset", {
                 get: function () { throwError(`cannot access ${target.name}.offset from ${source.tag}`, this.location); }
             });
-            ethers.utils.defineReadOnly(bytes, "_freeze", function () { });
+            quais.utils.defineReadOnly(bytes, "_freeze", function () { });
         }
         // Add the offset relative to the scope; unless the offset has
         // been marked as invalid, in which case accessing it will fail
         if (safeOffset) {
             bytes.offset = info.offset - this.nodes[sourceScope.tag].offset;
             let frozen = false;
-            ethers.utils.defineReadOnly(bytes, "_freeze", function () {
+            quais.utils.defineReadOnly(bytes, "_freeze", function () {
                 if (frozen) {
                     return;
                 }
                 frozen = true;
-                ethers.utils.defineReadOnly(bytes, "offset", bytes.offset);
+                quais.utils.defineReadOnly(bytes, "offset", bytes.offset);
             });
         }
         return bytes;
@@ -860,10 +860,10 @@ class SemanticChecker extends Assembler {
 class CodeGenerationAssembler extends Assembler {
     constructor(root, options) {
         super(root, !!options.positionIndependentCode);
-        ethers.utils.defineReadOnly(this, "retry", ((options.retry != null) ? options.retry : 512));
-        ethers.utils.defineReadOnly(this, "filename", resolve(options.filename || "./contract.asm"));
-        ethers.utils.defineReadOnly(this, "defines", Object.freeze(options.defines || {}));
-        ethers.utils.defineReadOnly(this, "_stack", []);
+        quais.utils.defineReadOnly(this, "retry", ((options.retry != null) ? options.retry : 512));
+        quais.utils.defineReadOnly(this, "filename", resolve(options.filename || "./contract.asm"));
+        quais.utils.defineReadOnly(this, "defines", Object.freeze(options.defines || {}));
+        quais.utils.defineReadOnly(this, "_stack", []);
         this.reset();
     }
     _didChange() {
@@ -919,7 +919,7 @@ class CodeGenerationAssembler extends Assembler {
             else {
                 this._checks.push(() => {
                     const check = super.getLinkValue(target, source);
-                    if (check.offset === result.offset && ethers.utils.hexlify(check) === ethers.utils.hexlify(result)) {
+                    if (check.offset === result.offset && quais.utils.hexlify(check) === quais.utils.hexlify(result)) {
                         return true;
                     }
                     return false;
@@ -929,7 +929,7 @@ class CodeGenerationAssembler extends Assembler {
         catch (error) {
             this._checks.push(() => {
                 const check = super.getLinkValue(target, source);
-                return (ethers.utils.hexlify(check) === ethers.utils.hexlify(result));
+                return (quais.utils.hexlify(check) === quais.utils.hexlify(result));
             });
         }
         return result;
@@ -997,7 +997,7 @@ class CodeGenerationAssembler extends Assembler {
                         bytecode
                     ]);
                 });
-                offset += ethers.utils.hexDataLength(bytecode);
+                offset += quais.utils.hexDataLength(bytecode);
             });
             this._runChecks();
         });
@@ -1032,7 +1032,7 @@ class CodeGenerationAssembler extends Assembler {
                     return this.getBytecode(target);
                 }
             }
-            return logger.throwError(`unable to assemble; ${this.retry} attempts failed to generate stable bytecode`, ethers.utils.Logger.errors.UNKNOWN_ERROR, {});
+            return logger.throwError(`unable to assemble; ${this.retry} attempts failed to generate stable bytecode`, quais.utils.Logger.errors.UNKNOWN_ERROR, {});
         });
     }
 }
@@ -1067,7 +1067,7 @@ export function parse(code, options) {
         return info.offset + column;
     };
     // We use this in the _parser to convert locations to source
-    _parser.yy._ethersLocation = function (loc) {
+    _parser.yy._quaisLocation = function (loc) {
         // The _ scope should call with null to get the full source
         if (loc == null) {
             return {
@@ -1090,7 +1090,7 @@ export function parse(code, options) {
     };
     const result = Node.from(_parse(code));
     // Nuke the source code lookup callback
-    _parser.yy._ethersLocation = null;
+    _parser.yy._quaisLocation = null;
     // Semantic Checks
     const checker = new SemanticChecker(result);
     const errors = checker.check();

@@ -25,13 +25,13 @@ function copy(src, dst, transform) {
 (function () {
     return __awaiter(this, void 0, void 0, function* () {
         yield (0, utils_1.mkdir)((0, path_1.resolve)("output/karma"));
-        copy((0, path_1.resolve)("packages/ethers/dist/ethers.esm.js"), (0, path_1.resolve)("output/karma/ethers.esm.js"));
+        copy((0, path_1.resolve)("packages/quais/dist/quais.esm.js"), (0, path_1.resolve)("output/karma/quais.esm.js"));
         copy((0, path_1.resolve)("packages/tests/dist/tests.esm.js"), (0, path_1.resolve)("output/karma/tests.esm.js"), (data) => {
-            return data.replace(/^(import [^;]* from ')(ethers)(';)/, (all, prefix, id, suffix) => {
-                return prefix + "./ethers.esm.js" + suffix;
+            return data.replace(/^(import [^;]* from ')(quais)(';)/, (all, prefix, id, suffix) => {
+                return prefix + "./quais.esm.js" + suffix;
             });
         });
-        copy((0, path_1.resolve)("packages/ethers/dist/ethers.umd.js"), (0, path_1.resolve)("output/karma/ethers.umd.js"));
+        copy((0, path_1.resolve)("packages/quais/dist/quais.umd.js"), (0, path_1.resolve)("output/karma/quais.umd.js"));
         copy((0, path_1.resolve)("packages/tests/dist/tests.umd.js"), (0, path_1.resolve)("output/karma/tests.umd.js"));
     });
 })();

@@ -56,7 +56,7 @@ export function getOrdered(skipNobuild?: boolean): Array<string> {
     for (let i = 0; i < dirnames.length; i++) {
         let dirname = dirnames[i];
         let info = getPackage(dirname);
-        if (skipNobuild && info._ethers_nobuild) { continue; }
+        if (skipNobuild && info._quais_nobuild) { continue; }
         packages[info.name] = info;
         filenames[info.name] = dirname;
     }

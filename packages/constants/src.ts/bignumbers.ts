@@ -1,4 +1,4 @@
-import { BigNumber } from "@ethersproject/bignumber";
+import { BigNumber } from "@quais/bignumber";
 
 const NegativeOne: BigNumber = (/*#__PURE__*/BigNumber.from(-1));
 const Zero: BigNumber = (/*#__PURE__*/BigNumber.from(0));

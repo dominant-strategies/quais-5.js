@@ -41,7 +41,7 @@ _subsection: Creating Instances @<BigNumber--creating>
 
 The constructor of BigNumber cannot be called directly. Instead, Use the static ``BigNumber.from``.
 
-_property: ethers.BigNumber.from(aBigNumberish) => [[BigNumber]]
+_property: quais.BigNumber.from(aBigNumberish) => [[BigNumber]]
 Returns an instance of a **BigNumber** for //aBigNumberish//.
 
 _heading: Examples:  @<>
@@ -188,7 +188,7 @@ Returns the value of //BigNumber// as a base-16, ``0x``-prefixed [[DataHexString
 
 _heading: Inspection
 
-_property: ethers.BigNumber.isBigNumber(object) => boolean  @SRC<bignumber>
+_property: quais.BigNumber.isBigNumber(object) => boolean  @SRC<bignumber>
 Returns true if and only if the //object// is a BigNumber object.
 
 
@@ -290,7 +290,7 @@ global user-defined Big Number library, which all functions would
 return.
 
 This becomes problematic since your code may live along side other
-libraries or code that use Ethers. In fact, even Ethers uses a lot
+libraries or code that use quais. In fact, even Ethers uses a lot
 of the public functions internally.
 
 If you, for example, used a library that used ``a.plus(b)`` instead

@@ -48,7 +48,7 @@ function getOrdered(skipNobuild) {
     for (let i = 0; i < path_1.dirnames.length; i++) {
         let dirname = path_1.dirnames[i];
         let info = (0, local_1.getPackage)(dirname);
-        if (skipNobuild && info._ethers_nobuild) {
+        if (skipNobuild && info._quais_nobuild) {
             continue;
         }
         packages[info.name] = info;

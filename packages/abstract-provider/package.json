@@ -1,16 +1,16 @@
 {
   "author": "Richard Moore <me@ricmoo.com>",
   "dependencies": {
-    "@ethersproject/bignumber": "^5.7.0",
-    "@ethersproject/bytes": "^5.7.0",
-    "@ethersproject/logger": "^5.7.0",
-    "@ethersproject/networks": "^5.7.0",
-    "@ethersproject/properties": "^5.7.0",
-    "@ethersproject/transactions": "^5.7.0",
-    "@ethersproject/web": "^5.7.0"
+    "@quais/bignumber": "^5.7.0",
+    "@quais/bytes": "^5.7.0",
+    "@quais/logger": "^5.7.0",
+    "@quais/networks": "^5.7.0",
+    "@quais/properties": "^5.7.0",
+    "@quais/transactions": "^5.7.0",
+    "@quais/web": "^5.7.0"
   },
-  "description": "An Abstract Class for describing an Ethereum Provider for ethers.",
-  "ethereum": "donations.ethers.eth",
+  "description": "An Abstract Class for describing an Ethereum Provider for quais.",
+  "ethereum": "donations.quais.eth",
   "funding": [
     {
       "type": "individual",
@@ -28,14 +28,14 @@
   "license": "MIT",
   "main": "./lib/index.js",
   "module": "./lib.esm/index.js",
-  "name": "@ethersproject/abstract-provider",
+  "name": "@quais/abstract-provider",
   "publishConfig": {
     "access": "public"
   },
   "repository": {
     "directory": "packages/abstract-provider",
     "type": "git",
-    "url": "git://github.com/ethers-io/ethers.js.git"
+    "url": "git://github.com:dominant-strategies/quais.js.git"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"

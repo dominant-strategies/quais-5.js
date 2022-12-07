@@ -1,12 +1,12 @@
 {
   "author": "Richard Moore <me@ricmoo.com>",
   "dependencies": {
-    "@ethersproject/web": "^5.7.0",
-    "ethers": "^5.7.0",
+    "@quais/web": "^5.7.0",
+    "quais": "^5.7.0",
     "scrypt-js": "3.0.1"
   },
-  "description": "Experimental libraries for ethers. These should not be considered stable.",
-  "ethereum": "donations.ethers.eth",
+  "description": "Experimental libraries for quais. These should not be considered stable.",
+  "ethereum": "donations.quais.eth",
   "funding": [
     {
       "type": "individual",
@@ -24,14 +24,14 @@
   "license": "MIT",
   "main": "./lib/index.js",
   "module": "./lib.esm/index.js",
-  "name": "@ethersproject/experimental",
+  "name": "@quais/experimental",
   "publishConfig": {
     "access": "public"
   },
   "repository": {
     "directory": "packages/experimental",
     "type": "git",
-    "url": "git://github.com/ethers-io/ethers.js.git"
+    "url": "git://github.com:dominant-strategies/quais.js.git"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"

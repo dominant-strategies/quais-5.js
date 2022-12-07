@@ -15,7 +15,7 @@ Most often, any contract you will need to interact with will already
 be deployed to the blockchain, but for this example will will first
 deploy the contract.
 
-_property: new ethers.ContractFactory(abi, bytecode, signer)
+_property: new quais.ContractFactory(abi, bytecode, signer)
 Create a new [[ContractFactory]] which can deploy a contract to the
 blockchain.
 
@@ -32,7 +32,7 @@ const abi = [
     "constructor(uint totalSupply)"
 ];
 
-const factory = new ethers.ContractFactory(abi, bytecode, signer)
+const factory = new quais.ContractFactory(abi, bytecode, signer)
 
 // Deploy, setting total supply to 100 tokens (assigned to the deployer)
 const contract = await factory.deploy(parseUnits("100"));
@@ -55,7 +55,7 @@ _subsection: Connecting to a Contract
 
 _heading: ERC20Contract @INHERIT<[[Contract]]>
 
-_property: new ethers.Contract(address, abi, providerOrSigner)
+_property: new quais.Contract(address, abi, providerOrSigner)
 Creating a new instance of a Contract connects to an existing
 contract by specifying its //address// on the blockchain,
 its //abi// (used to populate the class' methods) a //providerOrSigner//.
@@ -93,13 +93,13 @@ const abi = [
 // - Populating Unsigned Transactions for non-constant methods
 // - Estimating Gas for non-constant (as an anonymous sender)
 // - Static Calling non-constant methods (as anonymous sender)
-const erc20 = new ethers.Contract(address, abi, provider);
+const erc20 = new quais.Contract(address, abi, provider);
 //_hide: _page.erc20 = erc20;
 
 // Read-Write; By connecting to a Signer, allows:
 // - Everything from Read-Only (except as Signer, not anonymous)
 // - Sending transactions for non-constant functions
-const erc20_rw = new ethers.Contract(address, abi, signer);
+const erc20_rw = new quais.Contract(address, abi, signer);
 //_hide: _page.erc20_rw = erc20_rw;
 
 
@@ -267,7 +267,7 @@ This can be used to preflight check that a transaction will be successful.
 _code: @lang<javascript>
 
 //_hide: const erc20_rw = _page.erc20_rw;
-//_hide: const randomWallet = ethers.Wallet.createRandom().connect(erc20_rw.provider);
+//_hide: const randomWallet = quais.Wallet.createRandom().connect(erc20_rw.provider);
 //_hide: const parseUnits = utils.parseUnits;
 
 // The signer has enough tokens to send, so true is returned

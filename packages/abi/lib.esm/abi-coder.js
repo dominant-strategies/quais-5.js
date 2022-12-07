@@ -1,8 +1,8 @@
 "use strict";
 // See: https://github.com/ethereum/wiki/wiki/Ethereum-Contract-ABI
-import { arrayify } from "@ethersproject/bytes";
-import { defineReadOnly } from "@ethersproject/properties";
-import { Logger } from "@ethersproject/logger";
+import { arrayify } from "@quais/bytes";
+import { defineReadOnly } from "@quais/properties";
+import { Logger } from "@quais/logger";
 import { version } from "./_version";
 const logger = new Logger(version);
 import { Reader, Writer } from "./coders/abstract-coder";

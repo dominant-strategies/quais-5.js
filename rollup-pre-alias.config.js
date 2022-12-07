@@ -16,14 +16,14 @@ function getSigningKeyConfig() {
 
     // Remove the buffer check from BN.js
     plugins.push(replace({
-        "require('buffer')": "/*RicMoo:ethers*/(null)",
+        "require('buffer')": "/*RicMoo:quais*/(null)",
         include: "**/lib/bn.js",
         delimiters: [ '', '' ]
     }));
 
     // Replace the package.json in elliptic
     plugins.push(replace({
-        "require('../package.json')": `/*RicMoo:ethers*/{ version: "${ elliptic.version }" }`,
+        "require('../package.json')": `/*RicMoo:quais*/{ version: "${ elliptic.version }" }`,
         include: "**/lib/elliptic.js",
         delimiters: [ '', '' ]
     }));
@@ -44,14 +44,14 @@ function getSigningKeyConfig() {
             include: `**/${ filename }`,
             delimiters: [ '', '' ]
         };
-        replacement[`require('${ name }')`] = `/*RicMoo:ethers:require(${ name })*/${ text }`,
+        replacement[`require('${ name }')`] = `/*RicMoo:quais:require(${ name })*/${ text }`,
         plugins.push(replace(replacement));
     });
 
-    // Keep @ethersproject imports, merge anything else
+    // Keep @quais imports, merge anything else
     plugins.push(resolveNode({
-        //resolveOnly: ((name === "ethers") ? []: [ /^(?!(@ethersproject|ethers))/ ]),
-        resolveOnly: [ /^(?!(@ethersproject|ethers|bn\.js|hash\.js))/ ],
+        //resolveOnly: ((name === "quais") ? []: [ /^(?!(@quais|quais))/ ]),
+        resolveOnly: [ /^(?!(@quais|quais|bn\.js|hash\.js))/ ],
         mainFields: [ "module", "browser", "main" ],
         preferBuiltins: false
     }));

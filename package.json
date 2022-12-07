@@ -1,7 +1,6 @@
 {
-  "name": "ethers",
+  "name": "quais",
   "common": {
-    "ethereum": "donations.ethers.eth",
     "funding": [
       {
         "type": "individual",
@@ -16,7 +15,7 @@
   "private": true,
   "repository": {
     "type": "git",
-    "url": "git://github.com/ethers-io/ethers.js.git"
+    "url": "git://github.com:dominant-strategies/quais.js.git"
   },
   "scripts": {
     "preinstall": "npm run bootstrap-hoist",
@@ -47,7 +46,7 @@
     "_esm-alias": "node ./misc/admin/lib/cmds/npm-skip-node8.js || npm run _esm-alias-nodesafe",
     "build-libs": "node ./misc/admin/lib/cmds/update-exports.js && node ./misc/admin/lib/cmds/bundle-testcases && npm run _build-cjs && npm run _build-esm && npm run _reset-build && node packages/asm/generate.js && npm run _esm-alias && chmod 755 packages/*/lib/bin/*.js",
     "build-dist-shims": "rollup -c rollup-shims.config.js && uglifyjs --compress --mangle --output ./packages/shims/dist/index.min.js -- ./packages/shims/dist/index.js",
-    "build-dist-libs": "rollup -c rollup-dist.config.js && uglifyjs packages/ethers/dist/ethers.umd.js --output packages/ethers/dist/ethers.umd.min.js --source-map 'content=packages/ethers/dist/ethers.umd.js.map' && uglifyjs packages/ethers/dist/ethers.esm.js --output packages/ethers/dist/ethers.esm.min.js --source-map 'content=packages/ethers/dist/ethers.esm.js.map'",
+    "build-dist-libs": "rollup -c rollup-dist.config.js && uglifyjs packages/quais/dist/quais.umd.js --output packages/quais/dist/quais.umd.min.js --source-map 'content=packages/quais/dist/quais.umd.js.map' && uglifyjs packages/quais/dist/quais.esm.js --output packages/quais/dist/quais.esm.min.js --source-map 'content=packages/quais/dist/quais.esm.js.map'",
     "_build-dist-nodesafe": "node ./misc/admin/lib/cmds/echo 'Building dist files...' && npm run build-dist-libs && npm run build-dist-shims",
     "build-dist": "node ./misc/admin/lib/cmds/npm-skip-node8.js || npm run _build-dist-nodesafe",
     "build-all": "npm run build-libs && npm run build-dist",

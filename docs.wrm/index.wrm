@@ -2,9 +2,9 @@ _section: Documentation @<documentation>
 
 _subsection: What is Ethers? @<preamble>
 
-The ethers.js library aims to be a complete and compact library for
+The quais.js library aims to be a complete and compact library for
 interacting with the Ethereum Blockchain and its ecosystem. It was
-originally designed for use with [ethers.io](link-ethersio) and
+originally designed for use with [quais.io](link-quaisio) and
 has since expanded into a more general-purpose library.
 
 _subsection: Features @<features>
@@ -24,7 +24,7 @@ _subsection: Features @<features>
   anywhere an Ethereum addresses can be used
 - **Tiny** (~88kb compressed; 284kb uncompressed)
 - **Complete** functionality for all your Ethereum needs
-- Extensive [documentation](link-ethers-docs)
+- Extensive [documentation](link-quais-docs)
 - Large collection of **test cases** which are maintained and added to
 - Fully **TypeScript** ready, with definition files and full
   TypeScript source

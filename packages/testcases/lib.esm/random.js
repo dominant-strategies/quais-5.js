@@ -1,5 +1,5 @@
 "use strict";
-import { ethers } from "ethers";
+import { quais } from "quais";
 export function randomBytes(seed, lower, upper) {
     if (!upper) {
         upper = lower;
@@ -7,16 +7,16 @@ export function randomBytes(seed, lower, upper) {
     if (upper === 0 && upper === lower) {
         return new Uint8Array(0);
     }
-    let result = ethers.utils.arrayify(ethers.utils.keccak256(ethers.utils.toUtf8Bytes(seed)));
+    let result = quais.utils.arrayify(quais.utils.keccak256(quais.utils.toUtf8Bytes(seed)));
     while (result.length < upper) {
-        result = ethers.utils.concat([result, ethers.utils.keccak256(result)]);
+        result = quais.utils.concat([result, quais.utils.keccak256(result)]);
     }
-    let top = ethers.utils.arrayify(ethers.utils.keccak256(result));
+    let top = quais.utils.arrayify(quais.utils.keccak256(result));
     let percent = ((top[0] << 16) | (top[1] << 8) | top[2]) / 0x01000000;
     return result.slice(0, lower + Math.floor((upper - lower) * percent));
 }
 export function randomHexString(seed, lower, upper) {
-    return ethers.utils.hexlify(randomBytes(seed, lower, upper));
+    return quais.utils.hexlify(randomBytes(seed, lower, upper));
 }
 export function randomNumber(seed, lower, upper) {
     let top = randomBytes(seed, 3);

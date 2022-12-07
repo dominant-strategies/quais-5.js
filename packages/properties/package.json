@@ -1,10 +1,10 @@
 {
   "author": "Richard Moore <me@ricmoo.com>",
   "dependencies": {
-    "@ethersproject/logger": "^5.7.0"
+    "@quais/logger": "^5.7.0"
   },
-  "description": "Properties utility functions for ethers.",
-  "ethereum": "donations.ethers.eth",
+  "description": "Properties utility functions for quais.",
+  "ethereum": "donations.quais.eth",
   "funding": [
     {
       "type": "individual",
@@ -22,14 +22,14 @@
   "license": "MIT",
   "main": "./lib/index.js",
   "module": "./lib.esm/index.js",
-  "name": "@ethersproject/properties",
+  "name": "@quais/properties",
   "publishConfig": {
     "access": "public"
   },
   "repository": {
     "directory": "packages/properties",
     "type": "git",
-    "url": "git://github.com/ethers-io/ethers.js.git"
+    "url": "git://github.com:dominant-strategies/quais.js.git"
   },
   "scripts": {
     "auto-build": "npm run build -- -w",

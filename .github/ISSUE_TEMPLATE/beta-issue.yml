@@ -8,7 +8,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        This form is **only** for issues in the **v6 beta**, which you can access using either the `v6-beta` tag in the repository or install using `ethers@beta` with `npm`.
+        This form is **only** for issues in the **v6 beta**, which you can access using either the `v6-beta` tag in the repository or install using `quais@beta` with `npm`.
 
         The v6 branch will be very lively, undergoing a lot of changes, including backwards compatible changes between beta versions.
 
@@ -19,7 +19,7 @@ body:
     id: version
     attributes:
       label: Ethers Beta Version
-      description: What version of ethers are you using? Before opening an issue, please make sure you are using the latest beta.
+      description: What version of quais are you using? Before opening an issue, please make sure you are using the latest beta.
       placeholder: x.y.z-beta.N
     validations:
       required: true
@@ -35,7 +35,7 @@ body:
     id: code-snippet
     attributes:
       label: Code Snippet
-      description: If possible, please include a **short and concise** code snippets that can reproduce this issue. Ideally code that can be pasted into the [Ethers Playground](https://playground.ethers.org).
+      description: If possible, please include a **short and concise** code snippets that can reproduce this issue. Ideally code that can be pasted into the [Ethers Playground](https://playground.quais.org).
       placeholder: e.g. provider.getBlockNumber()
       render: shell
   - type: textarea

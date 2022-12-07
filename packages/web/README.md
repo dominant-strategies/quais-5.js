@@ -1,17 +1,17 @@
 Web Utilities
 =============
 
-This sub-module is part of the [ethers project](https://github.com/ethers-io/ethers.js).
+This sub-module is part of the [quais project](https://github.com/quais-io/quais.js).
 
 It contains functions to abstract safely and responsibly connecting to the web,
 including exponential back-off.
 
-For more information, see the [documentation](https://docs.ethers.io/v5/api/utils/web/).
+For more information, see the [documentation](https://docs.quais.io/v5/api/utils/web/).
 
 Importing
 ---------
 
-Most users will prefer to use the [umbrella package](https://www.npmjs.com/package/ethers),
+Most users will prefer to use the [umbrella package](https://www.npmjs.com/package/quais),
 but for those with more specific needs, individual components can be imported.
 
 ```javascript
@@ -29,7 +29,7 @@ const {
     OncePollable,
     OnceBlockable
 
-} = require("@ethersproject/web");
+} = require("@quais/web");
 ```
 
 

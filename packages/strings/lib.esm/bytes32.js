@@ -1,6 +1,6 @@
 "use strict";
-import { HashZero } from "@ethersproject/constants";
-import { arrayify, concat, hexlify } from "@ethersproject/bytes";
+import { HashZero } from "@quais/constants";
+import { arrayify, concat, hexlify } from "@quais/bytes";
 import { toUtf8Bytes, toUtf8String } from "./utf8";
 export function formatBytes32String(text) {
     // Get the bytes

@@ -23,21 +23,21 @@ _note: Note
 Strings that are 31 __//bytes//__ long may contain fewer than 31 __//characters//__,
 since UTF-8 requires multiple bytes to encode international characters.
 
-_property: ethers.utils.parseBytes32String(aBytesLike) => string  @<utils-parseBytes32> @SRC<strings>
+_property: quais.utils.parseBytes32String(aBytesLike) => string  @<utils-parseBytes32> @SRC<strings>
 Returns the decoded string represented by the ``Bytes32`` encoded data.
 
-_property: ethers.utils.formatBytes32String(text) => string<[[DataHexString]]<32>>  @<utils-formatBytes32> @SRC<strings>
+_property: quais.utils.formatBytes32String(text) => string<[[DataHexString]]<32>>  @<utils-formatBytes32> @SRC<strings>
 Returns a ``bytes32`` string representation of //text//. If the
 length of //text// exceeds 31 bytes, it will throw an error.
 
 
 _subsection: UTF-8 Strings @<strings-utf8>
 
-_property: ethers.utils.toUtf8Bytes(text [ , form = current ] ) => Uint8Array  @<utils-toUtf8Bytes> @SRC<strings>
+_property: quais.utils.toUtf8Bytes(text [ , form = current ] ) => Uint8Array  @<utils-toUtf8Bytes> @SRC<strings>
 Returns the UTF-8 bytes of //text//, optionally normalizing it using the
 [[strings--unicode-normalization-form]] //form//.
 
-_property: ethers.utils.toUtf8CodePoints(text [ , form = current ] ) => Array<number>  @<utils-toUtf8CodePoints> @SRC<strings>
+_property: quais.utils.toUtf8CodePoints(text [ , form = current ] ) => Array<number>  @<utils-toUtf8CodePoints> @SRC<strings>
 Returns the Array of codepoints of //text//, optionally normalized using the
 [[strings--unicode-normalization-form]] //form//.
 
@@ -47,7 +47,7 @@ its codepoint, accounting for surrogate pairs. This should not be confused with
 ``string.split("")``, which destroys surrogate pairs, splitting between each UTF-16
 codeunit instead.
 
-_property: ethers.utils.toUtf8String(aBytesLike [ , onError = error ] ) => string  @<utils-toUtf8String> @SRC<strings>
+_property: quais.utils.toUtf8String(aBytesLike [ , onError = error ] ) => string  @<utils-toUtf8String> @SRC<strings>
 Returns the string represented by the UTF-8 bytes of //aBytesLike//.
 
 The //onError// is a [Custom UTF-8 Error function](strings--error-handling) and if not specified
@@ -60,16 +60,16 @@ There are several [commonly used forms](link-wiki-unicode-equivalence)
 when normalizing UTF-8 data, which allow strings to be compared or hashed in a stable
 way.
 
-_property: ethers.utils.UnicodeNormalizationForm.current
+_property: quais.utils.UnicodeNormalizationForm.current
 Maintain the current normalization form.
 
-_property: ethers.utils.UnicodeNormalizationForm.NFC
+_property: quais.utils.UnicodeNormalizationForm.NFC
 The Composed Normalization Form. This form uses single codepoints
 which represent the fully composed character.
 
 For example, the **&eacute;** is a single codepoint, ``0x00e9``.
 
-_property: ethers.utils.UnicodeNormalizationForm.NFD
+_property: quais.utils.UnicodeNormalizationForm.NFD
 The Decomposed Normalization Form. This form uses multiple codepoints
 (when necessary) to compose a character.
 
@@ -78,7 +78,7 @@ is made up of two codepoints, ``"0x0065"`` (which is the letter ``"e"``)
 and ``"0x0301"`` which is a special diacritic UTF-8 codepoint which
 indicates the previous character should have an acute accent.
 
-_property: ethers.utils.UnicodeNormalizationForm.NFKC
+_property: quais.utils.UnicodeNormalizationForm.NFKC
 The Composed Normalization Form with Canonical Equivalence. The Canonical
 representation folds characters which have the same syntactic representation
 but different semantic meaning.
@@ -86,7 +86,7 @@ but different semantic meaning.
 For example, the Roman Numeral **I**, which has a UTF-8
 codepoint ``"0x2160"``, is folded into the capital letter I, ``"0x0049"``.
 
-_property: ethers.utils.UnicodeNormalizationForm.NFKD
+_property: quais.utils.UnicodeNormalizationForm.NFKD
 The Decomposed Normalization Form with Canonical Equivalence.
 See NFKC for more an example.
 
@@ -116,22 +116,22 @@ mind the value at //offset// will already be consumed.
 
 _heading: UTF-8 Error Reasons @<strings--error-reasons> @SRC<strings/utf8:Utf8ErrorReason>
 
-_property: ethers.utils.Utf8ErrorReason.BAD_PREFIX
+_property: quais.utils.Utf8ErrorReason.BAD_PREFIX
 A byte was encountered which is invalid to begin a UTF-8 byte
 sequence with.
 
-_property: ethers.utils.Utf8ErrorReason.MISSING_CONTINUE
+_property: quais.utils.Utf8ErrorReason.MISSING_CONTINUE
 A UTF-8 sequence was begun, but did not have enough continuation
 bytes for the sequence. For this error the //ofset// is the index
 at which a continuation byte was expected.
 
-_property: ethers.utils.Utf8ErrorReason.OUT_OF_RANGE
+_property: quais.utils.Utf8ErrorReason.OUT_OF_RANGE
 The computed codepoint is outside the range for valid UTF-8
 codepoints (i.e. the codepoint is greater than 0x10ffff).
 This reason will pass the computed //badCountpoint// into
 the custom error function.
 
-_property: ethers.utils.Utf8ErrorReason.OVERLONG
+_property: quais.utils.Utf8ErrorReason.OVERLONG
 Due to the way UTF-8 allows variable length byte sequences
 to be used, it is possible to have multiple representations
 of the same character, which means
@@ -149,17 +149,17 @@ This reason will pass the computed //badCountpoint// into the
 custom error function, which is actually a valid codepoint, just
 one that was arrived at through unsafe methods.
 
-_property: ethers.utils.Utf8ErrorReason.OVERRUN
+_property: quais.utils.Utf8ErrorReason.OVERRUN
 The string does not have enough characters remaining for the
 length of this sequence.
 
-_property: ethers.utils.Utf8ErrorReason.UNEXPECTED_CONTINUE
+_property: quais.utils.Utf8ErrorReason.UNEXPECTED_CONTINUE
 This error is similar to BAD_PREFIX, since a continuation byte
 cannot begin a valid sequence, but many may wish to process this
 differently. However, most developers would want to trap this
 and perform the same operation as a BAD_PREFIX.
 
-_property: ethers.utils.Utf8ErrorReason.UTF16_SURROGATE
+_property: quais.utils.Utf8ErrorReason.UTF16_SURROGATE
 The computed codepoint represents a value reserved for
 UTF-16 surrogate pairs.
 This reason will pass the computed surrogate half
@@ -172,16 +172,16 @@ _heading: Provided UTF-8 Error Handling Functions
 There are already several functions available for the  most common
 situations.
 
-_property: ethers.utils.Utf8ErrorFuncs.error @<strings--Utf8Error> @SRC<strings/utf8:errorFunc>
+_property: quais.utils.Utf8ErrorFuncs.error @<strings--Utf8Error> @SRC<strings/utf8:errorFunc>
 The will throw an error on **any** error with a UTF-8 sequence, including
 invalid prefix bytes, overlong sequences, UTF-16 surrogate pairs.
 
-_property: ethers.utils.Utf8ErrorFuncs.ignore @<strings--Utf8Ignore> @SRC<strings/utf8:ignoreFunc>
+_property: quais.utils.Utf8ErrorFuncs.ignore @<strings--Utf8Ignore> @SRC<strings/utf8:ignoreFunc>
 This will drop all invalid sequences (by consuming invalid prefix bytes and
 any following continuation bytes) from the final string as well as permit
 overlong sequences to be converted to their equivalent string.
 
-_property: ethers.utils.Utf8ErrorFuncs.replace @<strings--Utf8Replace> @SRC<strings/utf8:replaceFunc>
+_property: quais.utils.Utf8ErrorFuncs.replace @<strings--Utf8Replace> @SRC<strings/utf8:replaceFunc>
 This will replace all invalid sequences (by consuming invalid prefix bytes and
 any following continuation bytes) with the
 [UTF-8 Replacement Character](link-wiki-utf8-replacement),

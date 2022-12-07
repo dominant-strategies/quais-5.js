@@ -1,15 +1,15 @@
 "use strict";
 
-import { BlockTag, TransactionRequest, TransactionResponse } from "@ethersproject/abstract-provider";
-import { hexlify, hexValue, isHexString } from "@ethersproject/bytes";
-import { Network, Networkish } from "@ethersproject/networks";
-import { deepCopy, defineReadOnly } from "@ethersproject/properties";
-import { accessListify } from "@ethersproject/transactions";
-import { ConnectionInfo, fetchJson } from "@ethersproject/web";
+import { BlockTag, TransactionRequest, TransactionResponse } from "@quais/abstract-provider";
+import { hexlify, hexValue, isHexString } from "@quais/bytes";
+import { Network, Networkish } from "@quais/networks";
+import { deepCopy, defineReadOnly } from "@quais/properties";
+import { accessListify } from "@quais/transactions";
+import { ConnectionInfo, fetchJson } from "@quais/web";
 
 import { showThrottleMessage } from "./formatter";
 
-import { Logger } from "@ethersproject/logger";
+import { Logger } from "@quais/logger";
 import { version } from "./_version";
 const logger = new Logger(version);
 

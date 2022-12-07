@@ -1,22 +1,22 @@
 {
   "author": "Richard Moore <me@ricmoo.com>",
   "dependencies": {
-    "@ethersproject/abstract-signer": "^5.7.0",
-    "@ethersproject/address": "^5.7.0",
-    "@ethersproject/bytes": "^5.7.0",
-    "@ethersproject/hdnode": "^5.7.0",
-    "@ethersproject/keccak256": "^5.7.0",
-    "@ethersproject/logger": "^5.7.0",
-    "@ethersproject/pbkdf2": "^5.7.0",
-    "@ethersproject/properties": "^5.7.0",
-    "@ethersproject/random": "^5.7.0",
-    "@ethersproject/strings": "^5.7.0",
-    "@ethersproject/transactions": "^5.7.0",
+    "@quais/abstract-signer": "^5.7.0",
+    "@quais/address": "^5.7.0",
+    "@quais/bytes": "^5.7.0",
+    "@quais/hdnode": "^5.7.0",
+    "@quais/keccak256": "^5.7.0",
+    "@quais/logger": "^5.7.0",
+    "@quais/pbkdf2": "^5.7.0",
+    "@quais/properties": "^5.7.0",
+    "@quais/random": "^5.7.0",
+    "@quais/strings": "^5.7.0",
+    "@quais/transactions": "^5.7.0",
     "aes-js": "3.0.0",
     "scrypt-js": "3.0.1"
   },
   "description": "Wallet management utilities for KeyStore and Crowdsale JSON wallets.",
-  "ethereum": "donations.ethers.eth",
+  "ethereum": "donations.quais.eth",
   "funding": [
     {
       "type": "individual",
@@ -34,14 +34,14 @@
   "license": "MIT",
   "main": "./lib/index.js",
   "module": "./lib.esm/index.js",
-  "name": "@ethersproject/json-wallets",
+  "name": "@quais/json-wallets",
   "publishConfig": {
     "access": "public"
   },
   "repository": {
     "directory": "packages/json-wallets",
     "type": "git",
-    "url": "git://github.com/ethers-io/ethers.js.git"
+    "url": "git://github.com:dominant-strategies/quais.js.git"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"

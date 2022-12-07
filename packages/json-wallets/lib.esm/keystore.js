@@ -10,16 +10,16 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 import aes from "aes-js";
 import scrypt from "scrypt-js";
-import { getAddress } from "@ethersproject/address";
-import { arrayify, concat, hexlify } from "@ethersproject/bytes";
-import { defaultPath, entropyToMnemonic, HDNode, mnemonicToEntropy } from "@ethersproject/hdnode";
-import { keccak256 } from "@ethersproject/keccak256";
-import { pbkdf2 as _pbkdf2 } from "@ethersproject/pbkdf2";
-import { randomBytes } from "@ethersproject/random";
-import { Description } from "@ethersproject/properties";
-import { computeAddress } from "@ethersproject/transactions";
+import { getAddress } from "@quais/address";
+import { arrayify, concat, hexlify } from "@quais/bytes";
+import { defaultPath, entropyToMnemonic, HDNode, mnemonicToEntropy } from "@quais/hdnode";
+import { keccak256 } from "@quais/keccak256";
+import { pbkdf2 as _pbkdf2 } from "@quais/pbkdf2";
+import { randomBytes } from "@quais/random";
+import { Description } from "@quais/properties";
+import { computeAddress } from "@quais/transactions";
 import { getPassword, looseArrayify, searchPath, uuidV4, zpad } from "./utils";
-import { Logger } from "@ethersproject/logger";
+import { Logger } from "@quais/logger";
 import { version } from "./_version";
 const logger = new Logger(version);
 // Exported Types
@@ -69,14 +69,14 @@ function _getAccount(data, key) {
         address: address,
         privateKey: hexlify(privateKey)
     };
-    // Version 0.1 x-ethers metadata must contain an encrypted mnemonic phrase
-    if (searchPath(data, "x-ethers/version") === "0.1") {
-        const mnemonicCiphertext = looseArrayify(searchPath(data, "x-ethers/mnemonicCiphertext"));
-        const mnemonicIv = looseArrayify(searchPath(data, "x-ethers/mnemonicCounter"));
+    // Version 0.1 x-quais metadata must contain an encrypted mnemonic phrase
+    if (searchPath(data, "x-quais/version") === "0.1") {
+        const mnemonicCiphertext = looseArrayify(searchPath(data, "x-quais/mnemonicCiphertext"));
+        const mnemonicIv = looseArrayify(searchPath(data, "x-quais/mnemonicCounter"));
         const mnemonicCounter = new aes.Counter(mnemonicIv);
         const mnemonicAesCtr = new aes.ModeOfOperation.ctr(mnemonicKey, mnemonicCounter);
-        const path = searchPath(data, "x-ethers/path") || defaultPath;
-        const locale = searchPath(data, "x-ethers/locale") || "en";
+        const path = searchPath(data, "x-quais/path") || defaultPath;
+        const locale = searchPath(data, "x-quais/locale") || "en";
         const entropy = arrayify(mnemonicAesCtr.decrypt(mnemonicCiphertext));
         try {
             const mnemonic = entropyToMnemonic(entropy, locale);
@@ -203,7 +203,7 @@ export function encrypt(account, password, options, progressCallback) {
     }
     let client = options.client;
     if (!client) {
-        client = "ethers.js";
+        client = "quais.js";
     }
     // Check/generate the salt
     let salt = null;
@@ -300,7 +300,7 @@ export function encrypt(account, password, options, progressCallback) {
                 zpad(now.getUTCHours(), 2) + "-" +
                 zpad(now.getUTCMinutes(), 2) + "-" +
                 zpad(now.getUTCSeconds(), 2) + ".0Z");
-            data["x-ethers"] = {
+            data["x-quais"] = {
                 client: client,
                 gethFilename: ("UTC--" + timestamp + "--" + data.address),
                 mnemonicCounter: hexlify(mnemonicIv).substring(2),

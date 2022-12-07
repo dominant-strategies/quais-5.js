@@ -4,19 +4,19 @@
 // See: https://github.com/bitcoin/bips/blob/master/bip-0039.mediawiki
 
 
-import { ExternallyOwnedAccount } from "@ethersproject/abstract-signer";
-import { Base58 } from "@ethersproject/basex";
-import { arrayify, BytesLike, concat, hexDataSlice, hexZeroPad, hexlify } from "@ethersproject/bytes";
-import { BigNumber } from "@ethersproject/bignumber";
-import { toUtf8Bytes, UnicodeNormalizationForm } from "@ethersproject/strings";
-import { pbkdf2 } from "@ethersproject/pbkdf2";
-import { defineReadOnly } from "@ethersproject/properties";
-import { SigningKey } from "@ethersproject/signing-key";
-import { computeHmac, ripemd160, sha256, SupportedAlgorithm } from "@ethersproject/sha2";
-import { computeAddress } from "@ethersproject/transactions";
-import { Wordlist, wordlists } from "@ethersproject/wordlists";
+import { ExternallyOwnedAccount } from "@quais/abstract-signer";
+import { Base58 } from "@quais/basex";
+import { arrayify, BytesLike, concat, hexDataSlice, hexZeroPad, hexlify } from "@quais/bytes";
+import { BigNumber } from "@quais/bignumber";
+import { toUtf8Bytes, UnicodeNormalizationForm } from "@quais/strings";
+import { pbkdf2 } from "@quais/pbkdf2";
+import { defineReadOnly } from "@quais/properties";
+import { SigningKey } from "@quais/signing-key";
+import { computeHmac, ripemd160, sha256, SupportedAlgorithm } from "@quais/sha2";
+import { computeAddress } from "@quais/transactions";
+import { Wordlist, wordlists } from "@quais/wordlists";
 
-import { Logger } from "@ethersproject/logger";
+import { Logger } from "@quais/logger";
 import { version } from "./_version";
 const logger = new Logger(version);
 

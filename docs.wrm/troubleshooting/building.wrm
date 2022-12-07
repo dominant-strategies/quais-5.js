@@ -8,8 +8,8 @@ Sometimes packages get out of sync.
 
 _code:
 
-/home/ethers> rm package-lock.json node_modules/
+/home/quais> rm package-lock.json node_modules/
 
-/home/ethers> rm yarn.lock
+/home/quais> rm yarn.lock
 
-/home/ethers> npm install
+/home/quais> npm install

@@ -2,12 +2,12 @@
 
 "use strict";
 
-import { ethers } from "ethers";
+import { quais } from "quais";
 
 import { ContractCode } from "./solc";
 
 
-function getType(param: ethers.utils.ParamType, flexible?: boolean): string {
+function getType(param: quais.utils.ParamType, flexible?: boolean): string {
 
     if (param.type === "address" || param.type === "string") { return "string"; }
 
@@ -15,7 +15,7 @@ function getType(param: ethers.utils.ParamType, flexible?: boolean): string {
 
     if (param.type.substring(0, 5) === "bytes") {
         if (flexible) {
-            return "string | ethers.utils.BytesLike";
+            return "string | quais.utils.BytesLike";
         }
         return "string"
     }
@@ -23,10 +23,10 @@ function getType(param: ethers.utils.ParamType, flexible?: boolean): string {
     let match = param.type.match(/^(u?int)([0-9]+)$/)
     if (match) {
         if (flexible) {
-            return "ethers.BigNumberish";
+            return "quais.BigNumberish";
         }
         if (parseInt(match[2]) < 53) { return 'number'; }
-        return 'ethers.BigNumber';
+        return 'quais.BigNumber';
     }
 
     if (param.type === "array") {
@@ -42,19 +42,19 @@ function getType(param: ethers.utils.ParamType, flexible?: boolean): string {
     return null;
 }
 
-export const header = "import { ethers } from \"ethers\";\n\n"
+export const header = "import { quais } from \"quais\";\n\n"
 
 export function generate(contract: ContractCode, bytecode?: string): string {
 
     let lines = [ ];
 
-    lines.push("export class " + contract.name + " extends ethers.Contract {");
+    lines.push("export class " + contract.name + " extends quais.Contract {");
     lines.push("");
-    lines.push("    constructor(addressOrName: string, providerOrSigner: ethers.Signer | ethers.providers.Provider) {");
+    lines.push("    constructor(addressOrName: string, providerOrSigner: quais.Signer | quais.providers.Provider) {");
     lines.push("        super(addressOrName, new.target.ABI(), providerOrSigner)");
     lines.push("    }");
     lines.push("");
-    lines.push(`    connect(providerOrSigner: ethers.Signer | ethers.providers.Provider): ${contract.name} {`);
+    lines.push(`    connect(providerOrSigner: quais.Signer | quais.providers.Provider): ${contract.name} {`);
     lines.push(`        return new (<{ new(...args: any[]): ${contract.name} }>(this.constructor))(this.address, providerOrSigner)`);
     lines.push("    }");
     lines.push("");
@@ -67,14 +67,14 @@ export function generate(contract: ContractCode, bytecode?: string): string {
         let fragment = contract.interface.functions[signature];
         console.log(fragment);
 
-        let output = "Promise<ethers.providers.TransactionResponse>";
+        let output = "Promise<quais.providers.TransactionResponse>";
 
-        let overrides = "ethers.CallOverrides";
+        let overrides = "quais.CallOverrides";
         if (fragment.constant == false) {
             if (fragment.payable) {
-                overrides = "ethers.PayableOverrides";
+                overrides = "quais.PayableOverrides";
             } else {
-                overrides = "ethers.Overrides";
+                overrides = "quais.Overrides";
             }
         } else if (fragment.outputs.length > 0) {
             if (fragment.outputs.length === 1) {
@@ -110,14 +110,14 @@ export function generate(contract: ContractCode, bytecode?: string): string {
     }
 
     lines.push("");
-    lines.push("    static factory(signer?: ethers.Signer): ethers.ContractFactory {");
-    lines.push("        return new ethers.ContractFactory(" + contract.name + ".ABI(), " + contract.name + ".bytecode(), signer);");
+    lines.push("    static factory(signer?: quais.Signer): quais.ContractFactory {");
+    lines.push("        return new quais.ContractFactory(" + contract.name + ".ABI(), " + contract.name + ".bytecode(), signer);");
     lines.push("    }");
 
     lines.push("");
     lines.push("    static bytecode(): string {");
     if (bytecode == null) {
-        lines.push('        return ethers.errors.throwError("no bytecode provided during generation", ethers.errors.UNSUPPORTED_OPERATION, { operation: "contract.bytecode" });');
+        lines.push('        return quais.errors.throwError("no bytecode provided during generation", quais.errors.UNSUPPORTED_OPERATION, { operation: "contract.bytecode" });');
     } else {
         lines.push('        return "' + bytecode + '";');
     }
@@ -127,7 +127,7 @@ export function generate(contract: ContractCode, bytecode?: string): string {
     lines.push("    static ABI(): Array<string> {");
     lines.push("        return [");
     contract.interface.fragments.forEach((fragment) => {
-        lines.push(`            "${fragment.format(ethers.utils.FormatTypes.full)}",`);
+        lines.push(`            "${fragment.format(quais.utils.FormatTypes.full)}",`);
     });
     lines.push("        ];");
     lines.push("    }");

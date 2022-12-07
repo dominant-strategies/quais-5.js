@@ -1,5 +1,5 @@
 {
-  "_ethers.alias": {
+  "_quais.alias": {
     "base64.js": "browser-base64.js"
   },
   "author": "Richard Moore <me@ricmoo.com>",
@@ -7,10 +7,10 @@
     "./lib/base64": "./lib/browser-base64.js"
   },
   "dependencies": {
-    "@ethersproject/bytes": "^5.7.0"
+    "@quais/bytes": "^5.7.0"
   },
   "description": "Base64 coder.",
-  "ethereum": "donations.ethers.eth",
+  "ethereum": "donations.quais.eth",
   "funding": [
     {
       "type": "individual",
@@ -28,14 +28,14 @@
   "license": "MIT",
   "main": "./lib/index.js",
   "module": "./lib.esm/index.js",
-  "name": "@ethersproject/base64",
+  "name": "@quais/base64",
   "publishConfig": {
     "access": "public"
   },
   "repository": {
     "directory": "packages/base64",
     "type": "git",
-    "url": "git://github.com/ethers-io/ethers.js.git"
+    "url": "git://github.com:dominant-strategies/quais.js.git"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"

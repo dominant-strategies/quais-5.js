@@ -57,11 +57,11 @@ $TopicABaCD: **[** (topic[0] = A) **OR** (topic[0] = B) **]** **AND**
 
 _code: ERC-20 Transfer Filter Examples @lang<javascript>
 
-//_hide: const tokenAddress = ethers.constants.AddressZero;
-//_hide: const myAddress = ethers.constants.AddressZero;
-//_hide: const myOtherAddress = ethers.constants.AddressZero;
-//_hide: const id = ethers.utils.id;
-//_hide: const hexZeroPad = ethers.utils.hexZeroPad;
+//_hide: const tokenAddress = quais.constants.AddressZero;
+//_hide: const myAddress = quais.constants.AddressZero;
+//_hide: const myOtherAddress = quais.constants.AddressZero;
+//_hide: const id = quais.utils.id;
+//_hide: const hexZeroPad = quais.utils.hexZeroPad;
 
 // Short example of manually creating filters for an ERC-20
 // Transfer event.
@@ -129,8 +129,8 @@ _code: ERC-20 Contract Filter Examples @lang<javascript>
 //_hide: const tokenAddress = "0x6B175474E89094C44Da98b954EedeAC495271d0F"; /* DAI */
 //_hide: const myAddress = "0x8ba1f109551bD432803012645Ac136ddd64DBA72";
 //_hide: const otherAddress = "0xEA517D5a070e6705Cc5467858681Ed953d285Eb9";
-//_hide: const provider = ethers.getDefaultProvider();
-//_hide: const Contract = ethers.Contract;
+//_hide: const provider = quais.getDefaultProvider();
+//_hide: const Contract = quais.Contract;
 
 abi = [
   "event Transfer(address indexed src, address indexed dst, uint val)"

@@ -4,7 +4,7 @@ const { resolve } = require("path");
 const Content = `
 <html>
   <head>
-    <title>ethers.js - Legacy Documentation</title>
+    <title>quais.js - Legacy Documentation</title>
     <style type="text/css">
       html {
         font-family: sans-serif;
@@ -68,7 +68,7 @@ const links = require("../docs/v5/metadata.json").links;
 
 const result = { };
 
-const prefix = "ethers.js/html/";
+const prefix = "quais.js/html/";
 Object.keys(redirects).forEach((uri) => {
     if (uri.substring(0, prefix.length) !== prefix) { return; }
 
@@ -107,7 +107,7 @@ function generateOutput(filename) {
 
 Object.keys(result).forEach((filename) => {
     const output = generateOutput(filename);
-    const path = resolve(__dirname, "../docs/ethers.js/html", filename);
+    const path = resolve(__dirname, "../docs/quais.js/html", filename);
     fs.writeFileSync(path, output);
 });
 

@@ -23,7 +23,7 @@ and the password cannot be changed. But for backwards compatibility and for simp
 testing, we provide it here.
 
 ```javascript
-import { BrainWallet } from "@ethersproject/experimental/brain-wallet";
+import { BrainWallet } from "@quais/experimental/brain-wallet";
 
 // This is optional, but since a Brain Wallet can take 5-10s to generate,
 // helps keep your users informed
@@ -49,7 +49,7 @@ BrainWallet.generate(username, password, showProgess).then((wallet) => {
 **NonceManager**
 
 ```javascript
-import { NonceManager } from "@ethersproject/experimental/nonce-manager";
+import { NonceManager } from "@quais/experimental/nonce-manager";
 
 let signer = "... any way you get a signer ...";
 
@@ -64,10 +64,10 @@ const managedSigner = new NonceManager(signer);
 **Eip1193Bridge**
 
 ```javascript
-import { Eip1193Bridge } from "@ethersproject/experimental/retry-provider";
+import { Eip1193Bridge } from "@quais/experimental/retry-provider";
 
-const signer = "... any way you get an ethers Signer...";
-const provider = "... any way you get an ethers Provider...";
+const signer = "... any way you get an quais Signer...";
+const provider = "... any way you get an quais Provider...";
 
 const eip1193Provider = new Eip1193Provider(signer, provider);
 

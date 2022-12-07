@@ -116,7 +116,7 @@ and arguments.
 
 _code: @lang<shell>
 
-/home/ethers> ethers --account wallet.json --yes send ricmoo.eth 1.0
+/home/quais> quais --account wallet.json --yes send ricmoo.eth 1.0
 #  An Option ----------^                     ^   ^
 #    - name =  "account"                     |   |
 #    - value = "wallet.json"                 |   |

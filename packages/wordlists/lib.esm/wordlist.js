@@ -1,9 +1,9 @@
 "use strict";
 // This gets overridden by rollup
 const exportWordlist = false;
-import { id } from "@ethersproject/hash";
-import { defineReadOnly } from "@ethersproject/properties";
-import { Logger } from "@ethersproject/logger";
+import { id } from "@quais/hash";
+import { defineReadOnly } from "@quais/properties";
+import { Logger } from "@quais/logger";
 import { version } from "./_version";
 export const logger = new Logger(version);
 export class Wordlist {
@@ -39,9 +39,9 @@ export class Wordlist {
         if (exportWordlist) {
             try {
                 const anyGlobal = window;
-                if (anyGlobal._ethers && anyGlobal._ethers.wordlists) {
-                    if (!anyGlobal._ethers.wordlists[name]) {
-                        defineReadOnly(anyGlobal._ethers.wordlists, name, lang);
+                if (anyGlobal._quais && anyGlobal._quais.wordlists) {
+                    if (!anyGlobal._quais.wordlists[name]) {
+                        defineReadOnly(anyGlobal._quais.wordlists, name, lang);
                     }
                 }
             }

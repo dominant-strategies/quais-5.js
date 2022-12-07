@@ -100,7 +100,7 @@
       "path": "./packages/wallet"
     },
     {
-      "path": "./packages/ethers"
+      "path": "./packages/quais"
     },
     {
       "path": "./packages/asm"

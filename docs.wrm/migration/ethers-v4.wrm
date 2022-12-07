@@ -20,12 +20,12 @@ the top level of the umbrella package.
 _code: @lang<script>
 
 // v4
-ethers.utils.BigNumber
-ethers.utils.BigNumberish
+quais.utils.BigNumber
+quais.utils.BigNumberish
 
 // v5
-ethers.BigNumber
-ethers.BigNumberish
+quais.BigNumber
+quais.BigNumberish
 
 
 _heading: Creating Instances
@@ -38,13 +38,13 @@ objects (since they are immutable). This has been moved to a static
 _code: @lang<script>
 
 // v4
-new ethers.utils.BigNumber(someValue)
-ethers.utils.bigNumberify(someValue);
+new quais.utils.BigNumber(someValue)
+quais.utils.bigNumberify(someValue);
 
 // v5
 // - Constructor is private
 // - Removed `bigNumberify`
-ethers.BigNumber.from(someValue)
+quais.BigNumber.from(someValue)
 
 
 _subsection: Contracts
@@ -82,7 +82,7 @@ contract.estimateGas.transfer(toAddress, amount)
 
 _heading: Functions
 
-In a contract in ethers, there is a ``functions`` bucket, which exposes
+In a contract in quais, there is a ``functions`` bucket, which exposes
 all the methods of a contract.
 
 All these functions are available on the root contract itself as well
@@ -156,8 +156,8 @@ Global error functions have been moved to [[Logger]] class methods.
 _code: @lang<script>
 
 // v4
-ethers.errors.UNKNOWN_ERROR
-ethers.errors.*
+quais.errors.UNKNOWN_ERROR
+quais.errors.*
 
 errors.setCensorship(censorship, permanent)
 errors.setLogLevel(logLevel)
@@ -170,13 +170,13 @@ errors.warn(...)
 errors.info(...)
 
 // v5
-ethers.utils.Logger.errors.UNKNOWN_ERROR
-ethers.utils.Logger.errors.*
+quais.utils.Logger.errors.UNKNOWN_ERROR
+quais.utils.Logger.errors.*
 
 Logger.setCensorship(censorship, permanent)
 Logger.setLogLevel(logLevel)
 
-const logger = new ethers.utils.Logger(version);
+const logger = new quais.utils.Logger(version);
 logger.checkArgumentCount(count, expectedCount, suffix)
 logger.checkNew(self, kind)
 logger.checkNormalize()

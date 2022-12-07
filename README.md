@@ -2,7 +2,7 @@ The Quais Project
 ==================
 
 [![npm (tag)](https://img.shields.io/npm/v/ethers)](https://www.npmjs.com/package/ethers)
-[![Node.js CI](https://github.com/ethers-io/ethers.js/workflows/Node.js%20CI/badge.svg?branch=ethers-v5-beta)](https://github.com/ethers-io/ethers.js/actions?query=workflow%3A%22Node.js+CI%22)
+[![Node.js CI](https://github.com/ethers-io/quais.js/workflows/Node.js%20CI/badge.svg?branch=ethers-v5-beta)](https://github.com/ethers-io/quais.js/actions?query=workflow%3A%22Node.js+CI%22)
 
 A complete Quai wallet implementation and utilities in JavaScript (and TypeScript). Quais is a downstream fork of Ethers v5.7.2.
 
@@ -18,7 +18,7 @@ IMPORTANT: These features are in beta and may not be 1:1 compatible with Quai Ne
 - **Tiny** (~104kb compressed; 322kb uncompressed)
 - **Modular** packages; include only what you need
 - **Complete** functionality for all your Ethereum desires
-- Extensive [documentation](https://docs.ethers.io/v5/)
+- Extensive [documentation](https://docs.quais.io/v5/)
 - Large collection of **test cases** which are maintained and added to
 - Fully **TypeScript** ready, with definition files and full TypeScript source
 - **MIT License** (including ALL dependencies); completely open source to do with as you please
@@ -28,11 +28,11 @@ Keep Updated
 ------------
 
 For the latest news and advisories, please follow the
-[@ethersproject](https://twitter.com/ethersproject) on Twitter (low-traffic,
+[@quainetwork](https://twitter.com/quainetwork) on Twitter (low-traffic,
 non-marketing, important information only) as well as watch this GitHub project.
 
 For the latest changes, see the
-[CHANGELOG](https://github.com/ethers-io/ethers.js/blob/master/CHANGELOG.md).
+[CHANGELOG](https://github.com/ethers-io/quais.js/blob/master/CHANGELOG.md).
 
 
 Installing
@@ -47,7 +47,7 @@ Installing
 **browser (UMD)**
 
 ```
-<script src="https://cdn.ethers.io/lib/ethers-5.6.umd.min.js" type="text/javascript">
+<script src="https://cdn.quais.io/lib/ethers-5.6.umd.min.js" type="text/javascript">
 </script>
 ```
 
@@ -55,7 +55,7 @@ Installing
 
 ```
 <script type="module">
-    import { ethers } from "https://cdn.ethers.io/lib/ethers-5.6.esm.min.js";
+    import { ethers } from "https://cdn.quais.io/lib/ethers-5.6.esm.min.js";
 </script>
 ```
 
@@ -63,10 +63,10 @@ Installing
 Documentation
 -------------
 
-Browse the [documentation](https://docs.ethers.io/v5/) online:
+Browse the [documentation](https://docs.quais.io/v5/) online:
 
-- [Getting Started](https://docs.ethers.io/v5/getting-started/)
-- [Full API Documentation](https://docs.ethers.io/v5/api/)
+- [Getting Started](https://docs.quais.io/v5/getting-started/)
+- [Full API Documentation](https://docs.quais.io/v5/api/)
 - [Various Ethereum Articles](https://blog.ricmoo.com/)
 
 
@@ -77,7 +77,7 @@ Ethers works closely with an ever-growing list of third-party providers
 to ensure getting started is quick and easy, by providing default keys
 to each service.
 
-These built-in keys mean you can use `ethers.getDefaultProvider()` and
+These built-in keys mean you can use `quais.getDefaultProvider()` and
 start developing right away.
 
 However, the API keys provided to ethers are also shared and are
@@ -87,7 +87,7 @@ responses, more capacity, analytics and other features like archival
 data.
 
 When you are ready to sign up and start using for your own keys, please
-check out the [Provider API Keys](https://docs.ethers.io/v5/api-keys/) in
+check out the [Provider API Keys](https://docs.quais.io/v5/api-keys/) in
 the documentation.
 
 A special thanks to these services for providing community resources:
@@ -110,9 +110,9 @@ everyone else with packages they do not need.
 
 We will keep a list of useful packages here.
 
-- `@ethersproject/experimental` ([documentation](https://docs.ethers.io/v5/api/experimental/))
-- `@ethersproject/cli` ([documentation](https://docs.ethers.io/v5/cli/))
-- `@ethersproject/hardware-wallets` ([documentation](https://docs.ethers.io/v5/api/other/hardware/))
+- `@quais/experimental` ([documentation](https://docs.quais.io/v5/api/experimental/))
+- `@quais/cli` ([documentation](https://docs.quais.io/v5/cli/))
+- `@quais/hardware-wallets` ([documentation](https://docs.quais.io/v5/api/other/hardware/))
 
 
 License

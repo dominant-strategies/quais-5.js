@@ -1,12 +1,12 @@
 "use strict";
-import { defineReadOnly } from "@ethersproject/properties";
+import { defineReadOnly } from "@quais/properties";
 import { showThrottleMessage } from "./formatter";
 import { WebSocketProvider } from "./websocket-provider";
-import { Logger } from "@ethersproject/logger";
+import { Logger } from "@quais/logger";
 import { version } from "./_version";
 const logger = new Logger(version);
 import { UrlJsonRpcProvider } from "./url-json-rpc-provider";
-// This key was provided to ethers.js by Alchemy to be used by the
+// This key was provided to quais.js by Alchemy to be used by the
 // default provider, but it is recommended that for your own
 // production environments, that you acquire your own API key at:
 //   https://dashboard.alchemyapi.io

@@ -8,14 +8,14 @@ does not use Node.js or the common Web and DOM APIs. As such,
 there are many operations missing that a normal web environment
 or Node.js instance would provide.
 
-For this reason, there is a [[link-npm-ethersproject-shims]] module
+For this reason, there is a [[link-npm-quaisproject-shims]] module
 provided to fill in the holes.
 
 
 _subsection: Installing @<cookbook-reactnative-shims>
 
-To use ethers in React Native, you must either provide shims for the needed
-missing functionality, or use the ethers.js shim.
+To use quais in React Native, you must either provide shims for the needed
+missing functionality, or use the quais.js shim.
 
 It is **HIGHLY RECOMMENDED** you check out the [security section](cookbook-reactnative-security)
 below for instructions on installing packages which can affect the security
@@ -25,15 +25,15 @@ After installing packages, you may need to restart your packager and company.
 
 _code: Installing @lang<shell>
 
-/home/ricmoo/my-react-project> npm install @ethersproject/shims --save
+/home/ricmoo/my-react-project> npm install @quais/shims --save
 
 _code: Importing @lang<script>
 
-// Pull in the shims (BEFORE importing ethers)
-import "@ethersproject/shims"
+// Pull in the shims (BEFORE importing quais)
+import "@quais/shims"
 
-// Import the ethers library
-import { ethers } from "ethers";
+// Import the quais library
+import { quais } from "quais";
 
 
 _subsection: Security @<cookbook-reactnative-security>
@@ -53,8 +53,8 @@ _code: Importing with Secure Random Sources @lang<script>
 // Import the crypto getRandomValues shim (**BEFORE** the shims)
 import "react-native-get-random-values"
 
-// Import the the ethers shims (**BEFORE** ethers)
-import "@ethersproject/shims"
+// Import the the quais shims (**BEFORE** quais)
+import "@quais/shims"
 
-// Import the ethers library
-import { ethers } from "ethers";
+// Import the quais library
+import { quais } from "quais";

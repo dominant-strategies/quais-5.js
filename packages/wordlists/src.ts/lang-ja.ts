@@ -1,7 +1,7 @@
 "use strict";
 
-import { hexlify } from "@ethersproject/bytes";
-import { toUtf8Bytes, toUtf8String } from "@ethersproject/strings";
+import { hexlify } from "@quais/bytes";
+import { toUtf8Bytes, toUtf8String } from "@quais/strings";
 
 import { logger, Wordlist } from "./wordlist";
 

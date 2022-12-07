@@ -3,10 +3,10 @@
 import fs from "fs";
 import _module from "module";
 import { dirname, resolve } from "path";
-import { ethers } from "ethers";
+import { quais } from "quais";
 ;
 function populateOptions(options) {
-    options = ethers.utils.shallowCopy(options || {});
+    options = quais.utils.shallowCopy(options || {});
     if (options.filename && !options.basedir) {
         options.basedir = dirname(options.filename);
     }
@@ -84,7 +84,7 @@ function _compile(_solc, source, options) {
             }
             result.push({
                 name: name,
-                interface: new ethers.utils.Interface(contract.abi),
+                interface: new quais.utils.Interface(contract.abi),
                 bytecode: "0x" + contract.evm.bytecode.object,
                 runtime: "0x" + contract.evm.deployedBytecode.object,
                 compiler: compilerVersion
@@ -94,7 +94,7 @@ function _compile(_solc, source, options) {
     return result;
 }
 // Creates a require which will first search from the current location,
-// and for solc will fallback onto the version included in @ethersproject/cli
+// and for solc will fallback onto the version included in @quais/cli
 export function customRequire(path) {
     // Node 8.x does not support createRequireFromPath
     const createRequire = (_module.createRequireFromPath || (function (path) {

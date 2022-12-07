@@ -56,7 +56,7 @@ function getDefinitions(source) {
 
 const getSourceUrl = (function(path, include, exclude) {
     console.log("Scanning TypeScript Sources...");
-    const Link = "https://github.com/ethers-io/ethers.js/blob/master/packages$FILENAME#L$LINE";
+    const Link = "https://github.com/quais-io/quais.js/blob/master/packages$FILENAME#L$LINE";
     const Root = resolve(__dirname, path);
 
     const readdir = function(path) {
@@ -121,24 +121,24 @@ let localSigner = null;
 
 function codeContextify(context) {
     const { inspect } = require("util");
-    const ethers = context.require("./packages/ethers");
+    const quais = context.require("./packages/quais");
 
-    if (localSigner == null) { localSigner = ethers.Wallet.createRandom(); }
+    if (localSigner == null) { localSigner = quais.Wallet.createRandom(); }
 
-    context.ethers = ethers;
-    context.BigNumber = ethers.BigNumber;
-    context.constants = ethers.constants;
-    context.utils = ethers.utils;
-    context.arrayify = ethers.utils.arrayify;
-    context.hexlify = ethers.utils.hexlify;
-    context.hexValue = ethers.utils.hexValue;
-    context.Wallet = ethers.Wallet;
-    context.provider = new ethers.providers.InfuraProvider("mainnet", "49a0efa3aaee4fd99797bfa94d8ce2f1");
+    context.quais = quais;
+    context.BigNumber = quais.BigNumber;
+    context.constants = quais.constants;
+    context.utils = quais.utils;
+    context.arrayify = quais.utils.arrayify;
+    context.hexlify = quais.utils.hexlify;
+    context.hexValue = quais.utils.hexValue;
+    context.Wallet = quais.Wallet;
+    context.provider = new quais.providers.InfuraProvider("mainnet", "49a0efa3aaee4fd99797bfa94d8ce2f1");
 
     // We use a local dev node for some signing examples, but want to
     // resolve ENS names against mainnet; super hacky but makes the
     // docs nicer (funded in _startup)
-    context.localProvider = new ethers.providers.JsonRpcProvider();
+    context.localProvider = new quais.providers.JsonRpcProvider();
     context.localSigner = localSigner.connect(context.localProvider);
     context.localProvider.resolveName = context.provider.resolveName.bind(context.provider);
 
@@ -155,12 +155,12 @@ function codeContextify(context) {
 
     context._inspect = function(value, depth) {
         if (toString.call(value) === '[object Error]') {
-            // Not an error from ethers...
-            if (ethers.utils.Logger.errors[value.code] == null) {
+            // Not an error from quais...
+            if (quais.utils.Logger.errors[value.code] == null) {
                 return `Error: ${ value.message }`;
             }
 
-            // Trim the ethers errors down on their verbosity for the docs...
+            // Trim the quais errors down on their verbosity for the docs...
             if (value.message) {
                 value.message = value.message.split(" (")[0];
             }
@@ -189,7 +189,7 @@ function codeContextify(context) {
         const signer = context.localProvider.getSigner();
         const tx = await signer.sendTransaction({
             to: localSigner.address,
-            value: ethers.utils.parseEther("10.0")
+            value: quais.utils.parseEther("10.0")
         });
         await tx.wait();
     }
@@ -201,20 +201,20 @@ function codeContextify(context) {
 
 
 module.exports = {
-  title: "ethers",
+  title: "quais",
   subtitle: "v5.4",
-  description: "Documentation for ethers, a complete, tiny and simple Ethereum library.",
+  description: "Documentation for quais, a complete, tiny and simple Ethereum library.",
   logo: "logo.svg",
 
   socialImage: "social.jpg",
 
   prefix: "/v5",
 
-  link: "https:/\/docs.ethers.io",
+  link: "https:/\/docs.quais.io",
   copyright: "The content of this site is licensed under the [Creative Commons License](https:/\/choosealicense.com/licenses/cc-by-4.0/). Generated on &$now;.",
 
   markdown: {
-      "banner": "-----\n\nDocumentation: [html](https://docs.ethers.io/)\n\n-----\n\n"
+      "banner": "-----\n\nDocumentation: [html](https://docs.quais.io/)\n\n-----\n\n"
   },
 
   codeContextify: codeContextify,
@@ -265,13 +265,13 @@ module.exports = {
       "link-geth-debug": "https:/\/github.com/ethereum/go-ethereum/wiki/Management-APIs#debug",
       "link-geth-rpc": "https:/\/github.com/ethereum/go-ethereum/wiki/Management-APIs",
 
-      "link-legacy-docs3": "https:/\/docs.ethers.io/v3/",
-      "link-legacy-docs4": "https:/\/docs.ethers.io/v4/",
+      "link-legacy-docs3": "https:/\/docs.quais.io/v3/",
+      "link-legacy-docs4": "https:/\/docs.quais.io/v4/",
 
-      "link-github-ci": "https:/\/github.com/ethers-io/ethers.js/actions/runs/158006903",
-      "link-github-issues": "https:/\/github.com/ethers-io/ethers.js/issues",
+      "link-github-ci": "https:/\/github.com/quais-io/quais.js/actions/runs/158006903",
+      "link-github-issues": "https:/\/github.com/quais-io/quais.js/issues",
 
-      "link-issue-407": "https:/\/github.com/ethers-io/ethers.js/issues/407",
+      "link-issue-407": "https:/\/github.com/quais-io/quais.js/issues/407",
 
       "link-infura-secret": "https:/\/infura.io/docs/gettingStarted/authentication",
 
@@ -289,11 +289,11 @@ module.exports = {
       "link-namehash": { name: "namehash", url: "https:/\/docs.ens.domains/contract-api-reference/name-processing#hashing-names" },
       "link-rlp": { name: "Recursive Length Prefix", url: "https:/\/github.com/ethereum/wiki/wiki/RLP" },
 
-      "link-ethersio": "https:/\/ethers.io/",
-      "link-ethers-docs": "https:/\/docs.ethers.io/",
-      "link-ethers-js": "https:/\/cdn.ethers.io/lib/ethers-5.1.esm.min.js",
-      "link-ethers-npm": "https:/\/www.npmjs.com/search?q=%40ethersproject%2F",
-      "link-ethers-asm-grammar": "https:/\/github.com/ethers-io/ethers.js/blob/master/packages/asm/grammar.jison",
+      "link-quaisio": "https:/\/quais.io/",
+      "link-quais-docs": "https:/\/docs.quais.io/",
+      "link-quais-js": "https:/\/cdn.quais.io/lib/quais-5.1.esm.min.js",
+      "link-quais-npm": "https:/\/www.npmjs.com/search?q=%40quaisproject%2F",
+      "link-quais-asm-grammar": "https:/\/github.com/quais-io/quais.js/blob/master/packages/asm/grammar.jison",
 
       "link-eip-155": { name: "EIP-155", url: "https:/\/eips.ethereum.org/EIPS/eip-155" },
       "link-eip-191": { name: "EIP-191", url: "https:/\/eips.ethereum.org/EIPS/eip-191" },
@@ -313,7 +313,7 @@ module.exports = {
       "link-bip-44": { name: "BIP-44", url: "https:/\/en.bitcoin.it/wiki/BIP_0044" },
 
       "link-npm-elliptic": { name: "elliptic", url: "https:/\/www.npmjs.com/package/elliptic" },
-      "link-npm-ethersproject-shims": { name: "Shims", url: "https:/\/www.npmjs.com/package/@ethersproject/shims" },
+      "link-npm-quaisproject-shims": { name: "Shims", url: "https:/\/www.npmjs.com/package/@quais/shims" },
       "link-npm-events": { name: "EventEmitter", url: "https:/\/nodejs.org/dist/latest-v13.x/docs/api/events.html#events_class_eventemitter" },
       "link-npm-bnjs": { name: "BN.js", url: "https:/\/www.npmjs.com/package/bn.js" },
       "link-npm-query-bignumber": "https:/\/www.npmjs.com/search?q=bignumber",
@@ -328,7 +328,7 @@ module.exports = {
 
       "link-cors": { name: "CORS", url: "https:/\/developer.mozilla.org/en-US/docs/Web/HTTP/CORS" },
 
-      "link-ricmoo-humanreadableabi": "https:/\/blog.ricmoo.com/human-readable-contract-abis-in-ethers-js-141902f4d917",
+      "link-ricmoo-humanreadableabi": "https:/\/blog.ricmoo.com/human-readable-contract-abis-in-quais-js-141902f4d917",
 
       "link-other-ethereum-dev-docs": "https:/\/ethereum.org/en/developers/docs/",
 

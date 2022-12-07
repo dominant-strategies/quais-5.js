@@ -1,16 +1,16 @@
-import { ethers } from "ethers";
-export declare class NonceManager extends ethers.Signer {
-    readonly signer: ethers.Signer;
+import { quais } from "quais";
+export declare class NonceManager extends quais.Signer {
+    readonly signer: quais.Signer;
     _initialPromise: Promise<number>;
     _deltaCount: number;
-    constructor(signer: ethers.Signer);
-    connect(provider: ethers.providers.Provider): NonceManager;
+    constructor(signer: quais.Signer);
+    connect(provider: quais.providers.Provider): NonceManager;
     getAddress(): Promise<string>;
-    getTransactionCount(blockTag?: ethers.providers.BlockTag): Promise<number>;
-    setTransactionCount(transactionCount: ethers.BigNumberish | Promise<ethers.BigNumberish>): void;
+    getTransactionCount(blockTag?: quais.providers.BlockTag): Promise<number>;
+    setTransactionCount(transactionCount: quais.BigNumberish | Promise<quais.BigNumberish>): void;
     incrementTransactionCount(count?: number): void;
-    signMessage(message: ethers.Bytes | string): Promise<string>;
-    signTransaction(transaction: ethers.utils.Deferrable<ethers.providers.TransactionRequest>): Promise<string>;
-    sendTransaction(transaction: ethers.utils.Deferrable<ethers.providers.TransactionRequest>): Promise<ethers.providers.TransactionResponse>;
+    signMessage(message: quais.Bytes | string): Promise<string>;
+    signTransaction(transaction: quais.utils.Deferrable<quais.providers.TransactionRequest>): Promise<string>;
+    sendTransaction(transaction: quais.utils.Deferrable<quais.providers.TransactionRequest>): Promise<quais.providers.TransactionResponse>;
 }
 //# sourceMappingURL=nonce-manager.d.ts.map

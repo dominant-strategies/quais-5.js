@@ -1,10 +1,10 @@
 _section: Migration: From Web3.js
 
-This migration guide focuses on migrating web3.js version 1.2.9 to ethers.js v5.
+This migration guide focuses on migrating web3.js version 1.2.9 to quais.js v5.
 
 _subsection: Providers
 
-In ethers, a provider provides an abstraction for a connection to the Ethereum Network. It can be used to issue read only queries and send signed state changing transactions to the Ethereum Network.
+In quais, a provider provides an abstraction for a connection to the Ethereum Network. It can be used to issue read only queries and send signed state changing transactions to the Ethereum Network.
 
 _heading: Connecting to Ethereum
 
@@ -14,10 +14,10 @@ _code: @lang<script>
 var Web3 = require('web3');
 var web3 = new Web3('http://localhost:8545');
 
-// ethers
-var ethers = require('ethers');
+// quais
+var quais = require('quais');
 const url = "http://127.0.0.1:8545";
-const provider = new ethers.providers.JsonRpcProvider(url);
+const provider = new quais.providers.JsonRpcProvider(url);
 
 
 _heading: Connecting to Ethereum: Metamask
@@ -28,13 +28,13 @@ _code: @lang<script>
 // web3
 const web3 = new Web3(Web3.givenProvider);
 
-// ethers
-const provider = new ethers.providers.Web3Provider(window.ethereum);
+// quais
+const provider = new quais.providers.Web3Provider(window.ethereum);
 
 
 _subsection: Signers
 
-In ethers, a **signer** is an abstraction of an Ethereum Account. It can be used to sign messages and transactions and send signed transactions to the Ethereum Network.
+In quais, a **signer** is an abstraction of an Ethereum Account. It can be used to sign messages and transactions and send signed transactions to the Ethereum Network.
 
 In web3, an account can be used to sign messages and transactions.
 
@@ -46,10 +46,10 @@ _code: @lang<script>
 // web3
 const account = web3.eth.accounts.create();
 
-// ethers (create random new account)
-const signer = ethers.Wallet.createRandom();
+// quais (create random new account)
+const signer = quais.Wallet.createRandom();
 
-// ethers (connect to JSON-RPC accounts)
+// quais (connect to JSON-RPC accounts)
 const signer = provider.getSigner();
 
 
@@ -63,7 +63,7 @@ signature = web3.eth.accounts.sign('Some data', privateKey)
 // web3 (using a JSON-RPC account)
 // @TODO
 
-// ethers
+// quais
 signature = await signer.signMessage('Some data')
 
 
@@ -90,9 +90,9 @@ contract.deploy({
     console.log('new contract', newContract.options.address) 
 });
 
-// ethers
+// quais
 const signer = provider.getSigner();
-const factory = new ethers.ContractFactory(abi, bytecode, signer);
+const factory = new quais.ContractFactory(abi, bytecode, signer);
 const contract = await factory.deploy("hello world");
 console.log('contract address', contract.address);
 
@@ -114,14 +114,14 @@ contract.methods.changeValue(42).send({from: ....})
     ...
 });
 
-// ethers
+// quais
 // pass a provider when initiating a contract for read only queries
-const contract = new ethers.Contract(contractAddress, abi, provider);
+const contract = new quais.Contract(contractAddress, abi, provider);
 const value = await contract.getValue();
 
 
 // pass a signer to create a contract instance for state changing operations
-const contract = new ethers.Contract(contractAddress, abi, signer);
+const contract = new quais.Contract(contractAddress, abi, signer);
 const tx = await contract.changeValue(33);
 
 // wait for the transaction to be mined
@@ -133,9 +133,9 @@ _heading: Overloaded Functions
 Overloaded functions are functions that have the same name but different parameter
 types.
 
-In ethers, the syntax to call an overloaded contract function is different
+In quais, the syntax to call an overloaded contract function is different
 from the non-overloaded function. This section shows the differences between web3
-and ethers when calling overloaded functions.
+and quais when calling overloaded functions.
 
 See [issue #407](link-issue-407) for more details.
 
@@ -145,12 +145,12 @@ _code: @lang<script>
 message = await contract.methods.getMessage('nice').call();
 
 
-// ethers
+// quais
 const abi = [
   "function getMessage(string) public view returns (string)",
   "function getMessage() public view returns (string)"
 ]
-const contract = new ethers.Contract(address, abi, signer);
+const contract = new quais.Contract(address, abi, signer);
 
 // for ambiguous functions (two functions with the same
 // name), the signature must also be specified
@@ -168,21 +168,21 @@ _code: @lang<script>
 // web3
 web3.utils.toBN('123456');
 
-// ethers (from a number; must be within safe range)
-ethers.BigNumber.from(123456)
+// quais (from a number; must be within safe range)
+quais.BigNumber.from(123456)
 
-// ethers (from base-10 string)
-ethers.BigNumber.from("123456")
+// quais (from base-10 string)
+quais.BigNumber.from("123456")
 
-// ethers (from hex string)
-ethers.BigNumber.from("0x1e240")
+// quais (from hex string)
+quais.BigNumber.from("0x1e240")
 
 
 _subsection: Utilities
 
 _heading: Hash
 
-Computing Keccak256 hash of a UTF-8 string in web3 and ethers:
+Computing Keccak256 hash of a UTF-8 string in web3 and quais:
 
 _code: @lang<script>
 
@@ -190,9 +190,9 @@ _code: @lang<script>
 web3.utils.sha3('hello world');
 web3.utils.keccak256('hello world');
 
-// ethers (hash of a string)
-ethers.utils.id('hello world')
+// quais (hash of a string)
+quais.utils.id('hello world')
 
-// ethers (hash of binary data)
-ethers.utils.keccak256('0x4242')
+// quais (hash of binary data)
+quais.utils.keccak256('0x4242')
 

@@ -1,26 +1,26 @@
 {
   "author": "Richard Moore <me@ricmoo.com>",
   "bin": {
-    "ethers": "./lib/bin/ethers.js",
-    "ethers-asm": "./lib/bin/ethers-asm.js",
-    "ethers-ens": "./lib/bin/ethers-ens.js",
-    "ethers-ts": "./lib/bin/ethers-ts.js"
+    "quais": "./lib/bin/quais.js",
+    "quais-asm": "./lib/bin/quais-asm.js",
+    "quais-ens": "./lib/bin/quais-ens.js",
+    "quais-ts": "./lib/bin/quais-ts.js"
   },
   "dependencies": {
     "@babel/parser": "7.8.4",
     "@babel/types": "7.8.3",
-    "@ethersproject/asm": "^5.7.0",
-    "@ethersproject/basex": "^5.7.0",
-    "ethers": "^5.7.0",
+    "@quais/asm": "^5.7.0",
+    "@quais/basex": "^5.7.0",
+    "quais": "^5.7.0",
     "scrypt-js": "3.0.1",
     "solc": "0.7.1"
   },
   "description": "Command-Line Interface scripts and releated utilities.",
-  "ethereum": "donations.ethers.eth",
+  
   "funding": [
     {
       "type": "individual",
-      "url": "https://gitcoin.co/grants/13/ethersjs-complete-simple-and-tiny-2"
+      "url": "https://gitcoin.co/grants/13/quaisjs-complete-simple-and-tiny-2"
     },
     {
       "type": "individual",
@@ -29,20 +29,20 @@
   ],
   "keywords": [
     "Ethereum",
-    "ethers",
+    "quais",
     "cli"
   ],
   "license": "MIT",
   "main": "./lib/index.js",
   "module": "./lib.esm/index.js",
-  "name": "@ethersproject/cli",
+  "name": "@quais/cli",
   "publishConfig": {
     "access": "public"
   },
   "repository": {
     "directory": "packages/cli",
     "type": "git",
-    "url": "git://github.com/ethers-io/ethers.js.git"
+    "url": "git://github.com:dominant-strategies/quais.js.git"
   },
   "scripts": {
     "test": "exit 1"

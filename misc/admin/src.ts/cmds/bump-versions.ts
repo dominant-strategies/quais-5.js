@@ -61,7 +61,7 @@ import { loadJson, repeat, saveJson } from "../utils";
         latestVersions[pLocal.name] = version;
 
         // Write out the _version.ts
-        if (!pLocal._ethers_nobuild) {
+        if (!pLocal._quais_nobuild) {
             const code = "export const version = " + JSON.stringify(dirname + "/" + version) + ";\n";
             fs.writeFileSync(resolve(getPackagePath(dirname), "src.ts/_version.ts"), code);
         }
@@ -69,7 +69,7 @@ import { loadJson, repeat, saveJson } from "../utils";
     progress(1);
 
     if (updated) {
-        const filename = resolve("packages/ethers/package.json")
+        const filename = resolve("packages/quais/package.json")
         const info = loadJson(filename);
         Object.keys(info.dependencies).forEach((name) => {
             const version = latestVersions[name];

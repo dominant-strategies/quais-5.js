@@ -2,14 +2,14 @@
 
 "use strict";
 
-import { Network } from "@ethersproject/networks";
+import { Network } from "@quais/networks";
 import { UrlJsonRpcProvider } from "./url-json-rpc-provider";
 
-import { Logger } from "@ethersproject/logger";
+import { Logger } from "@quais/logger";
 import { version } from "./_version";
 const logger = new Logger(version);
 
-// Special API key provided by Nodesmith for ethers.js
+// Special API key provided by Nodesmith for quais.js
 const defaultApiKey = "ETHERS_JS_SHARED";
 
 export class NodesmithProvider extends UrlJsonRpcProvider {

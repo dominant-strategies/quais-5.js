@@ -16,9 +16,9 @@ var __extends = (this && this.__extends) || (function () {
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.MetamaskProvider = void 0;
-var ethers_1 = require("ethers");
+var quais_1 = require("quais");
 var _version_1 = require("./_version");
-var logger = new ethers_1.ethers.utils.Logger(_version_1.version);
+var logger = new quais_1.quais.utils.Logger(_version_1.version);
 var MetamaskProvider = /** @class */ (function (_super) {
     __extends(MetamaskProvider, _super);
     function MetamaskProvider(ethereum) {
@@ -26,14 +26,14 @@ var MetamaskProvider = /** @class */ (function (_super) {
         if (!ethereum) {
             ethereum = global.ethereum;
             if (!ethereum) {
-                logger.throwError("could not auto-detect global.ethereum", ethers_1.ethers.errors.UNSUPPORTED_OPERATION, {
+                logger.throwError("could not auto-detect global.ethereum", quais_1.quais.errors.UNSUPPORTED_OPERATION, {
                     operation: "window.ethereum"
                 });
             }
         }
         _this = _super.call(this, ethereum) || this;
         var _account = null;
-        ethers_1.ethers.utils.defineReadOnly(_this, "_pollAccountFunc", function () {
+        quais_1.quais.utils.defineReadOnly(_this, "_pollAccountFunc", function () {
             var account = null;
             if (account === _account) {
                 return;
@@ -88,6 +88,6 @@ var MetamaskProvider = /** @class */ (function (_super) {
         return this;
     };
     return MetamaskProvider;
-}(ethers_1.ethers.providers.Web3Provider));
+}(quais_1.quais.providers.Web3Provider));
 exports.MetamaskProvider = MetamaskProvider;
 //# sourceMappingURL=metamask-provider.js.map

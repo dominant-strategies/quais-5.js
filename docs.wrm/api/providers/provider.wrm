@@ -1,13 +1,13 @@
 _section: Provider @<Provider>
 
-A **Provider** in ethers is a read-only abstraction to
+A **Provider** in quais is a read-only abstraction to
 access the blockchain data.
 
 _note: Coming from Web3.js?
 If you are coming from Web3.js, this is one of the biggest
-differences you will encounter using ethers.
+differences you will encounter using quais.
 
-The ethers library creates a strong division between the
+The quais library creates a strong division between the
 operation a **Provider** can perform and those of a [[Signer]],
 which Web3.js lumps together.
 
@@ -89,7 +89,7 @@ and values.
 One of the most common uses for this is to use a simple name to
 refer to an [Ethereum Address](address).
 
-In the ethers API, nearly anywhere that accepts an address, an
+In the quais API, nearly anywhere that accepts an address, an
 ENS name may be used instead, which can simplify code and make
 reading and debugging much simpler.
 
@@ -106,7 +106,7 @@ about specific entries for an ENS name.
 
 _code: @lang<javascript>
 
-//_hide: provider = ethers.getDefaultProvider();
+//_hide: provider = quais.getDefaultProvider();
 
 // See below (Resolver) for examples of using this object
 const resolver = await provider.getResolver("ricmoo.eth");
@@ -314,7 +314,7 @@ relevant state.
 
 _code: @lang<javascript>
 
-//_hide: const parseEther = ethers.utils.parseEther;
+//_hide: const parseEther = quais.utils.parseEther;
 
 //_result:
 await provider.estimateGas({
@@ -364,13 +364,13 @@ for the transaction).
 _code: @lang<javascript>
 
 //_hide: const provider = localProvider;
-//_hide: const wallet = new ethers.Wallet(ethers.utils.id("HelloWorld"), provider);
+//_hide: const wallet = new quais.Wallet(quais.utils.id("HelloWorld"), provider);
 //_hide: const fundTx = await localSigner.sendTransaction({
 //_hide:   to: wallet.address,
-//_hide:   value: ethers.utils.parseEther("2.0")
+//_hide:   value: quais.utils.parseEther("2.0")
 //_hide: });
 //_hide: await fundTx.wait();
-//_hide: const tx = await localSigner.populateTransaction({ to: "ricmoo.eth", value: ethers.utils.parseEther("3.14159") });
+//_hide: const tx = await localSigner.populateTransaction({ to: "ricmoo.eth", value: quais.utils.parseEther("3.14159") });
 //_hide: const signedTx = await localSigner.signTransaction(tx);
 
 //_verbatim: `const signedTx = ${ JSON.stringify(signedTx) };`
@@ -491,9 +491,9 @@ $Debug:    each Provider may use this to emit useful debugging information
 _code: Events Example @lang<javascript>
 
 //_hide: const txHash = utils.id("dummy-data");
-//_hide: const myAddress = ethers.constants.HashZero;
-//_hide: const myOtherAddress = ethers.constants.HashZero;
-//_hide: const hexZeroPad = ethers.utils.hexZeroPad;
+//_hide: const myAddress = quais.constants.HashZero;
+//_hide: const myOtherAddress = quais.constants.HashZero;
+//_hide: const hexZeroPad = quais.utils.hexZeroPad;
 
 provider.on("block", (blockNumber) => {
     // Emitted on every block change
@@ -509,7 +509,7 @@ provider.once(txHash, (transaction) => {
 // Interface API. If address is not specified, any address
 // matches and if topics is not specified, any log matches
 filter = {
-    address: "dai.tokens.ethers.eth",
+    address: "dai.tokens.quais.eth",
     topics: [
         utils.id("Transfer(address,address,uint256)")
     ]
@@ -553,7 +553,7 @@ Returns true if and only if //object// is a Provider.
 
 _subsection: BaseProvider @<BaseProvider> @INHERIT<[[Provider]]> @SRC<providers:class.BaseProvider>
 
-Most Providers available in ethers are sub-classes of BaseProvider, which
+Most Providers available in quais are sub-classes of BaseProvider, which
 simplifies sub-classes, as it handles much of the event operations, such as
 polling and formatting.
 

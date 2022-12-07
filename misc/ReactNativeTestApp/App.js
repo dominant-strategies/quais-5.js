@@ -21,16 +21,16 @@ import {
 } from 'react-native/Libraries/NewAppScreen';
 
 
-// Inject the crypto shims (BEFORE the ethers shims)
+// Inject the crypto shims (BEFORE the quais shims)
 import "react-native-get-random-values";
 
-// Inject the missing features with the ethers shims
-import "@ethersproject/shims";
+// Inject the missing features with the quais shims
+import "@quais/shims";
 //import "./libs/shims";
 
-// Import ethers
-import { ethers } from "ethers";
-//import { ethers } from "./libs/ethers";
+// Import quais
+import { quais } from "quais";
+//import { quais } from "./libs/quais";
 
 // Import the test framework
 import "./libs/mocha.js";
@@ -55,7 +55,7 @@ setTimeout(async function() {
     testing.setLogFunc(function(message) {
         console.log(message);
         inflight = inflight.then(() => {
-            return ethers.utils._fetchData("http:/\/localhost:8042/", ethers.utils.toUtf8Bytes(message)).then((result) => {
+            return quais.utils._fetchData("http:/\/localhost:8042/", quais.utils.toUtf8Bytes(message)).then((result) => {
                 return true;
             }, (error) => {
                 return false;
