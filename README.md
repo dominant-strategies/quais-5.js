@@ -1,12 +1,13 @@
-The Ethers Project
+The Quais Project
 ==================
 
 [![npm (tag)](https://img.shields.io/npm/v/ethers)](https://www.npmjs.com/package/ethers)
 [![Node.js CI](https://github.com/ethers-io/ethers.js/workflows/Node.js%20CI/badge.svg?branch=ethers-v5-beta)](https://github.com/ethers-io/ethers.js/actions?query=workflow%3A%22Node.js+CI%22)
 
-A complete Ethereum wallet implementation and utilities in JavaScript (and TypeScript).
+A complete Quai wallet implementation and utilities in JavaScript (and TypeScript). Quais is a downstream fork of Ethers v5.7.2.
 
 **Features:**
+IMPORTANT: These features are in beta and may not be 1:1 compatible with Quai Network as it stands.
 
 - Keep your private keys in your client, **safe** and sound
 - Import and export **JSON wallets** (Geth, Parity and crowdsale)
