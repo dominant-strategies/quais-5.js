@@ -6,7 +6,7 @@ This sub-module is part of the [quais project](https://github.com/quais-io/quais
 It is responsible computing, deriving, encoding and decoding Hierarchal-Deterministic
 private keys.
 
-For more information, see the [documentation](https://docs.quais.io/v5/api/utils/hdnode/).
+For more information, see the [documentation](https://docs.ethers.io/v5/api/utils/hdnode/).
 
 Importing
 ---------

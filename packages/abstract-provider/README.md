@@ -12,7 +12,7 @@ is generally not directly involved in signing transaction or data.
 For signing, see the [Abstract Signer](https://www.npmjs.com/package/@quais/abstract-signer)
 or [Wallet](https://www.npmjs.com/package/@quais/wallet) sub-modules.
 
-For more information, see the [documentation](https://docs.quais.io/v5/api/providers/).
+For more information, see the [documentation](https://docs.ethers.io/v5/api/providers/).
 
 Importing
 ---------

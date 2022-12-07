@@ -6,7 +6,7 @@ This sub-module is part of the [quais project](https://github.com/quais-io/quais
 It is responsible for encoding and decoding vinary data in arbitrary bases, but
 is primarily for Base58 encoding which is used for various blockchain data.
 
-For more information, see the [documentation](https://docs.quais.io/v5/api/utils/encoding/).
+For more information, see the [documentation](https://docs.ethers.io/v5/api/utils/encoding/).
 
 Importing
 ---------

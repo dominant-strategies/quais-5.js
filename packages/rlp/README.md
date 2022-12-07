@@ -5,7 +5,7 @@ This sub-module is part of the [quais project](https://github.com/quais-io/quais
 
 It contains functions for encoding and decoding RLP data.
 
-For more information, see the [documentation](https://docs.quais.io/v5/api/utils/encoding/#rlp--methods).
+For more information, see the [documentation](https://docs.ethers.io/v5/api/utils/encoding/#rlp--methods).
 
 
 Importing

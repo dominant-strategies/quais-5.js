@@ -17,7 +17,7 @@ A complete Ethereum wallet implementation and utilities in JavaScript (and TypeS
 - **Tiny** (~104kb compressed; 322kb uncompressed)
 - **Modular** packages; include only what you need
 - **Complete** functionality for all your Ethereum desires
-- Extensive [documentation](https://docs.quais.io/v5/)
+- Extensive [documentation](https://docs.ethers.io/v5/)
 - Large collection of **test cases** which are maintained and added to
 - Fully **TypeScript** ready, with definition files and full TypeScript source
 - **MIT License** (including ALL dependencies); completely open source to do with as you please
@@ -60,13 +60,13 @@ Installing
 Documentation
 -------------
 
-Browse the [documentation](https://docs.quais.io/v5/) online:
+Browse the [documentation](https://docs.ethers.io/v5/) online:
 
-- [Getting Started](https://docs.quais.io/v5/getting-started/)
-- [Full API Documentation](https://docs.quais.io/v5/api/)
+- [Getting Started](https://docs.ethers.io/v5/getting-started/)
+- [Full API Documentation](https://docs.ethers.io/v5/api/)
 - [Various Ethereum Articles](https://blog.ricmoo.com/)
 
-Or browse the entire documentation as a [single page](https://docs.quais.io/v5/single-page/) to make searching easier.
+Or browse the entire documentation as a [single page](https://docs.ethers.io/v5/single-page/) to make searching easier.
 
 
 Ancillary Packages
@@ -80,9 +80,9 @@ everyone else with packages they do not need.
 
 We will keep a list of useful packages here.
 
-- `@quais/experimental` ([documentation](https://docs.quais.io))
-- `@quais/cli` ([documentation](https://docs.quais.io))
-- `@quais/hardware-wallets` ([documentation](https://docs.quais.io))
+- `@quais/experimental` ([documentation](https://docs.ethers.io))
+- `@quais/cli` ([documentation](https://docs.ethers.io))
+- `@quais/hardware-wallets` ([documentation](https://docs.ethers.io))
 
 
 Sponsors

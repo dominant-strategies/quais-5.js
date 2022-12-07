@@ -5,7 +5,7 @@ This sub-module is part of the [quais project](https://github.com/quais-io/quais
 
 It is responsible for secp256-k1 signing, verifying and recovery operations.
 
-For more information, see the [documentation](https://docs.quais.io/v5/api/utils/signing-key/).
+For more information, see the [documentation](https://docs.ethers.io/v5/api/utils/signing-key/).
 
 Importing
 ---------

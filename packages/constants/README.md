@@ -5,7 +5,7 @@ This sub-module is part of the [quais project](https://github.com/quais-io/quais
 
 It contains many frequently used constants when dealing with Ethereum.
 
-For more information, see the [documentation](https://docs.quais.io/v5/api/utils/constants/).
+For more information, see the [documentation](https://docs.ethers.io/v5/api/utils/constants/).
 
 Importing
 ---------

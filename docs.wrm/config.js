@@ -210,11 +210,11 @@ module.exports = {
 
   prefix: "/v5",
 
-  link: "https:/\/docs.quais.io",
+  link: "https:/\/docs.ethers.io",
   copyright: "The content of this site is licensed under the [Creative Commons License](https:/\/choosealicense.com/licenses/cc-by-4.0/). Generated on &$now;.",
 
   markdown: {
-      "banner": "-----\n\nDocumentation: [html](https://docs.quais.io/)\n\n-----\n\n"
+      "banner": "-----\n\nDocumentation: [html](https://docs.ethers.io/)\n\n-----\n\n"
   },
 
   codeContextify: codeContextify,
@@ -265,8 +265,8 @@ module.exports = {
       "link-geth-debug": "https:/\/github.com/ethereum/go-ethereum/wiki/Management-APIs#debug",
       "link-geth-rpc": "https:/\/github.com/ethereum/go-ethereum/wiki/Management-APIs",
 
-      "link-legacy-docs3": "https:/\/docs.quais.io/v3/",
-      "link-legacy-docs4": "https:/\/docs.quais.io/v4/",
+      "link-legacy-docs3": "https:/\/docs.ethers.io/v3/",
+      "link-legacy-docs4": "https:/\/docs.ethers.io/v4/",
 
       "link-github-ci": "https:/\/github.com/quais-io/quais.js/actions/runs/158006903",
       "link-github-issues": "https:/\/github.com/quais-io/quais.js/issues",
@@ -290,7 +290,7 @@ module.exports = {
       "link-rlp": { name: "Recursive Length Prefix", url: "https:/\/github.com/ethereum/wiki/wiki/RLP" },
 
       "link-quaisio": "https:/\/quais.io/",
-      "link-quais-docs": "https:/\/docs.quais.io/",
+      "link-quais-docs": "https:/\/docs.ethers.io/",
       "link-quais-js": "https:/\/cdn.quais.io/lib/quais-5.1.esm.min.js",
       "link-quais-npm": "https:/\/www.npmjs.com/search?q=%40quaisproject%2F",
       "link-quais-asm-grammar": "https:/\/github.com/quais-io/quais.js/blob/master/packages/asm/grammar.jison",

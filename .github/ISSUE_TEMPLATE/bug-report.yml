@@ -25,7 +25,7 @@ body:
     id: search-terms
     attributes:
       label: Search Terms
-      description: Have you searched for answers [in the documentation](https://docs.quais.io), through [the issues](https://github.com/quais-io/quais.js/issues) and [on the discusions](https://github.com/quais-io/quais.js/discussions)? Please include the search terms you have tried. This helps us add more keywords where needed.
+      description: Have you searched for answers [in the documentation](https://docs.ethers.io), through [the issues](https://github.com/quais-io/quais.js/issues) and [on the discusions](https://github.com/quais-io/quais.js/discussions)? Please include the search terms you have tried. This helps us add more keywords where needed.
       placeholder: e.g. abi, network, utf8
   - type: textarea
     id: about-the-bug

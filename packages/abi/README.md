@@ -6,7 +6,7 @@ This sub-module is part of the [quais project](https://github.com/quais-io/quais
 It is responsible for encoding and decoding the Application Binary Interface (ABI)
 used by most smart contracts to interoperate between other smart contracts and clients.
 
-For more information, see the [documentation](https://docs.quais.io/v5/api/utils/abi/).
+For more information, see the [documentation](https://docs.ethers.io/v5/api/utils/abi/).
 
 Importing
 ---------

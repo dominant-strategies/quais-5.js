@@ -8,7 +8,7 @@ signing service (such as Geth or Parity with key managment enabled, or a
 dedicated signing service such as Clef),
 [hardware wallets](https://www.npmjs.com/package/@quais/hardware-wallets), etc.
 
-For more information, see the [documentation](https://docs.quais.io/v5/api/signer/).
+For more information, see the [documentation](https://docs.ethers.io/v5/api/signer/).
 
 Importing
 ---------

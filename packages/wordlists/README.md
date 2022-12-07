@@ -14,7 +14,7 @@ Supported Languages:
 - **zh_cn** - Chinese (simplified)
 - **zh_tw** - Chinese (traditional)
 
-For more information, see the [documentation](https://docs.quais.io/v5/api/utils/wordlists/).
+For more information, see the [documentation](https://docs.ethers.io/v5/api/utils/wordlists/).
 
 
 Browser

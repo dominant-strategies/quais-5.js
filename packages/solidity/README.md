@@ -6,7 +6,7 @@ This sub-module is part of the [quais project](https://github.com/quais-io/quais
 It contains functions to perform Solidity-specific packed (i.e. non-standard)
 encoding operations.
 
-For more information, see the [documentation](https://docs.quais.io/v5/api/utils/hashing/#utils--solidity-hashing).
+For more information, see the [documentation](https://docs.ethers.io/v5/api/utils/hashing/#utils--solidity-hashing).
 
 Importing
 ---------

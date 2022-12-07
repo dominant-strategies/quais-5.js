@@ -6,7 +6,7 @@ This sub-module is part of the [quais project](https://github.com/quais-io/quais
 It contains functions to convert between string representations and numeric
 representations of numbers, including those out of the range of JavaScript.
 
-For more information, see the [documentation](https://docs.quais.io/v5/api/utils/display-logic/).
+For more information, see the [documentation](https://docs.ethers.io/v5/api/utils/display-logic/).
 
 
 Importing
