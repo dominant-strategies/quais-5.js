@@ -2,10 +2,9 @@
 
 import { getAddress } from "@quais/address";
 import { BigNumber, BigNumberish } from "@quais/bignumber";
-import { arrayify, BytesLike, DataOptions, hexConcat, hexDataLength, hexDataSlice, hexlify, hexZeroPad, isBytesLike, SignatureLike, splitSignature, stripZeros, } from "@quais/bytes";
+import { arrayify, BytesLike, hexConcat, hexDataLength, hexDataSlice, hexlify, hexZeroPad, SignatureLike, splitSignature, stripZeros, } from "@quais/bytes";
 import { Zero } from "@quais/constants";
 import { keccak256 } from "@quais/keccak256";
-import { checkProperties } from "@quais/properties";
 import * as RLP from "@quais/rlp";
 import { computePublicKey, recoverPublicKey } from "@quais/signing-key";
 
@@ -24,9 +23,9 @@ export type AccessListish = AccessList |
                             Record<string, Array<string>>;
 
 export enum TransactionTypes {
-    legacy = 0,
-    eip2930 = 1,
-    eip1559 = 2,
+    standard = 0,
+    etx = 1,
+    standardETx = 2
 };
 
 export type UnsignedTransaction = {
@@ -49,6 +48,13 @@ export type UnsignedTransaction = {
     // EIP-1559; Type 2
     maxPriorityFeePerGas?: BigNumberish;
     maxFeePerGas?: BigNumberish;
+
+    // ETx field; Type 1
+    externalGasLimit?: BigNumber;
+    externalGasPrice?: BigNumber;
+    externalGasTip?: BigNumber;
+    externalData?: string;
+    externalAccessList?: AccessListish;
 }
 
 export interface Transaction {
@@ -60,6 +66,8 @@ export interface Transaction {
 
     gasLimit: BigNumber;
     gasPrice?: BigNumber;
+    maxPriorityFeePerGas?: BigNumber;
+    maxFeePerGas?: BigNumber;
 
     data: string;
     value: BigNumber;
@@ -72,12 +80,15 @@ export interface Transaction {
     // Typed-Transaction features
     type?: number | null;
 
-    // EIP-2930; Type 1 & EIP-1559; Type 2
+    // EIP-2930; Type 0 & EIP-1559;
     accessList?: AccessList;
 
-    // EIP-1559; Type 2
-    maxPriorityFeePerGas?: BigNumber;
-    maxFeePerGas?: BigNumber;
+    // ETx field; Type 1
+    externalGasLimit?: BigNumber;
+    externalGasPrice?: BigNumber;
+    externalGasTip?: BigNumber;
+    externalData?: string;
+    externalAccessList?: AccessList;
 }
 
 ///////////////////////////////
@@ -90,20 +101,6 @@ function handleAddress(value: string): string {
 function handleNumber(value: string): BigNumber {
     if (value === "0x") { return Zero; }
     return BigNumber.from(value);
-}
-
-// Legacy Transaction Fields
-const transactionFields = [
-    { name: "nonce",    maxLength: 32, numeric: true },
-    { name: "gasPrice", maxLength: 32, numeric: true },
-    { name: "gasLimit", maxLength: 32, numeric: true },
-    { name: "to",          length: 20 },
-    { name: "value",    maxLength: 32, numeric: true },
-    { name: "data" },
-];
-
-const allowedTransactionKeys: { [ key: string ]: boolean } = {
-    chainId: true, data: true, gasLimit: true, gasPrice:true, nonce: true, to: true, type: true, value: true
 }
 
 export function computeAddress(key: BytesLike | string): string {
@@ -163,7 +160,7 @@ function formatAccessList(value: AccessListish): Array<[ string, Array<string> ]
     return accessListify(value).map((set) => [ set.address, set.storageKeys ]);
 }
 
-function _serializeEip1559(transaction: UnsignedTransaction, signature?: SignatureLike): string {
+function _serialize(transaction: UnsignedTransaction, signature?: SignatureLike): string {
     // If there is an explicit gasPrice, make sure it matches the
     // EIP-1559 fees; otherwise they may not understand what they
     // think they are setting in terms of fee.
@@ -196,19 +193,26 @@ function _serializeEip1559(transaction: UnsignedTransaction, signature?: Signatu
         fields.push(stripZeros(sig.s));
     }
 
-    return hexConcat([ "0x02", RLP.encode(fields)]);
+    return hexConcat([ "0x00", RLP.encode(fields)]);
 }
 
-function _serializeEip2930(transaction: UnsignedTransaction, signature?: SignatureLike): string {
+
+function _serializeStandardETx(transaction: UnsignedTransaction, signature?: SignatureLike): string {
     const fields: any = [
         formatNumber(transaction.chainId || 0, "chainId"),
         formatNumber(transaction.nonce || 0, "nonce"),
-        formatNumber(transaction.gasPrice || 0, "gasPrice"),
+        formatNumber(transaction.maxPriorityFeePerGas || 0, "maxPriorityFeePerGas"),
+        formatNumber(transaction.maxFeePerGas || 0, "maxFeePerGas"),
         formatNumber(transaction.gasLimit || 0, "gasLimit"),
         ((transaction.to != null) ? getAddress(transaction.to): "0x"),
         formatNumber(transaction.value || 0, "value"),
         (transaction.data || "0x"),
-        (formatAccessList(transaction.accessList || []))
+        (formatAccessList(transaction.accessList || [])),
+        formatNumber(transaction.externalGasPrice || 0, "externalGasPrice"),
+        formatNumber(transaction.externalGasLimit || 0, "externalGasLimit"),
+        formatNumber(transaction.externalGasTip || 0, "externalGasTip"),
+        (transaction.externalData || "0x"),
+        (formatAccessList(transaction.externalAccessList || [])),
     ];
 
     if (signature) {
@@ -218,105 +222,17 @@ function _serializeEip2930(transaction: UnsignedTransaction, signature?: Signatu
         fields.push(stripZeros(sig.s));
     }
 
-    return hexConcat([ "0x01", RLP.encode(fields)]);
-}
-
-// Legacy Transactions and EIP-155
-function _serialize(transaction: UnsignedTransaction, signature?: SignatureLike): string {
-    checkProperties(transaction, allowedTransactionKeys);
-
-    const raw: Array<string | Uint8Array> = [];
-
-    transactionFields.forEach(function(fieldInfo) {
-        let value = (<any>transaction)[fieldInfo.name] || ([]);
-        const options: DataOptions = { };
-        if (fieldInfo.numeric) { options.hexPad = "left"; }
-        value = arrayify(hexlify(value, options));
-
-        // Fixed-width field
-        if (fieldInfo.length && value.length !== fieldInfo.length && value.length > 0) {
-            logger.throwArgumentError("invalid length for " + fieldInfo.name, ("transaction:" + fieldInfo.name), value);
-        }
-
-        // Variable-width (with a maximum)
-        if (fieldInfo.maxLength) {
-            value = stripZeros(value);
-            if (value.length > fieldInfo.maxLength) {
-                logger.throwArgumentError("invalid length for " + fieldInfo.name, ("transaction:" + fieldInfo.name), value );
-            }
-        }
-
-        raw.push(hexlify(value));
-    });
-
-    let chainId = 0;
-    if (transaction.chainId != null) {
-        // A chainId was provided; if non-zero we'll use EIP-155
-        chainId = transaction.chainId;
-
-        if (typeof(chainId) !== "number") {
-            logger.throwArgumentError("invalid transaction.chainId", "transaction", transaction);
-        }
-
-    } else if (signature && !isBytesLike(signature) && signature.v > 28) {
-        // No chainId provided, but the signature is signing with EIP-155; derive chainId
-        chainId = Math.floor((signature.v - 35) / 2);
-    }
-
-    // We have an EIP-155 transaction (chainId was specified and non-zero)
-    if (chainId !== 0) {
-        raw.push(hexlify(chainId)); // @TODO: hexValue?
-        raw.push("0x");
-        raw.push("0x");
-    }
-
-    // Requesting an unsigned transaction
-    if (!signature) {
-        return RLP.encode(raw);
-    }
-
-    // The splitSignature will ensure the transaction has a recoveryParam in the
-    // case that the signTransaction function only adds a v.
-    const sig = splitSignature(signature);
-
-    // We pushed a chainId and null r, s on for hashing only; remove those
-    let v = 27 + sig.recoveryParam
-    if (chainId !== 0) {
-        raw.pop();
-        raw.pop();
-        raw.pop();
-        v += chainId * 2 + 8;
-
-        // If an EIP-155 v (directly or indirectly; maybe _vs) was provided, check it!
-        if (sig.v > 28 && sig.v !== v) {
-             logger.throwArgumentError("transaction.chainId/signature.v mismatch", "signature", signature);
-        }
-    } else if (sig.v !== v) {
-         logger.throwArgumentError("transaction.chainId/signature.v mismatch", "signature", signature);
-    }
-
-    raw.push(hexlify(v));
-    raw.push(stripZeros(arrayify(sig.r)));
-    raw.push(stripZeros(arrayify(sig.s)));
-
-    return RLP.encode(raw);
+    return hexConcat([ "0x02", RLP.encode(fields)]);
 }
 
 export function serialize(transaction: UnsignedTransaction, signature?: SignatureLike): string {
-    // Legacy and EIP-155 Transactions
-    if (transaction.type == null || transaction.type === 0) {
-        if (transaction.accessList != null) {
-            logger.throwArgumentError("untyped transactions do not support accessList; include type: 1", "transaction", transaction);
-        }
-        return _serialize(transaction, signature);
-    }
-
-    // Typed Transactions (EIP-2718)
+    // Typed Transactions (standard and ETx)
     switch (transaction.type) {
-        case 1:
-            return _serializeEip2930(transaction, signature);
+        case 0:
+            return _serialize(transaction, signature);
         case 2:
-            return _serializeEip1559(transaction, signature);
+            return _serializeStandardETx(transaction, signature);
+
         default:
             break;
     }
@@ -345,17 +261,17 @@ function _parseEipSignature(tx: Transaction, fields: Array<string>, serialize: (
     } catch (error) { }
 }
 
-function _parseEip1559(payload: Uint8Array): Transaction {
+function _parse(payload: Uint8Array): Transaction {
     const transaction = RLP.decode(payload.slice(1));
 
     if (transaction.length !== 9 && transaction.length !== 12) {
-        logger.throwArgumentError("invalid component count for transaction type: 2", "payload", hexlify(payload));
+        logger.throwArgumentError("invalid component count for transaction type: 0", "payload", hexlify(payload));
     }
 
     const maxPriorityFeePerGas = handleNumber(transaction[2]);
     const maxFeePerGas = handleNumber(transaction[3]);
     const tx: Transaction = {
-        type:                  2,
+        type:                  0,
         chainId:               handleNumber(transaction[0]).toNumber(),
         nonce:                 handleNumber(transaction[1]).toNumber(),
         maxPriorityFeePerGas:  maxPriorityFeePerGas,
@@ -372,121 +288,57 @@ function _parseEip1559(payload: Uint8Array): Transaction {
     if (transaction.length === 9) { return tx; }
 
     tx.hash = keccak256(payload);
-
-    _parseEipSignature(tx, transaction.slice(9), _serializeEip1559);
+    _parseEipSignature(tx, transaction.slice(9), _serialize);
 
     return tx;
 }
 
-function _parseEip2930(payload: Uint8Array): Transaction {
+function _parseStandardETx(payload: Uint8Array): Transaction {
     const transaction = RLP.decode(payload.slice(1));
 
-    if (transaction.length !== 8 && transaction.length !== 11) {
+    if (transaction.length !== 8 && transaction.length !== 17) {
         logger.throwArgumentError("invalid component count for transaction type: 1", "payload", hexlify(payload));
     }
 
+    const maxPriorityFeePerGas = handleNumber(transaction[2]);
+    const maxFeePerGas = handleNumber(transaction[3]);
     const tx: Transaction = {
-        type:       1,
+        type:       2,
         chainId:    handleNumber(transaction[0]).toNumber(),
         nonce:      handleNumber(transaction[1]).toNumber(),
-        gasPrice:   handleNumber(transaction[2]),
-        gasLimit:   handleNumber(transaction[3]),
-        to:         handleAddress(transaction[4]),
-        value:      handleNumber(transaction[5]),
-        data:       transaction[6],
-        accessList: accessListify(transaction[7])
+        maxPriorityFeePerGas:  maxPriorityFeePerGas,
+        maxFeePerGas:          maxFeePerGas,
+        gasPrice:   null,
+        gasLimit:   handleNumber(transaction[4]),
+        to:         handleAddress(transaction[5]),
+        value:      handleNumber(transaction[6]),
+        data:       transaction[7],
+        accessList: accessListify(transaction[8]),
+        externalGasLimit: handleNumber(transaction[9]),
+        externalGasPrice:  handleNumber(transaction[10]),
+        externalGasTip:  handleNumber(transaction[11]),
+        externalData: transaction[12],
+        externalAccessList: accessListify(transaction[13])
     };
 
     // Unsigned EIP-2930 Transaction
     if (transaction.length === 8) { return tx; }
 
     tx.hash = keccak256(payload);
-
-    _parseEipSignature(tx, transaction.slice(8), _serializeEip2930);
-
-    return tx;
-}
-
-// Legacy Transactions and EIP-155
-function _parse(rawTransaction: Uint8Array): Transaction {
-    const transaction = RLP.decode(rawTransaction);
-
-    if (transaction.length !== 9 && transaction.length !== 6) {
-        logger.throwArgumentError("invalid raw transaction", "rawTransaction", rawTransaction);
-    }
-
-    const tx: Transaction = {
-        nonce:    handleNumber(transaction[0]).toNumber(),
-        gasPrice: handleNumber(transaction[1]),
-        gasLimit: handleNumber(transaction[2]),
-        to:       handleAddress(transaction[3]),
-        value:    handleNumber(transaction[4]),
-        data:     transaction[5],
-        chainId:  0
-    };
-
-    // Legacy unsigned transaction
-    if (transaction.length === 6) { return tx; }
-
-    try {
-        tx.v = BigNumber.from(transaction[6]).toNumber();
-
-    } catch (error) {
-        // @TODO: What makes snese to do? The v is too big
-        return tx;
-    }
-
-    tx.r = hexZeroPad(transaction[7], 32);
-    tx.s = hexZeroPad(transaction[8], 32);
-
-    if (BigNumber.from(tx.r).isZero() && BigNumber.from(tx.s).isZero()) {
-        // EIP-155 unsigned transaction
-        tx.chainId = tx.v;
-        tx.v = 0;
-
-    } else {
-        // Signed Transaction
-
-        tx.chainId = Math.floor((tx.v - 35) / 2);
-        if (tx.chainId < 0) { tx.chainId = 0; }
-
-        let recoveryParam = tx.v - 27;
-
-        const raw = transaction.slice(0, 6);
-
-        if (tx.chainId !== 0) {
-            raw.push(hexlify(tx.chainId));
-            raw.push("0x");
-            raw.push("0x");
-            recoveryParam -= tx.chainId * 2 + 8;
-        }
-
-        const digest = keccak256(RLP.encode(raw));
-        try {
-            tx.from = recoverAddress(digest, { r: hexlify(tx.r), s: hexlify(tx.s), recoveryParam: recoveryParam });
-        } catch (error) { }
-
-        tx.hash = keccak256(rawTransaction);
-    }
-
-    tx.type = null;
+    _parseEipSignature(tx, transaction.slice(14), _serializeStandardETx);
 
     return tx;
 }
-
 
 export function parse(rawTransaction: BytesLike): Transaction {
     const payload = arrayify(rawTransaction);
 
-    // Legacy and EIP-155 Transactions
-    if (payload[0] > 0x7f) { return _parse(payload); }
-
     // Typed Transaction (EIP-2718)
     switch (payload[0]) {
-        case 1:
-            return _parseEip2930(payload);
+        case 0:
+            return _parse(payload);
         case 2:
-            return _parseEip1559(payload);
+            return _parseStandardETx(payload);
         default:
             break;
     }

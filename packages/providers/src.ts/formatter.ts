@@ -12,6 +12,8 @@ import { Logger } from "@quais/logger";
 import { version } from "./_version";
 const logger = new Logger(version);
 
+const HIERARCHY_DEPTH = 3;
+
 export type FormatFunc = (value: any) => any;
 
 export type FormatFuncs = { [ key: string ]: FormatFunc };
@@ -38,10 +40,13 @@ export class Formatter {
         const formats: Formats = <Formats>({ });
 
         const address = this.address.bind(this);
+        const addressArray = this.addressArray.bind(this);
         const bigNumber = this.bigNumber.bind(this);
+        const bigNumberArray = this.bigNumberArray.bind(this);
         const blockTag = this.blockTag.bind(this);
         const data = this.data.bind(this);
         const hash = this.hash.bind(this);
+        const hashArray = this.hashArray.bind(this);
         const hex = this.hex.bind(this);
         const number = this.number.bind(this);
         const type = this.type.bind(this);
@@ -95,6 +100,10 @@ export class Formatter {
             data: Formatter.allowNull(strictData),
             type: Formatter.allowNull(number),
             accessList: Formatter.allowNull(this.accessList.bind(this), null),
+            externalGasPrice: Formatter.allowNull(bigNumber),
+            externalMaxPriorityFeePerGas: Formatter.allowNull(bigNumber),
+            externalGasTip: Formatter.allowNull(bigNumber), 
+            externalAccessList: Formatter.allowNull(this.accessList.bind(this), null),       
         };
 
         formats.receiptLog = {
@@ -130,22 +139,25 @@ export class Formatter {
 
         formats.block = {
             hash: Formatter.allowNull(hash),
-            parentHash: hash,
-            number: number,
+            parentHash: hashArray,
+            number: bigNumberArray,
 
             timestamp: number,
             nonce: Formatter.allowNull(hex),
-            difficulty: this.difficulty.bind(this),
+            difficulty: bigNumberArray,
 
-            gasLimit: bigNumber,
-            gasUsed: bigNumber,
+            gasLimit: bigNumberArray,
+            gasUsed: bigNumberArray,
 
-            miner: Formatter.allowNull(address),
+            miner: addressArray,
             extraData: data,
 
+            stateRoot: hashArray,
+            transactionsRoot: hashArray,
+            receiptsRoot: hashArray,
             transactions: Formatter.allowNull(Formatter.arrayOf(hash)),
 
-            baseFeePerGas: Formatter.allowNull(bigNumber)
+            baseFeePerGas: bigNumberArray
         };
 
         formats.blockWithTransactions = shallowCopy(formats.block);
@@ -199,6 +211,11 @@ export class Formatter {
         return BigNumber.from(value);
     }
 
+    // Strict! Used on input.
+    bigNumberArray(value: any): BigNumber[] {
+        return Array.from(value);
+    }    
+
     // Requires a boolean, "true" or  "false"; returns a boolean
     boolean(value: any): boolean {
         if (typeof(value) === "boolean") { return value; }
@@ -233,6 +250,19 @@ export class Formatter {
     address(value: any): string {
         return getAddress(value);
     }
+
+    addressArray(value: any): string[] {
+        if (value.length != HIERARCHY_DEPTH) {
+            return logger.throwArgumentError("invalid address array", "value", value);
+        }
+        let results: string[] = [];
+        
+        for (const addr of value) {
+            results.push(getAddress(addr))
+        }
+        return results;
+    }
+    
 
     callAddress(value: any): string {
         if (!isHexString(value, 32)) { return null; }
@@ -272,6 +302,22 @@ export class Formatter {
         return result;
     }
 
+    // Requires a hash array, optionally requires 0x prefix; returns prefixed lowercase hash.
+    hashArray(value: any, strict?: boolean): string[] {
+      if (value.length != HIERARCHY_DEPTH) {
+        return logger.throwArgumentError("invalid hash array", "value", value);
+      }
+      let results: string[] = [];
+      for (const hash of value) {
+        const result = this.hex(hash, strict);
+        if (hexDataLength(result) !== 32) {
+            return logger.throwArgumentError("invalid hash", "value", value);
+        }
+        results.push(result);
+      }
+      return results;
+    }
+
     // Returns the difficulty as a number, or if too large (i.e. PoA network) null
     difficulty(value: any): number {
         if (value == null) { return null; }
@@ -292,23 +338,47 @@ export class Formatter {
         return hexZeroPad(value, 32);
     }
 
-    _block(value: any, format: any): Block {
+    _block(value: any, format: any, context?: number): Block {
         if (value.author != null && value.miner == null) {
             value.miner = value.author;
         }
         // The difficulty may need to come from _difficulty in recursed blocks
         const difficulty = (value._difficulty != null) ? value._difficulty: value.difficulty;
         const result = Formatter.check(format, value);
-        result._difficulty = ((difficulty == null) ? null: BigNumber.from(difficulty));
+        result._difficulty = ((difficulty == null) ? null: difficulty);
+        if(context){
+            return this.contextBlock(result, context);
+        }
         return result;
     }
 
-    block(value: any): Block {
-        return this._block(value, this.formats.block);
+    block(value: any, context?: number): Block {
+        return this._block(value, this.formats.block, context);
     }
 
     blockWithTransactions(value: any): Block {
         return this._block(value, this.formats.blockWithTransactions);
+    }
+
+    contextBlock(value: any, context: number): Block{
+        let contextBlock: Block = {
+            number: value.number[context],
+            transactions: value.transactions,
+            hash: value.hash,
+            parentHash: value.parentHash[context],
+            timestamp: value.timestamp,
+            nonce: value.nonce,
+            difficulty: value.difficulty[context],
+            _difficulty: value._difficulty[context],
+            gasLimit: value.gasLimit[context],
+            gasUsed: value.gasUsed[context],
+            miner: value.miner[context],
+            extraData: value.data,
+            transactionsRoot: value.transactionsRoot[context],
+            stateRoot: value.stateRoot[context],
+            receiptsRoot: value.receiptsRoot[context]
+        }
+        return contextBlock
     }
 
     // Strict! Used on input.

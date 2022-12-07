@@ -75,7 +75,7 @@ function checkError(method: string, error: any, params: any): any {
 
         // Found "reverted", this is a CALL_EXCEPTION
         if (result) {
-            logger.throwError("cannot estimate gas; transaction may fail or may require manual gas limit", Logger.errors.UNPREDICTABLE_GAS_LIMIT, {
+            logger.throwError("json-rpc-provider: cannot estimate gas; transaction may fail or may require manual gas limit", Logger.errors.UNPREDICTABLE_GAS_LIMIT, {
                 reason: result.message, method, transaction, error
             });
         }
@@ -199,7 +199,7 @@ export class JsonRpcSigner extends Signer implements TypedDataSigner {
             return Promise.resolve(this._address);
         }
 
-        return this.provider.send("eth_accounts", []).then((accounts) => {
+        return this.provider.send("quai_accounts", []).then((accounts) => {
             if (accounts.length <= this._index) {
                 logger.throwError("unknown account #" + this._index, Logger.errors.UNSUPPORTED_OPERATION, {
                     operation: "getAddress"
@@ -217,7 +217,7 @@ export class JsonRpcSigner extends Signer implements TypedDataSigner {
             return address;
         });
 
-        // The JSON-RPC for eth_sendTransaction uses 90000 gas; if the user
+        // The JSON-RPC for quai_sendTransaction uses 90000 gas; if the user
         // wishes to use this, it is easy to specify explicitly, otherwise
         // we look it up for them.
         if (transaction.gasLimit == null) {
@@ -252,7 +252,7 @@ export class JsonRpcSigner extends Signer implements TypedDataSigner {
 
             const hexTx = (<any>this.provider.constructor).hexlifyTransaction(tx, { from: true });
 
-            return this.provider.send("eth_sendTransaction", [ hexTx ]).then((hash) => {
+            return this.provider.send("quai_sendTransaction", [ hexTx ]).then((hash) => {
                 return hash;
             }, (error) => {
                 if (typeof(error.message) === "string" && error.message.match(/user denied/i)) {
@@ -317,8 +317,8 @@ export class JsonRpcSigner extends Signer implements TypedDataSigner {
         const address = await this.getAddress();
 
         try {
-            // https://github.com/ethereum/wiki/wiki/JSON-RPC#eth_sign
-            return await this.provider.send("eth_sign", [ address.toLowerCase(), hexlify(data) ]);
+            // https://github.com/ethereum/wiki/wiki/JSON-RPC#quai_sign
+            return await this.provider.send("quai_sign", [ address.toLowerCase(), hexlify(data) ]);
         } catch (error) {
             if (typeof(error.message) === "string" && error.message.match(/user denied/i)) {
                 logger.throwError("user rejected signing", Logger.errors.ACTION_REJECTED, {
@@ -340,7 +340,7 @@ export class JsonRpcSigner extends Signer implements TypedDataSigner {
         const address = await this.getAddress();
 
         try {
-            return await this.provider.send("eth_signTypedData_v4", [
+            return await this.provider.send("quai_signTypedData_v4", [
                 address.toLowerCase(),
                 JSON.stringify(_TypedDataEncoder.getPayload(populated.domain, types, populated.value))
             ]);
@@ -387,7 +387,8 @@ class UncheckedJsonRpcSigner extends JsonRpcSigner {
 const allowedTransactionKeys: { [ key: string ]: boolean } = {
     chainId: true, data: true, gasLimit: true, gasPrice:true, nonce: true, to: true, value: true,
     type: true, accessList: true,
-    maxFeePerGas: true, maxPriorityFeePerGas: true
+    maxFeePerGas: true, maxPriorityFeePerGas: true,
+    externalGasLimit: true, externalGasPrice: true, externalGasTip: true, externalData: true, externalAccessList: true,
 }
 
 export class JsonRpcProvider extends BaseProvider {
@@ -407,7 +408,7 @@ export class JsonRpcProvider extends BaseProvider {
         return this._eventLoopCache;
     }
 
-    constructor(url?: ConnectionInfo | string, network?: Networkish) {
+    constructor(url?: ConnectionInfo | string, network?: Networkish, context?: number) {
         let networkOrReady: Networkish | Promise<Network> = network;
 
         // The network is unknown, query the JSON-RPC for it
@@ -422,6 +423,16 @@ export class JsonRpcProvider extends BaseProvider {
                 }, 0);
             });
         }
+        
+        new Promise((resolve, reject) => {
+        setTimeout(() => {
+                this.detectContext().then((context) => {
+                    resolve(context)
+                }, (error) => {
+                    reject(error);
+                });
+            }, 0);
+        })
 
         super(networkOrReady);
 
@@ -460,7 +471,7 @@ export class JsonRpcProvider extends BaseProvider {
 
         let chainId = null;
         try {
-            chainId = await this.send("eth_chainId", [ ]);
+            chainId = await this.send("quai_chainId", [ ]);
         } catch (error) {
             try {
                 chainId = await this.send("net_version", [ ]);
@@ -485,6 +496,26 @@ export class JsonRpcProvider extends BaseProvider {
         });
     }
 
+    async detectContext(): Promise<number> {
+        await timer(0);
+
+        let location = null;
+        try {
+            location = await this.send("quai_nodeLocation", [ ]);
+        } catch (error) {
+        }
+
+        if (location != null){
+            this._context = location.length
+            return this._context 
+        }
+
+        return logger.throwError("could not detect context", Logger.errors.NETWORK_ERROR, {
+            event: "noNetwork"
+        });
+
+    }
+
     getSigner(addressOrIndex?: string | number): JsonRpcSigner {
         return new JsonRpcSigner(_constructorGuard, this, addressOrIndex);
     }
@@ -494,7 +525,7 @@ export class JsonRpcProvider extends BaseProvider {
     }
 
     listAccounts(): Promise<Array<string>> {
-        return this.send("eth_accounts", []).then((accounts: Array<string>) => {
+        return this.send("quai_accounts", []).then((accounts: Array<string>) => {
             return accounts.map((a) => this.formatter.address(a));
         });
     }
@@ -515,7 +546,7 @@ export class JsonRpcProvider extends BaseProvider {
 
         // We can expand this in the future to any call, but for now these
         // are the biggest wins and do not require any serializing parameters.
-        const cache = ([ "eth_chainId", "eth_blockNumber" ].indexOf(method) >= 0);
+        const cache = ([ "quai_chainId", "quai_blockNumber" ].indexOf(method) >= 0);
         if (cache && this._cache[method]) {
             return this._cache[method];
         }
@@ -555,55 +586,58 @@ export class JsonRpcProvider extends BaseProvider {
     prepareRequest(method: string, params: any): [ string, Array<any> ] {
         switch (method) {
             case "getBlockNumber":
-                return [ "eth_blockNumber", [] ];
+                return [ "quai_blockNumber", [] ];
 
             case "getGasPrice":
-                return [ "eth_gasPrice", [] ];
+                return [ "quai_gasPrice", [] ];
 
+            case "getMaxPriorityFeePerGas":
+                return [ "quai_maxPriorityFeePerGas", []];
+                
             case "getBalance":
-                return [ "eth_getBalance", [ getLowerCase(params.address), params.blockTag ] ];
+                return [ "quai_getBalance", [ getLowerCase(params.address), params.blockTag ] ];
 
             case "getTransactionCount":
-                return [ "eth_getTransactionCount", [ getLowerCase(params.address), params.blockTag ] ];
+                return [ "quai_getTransactionCount", [ getLowerCase(params.address), params.blockTag ] ];
 
             case "getCode":
-                return [ "eth_getCode", [ getLowerCase(params.address), params.blockTag ] ];
+                return [ "quai_getCode", [ getLowerCase(params.address), params.blockTag ] ];
 
             case "getStorageAt":
-                return [ "eth_getStorageAt", [ getLowerCase(params.address), hexZeroPad(params.position, 32), params.blockTag ] ];
+                return [ "quai_getStorageAt", [ getLowerCase(params.address), hexZeroPad(params.position, 32), params.blockTag ] ];
 
             case "sendTransaction":
-                return [ "eth_sendRawTransaction", [ params.signedTransaction ] ]
+                return [ "quai_sendRawTransaction", [ params.signedTransaction ] ]
 
             case "getBlock":
                 if (params.blockTag) {
-                    return [ "eth_getBlockByNumber", [ params.blockTag, !!params.includeTransactions ] ];
+                    return [ "quai_getBlockByNumber", [ params.blockTag, !!params.includeTransactions ] ];
                 } else if (params.blockHash) {
-                    return [ "eth_getBlockByHash", [ params.blockHash, !!params.includeTransactions ] ];
+                    return [ "quai_getBlockByHash", [ params.blockHash, !!params.includeTransactions ] ];
                 }
                 return null;
 
             case "getTransaction":
-                return [ "eth_getTransactionByHash", [ params.transactionHash ] ];
+                return [ "quai_getTransactionByHash", [ params.transactionHash ] ];
 
             case "getTransactionReceipt":
-                return [ "eth_getTransactionReceipt", [ params.transactionHash ] ];
+                return [ "quai_getTransactionReceipt", [ params.transactionHash ] ];
 
             case "call": {
                 const hexlifyTransaction = getStatic<(t: TransactionRequest, a?: { [key: string]: boolean }) => { [key: string]: string }>(this.constructor, "hexlifyTransaction");
-                return [ "eth_call", [ hexlifyTransaction(params.transaction, { from: true }), params.blockTag ] ];
+                return [ "quai_call", [ hexlifyTransaction(params.transaction, { from: true }), params.blockTag ] ];
             }
 
             case "estimateGas": {
                 const hexlifyTransaction = getStatic<(t: TransactionRequest, a?: { [key: string]: boolean }) => { [key: string]: string }>(this.constructor, "hexlifyTransaction");
-                return [ "eth_estimateGas", [ hexlifyTransaction(params.transaction, { from: true }) ] ];
+                return [ "quai_estimateGas", [ hexlifyTransaction(params.transaction, { from: true }) ] ];
             }
 
             case "getLogs":
                 if (params.filter && params.filter.address != null) {
                     params.filter.address = getLowerCase(params.filter.address);
                 }
-                return [ "eth_getLogs", [ params.filter ] ];
+                return [ "quai_getLogs", [ params.filter ] ];
 
             default:
                 break;
@@ -652,12 +686,12 @@ export class JsonRpcProvider extends BaseProvider {
         if (this._pendingFilter != null) { return; }
         const self = this;
 
-        const pendingFilter: Promise<number> = this.send("eth_newPendingTransactionFilter", []);
+        const pendingFilter: Promise<number> = this.send("quai_newPendingTransactionFilter", []);
         this._pendingFilter = pendingFilter;
 
         pendingFilter.then(function(filterId) {
             function poll() {
-                self.send("eth_getFilterChanges", [ filterId ]).then(function(hashes: Array<string>) {
+                self.send("quai_getFilterChanges", [ filterId ]).then(function(hashes: Array<string>) {
                     if (self._pendingFilter != pendingFilter) { return null; }
 
                     let seq = Promise.resolve();
@@ -677,7 +711,7 @@ export class JsonRpcProvider extends BaseProvider {
                     });
                 }).then(function() {
                     if (self._pendingFilter != pendingFilter) {
-                        self.send("eth_uninstallFilter", [ filterId ]);
+                        self.send("quai_uninstallFilter", [ filterId ]);
                         return;
                     }
                     setTimeout(function() { poll(); }, 0);
@@ -698,7 +732,7 @@ export class JsonRpcProvider extends BaseProvider {
         super._stopEvent(event);
     }
 
-    // Convert an quais.js transaction into a JSON-RPC transaction
+    // Convert an ethers.js transaction into a JSON-RPC transaction
     //  - gasLimit => gas
     //  - All values hexlified
     //  - All numeric values zero-striped

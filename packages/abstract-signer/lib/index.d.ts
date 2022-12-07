@@ -35,6 +35,7 @@ export declare abstract class Signer {
     sendTransaction(transaction: Deferrable<TransactionRequest>): Promise<TransactionResponse>;
     getChainId(): Promise<number>;
     getGasPrice(): Promise<BigNumber>;
+    getMaxPriorityFeePerGas(): Promise<BigNumber>;
     getFeeData(): Promise<FeeData>;
     resolveName(name: string): Promise<string>;
     checkTransaction(transaction: Deferrable<TransactionRequest>): Deferrable<TransactionRequest>;

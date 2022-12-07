@@ -35,6 +35,12 @@ export type TransactionRequest = {
 
     customData?: Record<string, any>;
     ccipReadEnabled?: boolean;
+
+    externalGasLimit?: BigNumberish;
+    externalGasPrice?: BigNumberish;
+    externalGasTip?: BigNumberish;
+    externalData?: BytesLike;
+    externalAccessList?: AccessListish;
 }
 
 export interface TransactionResponse extends Transaction {
@@ -76,6 +82,10 @@ export interface _Block {
     extraData: string;
 
     baseFeePerGas?: null | BigNumber;
+
+    stateRoot: string;
+    transactionsRoot: string;
+    receiptsRoot: string;
 }
 
 export interface Block extends _Block {
@@ -232,6 +242,7 @@ export abstract class Provider implements OnceBlockable {
     // Latest State
     abstract getBlockNumber(): Promise<number>;
     abstract getGasPrice(): Promise<BigNumber>;
+    abstract getMaxPriorityFeePerGas(): Promise<BigNumber>;
     async getFeeData(): Promise<FeeData> {
         const { block, gasPrice } = await resolveProperties({
             block: this.getBlock("latest"),

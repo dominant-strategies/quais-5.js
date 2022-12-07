@@ -50,9 +50,6 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.BaseProvider = exports.Resolver = exports.Event = void 0;
 var abstract_provider_1 = require("@quais/abstract-provider");
@@ -67,7 +64,6 @@ var properties_1 = require("@quais/properties");
 var sha2_1 = require("@quais/sha2");
 var strings_1 = require("@quais/strings");
 var web_1 = require("@quais/web");
-var bech32_1 = __importDefault(require("bech32"));
 var logger_1 = require("@quais/logger");
 var _version_1 = require("./_version");
 var logger = new logger_1.Logger(_version_1.version);
@@ -156,17 +152,17 @@ function stall(duration) {
 //////////////////////////////
 // Provider Object
 /**
- *  EventType
- *   - "block"
- *   - "poll"
- *   - "didPoll"
- *   - "pending"
- *   - "error"
- *   - "network"
- *   - filter
- *   - topics array
- *   - transaction hash
- */
+*  EventType
+*   - "block"
+*   - "poll"
+*   - "didPoll"
+*   - "pending"
+*   - "error"
+*   - "network"
+*   - filter
+*   - topics array
+*   - transaction hash
+*/
 var PollableEvents = ["block", "network", "pending", "poll"];
 var Event = /** @class */ (function () {
     function Event(tag, listener, once) {
@@ -454,11 +450,6 @@ var Resolver = /** @class */ (function () {
             }
             else {
                 version_1 = -1;
-            }
-            if (version_1 >= 0 && bytes.length === 2 + length_3 && length_3 >= 1 && length_3 <= 75) {
-                var words = bech32_1.default.toWords(bytes.slice(2));
-                words.unshift(version_1);
-                return bech32_1.default.encode(coinInfo.prefix, words);
             }
         }
         return null;
@@ -1515,6 +1506,32 @@ var BaseProvider = /** @class */ (function (_super) {
             });
         });
     };
+    BaseProvider.prototype.getMaxPriorityFeePerGas = function () {
+        return __awaiter(this, void 0, void 0, function () {
+            var result;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0: return [4 /*yield*/, this.getNetwork()];
+                    case 1:
+                        _a.sent();
+                        return [4 /*yield*/, this.perform("getMaxPriorityFeePerGas", {})];
+                    case 2:
+                        result = _a.sent();
+                        try {
+                            return [2 /*return*/, bignumber_1.BigNumber.from(result)];
+                        }
+                        catch (error) {
+                            return [2 /*return*/, logger.throwError("bad result from backend", logger_1.Logger.errors.SERVER_ERROR, {
+                                    method: "getMaxPriorityFeePerGas",
+                                    result: result,
+                                    error: error
+                                })];
+                        }
+                        return [2 /*return*/];
+                }
+            });
+        });
+    };
     BaseProvider.prototype.getBalance = function (addressOrName, blockTag) {
         return __awaiter(this, void 0, void 0, function () {
             var params, result;
@@ -2077,7 +2094,7 @@ var BaseProvider = /** @class */ (function (_super) {
                                         blockWithTxs = this.formatter.blockWithTransactions(block);
                                         blockWithTxs.transactions = blockWithTxs.transactions.map(function (tx) { return _this._wrapTransaction(tx); });
                                         return [2 /*return*/, blockWithTxs];
-                                    case 8: return [2 /*return*/, this.formatter.block(block)];
+                                    case 8: return [2 /*return*/, this.formatter.block(block, this._context)];
                                 }
                             });
                         }); }, { oncePoll: this })];
