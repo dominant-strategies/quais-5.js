@@ -296,6 +296,7 @@ var Signer = /** @class */ (function () {
                     case 2: return [4 /*yield*/, this.getFeeData()];
                     case 3:
                         feeData = _a.sent();
+                        console.log("FEE DATA:", feeData);
                         if (tx.type == null) {
                             // We need to auto-detect the intended type of this transaction...
                             if (feeData.maxFeePerGas != null && feeData.maxPriorityFeePerGas != null) {

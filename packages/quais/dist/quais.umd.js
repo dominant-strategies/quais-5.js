@@ -5539,7 +5539,7 @@
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.version = void 0;
-	exports.version = "logger/0.1.0";
+	exports.version = "logger/5.7.0";
 
 	});
 
@@ -6111,926 +6111,11 @@
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.version = void 0;
-	exports.version = "abi/0.1.0";
+	exports.version = "logger/0.1.0";
 
 	});
 
 	var _version$d = /*@__PURE__*/getDefaultExportFromCjs(_version$c);
-
-	var fragments = createCommonjsModule(function (module, exports) {
-	"use strict";
-	var __extends = (commonjsGlobal && commonjsGlobal.__extends) || (function () {
-	    var extendStatics = function (d, b) {
-	        extendStatics = Object.setPrototypeOf ||
-	            ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-	            function (d, b) { for (var p in b) if (Object.prototype.hasOwnProperty.call(b, p)) d[p] = b[p]; };
-	        return extendStatics(d, b);
-	    };
-	    return function (d, b) {
-	        if (typeof b !== "function" && b !== null)
-	            throw new TypeError("Class extends value " + String(b) + " is not a constructor or null");
-	        extendStatics(d, b);
-	        function __() { this.constructor = d; }
-	        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-	    };
-	})();
-	Object.defineProperty(exports, "__esModule", { value: true });
-	exports.ErrorFragment = exports.FunctionFragment = exports.ConstructorFragment = exports.EventFragment = exports.Fragment = exports.ParamType = exports.FormatTypes = void 0;
-
-
-
-
-	var logger = new lib$4.Logger(_version$c.version);
-	;
-	var _constructorGuard = {};
-	var ModifiersBytes = { calldata: true, memory: true, storage: true };
-	var ModifiersNest = { calldata: true, memory: true };
-	function checkModifier(type, name) {
-	    if (type === "bytes" || type === "string") {
-	        if (ModifiersBytes[name]) {
-	            return true;
-	        }
-	    }
-	    else if (type === "address") {
-	        if (name === "payable") {
-	            return true;
-	        }
-	    }
-	    else if (type.indexOf("[") >= 0 || type === "tuple") {
-	        if (ModifiersNest[name]) {
-	            return true;
-	        }
-	    }
-	    if (ModifiersBytes[name] || name === "payable") {
-	        logger.throwArgumentError("invalid modifier", "name", name);
-	    }
-	    return false;
-	}
-	// @TODO: Make sure that children of an indexed tuple are marked with a null indexed
-	function parseParamType(param, allowIndexed) {
-	    var originalParam = param;
-	    function throwError(i) {
-	        logger.throwArgumentError("unexpected character at position " + i, "param", param);
-	    }
-	    param = param.replace(/\s/g, " ");
-	    function newNode(parent) {
-	        var node = { type: "", name: "", parent: parent, state: { allowType: true } };
-	        if (allowIndexed) {
-	            node.indexed = false;
-	        }
-	        return node;
-	    }
-	    var parent = { type: "", name: "", state: { allowType: true } };
-	    var node = parent;
-	    for (var i = 0; i < param.length; i++) {
-	        var c = param[i];
-	        switch (c) {
-	            case "(":
-	                if (node.state.allowType && node.type === "") {
-	                    node.type = "tuple";
-	                }
-	                else if (!node.state.allowParams) {
-	                    throwError(i);
-	                }
-	                node.state.allowType = false;
-	                node.type = verifyType(node.type);
-	                node.components = [newNode(node)];
-	                node = node.components[0];
-	                break;
-	            case ")":
-	                delete node.state;
-	                if (node.name === "indexed") {
-	                    if (!allowIndexed) {
-	                        throwError(i);
-	                    }
-	                    node.indexed = true;
-	                    node.name = "";
-	                }
-	                if (checkModifier(node.type, node.name)) {
-	                    node.name = "";
-	                }
-	                node.type = verifyType(node.type);
-	                var child = node;
-	                node = node.parent;
-	                if (!node) {
-	                    throwError(i);
-	                }
-	                delete child.parent;
-	                node.state.allowParams = false;
-	                node.state.allowName = true;
-	                node.state.allowArray = true;
-	                break;
-	            case ",":
-	                delete node.state;
-	                if (node.name === "indexed") {
-	                    if (!allowIndexed) {
-	                        throwError(i);
-	                    }
-	                    node.indexed = true;
-	                    node.name = "";
-	                }
-	                if (checkModifier(node.type, node.name)) {
-	                    node.name = "";
-	                }
-	                node.type = verifyType(node.type);
-	                var sibling = newNode(node.parent);
-	                //{ type: "", name: "", parent: node.parent, state: { allowType: true } };
-	                node.parent.components.push(sibling);
-	                delete node.parent;
-	                node = sibling;
-	                break;
-	            // Hit a space...
-	            case " ":
-	                // If reading type, the type is done and may read a param or name
-	                if (node.state.allowType) {
-	                    if (node.type !== "") {
-	                        node.type = verifyType(node.type);
-	                        delete node.state.allowType;
-	                        node.state.allowName = true;
-	                        node.state.allowParams = true;
-	                    }
-	                }
-	                // If reading name, the name is done
-	                if (node.state.allowName) {
-	                    if (node.name !== "") {
-	                        if (node.name === "indexed") {
-	                            if (!allowIndexed) {
-	                                throwError(i);
-	                            }
-	                            if (node.indexed) {
-	                                throwError(i);
-	                            }
-	                            node.indexed = true;
-	                            node.name = "";
-	                        }
-	                        else if (checkModifier(node.type, node.name)) {
-	                            node.name = "";
-	                        }
-	                        else {
-	                            node.state.allowName = false;
-	                        }
-	                    }
-	                }
-	                break;
-	            case "[":
-	                if (!node.state.allowArray) {
-	                    throwError(i);
-	                }
-	                node.type += c;
-	                node.state.allowArray = false;
-	                node.state.allowName = false;
-	                node.state.readArray = true;
-	                break;
-	            case "]":
-	                if (!node.state.readArray) {
-	                    throwError(i);
-	                }
-	                node.type += c;
-	                node.state.readArray = false;
-	                node.state.allowArray = true;
-	                node.state.allowName = true;
-	                break;
-	            default:
-	                if (node.state.allowType) {
-	                    node.type += c;
-	                    node.state.allowParams = true;
-	                    node.state.allowArray = true;
-	                }
-	                else if (node.state.allowName) {
-	                    node.name += c;
-	                    delete node.state.allowArray;
-	                }
-	                else if (node.state.readArray) {
-	                    node.type += c;
-	                }
-	                else {
-	                    throwError(i);
-	                }
-	        }
-	    }
-	    if (node.parent) {
-	        logger.throwArgumentError("unexpected eof", "param", param);
-	    }
-	    delete parent.state;
-	    if (node.name === "indexed") {
-	        if (!allowIndexed) {
-	            throwError(originalParam.length - 7);
-	        }
-	        if (node.indexed) {
-	            throwError(originalParam.length - 7);
-	        }
-	        node.indexed = true;
-	        node.name = "";
-	    }
-	    else if (checkModifier(node.type, node.name)) {
-	        node.name = "";
-	    }
-	    parent.type = verifyType(parent.type);
-	    return parent;
-	}
-	function populate(object, params) {
-	    for (var key in params) {
-	        (0, lib$5.defineReadOnly)(object, key, params[key]);
-	    }
-	}
-	exports.FormatTypes = Object.freeze({
-	    // Bare formatting, as is needed for computing a sighash of an event or function
-	    sighash: "sighash",
-	    // Human-Readable with Minimal spacing and without names (compact human-readable)
-	    minimal: "minimal",
-	    // Human-Readable with nice spacing, including all names
-	    full: "full",
-	    // JSON-format a la Solidity
-	    json: "json"
-	});
-	var paramTypeArray = new RegExp(/^(.*)\[([0-9]*)\]$/);
-	var ParamType = /** @class */ (function () {
-	    function ParamType(constructorGuard, params) {
-	        if (constructorGuard !== _constructorGuard) {
-	            logger.throwError("use fromString", lib$4.Logger.errors.UNSUPPORTED_OPERATION, {
-	                operation: "new ParamType()"
-	            });
-	        }
-	        populate(this, params);
-	        var match = this.type.match(paramTypeArray);
-	        if (match) {
-	            populate(this, {
-	                arrayLength: parseInt(match[2] || "-1"),
-	                arrayChildren: ParamType.fromObject({
-	                    type: match[1],
-	                    components: this.components
-	                }),
-	                baseType: "array"
-	            });
-	        }
-	        else {
-	            populate(this, {
-	                arrayLength: null,
-	                arrayChildren: null,
-	                baseType: ((this.components != null) ? "tuple" : this.type)
-	            });
-	        }
-	        this._isParamType = true;
-	        Object.freeze(this);
-	    }
-	    // Format the parameter fragment
-	    //   - sighash: "(uint256,address)"
-	    //   - minimal: "tuple(uint256,address) indexed"
-	    //   - full:    "tuple(uint256 foo, address bar) indexed baz"
-	    ParamType.prototype.format = function (format) {
-	        if (!format) {
-	            format = exports.FormatTypes.sighash;
-	        }
-	        if (!exports.FormatTypes[format]) {
-	            logger.throwArgumentError("invalid format type", "format", format);
-	        }
-	        if (format === exports.FormatTypes.json) {
-	            var result_1 = {
-	                type: ((this.baseType === "tuple") ? "tuple" : this.type),
-	                name: (this.name || undefined)
-	            };
-	            if (typeof (this.indexed) === "boolean") {
-	                result_1.indexed = this.indexed;
-	            }
-	            if (this.components) {
-	                result_1.components = this.components.map(function (comp) { return JSON.parse(comp.format(format)); });
-	            }
-	            return JSON.stringify(result_1);
-	        }
-	        var result = "";
-	        // Array
-	        if (this.baseType === "array") {
-	            result += this.arrayChildren.format(format);
-	            result += "[" + (this.arrayLength < 0 ? "" : String(this.arrayLength)) + "]";
-	        }
-	        else {
-	            if (this.baseType === "tuple") {
-	                if (format !== exports.FormatTypes.sighash) {
-	                    result += this.type;
-	                }
-	                result += "(" + this.components.map(function (comp) { return comp.format(format); }).join((format === exports.FormatTypes.full) ? ", " : ",") + ")";
-	            }
-	            else {
-	                result += this.type;
-	            }
-	        }
-	        if (format !== exports.FormatTypes.sighash) {
-	            if (this.indexed === true) {
-	                result += " indexed";
-	            }
-	            if (format === exports.FormatTypes.full && this.name) {
-	                result += " " + this.name;
-	            }
-	        }
-	        return result;
-	    };
-	    ParamType.from = function (value, allowIndexed) {
-	        if (typeof (value) === "string") {
-	            return ParamType.fromString(value, allowIndexed);
-	        }
-	        return ParamType.fromObject(value);
-	    };
-	    ParamType.fromObject = function (value) {
-	        if (ParamType.isParamType(value)) {
-	            return value;
-	        }
-	        return new ParamType(_constructorGuard, {
-	            name: (value.name || null),
-	            type: verifyType(value.type),
-	            indexed: ((value.indexed == null) ? null : !!value.indexed),
-	            components: (value.components ? value.components.map(ParamType.fromObject) : null)
-	        });
-	    };
-	    ParamType.fromString = function (value, allowIndexed) {
-	        function ParamTypify(node) {
-	            return ParamType.fromObject({
-	                name: node.name,
-	                type: node.type,
-	                indexed: node.indexed,
-	                components: node.components
-	            });
-	        }
-	        return ParamTypify(parseParamType(value, !!allowIndexed));
-	    };
-	    ParamType.isParamType = function (value) {
-	        return !!(value != null && value._isParamType);
-	    };
-	    return ParamType;
-	}());
-	exports.ParamType = ParamType;
-	;
-	function parseParams(value, allowIndex) {
-	    return splitNesting(value).map(function (param) { return ParamType.fromString(param, allowIndex); });
-	}
-	var Fragment = /** @class */ (function () {
-	    function Fragment(constructorGuard, params) {
-	        if (constructorGuard !== _constructorGuard) {
-	            logger.throwError("use a static from method", lib$4.Logger.errors.UNSUPPORTED_OPERATION, {
-	                operation: "new Fragment()"
-	            });
-	        }
-	        populate(this, params);
-	        this._isFragment = true;
-	        Object.freeze(this);
-	    }
-	    Fragment.from = function (value) {
-	        if (Fragment.isFragment(value)) {
-	            return value;
-	        }
-	        if (typeof (value) === "string") {
-	            return Fragment.fromString(value);
-	        }
-	        return Fragment.fromObject(value);
-	    };
-	    Fragment.fromObject = function (value) {
-	        if (Fragment.isFragment(value)) {
-	            return value;
-	        }
-	        switch (value.type) {
-	            case "function":
-	                return FunctionFragment.fromObject(value);
-	            case "event":
-	                return EventFragment.fromObject(value);
-	            case "constructor":
-	                return ConstructorFragment.fromObject(value);
-	            case "error":
-	                return ErrorFragment.fromObject(value);
-	            case "fallback":
-	            case "receive":
-	                // @TODO: Something? Maybe return a FunctionFragment? A custom DefaultFunctionFragment?
-	                return null;
-	        }
-	        return logger.throwArgumentError("invalid fragment object", "value", value);
-	    };
-	    Fragment.fromString = function (value) {
-	        // Make sure the "returns" is surrounded by a space and all whitespace is exactly one space
-	        value = value.replace(/\s/g, " ");
-	        value = value.replace(/\(/g, " (").replace(/\)/g, ") ").replace(/\s+/g, " ");
-	        value = value.trim();
-	        if (value.split(" ")[0] === "event") {
-	            return EventFragment.fromString(value.substring(5).trim());
-	        }
-	        else if (value.split(" ")[0] === "function") {
-	            return FunctionFragment.fromString(value.substring(8).trim());
-	        }
-	        else if (value.split("(")[0].trim() === "constructor") {
-	            return ConstructorFragment.fromString(value.trim());
-	        }
-	        else if (value.split(" ")[0] === "error") {
-	            return ErrorFragment.fromString(value.substring(5).trim());
-	        }
-	        return logger.throwArgumentError("unsupported fragment", "value", value);
-	    };
-	    Fragment.isFragment = function (value) {
-	        return !!(value && value._isFragment);
-	    };
-	    return Fragment;
-	}());
-	exports.Fragment = Fragment;
-	var EventFragment = /** @class */ (function (_super) {
-	    __extends(EventFragment, _super);
-	    function EventFragment() {
-	        return _super !== null && _super.apply(this, arguments) || this;
-	    }
-	    EventFragment.prototype.format = function (format) {
-	        if (!format) {
-	            format = exports.FormatTypes.sighash;
-	        }
-	        if (!exports.FormatTypes[format]) {
-	            logger.throwArgumentError("invalid format type", "format", format);
-	        }
-	        if (format === exports.FormatTypes.json) {
-	            return JSON.stringify({
-	                type: "event",
-	                anonymous: this.anonymous,
-	                name: this.name,
-	                inputs: this.inputs.map(function (input) { return JSON.parse(input.format(format)); })
-	            });
-	        }
-	        var result = "";
-	        if (format !== exports.FormatTypes.sighash) {
-	            result += "event ";
-	        }
-	        result += this.name + "(" + this.inputs.map(function (input) { return input.format(format); }).join((format === exports.FormatTypes.full) ? ", " : ",") + ") ";
-	        if (format !== exports.FormatTypes.sighash) {
-	            if (this.anonymous) {
-	                result += "anonymous ";
-	            }
-	        }
-	        return result.trim();
-	    };
-	    EventFragment.from = function (value) {
-	        if (typeof (value) === "string") {
-	            return EventFragment.fromString(value);
-	        }
-	        return EventFragment.fromObject(value);
-	    };
-	    EventFragment.fromObject = function (value) {
-	        if (EventFragment.isEventFragment(value)) {
-	            return value;
-	        }
-	        if (value.type !== "event") {
-	            logger.throwArgumentError("invalid event object", "value", value);
-	        }
-	        var params = {
-	            name: verifyIdentifier(value.name),
-	            anonymous: value.anonymous,
-	            inputs: (value.inputs ? value.inputs.map(ParamType.fromObject) : []),
-	            type: "event"
-	        };
-	        return new EventFragment(_constructorGuard, params);
-	    };
-	    EventFragment.fromString = function (value) {
-	        var match = value.match(regexParen);
-	        if (!match) {
-	            logger.throwArgumentError("invalid event string", "value", value);
-	        }
-	        var anonymous = false;
-	        match[3].split(" ").forEach(function (modifier) {
-	            switch (modifier.trim()) {
-	                case "anonymous":
-	                    anonymous = true;
-	                    break;
-	                case "":
-	                    break;
-	                default:
-	                    logger.warn("unknown modifier: " + modifier);
-	            }
-	        });
-	        return EventFragment.fromObject({
-	            name: match[1].trim(),
-	            anonymous: anonymous,
-	            inputs: parseParams(match[2], true),
-	            type: "event"
-	        });
-	    };
-	    EventFragment.isEventFragment = function (value) {
-	        return (value && value._isFragment && value.type === "event");
-	    };
-	    return EventFragment;
-	}(Fragment));
-	exports.EventFragment = EventFragment;
-	function parseGas(value, params) {
-	    params.gas = null;
-	    var comps = value.split("@");
-	    if (comps.length !== 1) {
-	        if (comps.length > 2) {
-	            logger.throwArgumentError("invalid human-readable ABI signature", "value", value);
-	        }
-	        if (!comps[1].match(/^[0-9]+$/)) {
-	            logger.throwArgumentError("invalid human-readable ABI signature gas", "value", value);
-	        }
-	        params.gas = lib$3.BigNumber.from(comps[1]);
-	        return comps[0];
-	    }
-	    return value;
-	}
-	function parseModifiers(value, params) {
-	    params.constant = false;
-	    params.payable = false;
-	    params.stateMutability = "nonpayable";
-	    value.split(" ").forEach(function (modifier) {
-	        switch (modifier.trim()) {
-	            case "constant":
-	                params.constant = true;
-	                break;
-	            case "payable":
-	                params.payable = true;
-	                params.stateMutability = "payable";
-	                break;
-	            case "nonpayable":
-	                params.payable = false;
-	                params.stateMutability = "nonpayable";
-	                break;
-	            case "pure":
-	                params.constant = true;
-	                params.stateMutability = "pure";
-	                break;
-	            case "view":
-	                params.constant = true;
-	                params.stateMutability = "view";
-	                break;
-	            case "external":
-	            case "public":
-	            case "":
-	                break;
-	            default:
-	                console.log("unknown modifier: " + modifier);
-	        }
-	    });
-	}
-	function verifyState(value) {
-	    var result = {
-	        constant: false,
-	        payable: true,
-	        stateMutability: "payable"
-	    };
-	    if (value.stateMutability != null) {
-	        result.stateMutability = value.stateMutability;
-	        // Set (and check things are consistent) the constant property
-	        result.constant = (result.stateMutability === "view" || result.stateMutability === "pure");
-	        if (value.constant != null) {
-	            if ((!!value.constant) !== result.constant) {
-	                logger.throwArgumentError("cannot have constant function with mutability " + result.stateMutability, "value", value);
-	            }
-	        }
-	        // Set (and check things are consistent) the payable property
-	        result.payable = (result.stateMutability === "payable");
-	        if (value.payable != null) {
-	            if ((!!value.payable) !== result.payable) {
-	                logger.throwArgumentError("cannot have payable function with mutability " + result.stateMutability, "value", value);
-	            }
-	        }
-	    }
-	    else if (value.payable != null) {
-	        result.payable = !!value.payable;
-	        // If payable we can assume non-constant; otherwise we can't assume
-	        if (value.constant == null && !result.payable && value.type !== "constructor") {
-	            logger.throwArgumentError("unable to determine stateMutability", "value", value);
-	        }
-	        result.constant = !!value.constant;
-	        if (result.constant) {
-	            result.stateMutability = "view";
-	        }
-	        else {
-	            result.stateMutability = (result.payable ? "payable" : "nonpayable");
-	        }
-	        if (result.payable && result.constant) {
-	            logger.throwArgumentError("cannot have constant payable function", "value", value);
-	        }
-	    }
-	    else if (value.constant != null) {
-	        result.constant = !!value.constant;
-	        result.payable = !result.constant;
-	        result.stateMutability = (result.constant ? "view" : "payable");
-	    }
-	    else if (value.type !== "constructor") {
-	        logger.throwArgumentError("unable to determine stateMutability", "value", value);
-	    }
-	    return result;
-	}
-	var ConstructorFragment = /** @class */ (function (_super) {
-	    __extends(ConstructorFragment, _super);
-	    function ConstructorFragment() {
-	        return _super !== null && _super.apply(this, arguments) || this;
-	    }
-	    ConstructorFragment.prototype.format = function (format) {
-	        if (!format) {
-	            format = exports.FormatTypes.sighash;
-	        }
-	        if (!exports.FormatTypes[format]) {
-	            logger.throwArgumentError("invalid format type", "format", format);
-	        }
-	        if (format === exports.FormatTypes.json) {
-	            return JSON.stringify({
-	                type: "constructor",
-	                stateMutability: ((this.stateMutability !== "nonpayable") ? this.stateMutability : undefined),
-	                payable: this.payable,
-	                gas: (this.gas ? this.gas.toNumber() : undefined),
-	                inputs: this.inputs.map(function (input) { return JSON.parse(input.format(format)); })
-	            });
-	        }
-	        if (format === exports.FormatTypes.sighash) {
-	            logger.throwError("cannot format a constructor for sighash", lib$4.Logger.errors.UNSUPPORTED_OPERATION, {
-	                operation: "format(sighash)"
-	            });
-	        }
-	        var result = "constructor(" + this.inputs.map(function (input) { return input.format(format); }).join((format === exports.FormatTypes.full) ? ", " : ",") + ") ";
-	        if (this.stateMutability && this.stateMutability !== "nonpayable") {
-	            result += this.stateMutability + " ";
-	        }
-	        return result.trim();
-	    };
-	    ConstructorFragment.from = function (value) {
-	        if (typeof (value) === "string") {
-	            return ConstructorFragment.fromString(value);
-	        }
-	        return ConstructorFragment.fromObject(value);
-	    };
-	    ConstructorFragment.fromObject = function (value) {
-	        if (ConstructorFragment.isConstructorFragment(value)) {
-	            return value;
-	        }
-	        if (value.type !== "constructor") {
-	            logger.throwArgumentError("invalid constructor object", "value", value);
-	        }
-	        var state = verifyState(value);
-	        if (state.constant) {
-	            logger.throwArgumentError("constructor cannot be constant", "value", value);
-	        }
-	        var params = {
-	            name: null,
-	            type: value.type,
-	            inputs: (value.inputs ? value.inputs.map(ParamType.fromObject) : []),
-	            payable: state.payable,
-	            stateMutability: state.stateMutability,
-	            gas: (value.gas ? lib$3.BigNumber.from(value.gas) : null)
-	        };
-	        return new ConstructorFragment(_constructorGuard, params);
-	    };
-	    ConstructorFragment.fromString = function (value) {
-	        var params = { type: "constructor" };
-	        value = parseGas(value, params);
-	        var parens = value.match(regexParen);
-	        if (!parens || parens[1].trim() !== "constructor") {
-	            logger.throwArgumentError("invalid constructor string", "value", value);
-	        }
-	        params.inputs = parseParams(parens[2].trim(), false);
-	        parseModifiers(parens[3].trim(), params);
-	        return ConstructorFragment.fromObject(params);
-	    };
-	    ConstructorFragment.isConstructorFragment = function (value) {
-	        return (value && value._isFragment && value.type === "constructor");
-	    };
-	    return ConstructorFragment;
-	}(Fragment));
-	exports.ConstructorFragment = ConstructorFragment;
-	var FunctionFragment = /** @class */ (function (_super) {
-	    __extends(FunctionFragment, _super);
-	    function FunctionFragment() {
-	        return _super !== null && _super.apply(this, arguments) || this;
-	    }
-	    FunctionFragment.prototype.format = function (format) {
-	        if (!format) {
-	            format = exports.FormatTypes.sighash;
-	        }
-	        if (!exports.FormatTypes[format]) {
-	            logger.throwArgumentError("invalid format type", "format", format);
-	        }
-	        if (format === exports.FormatTypes.json) {
-	            return JSON.stringify({
-	                type: "function",
-	                name: this.name,
-	                constant: this.constant,
-	                stateMutability: ((this.stateMutability !== "nonpayable") ? this.stateMutability : undefined),
-	                payable: this.payable,
-	                gas: (this.gas ? this.gas.toNumber() : undefined),
-	                inputs: this.inputs.map(function (input) { return JSON.parse(input.format(format)); }),
-	                outputs: this.outputs.map(function (output) { return JSON.parse(output.format(format)); }),
-	            });
-	        }
-	        var result = "";
-	        if (format !== exports.FormatTypes.sighash) {
-	            result += "function ";
-	        }
-	        result += this.name + "(" + this.inputs.map(function (input) { return input.format(format); }).join((format === exports.FormatTypes.full) ? ", " : ",") + ") ";
-	        if (format !== exports.FormatTypes.sighash) {
-	            if (this.stateMutability) {
-	                if (this.stateMutability !== "nonpayable") {
-	                    result += (this.stateMutability + " ");
-	                }
-	            }
-	            else if (this.constant) {
-	                result += "view ";
-	            }
-	            if (this.outputs && this.outputs.length) {
-	                result += "returns (" + this.outputs.map(function (output) { return output.format(format); }).join(", ") + ") ";
-	            }
-	            if (this.gas != null) {
-	                result += "@" + this.gas.toString() + " ";
-	            }
-	        }
-	        return result.trim();
-	    };
-	    FunctionFragment.from = function (value) {
-	        if (typeof (value) === "string") {
-	            return FunctionFragment.fromString(value);
-	        }
-	        return FunctionFragment.fromObject(value);
-	    };
-	    FunctionFragment.fromObject = function (value) {
-	        if (FunctionFragment.isFunctionFragment(value)) {
-	            return value;
-	        }
-	        if (value.type !== "function") {
-	            logger.throwArgumentError("invalid function object", "value", value);
-	        }
-	        var state = verifyState(value);
-	        var params = {
-	            type: value.type,
-	            name: verifyIdentifier(value.name),
-	            constant: state.constant,
-	            inputs: (value.inputs ? value.inputs.map(ParamType.fromObject) : []),
-	            outputs: (value.outputs ? value.outputs.map(ParamType.fromObject) : []),
-	            payable: state.payable,
-	            stateMutability: state.stateMutability,
-	            gas: (value.gas ? lib$3.BigNumber.from(value.gas) : null)
-	        };
-	        return new FunctionFragment(_constructorGuard, params);
-	    };
-	    FunctionFragment.fromString = function (value) {
-	        var params = { type: "function" };
-	        value = parseGas(value, params);
-	        var comps = value.split(" returns ");
-	        if (comps.length > 2) {
-	            logger.throwArgumentError("invalid function string", "value", value);
-	        }
-	        var parens = comps[0].match(regexParen);
-	        if (!parens) {
-	            logger.throwArgumentError("invalid function signature", "value", value);
-	        }
-	        params.name = parens[1].trim();
-	        if (params.name) {
-	            verifyIdentifier(params.name);
-	        }
-	        params.inputs = parseParams(parens[2], false);
-	        parseModifiers(parens[3].trim(), params);
-	        // We have outputs
-	        if (comps.length > 1) {
-	            var returns = comps[1].match(regexParen);
-	            if (returns[1].trim() != "" || returns[3].trim() != "") {
-	                logger.throwArgumentError("unexpected tokens", "value", value);
-	            }
-	            params.outputs = parseParams(returns[2], false);
-	        }
-	        else {
-	            params.outputs = [];
-	        }
-	        return FunctionFragment.fromObject(params);
-	    };
-	    FunctionFragment.isFunctionFragment = function (value) {
-	        return (value && value._isFragment && value.type === "function");
-	    };
-	    return FunctionFragment;
-	}(ConstructorFragment));
-	exports.FunctionFragment = FunctionFragment;
-	//export class StructFragment extends Fragment {
-	//}
-	function checkForbidden(fragment) {
-	    var sig = fragment.format();
-	    if (sig === "Error(string)" || sig === "Panic(uint256)") {
-	        logger.throwArgumentError("cannot specify user defined " + sig + " error", "fragment", fragment);
-	    }
-	    return fragment;
-	}
-	var ErrorFragment = /** @class */ (function (_super) {
-	    __extends(ErrorFragment, _super);
-	    function ErrorFragment() {
-	        return _super !== null && _super.apply(this, arguments) || this;
-	    }
-	    ErrorFragment.prototype.format = function (format) {
-	        if (!format) {
-	            format = exports.FormatTypes.sighash;
-	        }
-	        if (!exports.FormatTypes[format]) {
-	            logger.throwArgumentError("invalid format type", "format", format);
-	        }
-	        if (format === exports.FormatTypes.json) {
-	            return JSON.stringify({
-	                type: "error",
-	                name: this.name,
-	                inputs: this.inputs.map(function (input) { return JSON.parse(input.format(format)); }),
-	            });
-	        }
-	        var result = "";
-	        if (format !== exports.FormatTypes.sighash) {
-	            result += "error ";
-	        }
-	        result += this.name + "(" + this.inputs.map(function (input) { return input.format(format); }).join((format === exports.FormatTypes.full) ? ", " : ",") + ") ";
-	        return result.trim();
-	    };
-	    ErrorFragment.from = function (value) {
-	        if (typeof (value) === "string") {
-	            return ErrorFragment.fromString(value);
-	        }
-	        return ErrorFragment.fromObject(value);
-	    };
-	    ErrorFragment.fromObject = function (value) {
-	        if (ErrorFragment.isErrorFragment(value)) {
-	            return value;
-	        }
-	        if (value.type !== "error") {
-	            logger.throwArgumentError("invalid error object", "value", value);
-	        }
-	        var params = {
-	            type: value.type,
-	            name: verifyIdentifier(value.name),
-	            inputs: (value.inputs ? value.inputs.map(ParamType.fromObject) : [])
-	        };
-	        return checkForbidden(new ErrorFragment(_constructorGuard, params));
-	    };
-	    ErrorFragment.fromString = function (value) {
-	        var params = { type: "error" };
-	        var parens = value.match(regexParen);
-	        if (!parens) {
-	            logger.throwArgumentError("invalid error signature", "value", value);
-	        }
-	        params.name = parens[1].trim();
-	        if (params.name) {
-	            verifyIdentifier(params.name);
-	        }
-	        params.inputs = parseParams(parens[2], false);
-	        return checkForbidden(ErrorFragment.fromObject(params));
-	    };
-	    ErrorFragment.isErrorFragment = function (value) {
-	        return (value && value._isFragment && value.type === "error");
-	    };
-	    return ErrorFragment;
-	}(Fragment));
-	exports.ErrorFragment = ErrorFragment;
-	function verifyType(type) {
-	    // These need to be transformed to their full description
-	    if (type.match(/^uint($|[^1-9])/)) {
-	        type = "uint256" + type.substring(4);
-	    }
-	    else if (type.match(/^int($|[^1-9])/)) {
-	        type = "int256" + type.substring(3);
-	    }
-	    // @TODO: more verification
-	    return type;
-	}
-	// See: https://github.com/ethereum/solidity/blob/1f8f1a3db93a548d0555e3e14cfc55a10e25b60e/docs/grammar/SolidityLexer.g4#L234
-	var regexIdentifier = new RegExp("^[a-zA-Z$_][a-zA-Z0-9$_]*$");
-	function verifyIdentifier(value) {
-	    if (!value || !value.match(regexIdentifier)) {
-	        logger.throwArgumentError("invalid identifier \"" + value + "\"", "value", value);
-	    }
-	    return value;
-	}
-	var regexParen = new RegExp("^([^)(]*)\\((.*)\\)([^)(]*)$");
-	function splitNesting(value) {
-	    value = value.trim();
-	    var result = [];
-	    var accum = "";
-	    var depth = 0;
-	    for (var offset = 0; offset < value.length; offset++) {
-	        var c = value[offset];
-	        if (c === "," && depth === 0) {
-	            result.push(accum);
-	            accum = "";
-	        }
-	        else {
-	            accum += c;
-	            if (c === "(") {
-	                depth++;
-	            }
-	            else if (c === ")") {
-	                depth--;
-	                if (depth === -1) {
-	                    logger.throwArgumentError("unbalanced parenthesis", "value", value);
-	                }
-	            }
-	        }
-	    }
-	    if (accum) {
-	        result.push(accum);
-	    }
-	    return result;
-	}
-
-	});
-
-	var fragments$1 = /*@__PURE__*/getDefaultExportFromCjs(fragments);
-
-	var _version$e = createCommonjsModule(function (module, exports) {
-	"use strict";
-	Object.defineProperty(exports, "__esModule", { value: true });
-	exports.version = void 0;
-	exports.version = "logger/5.7.0";
-
-	});
-
-	var _version$f = /*@__PURE__*/getDefaultExportFromCjs(_version$e);
 
 	var lib$6 = createCommonjsModule(function (module, exports) {
 	"use strict";
@@ -7366,7 +6451,7 @@
 	    };
 	    Logger.globalLogger = function () {
 	        if (!_globalLogger) {
-	            _globalLogger = new Logger(_version$e.version);
+	            _globalLogger = new Logger(_version$c.version);
 	        }
 	        return _globalLogger;
 	    };
@@ -7408,627 +6493,922 @@
 
 	var index$6 = /*@__PURE__*/getDefaultExportFromCjs(lib$6);
 
-	var _version$g = createCommonjsModule(function (module, exports) {
+	var _version$e = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.version = void 0;
-	exports.version = "bytes/0.1.0";
+	exports.version = "abi/0.1.0";
 
 	});
 
-	var _version$h = /*@__PURE__*/getDefaultExportFromCjs(_version$g);
+	var _version$f = /*@__PURE__*/getDefaultExportFromCjs(_version$e);
 
-	var lib$7 = createCommonjsModule(function (module, exports) {
+	var fragments = createCommonjsModule(function (module, exports) {
 	"use strict";
+	var __extends = (commonjsGlobal && commonjsGlobal.__extends) || (function () {
+	    var extendStatics = function (d, b) {
+	        extendStatics = Object.setPrototypeOf ||
+	            ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+	            function (d, b) { for (var p in b) if (Object.prototype.hasOwnProperty.call(b, p)) d[p] = b[p]; };
+	        return extendStatics(d, b);
+	    };
+	    return function (d, b) {
+	        if (typeof b !== "function" && b !== null)
+	            throw new TypeError("Class extends value " + String(b) + " is not a constructor or null");
+	        extendStatics(d, b);
+	        function __() { this.constructor = d; }
+	        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+	    };
+	})();
 	Object.defineProperty(exports, "__esModule", { value: true });
-	exports.joinSignature = exports.splitSignature = exports.hexZeroPad = exports.hexStripZeros = exports.hexValue = exports.hexConcat = exports.hexDataSlice = exports.hexDataLength = exports.hexlify = exports.isHexString = exports.zeroPad = exports.stripZeros = exports.concat = exports.arrayify = exports.isBytes = exports.isBytesLike = void 0;
+	exports.ErrorFragment = exports.FunctionFragment = exports.ConstructorFragment = exports.EventFragment = exports.Fragment = exports.ParamType = exports.FormatTypes = void 0;
 
 
-	var logger = new lib$6.Logger(_version$g.version);
-	///////////////////////////////
-	function isHexable(value) {
-	    return !!(value.toHexString);
-	}
-	function addSlice(array) {
-	    if (array.slice) {
-	        return array;
+
+
+	var logger = new lib$6.Logger(_version$e.version);
+	;
+	var _constructorGuard = {};
+	var ModifiersBytes = { calldata: true, memory: true, storage: true };
+	var ModifiersNest = { calldata: true, memory: true };
+	function checkModifier(type, name) {
+	    if (type === "bytes" || type === "string") {
+	        if (ModifiersBytes[name]) {
+	            return true;
+	        }
 	    }
-	    array.slice = function () {
-	        var args = Array.prototype.slice.call(arguments);
-	        return addSlice(new Uint8Array(Array.prototype.slice.apply(array, args)));
+	    else if (type === "address") {
+	        if (name === "payable") {
+	            return true;
+	        }
+	    }
+	    else if (type.indexOf("[") >= 0 || type === "tuple") {
+	        if (ModifiersNest[name]) {
+	            return true;
+	        }
+	    }
+	    if (ModifiersBytes[name] || name === "payable") {
+	        logger.throwArgumentError("invalid modifier", "name", name);
+	    }
+	    return false;
+	}
+	// @TODO: Make sure that children of an indexed tuple are marked with a null indexed
+	function parseParamType(param, allowIndexed) {
+	    var originalParam = param;
+	    function throwError(i) {
+	        logger.throwArgumentError("unexpected character at position " + i, "param", param);
+	    }
+	    param = param.replace(/\s/g, " ");
+	    function newNode(parent) {
+	        var node = { type: "", name: "", parent: parent, state: { allowType: true } };
+	        if (allowIndexed) {
+	            node.indexed = false;
+	        }
+	        return node;
+	    }
+	    var parent = { type: "", name: "", state: { allowType: true } };
+	    var node = parent;
+	    for (var i = 0; i < param.length; i++) {
+	        var c = param[i];
+	        switch (c) {
+	            case "(":
+	                if (node.state.allowType && node.type === "") {
+	                    node.type = "tuple";
+	                }
+	                else if (!node.state.allowParams) {
+	                    throwError(i);
+	                }
+	                node.state.allowType = false;
+	                node.type = verifyType(node.type);
+	                node.components = [newNode(node)];
+	                node = node.components[0];
+	                break;
+	            case ")":
+	                delete node.state;
+	                if (node.name === "indexed") {
+	                    if (!allowIndexed) {
+	                        throwError(i);
+	                    }
+	                    node.indexed = true;
+	                    node.name = "";
+	                }
+	                if (checkModifier(node.type, node.name)) {
+	                    node.name = "";
+	                }
+	                node.type = verifyType(node.type);
+	                var child = node;
+	                node = node.parent;
+	                if (!node) {
+	                    throwError(i);
+	                }
+	                delete child.parent;
+	                node.state.allowParams = false;
+	                node.state.allowName = true;
+	                node.state.allowArray = true;
+	                break;
+	            case ",":
+	                delete node.state;
+	                if (node.name === "indexed") {
+	                    if (!allowIndexed) {
+	                        throwError(i);
+	                    }
+	                    node.indexed = true;
+	                    node.name = "";
+	                }
+	                if (checkModifier(node.type, node.name)) {
+	                    node.name = "";
+	                }
+	                node.type = verifyType(node.type);
+	                var sibling = newNode(node.parent);
+	                //{ type: "", name: "", parent: node.parent, state: { allowType: true } };
+	                node.parent.components.push(sibling);
+	                delete node.parent;
+	                node = sibling;
+	                break;
+	            // Hit a space...
+	            case " ":
+	                // If reading type, the type is done and may read a param or name
+	                if (node.state.allowType) {
+	                    if (node.type !== "") {
+	                        node.type = verifyType(node.type);
+	                        delete node.state.allowType;
+	                        node.state.allowName = true;
+	                        node.state.allowParams = true;
+	                    }
+	                }
+	                // If reading name, the name is done
+	                if (node.state.allowName) {
+	                    if (node.name !== "") {
+	                        if (node.name === "indexed") {
+	                            if (!allowIndexed) {
+	                                throwError(i);
+	                            }
+	                            if (node.indexed) {
+	                                throwError(i);
+	                            }
+	                            node.indexed = true;
+	                            node.name = "";
+	                        }
+	                        else if (checkModifier(node.type, node.name)) {
+	                            node.name = "";
+	                        }
+	                        else {
+	                            node.state.allowName = false;
+	                        }
+	                    }
+	                }
+	                break;
+	            case "[":
+	                if (!node.state.allowArray) {
+	                    throwError(i);
+	                }
+	                node.type += c;
+	                node.state.allowArray = false;
+	                node.state.allowName = false;
+	                node.state.readArray = true;
+	                break;
+	            case "]":
+	                if (!node.state.readArray) {
+	                    throwError(i);
+	                }
+	                node.type += c;
+	                node.state.readArray = false;
+	                node.state.allowArray = true;
+	                node.state.allowName = true;
+	                break;
+	            default:
+	                if (node.state.allowType) {
+	                    node.type += c;
+	                    node.state.allowParams = true;
+	                    node.state.allowArray = true;
+	                }
+	                else if (node.state.allowName) {
+	                    node.name += c;
+	                    delete node.state.allowArray;
+	                }
+	                else if (node.state.readArray) {
+	                    node.type += c;
+	                }
+	                else {
+	                    throwError(i);
+	                }
+	        }
+	    }
+	    if (node.parent) {
+	        logger.throwArgumentError("unexpected eof", "param", param);
+	    }
+	    delete parent.state;
+	    if (node.name === "indexed") {
+	        if (!allowIndexed) {
+	            throwError(originalParam.length - 7);
+	        }
+	        if (node.indexed) {
+	            throwError(originalParam.length - 7);
+	        }
+	        node.indexed = true;
+	        node.name = "";
+	    }
+	    else if (checkModifier(node.type, node.name)) {
+	        node.name = "";
+	    }
+	    parent.type = verifyType(parent.type);
+	    return parent;
+	}
+	function populate(object, params) {
+	    for (var key in params) {
+	        (0, lib$5.defineReadOnly)(object, key, params[key]);
+	    }
+	}
+	exports.FormatTypes = Object.freeze({
+	    // Bare formatting, as is needed for computing a sighash of an event or function
+	    sighash: "sighash",
+	    // Human-Readable with Minimal spacing and without names (compact human-readable)
+	    minimal: "minimal",
+	    // Human-Readable with nice spacing, including all names
+	    full: "full",
+	    // JSON-format a la Solidity
+	    json: "json"
+	});
+	var paramTypeArray = new RegExp(/^(.*)\[([0-9]*)\]$/);
+	var ParamType = /** @class */ (function () {
+	    function ParamType(constructorGuard, params) {
+	        if (constructorGuard !== _constructorGuard) {
+	            logger.throwError("use fromString", lib$6.Logger.errors.UNSUPPORTED_OPERATION, {
+	                operation: "new ParamType()"
+	            });
+	        }
+	        populate(this, params);
+	        var match = this.type.match(paramTypeArray);
+	        if (match) {
+	            populate(this, {
+	                arrayLength: parseInt(match[2] || "-1"),
+	                arrayChildren: ParamType.fromObject({
+	                    type: match[1],
+	                    components: this.components
+	                }),
+	                baseType: "array"
+	            });
+	        }
+	        else {
+	            populate(this, {
+	                arrayLength: null,
+	                arrayChildren: null,
+	                baseType: ((this.components != null) ? "tuple" : this.type)
+	            });
+	        }
+	        this._isParamType = true;
+	        Object.freeze(this);
+	    }
+	    // Format the parameter fragment
+	    //   - sighash: "(uint256,address)"
+	    //   - minimal: "tuple(uint256,address) indexed"
+	    //   - full:    "tuple(uint256 foo, address bar) indexed baz"
+	    ParamType.prototype.format = function (format) {
+	        if (!format) {
+	            format = exports.FormatTypes.sighash;
+	        }
+	        if (!exports.FormatTypes[format]) {
+	            logger.throwArgumentError("invalid format type", "format", format);
+	        }
+	        if (format === exports.FormatTypes.json) {
+	            var result_1 = {
+	                type: ((this.baseType === "tuple") ? "tuple" : this.type),
+	                name: (this.name || undefined)
+	            };
+	            if (typeof (this.indexed) === "boolean") {
+	                result_1.indexed = this.indexed;
+	            }
+	            if (this.components) {
+	                result_1.components = this.components.map(function (comp) { return JSON.parse(comp.format(format)); });
+	            }
+	            return JSON.stringify(result_1);
+	        }
+	        var result = "";
+	        // Array
+	        if (this.baseType === "array") {
+	            result += this.arrayChildren.format(format);
+	            result += "[" + (this.arrayLength < 0 ? "" : String(this.arrayLength)) + "]";
+	        }
+	        else {
+	            if (this.baseType === "tuple") {
+	                if (format !== exports.FormatTypes.sighash) {
+	                    result += this.type;
+	                }
+	                result += "(" + this.components.map(function (comp) { return comp.format(format); }).join((format === exports.FormatTypes.full) ? ", " : ",") + ")";
+	            }
+	            else {
+	                result += this.type;
+	            }
+	        }
+	        if (format !== exports.FormatTypes.sighash) {
+	            if (this.indexed === true) {
+	                result += " indexed";
+	            }
+	            if (format === exports.FormatTypes.full && this.name) {
+	                result += " " + this.name;
+	            }
+	        }
+	        return result;
 	    };
-	    return array;
-	}
-	function isBytesLike(value) {
-	    return ((isHexString(value) && !(value.length % 2)) || isBytes(value));
-	}
-	exports.isBytesLike = isBytesLike;
-	function isInteger(value) {
-	    return (typeof (value) === "number" && value == value && (value % 1) === 0);
-	}
-	function isBytes(value) {
-	    if (value == null) {
-	        return false;
-	    }
-	    if (value.constructor === Uint8Array) {
-	        return true;
-	    }
-	    if (typeof (value) === "string") {
-	        return false;
-	    }
-	    if (!isInteger(value.length) || value.length < 0) {
-	        return false;
-	    }
-	    for (var i = 0; i < value.length; i++) {
-	        var v = value[i];
-	        if (!isInteger(v) || v < 0 || v >= 256) {
-	            return false;
+	    ParamType.from = function (value, allowIndexed) {
+	        if (typeof (value) === "string") {
+	            return ParamType.fromString(value, allowIndexed);
 	        }
-	    }
-	    return true;
+	        return ParamType.fromObject(value);
+	    };
+	    ParamType.fromObject = function (value) {
+	        if (ParamType.isParamType(value)) {
+	            return value;
+	        }
+	        return new ParamType(_constructorGuard, {
+	            name: (value.name || null),
+	            type: verifyType(value.type),
+	            indexed: ((value.indexed == null) ? null : !!value.indexed),
+	            components: (value.components ? value.components.map(ParamType.fromObject) : null)
+	        });
+	    };
+	    ParamType.fromString = function (value, allowIndexed) {
+	        function ParamTypify(node) {
+	            return ParamType.fromObject({
+	                name: node.name,
+	                type: node.type,
+	                indexed: node.indexed,
+	                components: node.components
+	            });
+	        }
+	        return ParamTypify(parseParamType(value, !!allowIndexed));
+	    };
+	    ParamType.isParamType = function (value) {
+	        return !!(value != null && value._isParamType);
+	    };
+	    return ParamType;
+	}());
+	exports.ParamType = ParamType;
+	;
+	function parseParams(value, allowIndex) {
+	    return splitNesting(value).map(function (param) { return ParamType.fromString(param, allowIndex); });
 	}
-	exports.isBytes = isBytes;
-	function arrayify(value, options) {
-	    if (!options) {
-	        options = {};
-	    }
-	    if (typeof (value) === "number") {
-	        logger.checkSafeUint53(value, "invalid arrayify value");
-	        var result = [];
-	        while (value) {
-	            result.unshift(value & 0xff);
-	            value = parseInt(String(value / 256));
+	var Fragment = /** @class */ (function () {
+	    function Fragment(constructorGuard, params) {
+	        if (constructorGuard !== _constructorGuard) {
+	            logger.throwError("use a static from method", lib$6.Logger.errors.UNSUPPORTED_OPERATION, {
+	                operation: "new Fragment()"
+	            });
 	        }
-	        if (result.length === 0) {
-	            result.push(0);
+	        populate(this, params);
+	        this._isFragment = true;
+	        Object.freeze(this);
+	    }
+	    Fragment.from = function (value) {
+	        if (Fragment.isFragment(value)) {
+	            return value;
 	        }
-	        return addSlice(new Uint8Array(result));
-	    }
-	    if (options.allowMissingPrefix && typeof (value) === "string" && value.substring(0, 2) !== "0x") {
-	        value = "0x" + value;
-	    }
-	    if (isHexable(value)) {
-	        value = value.toHexString();
-	    }
-	    if (isHexString(value)) {
-	        var hex = value.substring(2);
-	        if (hex.length % 2) {
-	            if (options.hexPad === "left") {
-	                hex = "0" + hex;
-	            }
-	            else if (options.hexPad === "right") {
-	                hex += "0";
-	            }
-	            else {
-	                logger.throwArgumentError("hex data is odd-length", "value", value);
-	            }
+	        if (typeof (value) === "string") {
+	            return Fragment.fromString(value);
 	        }
-	        var result = [];
-	        for (var i = 0; i < hex.length; i += 2) {
-	            result.push(parseInt(hex.substring(i, i + 2), 16));
+	        return Fragment.fromObject(value);
+	    };
+	    Fragment.fromObject = function (value) {
+	        if (Fragment.isFragment(value)) {
+	            return value;
 	        }
-	        return addSlice(new Uint8Array(result));
-	    }
-	    if (isBytes(value)) {
-	        return addSlice(new Uint8Array(value));
-	    }
-	    return logger.throwArgumentError("invalid arrayify value", "value", value);
-	}
-	exports.arrayify = arrayify;
-	function concat(items) {
-	    var objects = items.map(function (item) { return arrayify(item); });
-	    var length = objects.reduce(function (accum, item) { return (accum + item.length); }, 0);
-	    var result = new Uint8Array(length);
-	    objects.reduce(function (offset, object) {
-	        result.set(object, offset);
-	        return offset + object.length;
-	    }, 0);
-	    return addSlice(result);
-	}
-	exports.concat = concat;
-	function stripZeros(value) {
-	    var result = arrayify(value);
-	    if (result.length === 0) {
-	        return result;
-	    }
-	    // Find the first non-zero entry
-	    var start = 0;
-	    while (start < result.length && result[start] === 0) {
-	        start++;
-	    }
-	    // If we started with zeros, strip them
-	    if (start) {
-	        result = result.slice(start);
-	    }
-	    return result;
-	}
-	exports.stripZeros = stripZeros;
-	function zeroPad(value, length) {
-	    value = arrayify(value);
-	    if (value.length > length) {
-	        logger.throwArgumentError("value out of range", "value", arguments[0]);
-	    }
-	    var result = new Uint8Array(length);
-	    result.set(value, length - value.length);
-	    return addSlice(result);
-	}
-	exports.zeroPad = zeroPad;
-	function isHexString(value, length) {
-	    if (typeof (value) !== "string" || !value.match(/^0x[0-9A-Fa-f]*$/)) {
-	        return false;
-	    }
-	    if (length && value.length !== 2 + 2 * length) {
-	        return false;
-	    }
-	    return true;
-	}
-	exports.isHexString = isHexString;
-	var HexCharacters = "0123456789abcdef";
-	function hexlify(value, options) {
-	    if (!options) {
-	        options = {};
-	    }
-	    if (typeof (value) === "number") {
-	        logger.checkSafeUint53(value, "invalid hexlify value");
-	        var hex = "";
-	        while (value) {
-	            hex = HexCharacters[value & 0xf] + hex;
-	            value = Math.floor(value / 16);
+	        switch (value.type) {
+	            case "function":
+	                return FunctionFragment.fromObject(value);
+	            case "event":
+	                return EventFragment.fromObject(value);
+	            case "constructor":
+	                return ConstructorFragment.fromObject(value);
+	            case "error":
+	                return ErrorFragment.fromObject(value);
+	            case "fallback":
+	            case "receive":
+	                // @TODO: Something? Maybe return a FunctionFragment? A custom DefaultFunctionFragment?
+	                return null;
 	        }
-	        if (hex.length) {
-	            if (hex.length % 2) {
-	                hex = "0" + hex;
-	            }
-	            return "0x" + hex;
+	        return logger.throwArgumentError("invalid fragment object", "value", value);
+	    };
+	    Fragment.fromString = function (value) {
+	        // Make sure the "returns" is surrounded by a space and all whitespace is exactly one space
+	        value = value.replace(/\s/g, " ");
+	        value = value.replace(/\(/g, " (").replace(/\)/g, ") ").replace(/\s+/g, " ");
+	        value = value.trim();
+	        if (value.split(" ")[0] === "event") {
+	            return EventFragment.fromString(value.substring(5).trim());
 	        }
-	        return "0x00";
-	    }
-	    if (typeof (value) === "bigint") {
-	        value = value.toString(16);
-	        if (value.length % 2) {
-	            return ("0x0" + value);
+	        else if (value.split(" ")[0] === "function") {
+	            return FunctionFragment.fromString(value.substring(8).trim());
 	        }
-	        return "0x" + value;
+	        else if (value.split("(")[0].trim() === "constructor") {
+	            return ConstructorFragment.fromString(value.trim());
+	        }
+	        else if (value.split(" ")[0] === "error") {
+	            return ErrorFragment.fromString(value.substring(5).trim());
+	        }
+	        return logger.throwArgumentError("unsupported fragment", "value", value);
+	    };
+	    Fragment.isFragment = function (value) {
+	        return !!(value && value._isFragment);
+	    };
+	    return Fragment;
+	}());
+	exports.Fragment = Fragment;
+	var EventFragment = /** @class */ (function (_super) {
+	    __extends(EventFragment, _super);
+	    function EventFragment() {
+	        return _super !== null && _super.apply(this, arguments) || this;
 	    }
-	    if (options.allowMissingPrefix && typeof (value) === "string" && value.substring(0, 2) !== "0x") {
-	        value = "0x" + value;
-	    }
-	    if (isHexable(value)) {
-	        return value.toHexString();
-	    }
-	    if (isHexString(value)) {
-	        if (value.length % 2) {
-	            if (options.hexPad === "left") {
-	                value = "0x0" + value.substring(2);
-	            }
-	            else if (options.hexPad === "right") {
-	                value += "0";
-	            }
-	            else {
-	                logger.throwArgumentError("hex data is odd-length", "value", value);
+	    EventFragment.prototype.format = function (format) {
+	        if (!format) {
+	            format = exports.FormatTypes.sighash;
+	        }
+	        if (!exports.FormatTypes[format]) {
+	            logger.throwArgumentError("invalid format type", "format", format);
+	        }
+	        if (format === exports.FormatTypes.json) {
+	            return JSON.stringify({
+	                type: "event",
+	                anonymous: this.anonymous,
+	                name: this.name,
+	                inputs: this.inputs.map(function (input) { return JSON.parse(input.format(format)); })
+	            });
+	        }
+	        var result = "";
+	        if (format !== exports.FormatTypes.sighash) {
+	            result += "event ";
+	        }
+	        result += this.name + "(" + this.inputs.map(function (input) { return input.format(format); }).join((format === exports.FormatTypes.full) ? ", " : ",") + ") ";
+	        if (format !== exports.FormatTypes.sighash) {
+	            if (this.anonymous) {
+	                result += "anonymous ";
 	            }
 	        }
-	        return value.toLowerCase();
-	    }
-	    if (isBytes(value)) {
-	        var result = "0x";
-	        for (var i = 0; i < value.length; i++) {
-	            var v = value[i];
-	            result += HexCharacters[(v & 0xf0) >> 4] + HexCharacters[v & 0x0f];
+	        return result.trim();
+	    };
+	    EventFragment.from = function (value) {
+	        if (typeof (value) === "string") {
+	            return EventFragment.fromString(value);
 	        }
-	        return result;
-	    }
-	    return logger.throwArgumentError("invalid hexlify value", "value", value);
-	}
-	exports.hexlify = hexlify;
-	/*
-	function unoddify(value: BytesLike | Hexable | number): BytesLike | Hexable | number {
-	    if (typeof(value) === "string" && value.length % 2 && value.substring(0, 2) === "0x") {
-	        return "0x0" + value.substring(2);
+	        return EventFragment.fromObject(value);
+	    };
+	    EventFragment.fromObject = function (value) {
+	        if (EventFragment.isEventFragment(value)) {
+	            return value;
+	        }
+	        if (value.type !== "event") {
+	            logger.throwArgumentError("invalid event object", "value", value);
+	        }
+	        var params = {
+	            name: verifyIdentifier(value.name),
+	            anonymous: value.anonymous,
+	            inputs: (value.inputs ? value.inputs.map(ParamType.fromObject) : []),
+	            type: "event"
+	        };
+	        return new EventFragment(_constructorGuard, params);
+	    };
+	    EventFragment.fromString = function (value) {
+	        var match = value.match(regexParen);
+	        if (!match) {
+	            logger.throwArgumentError("invalid event string", "value", value);
+	        }
+	        var anonymous = false;
+	        match[3].split(" ").forEach(function (modifier) {
+	            switch (modifier.trim()) {
+	                case "anonymous":
+	                    anonymous = true;
+	                    break;
+	                case "":
+	                    break;
+	                default:
+	                    logger.warn("unknown modifier: " + modifier);
+	            }
+	        });
+	        return EventFragment.fromObject({
+	            name: match[1].trim(),
+	            anonymous: anonymous,
+	            inputs: parseParams(match[2], true),
+	            type: "event"
+	        });
+	    };
+	    EventFragment.isEventFragment = function (value) {
+	        return (value && value._isFragment && value.type === "event");
+	    };
+	    return EventFragment;
+	}(Fragment));
+	exports.EventFragment = EventFragment;
+	function parseGas(value, params) {
+	    params.gas = null;
+	    var comps = value.split("@");
+	    if (comps.length !== 1) {
+	        if (comps.length > 2) {
+	            logger.throwArgumentError("invalid human-readable ABI signature", "value", value);
+	        }
+	        if (!comps[1].match(/^[0-9]+$/)) {
+	            logger.throwArgumentError("invalid human-readable ABI signature gas", "value", value);
+	        }
+	        params.gas = lib$3.BigNumber.from(comps[1]);
+	        return comps[0];
 	    }
 	    return value;
 	}
-	*/
-	function hexDataLength(data) {
-	    if (typeof (data) !== "string") {
-	        data = hexlify(data);
-	    }
-	    else if (!isHexString(data) || (data.length % 2)) {
-	        return null;
-	    }
-	    return (data.length - 2) / 2;
-	}
-	exports.hexDataLength = hexDataLength;
-	function hexDataSlice(data, offset, endOffset) {
-	    if (typeof (data) !== "string") {
-	        data = hexlify(data);
-	    }
-	    else if (!isHexString(data) || (data.length % 2)) {
-	        logger.throwArgumentError("invalid hexData", "value", data);
-	    }
-	    offset = 2 + 2 * offset;
-	    if (endOffset != null) {
-	        return "0x" + data.substring(offset, 2 + 2 * endOffset);
-	    }
-	    return "0x" + data.substring(offset);
-	}
-	exports.hexDataSlice = hexDataSlice;
-	function hexConcat(items) {
-	    var result = "0x";
-	    items.forEach(function (item) {
-	        result += hexlify(item).substring(2);
+	function parseModifiers(value, params) {
+	    params.constant = false;
+	    params.payable = false;
+	    params.stateMutability = "nonpayable";
+	    value.split(" ").forEach(function (modifier) {
+	        switch (modifier.trim()) {
+	            case "constant":
+	                params.constant = true;
+	                break;
+	            case "payable":
+	                params.payable = true;
+	                params.stateMutability = "payable";
+	                break;
+	            case "nonpayable":
+	                params.payable = false;
+	                params.stateMutability = "nonpayable";
+	                break;
+	            case "pure":
+	                params.constant = true;
+	                params.stateMutability = "pure";
+	                break;
+	            case "view":
+	                params.constant = true;
+	                params.stateMutability = "view";
+	                break;
+	            case "external":
+	            case "public":
+	            case "":
+	                break;
+	            default:
+	                console.log("unknown modifier: " + modifier);
+	        }
 	    });
+	}
+	function verifyState(value) {
+	    var result = {
+	        constant: false,
+	        payable: true,
+	        stateMutability: "payable"
+	    };
+	    if (value.stateMutability != null) {
+	        result.stateMutability = value.stateMutability;
+	        // Set (and check things are consistent) the constant property
+	        result.constant = (result.stateMutability === "view" || result.stateMutability === "pure");
+	        if (value.constant != null) {
+	            if ((!!value.constant) !== result.constant) {
+	                logger.throwArgumentError("cannot have constant function with mutability " + result.stateMutability, "value", value);
+	            }
+	        }
+	        // Set (and check things are consistent) the payable property
+	        result.payable = (result.stateMutability === "payable");
+	        if (value.payable != null) {
+	            if ((!!value.payable) !== result.payable) {
+	                logger.throwArgumentError("cannot have payable function with mutability " + result.stateMutability, "value", value);
+	            }
+	        }
+	    }
+	    else if (value.payable != null) {
+	        result.payable = !!value.payable;
+	        // If payable we can assume non-constant; otherwise we can't assume
+	        if (value.constant == null && !result.payable && value.type !== "constructor") {
+	            logger.throwArgumentError("unable to determine stateMutability", "value", value);
+	        }
+	        result.constant = !!value.constant;
+	        if (result.constant) {
+	            result.stateMutability = "view";
+	        }
+	        else {
+	            result.stateMutability = (result.payable ? "payable" : "nonpayable");
+	        }
+	        if (result.payable && result.constant) {
+	            logger.throwArgumentError("cannot have constant payable function", "value", value);
+	        }
+	    }
+	    else if (value.constant != null) {
+	        result.constant = !!value.constant;
+	        result.payable = !result.constant;
+	        result.stateMutability = (result.constant ? "view" : "payable");
+	    }
+	    else if (value.type !== "constructor") {
+	        logger.throwArgumentError("unable to determine stateMutability", "value", value);
+	    }
 	    return result;
 	}
-	exports.hexConcat = hexConcat;
-	function hexValue(value) {
-	    var trimmed = hexStripZeros(hexlify(value, { hexPad: "left" }));
-	    if (trimmed === "0x") {
-	        return "0x0";
+	var ConstructorFragment = /** @class */ (function (_super) {
+	    __extends(ConstructorFragment, _super);
+	    function ConstructorFragment() {
+	        return _super !== null && _super.apply(this, arguments) || this;
 	    }
-	    return trimmed;
+	    ConstructorFragment.prototype.format = function (format) {
+	        if (!format) {
+	            format = exports.FormatTypes.sighash;
+	        }
+	        if (!exports.FormatTypes[format]) {
+	            logger.throwArgumentError("invalid format type", "format", format);
+	        }
+	        if (format === exports.FormatTypes.json) {
+	            return JSON.stringify({
+	                type: "constructor",
+	                stateMutability: ((this.stateMutability !== "nonpayable") ? this.stateMutability : undefined),
+	                payable: this.payable,
+	                gas: (this.gas ? this.gas.toNumber() : undefined),
+	                inputs: this.inputs.map(function (input) { return JSON.parse(input.format(format)); })
+	            });
+	        }
+	        if (format === exports.FormatTypes.sighash) {
+	            logger.throwError("cannot format a constructor for sighash", lib$6.Logger.errors.UNSUPPORTED_OPERATION, {
+	                operation: "format(sighash)"
+	            });
+	        }
+	        var result = "constructor(" + this.inputs.map(function (input) { return input.format(format); }).join((format === exports.FormatTypes.full) ? ", " : ",") + ") ";
+	        if (this.stateMutability && this.stateMutability !== "nonpayable") {
+	            result += this.stateMutability + " ";
+	        }
+	        return result.trim();
+	    };
+	    ConstructorFragment.from = function (value) {
+	        if (typeof (value) === "string") {
+	            return ConstructorFragment.fromString(value);
+	        }
+	        return ConstructorFragment.fromObject(value);
+	    };
+	    ConstructorFragment.fromObject = function (value) {
+	        if (ConstructorFragment.isConstructorFragment(value)) {
+	            return value;
+	        }
+	        if (value.type !== "constructor") {
+	            logger.throwArgumentError("invalid constructor object", "value", value);
+	        }
+	        var state = verifyState(value);
+	        if (state.constant) {
+	            logger.throwArgumentError("constructor cannot be constant", "value", value);
+	        }
+	        var params = {
+	            name: null,
+	            type: value.type,
+	            inputs: (value.inputs ? value.inputs.map(ParamType.fromObject) : []),
+	            payable: state.payable,
+	            stateMutability: state.stateMutability,
+	            gas: (value.gas ? lib$3.BigNumber.from(value.gas) : null)
+	        };
+	        return new ConstructorFragment(_constructorGuard, params);
+	    };
+	    ConstructorFragment.fromString = function (value) {
+	        var params = { type: "constructor" };
+	        value = parseGas(value, params);
+	        var parens = value.match(regexParen);
+	        if (!parens || parens[1].trim() !== "constructor") {
+	            logger.throwArgumentError("invalid constructor string", "value", value);
+	        }
+	        params.inputs = parseParams(parens[2].trim(), false);
+	        parseModifiers(parens[3].trim(), params);
+	        return ConstructorFragment.fromObject(params);
+	    };
+	    ConstructorFragment.isConstructorFragment = function (value) {
+	        return (value && value._isFragment && value.type === "constructor");
+	    };
+	    return ConstructorFragment;
+	}(Fragment));
+	exports.ConstructorFragment = ConstructorFragment;
+	var FunctionFragment = /** @class */ (function (_super) {
+	    __extends(FunctionFragment, _super);
+	    function FunctionFragment() {
+	        return _super !== null && _super.apply(this, arguments) || this;
+	    }
+	    FunctionFragment.prototype.format = function (format) {
+	        if (!format) {
+	            format = exports.FormatTypes.sighash;
+	        }
+	        if (!exports.FormatTypes[format]) {
+	            logger.throwArgumentError("invalid format type", "format", format);
+	        }
+	        if (format === exports.FormatTypes.json) {
+	            return JSON.stringify({
+	                type: "function",
+	                name: this.name,
+	                constant: this.constant,
+	                stateMutability: ((this.stateMutability !== "nonpayable") ? this.stateMutability : undefined),
+	                payable: this.payable,
+	                gas: (this.gas ? this.gas.toNumber() : undefined),
+	                inputs: this.inputs.map(function (input) { return JSON.parse(input.format(format)); }),
+	                outputs: this.outputs.map(function (output) { return JSON.parse(output.format(format)); }),
+	            });
+	        }
+	        var result = "";
+	        if (format !== exports.FormatTypes.sighash) {
+	            result += "function ";
+	        }
+	        result += this.name + "(" + this.inputs.map(function (input) { return input.format(format); }).join((format === exports.FormatTypes.full) ? ", " : ",") + ") ";
+	        if (format !== exports.FormatTypes.sighash) {
+	            if (this.stateMutability) {
+	                if (this.stateMutability !== "nonpayable") {
+	                    result += (this.stateMutability + " ");
+	                }
+	            }
+	            else if (this.constant) {
+	                result += "view ";
+	            }
+	            if (this.outputs && this.outputs.length) {
+	                result += "returns (" + this.outputs.map(function (output) { return output.format(format); }).join(", ") + ") ";
+	            }
+	            if (this.gas != null) {
+	                result += "@" + this.gas.toString() + " ";
+	            }
+	        }
+	        return result.trim();
+	    };
+	    FunctionFragment.from = function (value) {
+	        if (typeof (value) === "string") {
+	            return FunctionFragment.fromString(value);
+	        }
+	        return FunctionFragment.fromObject(value);
+	    };
+	    FunctionFragment.fromObject = function (value) {
+	        if (FunctionFragment.isFunctionFragment(value)) {
+	            return value;
+	        }
+	        if (value.type !== "function") {
+	            logger.throwArgumentError("invalid function object", "value", value);
+	        }
+	        var state = verifyState(value);
+	        var params = {
+	            type: value.type,
+	            name: verifyIdentifier(value.name),
+	            constant: state.constant,
+	            inputs: (value.inputs ? value.inputs.map(ParamType.fromObject) : []),
+	            outputs: (value.outputs ? value.outputs.map(ParamType.fromObject) : []),
+	            payable: state.payable,
+	            stateMutability: state.stateMutability,
+	            gas: (value.gas ? lib$3.BigNumber.from(value.gas) : null)
+	        };
+	        return new FunctionFragment(_constructorGuard, params);
+	    };
+	    FunctionFragment.fromString = function (value) {
+	        var params = { type: "function" };
+	        value = parseGas(value, params);
+	        var comps = value.split(" returns ");
+	        if (comps.length > 2) {
+	            logger.throwArgumentError("invalid function string", "value", value);
+	        }
+	        var parens = comps[0].match(regexParen);
+	        if (!parens) {
+	            logger.throwArgumentError("invalid function signature", "value", value);
+	        }
+	        params.name = parens[1].trim();
+	        if (params.name) {
+	            verifyIdentifier(params.name);
+	        }
+	        params.inputs = parseParams(parens[2], false);
+	        parseModifiers(parens[3].trim(), params);
+	        // We have outputs
+	        if (comps.length > 1) {
+	            var returns = comps[1].match(regexParen);
+	            if (returns[1].trim() != "" || returns[3].trim() != "") {
+	                logger.throwArgumentError("unexpected tokens", "value", value);
+	            }
+	            params.outputs = parseParams(returns[2], false);
+	        }
+	        else {
+	            params.outputs = [];
+	        }
+	        return FunctionFragment.fromObject(params);
+	    };
+	    FunctionFragment.isFunctionFragment = function (value) {
+	        return (value && value._isFragment && value.type === "function");
+	    };
+	    return FunctionFragment;
+	}(ConstructorFragment));
+	exports.FunctionFragment = FunctionFragment;
+	//export class StructFragment extends Fragment {
+	//}
+	function checkForbidden(fragment) {
+	    var sig = fragment.format();
+	    if (sig === "Error(string)" || sig === "Panic(uint256)") {
+	        logger.throwArgumentError("cannot specify user defined " + sig + " error", "fragment", fragment);
+	    }
+	    return fragment;
 	}
-	exports.hexValue = hexValue;
-	function hexStripZeros(value) {
-	    if (typeof (value) !== "string") {
-	        value = hexlify(value);
+	var ErrorFragment = /** @class */ (function (_super) {
+	    __extends(ErrorFragment, _super);
+	    function ErrorFragment() {
+	        return _super !== null && _super.apply(this, arguments) || this;
 	    }
-	    if (!isHexString(value)) {
-	        logger.throwArgumentError("invalid hex string", "value", value);
+	    ErrorFragment.prototype.format = function (format) {
+	        if (!format) {
+	            format = exports.FormatTypes.sighash;
+	        }
+	        if (!exports.FormatTypes[format]) {
+	            logger.throwArgumentError("invalid format type", "format", format);
+	        }
+	        if (format === exports.FormatTypes.json) {
+	            return JSON.stringify({
+	                type: "error",
+	                name: this.name,
+	                inputs: this.inputs.map(function (input) { return JSON.parse(input.format(format)); }),
+	            });
+	        }
+	        var result = "";
+	        if (format !== exports.FormatTypes.sighash) {
+	            result += "error ";
+	        }
+	        result += this.name + "(" + this.inputs.map(function (input) { return input.format(format); }).join((format === exports.FormatTypes.full) ? ", " : ",") + ") ";
+	        return result.trim();
+	    };
+	    ErrorFragment.from = function (value) {
+	        if (typeof (value) === "string") {
+	            return ErrorFragment.fromString(value);
+	        }
+	        return ErrorFragment.fromObject(value);
+	    };
+	    ErrorFragment.fromObject = function (value) {
+	        if (ErrorFragment.isErrorFragment(value)) {
+	            return value;
+	        }
+	        if (value.type !== "error") {
+	            logger.throwArgumentError("invalid error object", "value", value);
+	        }
+	        var params = {
+	            type: value.type,
+	            name: verifyIdentifier(value.name),
+	            inputs: (value.inputs ? value.inputs.map(ParamType.fromObject) : [])
+	        };
+	        return checkForbidden(new ErrorFragment(_constructorGuard, params));
+	    };
+	    ErrorFragment.fromString = function (value) {
+	        var params = { type: "error" };
+	        var parens = value.match(regexParen);
+	        if (!parens) {
+	            logger.throwArgumentError("invalid error signature", "value", value);
+	        }
+	        params.name = parens[1].trim();
+	        if (params.name) {
+	            verifyIdentifier(params.name);
+	        }
+	        params.inputs = parseParams(parens[2], false);
+	        return checkForbidden(ErrorFragment.fromObject(params));
+	    };
+	    ErrorFragment.isErrorFragment = function (value) {
+	        return (value && value._isFragment && value.type === "error");
+	    };
+	    return ErrorFragment;
+	}(Fragment));
+	exports.ErrorFragment = ErrorFragment;
+	function verifyType(type) {
+	    // These need to be transformed to their full description
+	    if (type.match(/^uint($|[^1-9])/)) {
+	        type = "uint256" + type.substring(4);
 	    }
-	    value = value.substring(2);
-	    var offset = 0;
-	    while (offset < value.length && value[offset] === "0") {
-	        offset++;
+	    else if (type.match(/^int($|[^1-9])/)) {
+	        type = "int256" + type.substring(3);
 	    }
-	    return "0x" + value.substring(offset);
+	    // @TODO: more verification
+	    return type;
 	}
-	exports.hexStripZeros = hexStripZeros;
-	function hexZeroPad(value, length) {
-	    if (typeof (value) !== "string") {
-	        value = hexlify(value);
-	    }
-	    else if (!isHexString(value)) {
-	        logger.throwArgumentError("invalid hex string", "value", value);
-	    }
-	    if (value.length > 2 * length + 2) {
-	        logger.throwArgumentError("value out of range", "value", arguments[1]);
-	    }
-	    while (value.length < 2 * length + 2) {
-	        value = "0x0" + value.substring(2);
+	// See: https://github.com/ethereum/solidity/blob/1f8f1a3db93a548d0555e3e14cfc55a10e25b60e/docs/grammar/SolidityLexer.g4#L234
+	var regexIdentifier = new RegExp("^[a-zA-Z$_][a-zA-Z0-9$_]*$");
+	function verifyIdentifier(value) {
+	    if (!value || !value.match(regexIdentifier)) {
+	        logger.throwArgumentError("invalid identifier \"" + value + "\"", "value", value);
 	    }
 	    return value;
 	}
-	exports.hexZeroPad = hexZeroPad;
-	function splitSignature(signature) {
-	    var result = {
-	        r: "0x",
-	        s: "0x",
-	        _vs: "0x",
-	        recoveryParam: 0,
-	        v: 0,
-	        yParityAndS: "0x",
-	        compact: "0x"
-	    };
-	    if (isBytesLike(signature)) {
-	        var bytes = arrayify(signature);
-	        // Get the r, s and v
-	        if (bytes.length === 64) {
-	            // EIP-2098; pull the v from the top bit of s and clear it
-	            result.v = 27 + (bytes[32] >> 7);
-	            bytes[32] &= 0x7f;
-	            result.r = hexlify(bytes.slice(0, 32));
-	            result.s = hexlify(bytes.slice(32, 64));
-	        }
-	        else if (bytes.length === 65) {
-	            result.r = hexlify(bytes.slice(0, 32));
-	            result.s = hexlify(bytes.slice(32, 64));
-	            result.v = bytes[64];
+	var regexParen = new RegExp("^([^)(]*)\\((.*)\\)([^)(]*)$");
+	function splitNesting(value) {
+	    value = value.trim();
+	    var result = [];
+	    var accum = "";
+	    var depth = 0;
+	    for (var offset = 0; offset < value.length; offset++) {
+	        var c = value[offset];
+	        if (c === "," && depth === 0) {
+	            result.push(accum);
+	            accum = "";
 	        }
 	        else {
-	            logger.throwArgumentError("invalid signature string", "signature", signature);
-	        }
-	        // Allow a recid to be used as the v
-	        if (result.v < 27) {
-	            if (result.v === 0 || result.v === 1) {
-	                result.v += 27;
+	            accum += c;
+	            if (c === "(") {
+	                depth++;
 	            }
-	            else {
-	                logger.throwArgumentError("signature invalid v byte", "signature", signature);
-	            }
-	        }
-	        // Compute recoveryParam from v
-	        result.recoveryParam = 1 - (result.v % 2);
-	        // Compute _vs from recoveryParam and s
-	        if (result.recoveryParam) {
-	            bytes[32] |= 0x80;
-	        }
-	        result._vs = hexlify(bytes.slice(32, 64));
-	    }
-	    else {
-	        result.r = signature.r;
-	        result.s = signature.s;
-	        result.v = signature.v;
-	        result.recoveryParam = signature.recoveryParam;
-	        result._vs = signature._vs;
-	        // If the _vs is available, use it to populate missing s, v and recoveryParam
-	        // and verify non-missing s, v and recoveryParam
-	        if (result._vs != null) {
-	            var vs_1 = zeroPad(arrayify(result._vs), 32);
-	            result._vs = hexlify(vs_1);
-	            // Set or check the recid
-	            var recoveryParam = ((vs_1[0] >= 128) ? 1 : 0);
-	            if (result.recoveryParam == null) {
-	                result.recoveryParam = recoveryParam;
-	            }
-	            else if (result.recoveryParam !== recoveryParam) {
-	                logger.throwArgumentError("signature recoveryParam mismatch _vs", "signature", signature);
-	            }
-	            // Set or check the s
-	            vs_1[0] &= 0x7f;
-	            var s = hexlify(vs_1);
-	            if (result.s == null) {
-	                result.s = s;
-	            }
-	            else if (result.s !== s) {
-	                logger.throwArgumentError("signature v mismatch _vs", "signature", signature);
-	            }
-	        }
-	        // Use recid and v to populate each other
-	        if (result.recoveryParam == null) {
-	            if (result.v == null) {
-	                logger.throwArgumentError("signature missing v and recoveryParam", "signature", signature);
-	            }
-	            else if (result.v === 0 || result.v === 1) {
-	                result.recoveryParam = result.v;
-	            }
-	            else {
-	                result.recoveryParam = 1 - (result.v % 2);
-	            }
-	        }
-	        else {
-	            if (result.v == null) {
-	                result.v = 27 + result.recoveryParam;
-	            }
-	            else {
-	                var recId = (result.v === 0 || result.v === 1) ? result.v : (1 - (result.v % 2));
-	                if (result.recoveryParam !== recId) {
-	                    logger.throwArgumentError("signature recoveryParam mismatch v", "signature", signature);
+	            else if (c === ")") {
+	                depth--;
+	                if (depth === -1) {
+	                    logger.throwArgumentError("unbalanced parenthesis", "value", value);
 	                }
 	            }
 	        }
-	        if (result.r == null || !isHexString(result.r)) {
-	            logger.throwArgumentError("signature missing or invalid r", "signature", signature);
-	        }
-	        else {
-	            result.r = hexZeroPad(result.r, 32);
-	        }
-	        if (result.s == null || !isHexString(result.s)) {
-	            logger.throwArgumentError("signature missing or invalid s", "signature", signature);
-	        }
-	        else {
-	            result.s = hexZeroPad(result.s, 32);
-	        }
-	        var vs = arrayify(result.s);
-	        if (vs[0] >= 128) {
-	            logger.throwArgumentError("signature s out of range", "signature", signature);
-	        }
-	        if (result.recoveryParam) {
-	            vs[0] |= 0x80;
-	        }
-	        var _vs = hexlify(vs);
-	        if (result._vs) {
-	            if (!isHexString(result._vs)) {
-	                logger.throwArgumentError("signature invalid _vs", "signature", signature);
-	            }
-	            result._vs = hexZeroPad(result._vs, 32);
-	        }
-	        // Set or check the _vs
-	        if (result._vs == null) {
-	            result._vs = _vs;
-	        }
-	        else if (result._vs !== _vs) {
-	            logger.throwArgumentError("signature _vs mismatch v and s", "signature", signature);
-	        }
 	    }
-	    result.yParityAndS = result._vs;
-	    result.compact = result.r + result.yParityAndS.substring(2);
+	    if (accum) {
+	        result.push(accum);
+	    }
 	    return result;
 	}
-	exports.splitSignature = splitSignature;
-	function joinSignature(signature) {
-	    signature = splitSignature(signature);
-	    return hexlify(concat([
-	        signature.r,
-	        signature.s,
-	        (signature.recoveryParam ? "0x1c" : "0x1b")
-	    ]));
-	}
-	exports.joinSignature = joinSignature;
 
 	});
 
-	var index$7 = /*@__PURE__*/getDefaultExportFromCjs(lib$7);
+	var fragments$1 = /*@__PURE__*/getDefaultExportFromCjs(fragments);
 
-	var abstractCoder = createCommonjsModule(function (module, exports) {
-	"use strict";
-	Object.defineProperty(exports, "__esModule", { value: true });
-	exports.Reader = exports.Writer = exports.Coder = exports.checkResultErrors = void 0;
-
-
-
-
-
-	var logger = new lib$4.Logger(_version$c.version);
-	function checkResultErrors(result) {
-	    // Find the first error (if any)
-	    var errors = [];
-	    var checkErrors = function (path, object) {
-	        if (!Array.isArray(object)) {
-	            return;
-	        }
-	        for (var key in object) {
-	            var childPath = path.slice();
-	            childPath.push(key);
-	            try {
-	                checkErrors(childPath, object[key]);
-	            }
-	            catch (error) {
-	                errors.push({ path: childPath, error: error });
-	            }
-	        }
-	    };
-	    checkErrors([], result);
-	    return errors;
-	}
-	exports.checkResultErrors = checkResultErrors;
-	var Coder = /** @class */ (function () {
-	    function Coder(name, type, localName, dynamic) {
-	        // @TODO: defineReadOnly these
-	        this.name = name;
-	        this.type = type;
-	        this.localName = localName;
-	        this.dynamic = dynamic;
-	    }
-	    Coder.prototype._throwError = function (message, value) {
-	        logger.throwArgumentError(message, this.localName, value);
-	    };
-	    return Coder;
-	}());
-	exports.Coder = Coder;
-	var Writer = /** @class */ (function () {
-	    function Writer(wordSize) {
-	        (0, lib$5.defineReadOnly)(this, "wordSize", wordSize || 32);
-	        this._data = [];
-	        this._dataLength = 0;
-	        this._padding = new Uint8Array(wordSize);
-	    }
-	    Object.defineProperty(Writer.prototype, "data", {
-	        get: function () {
-	            return (0, lib$7.hexConcat)(this._data);
-	        },
-	        enumerable: false,
-	        configurable: true
-	    });
-	    Object.defineProperty(Writer.prototype, "length", {
-	        get: function () { return this._dataLength; },
-	        enumerable: false,
-	        configurable: true
-	    });
-	    Writer.prototype._writeData = function (data) {
-	        this._data.push(data);
-	        this._dataLength += data.length;
-	        return data.length;
-	    };
-	    Writer.prototype.appendWriter = function (writer) {
-	        return this._writeData((0, lib$7.concat)(writer._data));
-	    };
-	    // Arrayish items; padded on the right to wordSize
-	    Writer.prototype.writeBytes = function (value) {
-	        var bytes = (0, lib$7.arrayify)(value);
-	        var paddingOffset = bytes.length % this.wordSize;
-	        if (paddingOffset) {
-	            bytes = (0, lib$7.concat)([bytes, this._padding.slice(paddingOffset)]);
-	        }
-	        return this._writeData(bytes);
-	    };
-	    Writer.prototype._getValue = function (value) {
-	        var bytes = (0, lib$7.arrayify)(lib$3.BigNumber.from(value));
-	        if (bytes.length > this.wordSize) {
-	            logger.throwError("value out-of-bounds", lib$4.Logger.errors.BUFFER_OVERRUN, {
-	                length: this.wordSize,
-	                offset: bytes.length
-	            });
-	        }
-	        if (bytes.length % this.wordSize) {
-	            bytes = (0, lib$7.concat)([this._padding.slice(bytes.length % this.wordSize), bytes]);
-	        }
-	        return bytes;
-	    };
-	    // BigNumberish items; padded on the left to wordSize
-	    Writer.prototype.writeValue = function (value) {
-	        return this._writeData(this._getValue(value));
-	    };
-	    Writer.prototype.writeUpdatableValue = function () {
-	        var _this = this;
-	        var offset = this._data.length;
-	        this._data.push(this._padding);
-	        this._dataLength += this.wordSize;
-	        return function (value) {
-	            _this._data[offset] = _this._getValue(value);
-	        };
-	    };
-	    return Writer;
-	}());
-	exports.Writer = Writer;
-	var Reader = /** @class */ (function () {
-	    function Reader(data, wordSize, coerceFunc, allowLoose) {
-	        (0, lib$5.defineReadOnly)(this, "_data", (0, lib$7.arrayify)(data));
-	        (0, lib$5.defineReadOnly)(this, "wordSize", wordSize || 32);
-	        (0, lib$5.defineReadOnly)(this, "_coerceFunc", coerceFunc);
-	        (0, lib$5.defineReadOnly)(this, "allowLoose", allowLoose);
-	        this._offset = 0;
-	    }
-	    Object.defineProperty(Reader.prototype, "data", {
-	        get: function () { return (0, lib$7.hexlify)(this._data); },
-	        enumerable: false,
-	        configurable: true
-	    });
-	    Object.defineProperty(Reader.prototype, "consumed", {
-	        get: function () { return this._offset; },
-	        enumerable: false,
-	        configurable: true
-	    });
-	    // The default Coerce function
-	    Reader.coerce = function (name, value) {
-	        var match = name.match("^u?int([0-9]+)$");
-	        if (match && parseInt(match[1]) <= 48) {
-	            value = value.toNumber();
-	        }
-	        return value;
-	    };
-	    Reader.prototype.coerce = function (name, value) {
-	        if (this._coerceFunc) {
-	            return this._coerceFunc(name, value);
-	        }
-	        return Reader.coerce(name, value);
-	    };
-	    Reader.prototype._peekBytes = function (offset, length, loose) {
-	        var alignedLength = Math.ceil(length / this.wordSize) * this.wordSize;
-	        if (this._offset + alignedLength > this._data.length) {
-	            if (this.allowLoose && loose && this._offset + length <= this._data.length) {
-	                alignedLength = length;
-	            }
-	            else {
-	                logger.throwError("data out-of-bounds", lib$4.Logger.errors.BUFFER_OVERRUN, {
-	                    length: this._data.length,
-	                    offset: this._offset + alignedLength
-	                });
-	            }
-	        }
-	        return this._data.slice(this._offset, this._offset + alignedLength);
-	    };
-	    Reader.prototype.subReader = function (offset) {
-	        return new Reader(this._data.slice(this._offset + offset), this.wordSize, this._coerceFunc, this.allowLoose);
-	    };
-	    Reader.prototype.readBytes = function (length, loose) {
-	        var bytes = this._peekBytes(0, length, !!loose);
-	        this._offset += bytes.length;
-	        // @TODO: Make sure the length..end bytes are all 0?
-	        return bytes.slice(0, length);
-	    };
-	    Reader.prototype.readValue = function () {
-	        return lib$3.BigNumber.from(this.readBytes(this.wordSize));
-	    };
-	    return Reader;
-	}());
-	exports.Reader = Reader;
-
-	});
-
-	var abstractCoder$1 = /*@__PURE__*/getDefaultExportFromCjs(abstractCoder);
-
-	var _version$i = createCommonjsModule(function (module, exports) {
+	var _version$g = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.version = void 0;
@@ -8036,9 +7416,9 @@
 
 	});
 
-	var _version$j = /*@__PURE__*/getDefaultExportFromCjs(_version$i);
+	var _version$h = /*@__PURE__*/getDefaultExportFromCjs(_version$g);
 
-	var lib$8 = createCommonjsModule(function (module, exports) {
+	var lib$7 = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.Logger = exports.ErrorCode = exports.LogLevel = void 0;
@@ -8372,7 +7752,7 @@
 	    };
 	    Logger.globalLogger = function () {
 	        if (!_globalLogger) {
-	            _globalLogger = new Logger(_version$i.version);
+	            _globalLogger = new Logger(_version$g.version);
 	        }
 	        return _globalLogger;
 	    };
@@ -8412,25 +7792,25 @@
 
 	});
 
-	var index$8 = /*@__PURE__*/getDefaultExportFromCjs(lib$8);
+	var index$7 = /*@__PURE__*/getDefaultExportFromCjs(lib$7);
 
-	var _version$k = createCommonjsModule(function (module, exports) {
+	var _version$i = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.version = void 0;
-	exports.version = "bytes/5.7.0";
+	exports.version = "bytes/0.1.0";
 
 	});
 
-	var _version$l = /*@__PURE__*/getDefaultExportFromCjs(_version$k);
+	var _version$j = /*@__PURE__*/getDefaultExportFromCjs(_version$i);
 
-	var lib$9 = createCommonjsModule(function (module, exports) {
+	var lib$8 = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.joinSignature = exports.splitSignature = exports.hexZeroPad = exports.hexStripZeros = exports.hexValue = exports.hexConcat = exports.hexDataSlice = exports.hexDataLength = exports.hexlify = exports.isHexString = exports.zeroPad = exports.stripZeros = exports.concat = exports.arrayify = exports.isBytes = exports.isBytesLike = void 0;
 
 
-	var logger = new lib$8.Logger(_version$k.version);
+	var logger = new lib$7.Logger(_version$i.version);
 	///////////////////////////////
 	function isHexable(value) {
 	    return !!(value.toHexString);
@@ -8854,7 +8234,1013 @@
 
 	});
 
+	var index$8 = /*@__PURE__*/getDefaultExportFromCjs(lib$8);
+
+	var abstractCoder = createCommonjsModule(function (module, exports) {
+	"use strict";
+	Object.defineProperty(exports, "__esModule", { value: true });
+	exports.Reader = exports.Writer = exports.Coder = exports.checkResultErrors = void 0;
+
+
+
+
+
+	var logger = new lib$6.Logger(_version$e.version);
+	function checkResultErrors(result) {
+	    // Find the first error (if any)
+	    var errors = [];
+	    var checkErrors = function (path, object) {
+	        if (!Array.isArray(object)) {
+	            return;
+	        }
+	        for (var key in object) {
+	            var childPath = path.slice();
+	            childPath.push(key);
+	            try {
+	                checkErrors(childPath, object[key]);
+	            }
+	            catch (error) {
+	                errors.push({ path: childPath, error: error });
+	            }
+	        }
+	    };
+	    checkErrors([], result);
+	    return errors;
+	}
+	exports.checkResultErrors = checkResultErrors;
+	var Coder = /** @class */ (function () {
+	    function Coder(name, type, localName, dynamic) {
+	        // @TODO: defineReadOnly these
+	        this.name = name;
+	        this.type = type;
+	        this.localName = localName;
+	        this.dynamic = dynamic;
+	    }
+	    Coder.prototype._throwError = function (message, value) {
+	        logger.throwArgumentError(message, this.localName, value);
+	    };
+	    return Coder;
+	}());
+	exports.Coder = Coder;
+	var Writer = /** @class */ (function () {
+	    function Writer(wordSize) {
+	        (0, lib$5.defineReadOnly)(this, "wordSize", wordSize || 32);
+	        this._data = [];
+	        this._dataLength = 0;
+	        this._padding = new Uint8Array(wordSize);
+	    }
+	    Object.defineProperty(Writer.prototype, "data", {
+	        get: function () {
+	            return (0, lib$8.hexConcat)(this._data);
+	        },
+	        enumerable: false,
+	        configurable: true
+	    });
+	    Object.defineProperty(Writer.prototype, "length", {
+	        get: function () { return this._dataLength; },
+	        enumerable: false,
+	        configurable: true
+	    });
+	    Writer.prototype._writeData = function (data) {
+	        this._data.push(data);
+	        this._dataLength += data.length;
+	        return data.length;
+	    };
+	    Writer.prototype.appendWriter = function (writer) {
+	        return this._writeData((0, lib$8.concat)(writer._data));
+	    };
+	    // Arrayish items; padded on the right to wordSize
+	    Writer.prototype.writeBytes = function (value) {
+	        var bytes = (0, lib$8.arrayify)(value);
+	        var paddingOffset = bytes.length % this.wordSize;
+	        if (paddingOffset) {
+	            bytes = (0, lib$8.concat)([bytes, this._padding.slice(paddingOffset)]);
+	        }
+	        return this._writeData(bytes);
+	    };
+	    Writer.prototype._getValue = function (value) {
+	        var bytes = (0, lib$8.arrayify)(lib$3.BigNumber.from(value));
+	        if (bytes.length > this.wordSize) {
+	            logger.throwError("value out-of-bounds", lib$6.Logger.errors.BUFFER_OVERRUN, {
+	                length: this.wordSize,
+	                offset: bytes.length
+	            });
+	        }
+	        if (bytes.length % this.wordSize) {
+	            bytes = (0, lib$8.concat)([this._padding.slice(bytes.length % this.wordSize), bytes]);
+	        }
+	        return bytes;
+	    };
+	    // BigNumberish items; padded on the left to wordSize
+	    Writer.prototype.writeValue = function (value) {
+	        return this._writeData(this._getValue(value));
+	    };
+	    Writer.prototype.writeUpdatableValue = function () {
+	        var _this = this;
+	        var offset = this._data.length;
+	        this._data.push(this._padding);
+	        this._dataLength += this.wordSize;
+	        return function (value) {
+	            _this._data[offset] = _this._getValue(value);
+	        };
+	    };
+	    return Writer;
+	}());
+	exports.Writer = Writer;
+	var Reader = /** @class */ (function () {
+	    function Reader(data, wordSize, coerceFunc, allowLoose) {
+	        (0, lib$5.defineReadOnly)(this, "_data", (0, lib$8.arrayify)(data));
+	        (0, lib$5.defineReadOnly)(this, "wordSize", wordSize || 32);
+	        (0, lib$5.defineReadOnly)(this, "_coerceFunc", coerceFunc);
+	        (0, lib$5.defineReadOnly)(this, "allowLoose", allowLoose);
+	        this._offset = 0;
+	    }
+	    Object.defineProperty(Reader.prototype, "data", {
+	        get: function () { return (0, lib$8.hexlify)(this._data); },
+	        enumerable: false,
+	        configurable: true
+	    });
+	    Object.defineProperty(Reader.prototype, "consumed", {
+	        get: function () { return this._offset; },
+	        enumerable: false,
+	        configurable: true
+	    });
+	    // The default Coerce function
+	    Reader.coerce = function (name, value) {
+	        var match = name.match("^u?int([0-9]+)$");
+	        if (match && parseInt(match[1]) <= 48) {
+	            value = value.toNumber();
+	        }
+	        return value;
+	    };
+	    Reader.prototype.coerce = function (name, value) {
+	        if (this._coerceFunc) {
+	            return this._coerceFunc(name, value);
+	        }
+	        return Reader.coerce(name, value);
+	    };
+	    Reader.prototype._peekBytes = function (offset, length, loose) {
+	        var alignedLength = Math.ceil(length / this.wordSize) * this.wordSize;
+	        if (this._offset + alignedLength > this._data.length) {
+	            if (this.allowLoose && loose && this._offset + length <= this._data.length) {
+	                alignedLength = length;
+	            }
+	            else {
+	                logger.throwError("data out-of-bounds", lib$6.Logger.errors.BUFFER_OVERRUN, {
+	                    length: this._data.length,
+	                    offset: this._offset + alignedLength
+	                });
+	            }
+	        }
+	        return this._data.slice(this._offset, this._offset + alignedLength);
+	    };
+	    Reader.prototype.subReader = function (offset) {
+	        return new Reader(this._data.slice(this._offset + offset), this.wordSize, this._coerceFunc, this.allowLoose);
+	    };
+	    Reader.prototype.readBytes = function (length, loose) {
+	        var bytes = this._peekBytes(0, length, !!loose);
+	        this._offset += bytes.length;
+	        // @TODO: Make sure the length..end bytes are all 0?
+	        return bytes.slice(0, length);
+	    };
+	    Reader.prototype.readValue = function () {
+	        return lib$3.BigNumber.from(this.readBytes(this.wordSize));
+	    };
+	    return Reader;
+	}());
+	exports.Reader = Reader;
+
+	});
+
+	var abstractCoder$1 = /*@__PURE__*/getDefaultExportFromCjs(abstractCoder);
+
+	var _version$k = createCommonjsModule(function (module, exports) {
+	"use strict";
+	Object.defineProperty(exports, "__esModule", { value: true });
+	exports.version = void 0;
+	exports.version = "logger/5.7.0";
+
+	});
+
+	var _version$l = /*@__PURE__*/getDefaultExportFromCjs(_version$k);
+
+	var lib$9 = createCommonjsModule(function (module, exports) {
+	"use strict";
+	Object.defineProperty(exports, "__esModule", { value: true });
+	exports.Logger = exports.ErrorCode = exports.LogLevel = void 0;
+	var _permanentCensorErrors = false;
+	var _censorErrors = false;
+	var LogLevels = { debug: 1, "default": 2, info: 2, warning: 3, error: 4, off: 5 };
+	var _logLevel = LogLevels["default"];
+
+	var _globalLogger = null;
+	function _checkNormalize() {
+	    try {
+	        var missing_1 = [];
+	        // Make sure all forms of normalization are supported
+	        ["NFD", "NFC", "NFKD", "NFKC"].forEach(function (form) {
+	            try {
+	                if ("test".normalize(form) !== "test") {
+	                    throw new Error("bad normalize");
+	                }
+	                ;
+	            }
+	            catch (error) {
+	                missing_1.push(form);
+	            }
+	        });
+	        if (missing_1.length) {
+	            throw new Error("missing " + missing_1.join(", "));
+	        }
+	        if (String.fromCharCode(0xe9).normalize("NFD") !== String.fromCharCode(0x65, 0x0301)) {
+	            throw new Error("broken implementation");
+	        }
+	    }
+	    catch (error) {
+	        return error.message;
+	    }
+	    return null;
+	}
+	var _normalizeError = _checkNormalize();
+	var LogLevel;
+	(function (LogLevel) {
+	    LogLevel["DEBUG"] = "DEBUG";
+	    LogLevel["INFO"] = "INFO";
+	    LogLevel["WARNING"] = "WARNING";
+	    LogLevel["ERROR"] = "ERROR";
+	    LogLevel["OFF"] = "OFF";
+	})(LogLevel = exports.LogLevel || (exports.LogLevel = {}));
+	var ErrorCode;
+	(function (ErrorCode) {
+	    ///////////////////
+	    // Generic Errors
+	    // Unknown Error
+	    ErrorCode["UNKNOWN_ERROR"] = "UNKNOWN_ERROR";
+	    // Not Implemented
+	    ErrorCode["NOT_IMPLEMENTED"] = "NOT_IMPLEMENTED";
+	    // Unsupported Operation
+	    //   - operation
+	    ErrorCode["UNSUPPORTED_OPERATION"] = "UNSUPPORTED_OPERATION";
+	    // Network Error (i.e. Ethereum Network, such as an invalid chain ID)
+	    //   - event ("noNetwork" is not re-thrown in provider.ready; otherwise thrown)
+	    ErrorCode["NETWORK_ERROR"] = "NETWORK_ERROR";
+	    // Some sort of bad response from the server
+	    ErrorCode["SERVER_ERROR"] = "SERVER_ERROR";
+	    // Timeout
+	    ErrorCode["TIMEOUT"] = "TIMEOUT";
+	    ///////////////////
+	    // Operational  Errors
+	    // Buffer Overrun
+	    ErrorCode["BUFFER_OVERRUN"] = "BUFFER_OVERRUN";
+	    // Numeric Fault
+	    //   - operation: the operation being executed
+	    //   - fault: the reason this faulted
+	    ErrorCode["NUMERIC_FAULT"] = "NUMERIC_FAULT";
+	    ///////////////////
+	    // Argument Errors
+	    // Missing new operator to an object
+	    //  - name: The name of the class
+	    ErrorCode["MISSING_NEW"] = "MISSING_NEW";
+	    // Invalid argument (e.g. value is incompatible with type) to a function:
+	    //   - argument: The argument name that was invalid
+	    //   - value: The value of the argument
+	    ErrorCode["INVALID_ARGUMENT"] = "INVALID_ARGUMENT";
+	    // Missing argument to a function:
+	    //   - count: The number of arguments received
+	    //   - expectedCount: The number of arguments expected
+	    ErrorCode["MISSING_ARGUMENT"] = "MISSING_ARGUMENT";
+	    // Too many arguments
+	    //   - count: The number of arguments received
+	    //   - expectedCount: The number of arguments expected
+	    ErrorCode["UNEXPECTED_ARGUMENT"] = "UNEXPECTED_ARGUMENT";
+	    ///////////////////
+	    // Blockchain Errors
+	    // Call exception
+	    //  - transaction: the transaction
+	    //  - address?: the contract address
+	    //  - args?: The arguments passed into the function
+	    //  - method?: The Solidity method signature
+	    //  - errorSignature?: The EIP848 error signature
+	    //  - errorArgs?: The EIP848 error parameters
+	    //  - reason: The reason (only for EIP848 "Error(string)")
+	    ErrorCode["CALL_EXCEPTION"] = "CALL_EXCEPTION";
+	    // Insufficient funds (< value + gasLimit * gasPrice)
+	    //   - transaction: the transaction attempted
+	    ErrorCode["INSUFFICIENT_FUNDS"] = "INSUFFICIENT_FUNDS";
+	    // Nonce has already been used
+	    //   - transaction: the transaction attempted
+	    ErrorCode["NONCE_EXPIRED"] = "NONCE_EXPIRED";
+	    // The replacement fee for the transaction is too low
+	    //   - transaction: the transaction attempted
+	    ErrorCode["REPLACEMENT_UNDERPRICED"] = "REPLACEMENT_UNDERPRICED";
+	    // The gas limit could not be estimated
+	    //   - transaction: the transaction passed to estimateGas
+	    ErrorCode["UNPREDICTABLE_GAS_LIMIT"] = "UNPREDICTABLE_GAS_LIMIT";
+	    // The transaction was replaced by one with a higher gas price
+	    //   - reason: "cancelled", "replaced" or "repriced"
+	    //   - cancelled: true if reason == "cancelled" or reason == "replaced")
+	    //   - hash: original transaction hash
+	    //   - replacement: the full TransactionsResponse for the replacement
+	    //   - receipt: the receipt of the replacement
+	    ErrorCode["TRANSACTION_REPLACED"] = "TRANSACTION_REPLACED";
+	    ///////////////////
+	    // Interaction Errors
+	    // The user rejected the action, such as signing a message or sending
+	    // a transaction
+	    ErrorCode["ACTION_REJECTED"] = "ACTION_REJECTED";
+	})(ErrorCode = exports.ErrorCode || (exports.ErrorCode = {}));
+	;
+	var HEX = "0123456789abcdef";
+	var Logger = /** @class */ (function () {
+	    function Logger(version) {
+	        Object.defineProperty(this, "version", {
+	            enumerable: true,
+	            value: version,
+	            writable: false
+	        });
+	    }
+	    Logger.prototype._log = function (logLevel, args) {
+	        var level = logLevel.toLowerCase();
+	        if (LogLevels[level] == null) {
+	            this.throwArgumentError("invalid log level name", "logLevel", logLevel);
+	        }
+	        if (_logLevel > LogLevels[level]) {
+	            return;
+	        }
+	        console.log.apply(console, args);
+	    };
+	    Logger.prototype.debug = function () {
+	        var args = [];
+	        for (var _i = 0; _i < arguments.length; _i++) {
+	            args[_i] = arguments[_i];
+	        }
+	        this._log(Logger.levels.DEBUG, args);
+	    };
+	    Logger.prototype.info = function () {
+	        var args = [];
+	        for (var _i = 0; _i < arguments.length; _i++) {
+	            args[_i] = arguments[_i];
+	        }
+	        this._log(Logger.levels.INFO, args);
+	    };
+	    Logger.prototype.warn = function () {
+	        var args = [];
+	        for (var _i = 0; _i < arguments.length; _i++) {
+	            args[_i] = arguments[_i];
+	        }
+	        this._log(Logger.levels.WARNING, args);
+	    };
+	    Logger.prototype.makeError = function (message, code, params) {
+	        // Errors are being censored
+	        if (_censorErrors) {
+	            return this.makeError("censored error", code, {});
+	        }
+	        if (!code) {
+	            code = Logger.errors.UNKNOWN_ERROR;
+	        }
+	        if (!params) {
+	            params = {};
+	        }
+	        var messageDetails = [];
+	        Object.keys(params).forEach(function (key) {
+	            var value = params[key];
+	            try {
+	                if (value instanceof Uint8Array) {
+	                    var hex = "";
+	                    for (var i = 0; i < value.length; i++) {
+	                        hex += HEX[value[i] >> 4];
+	                        hex += HEX[value[i] & 0x0f];
+	                    }
+	                    messageDetails.push(key + "=Uint8Array(0x" + hex + ")");
+	                }
+	                else {
+	                    messageDetails.push(key + "=" + JSON.stringify(value));
+	                }
+	            }
+	            catch (error) {
+	                messageDetails.push(key + "=" + JSON.stringify(params[key].toString()));
+	            }
+	        });
+	        messageDetails.push("code=" + code);
+	        messageDetails.push("version=" + this.version);
+	        var reason = message;
+	        var url = "";
+	        switch (code) {
+	            case ErrorCode.NUMERIC_FAULT: {
+	                url = "NUMERIC_FAULT";
+	                var fault = message;
+	                switch (fault) {
+	                    case "overflow":
+	                    case "underflow":
+	                    case "division-by-zero":
+	                        url += "-" + fault;
+	                        break;
+	                    case "negative-power":
+	                    case "negative-width":
+	                        url += "-unsupported";
+	                        break;
+	                    case "unbound-bitwise-result":
+	                        url += "-unbound-result";
+	                        break;
+	                }
+	                break;
+	            }
+	            case ErrorCode.CALL_EXCEPTION:
+	            case ErrorCode.INSUFFICIENT_FUNDS:
+	            case ErrorCode.MISSING_NEW:
+	            case ErrorCode.NONCE_EXPIRED:
+	            case ErrorCode.REPLACEMENT_UNDERPRICED:
+	            case ErrorCode.TRANSACTION_REPLACED:
+	            case ErrorCode.UNPREDICTABLE_GAS_LIMIT:
+	                url = code;
+	                break;
+	        }
+	        if (url) {
+	            message += " [ See: https:/\/links.quais.org/v5-errors-" + url + " ]";
+	        }
+	        if (messageDetails.length) {
+	            message += " (" + messageDetails.join(", ") + ")";
+	        }
+	        // @TODO: Any??
+	        var error = new Error(message);
+	        error.reason = reason;
+	        error.code = code;
+	        Object.keys(params).forEach(function (key) {
+	            error[key] = params[key];
+	        });
+	        return error;
+	    };
+	    Logger.prototype.throwError = function (message, code, params) {
+	        throw this.makeError(message, code, params);
+	    };
+	    Logger.prototype.throwArgumentError = function (message, name, value) {
+	        return this.throwError(message, Logger.errors.INVALID_ARGUMENT, {
+	            argument: name,
+	            value: value
+	        });
+	    };
+	    Logger.prototype.assert = function (condition, message, code, params) {
+	        if (!!condition) {
+	            return;
+	        }
+	        this.throwError(message, code, params);
+	    };
+	    Logger.prototype.assertArgument = function (condition, message, name, value) {
+	        if (!!condition) {
+	            return;
+	        }
+	        this.throwArgumentError(message, name, value);
+	    };
+	    Logger.prototype.checkNormalize = function (message) {
+	        if (message == null) {
+	            message = "platform missing String.prototype.normalize";
+	        }
+	        if (_normalizeError) {
+	            this.throwError("platform missing String.prototype.normalize", Logger.errors.UNSUPPORTED_OPERATION, {
+	                operation: "String.prototype.normalize", form: _normalizeError
+	            });
+	        }
+	    };
+	    Logger.prototype.checkSafeUint53 = function (value, message) {
+	        if (typeof (value) !== "number") {
+	            return;
+	        }
+	        if (message == null) {
+	            message = "value not safe";
+	        }
+	        if (value < 0 || value >= 0x1fffffffffffff) {
+	            this.throwError(message, Logger.errors.NUMERIC_FAULT, {
+	                operation: "checkSafeInteger",
+	                fault: "out-of-safe-range",
+	                value: value
+	            });
+	        }
+	        if (value % 1) {
+	            this.throwError(message, Logger.errors.NUMERIC_FAULT, {
+	                operation: "checkSafeInteger",
+	                fault: "non-integer",
+	                value: value
+	            });
+	        }
+	    };
+	    Logger.prototype.checkArgumentCount = function (count, expectedCount, message) {
+	        if (message) {
+	            message = ": " + message;
+	        }
+	        else {
+	            message = "";
+	        }
+	        if (count < expectedCount) {
+	            this.throwError("missing argument" + message, Logger.errors.MISSING_ARGUMENT, {
+	                count: count,
+	                expectedCount: expectedCount
+	            });
+	        }
+	        if (count > expectedCount) {
+	            this.throwError("too many arguments" + message, Logger.errors.UNEXPECTED_ARGUMENT, {
+	                count: count,
+	                expectedCount: expectedCount
+	            });
+	        }
+	    };
+	    Logger.prototype.checkNew = function (target, kind) {
+	        if (target === Object || target == null) {
+	            this.throwError("missing new", Logger.errors.MISSING_NEW, { name: kind.name });
+	        }
+	    };
+	    Logger.prototype.checkAbstract = function (target, kind) {
+	        if (target === kind) {
+	            this.throwError("cannot instantiate abstract class " + JSON.stringify(kind.name) + " directly; use a sub-class", Logger.errors.UNSUPPORTED_OPERATION, { name: target.name, operation: "new" });
+	        }
+	        else if (target === Object || target == null) {
+	            this.throwError("missing new", Logger.errors.MISSING_NEW, { name: kind.name });
+	        }
+	    };
+	    Logger.globalLogger = function () {
+	        if (!_globalLogger) {
+	            _globalLogger = new Logger(_version$k.version);
+	        }
+	        return _globalLogger;
+	    };
+	    Logger.setCensorship = function (censorship, permanent) {
+	        if (!censorship && permanent) {
+	            this.globalLogger().throwError("cannot permanently disable censorship", Logger.errors.UNSUPPORTED_OPERATION, {
+	                operation: "setCensorship"
+	            });
+	        }
+	        if (_permanentCensorErrors) {
+	            if (!censorship) {
+	                return;
+	            }
+	            this.globalLogger().throwError("error censorship permanent", Logger.errors.UNSUPPORTED_OPERATION, {
+	                operation: "setCensorship"
+	            });
+	        }
+	        _censorErrors = !!censorship;
+	        _permanentCensorErrors = !!permanent;
+	    };
+	    Logger.setLogLevel = function (logLevel) {
+	        var level = LogLevels[logLevel.toLowerCase()];
+	        if (level == null) {
+	            Logger.globalLogger().warn("invalid log level - " + logLevel);
+	            return;
+	        }
+	        _logLevel = level;
+	    };
+	    Logger.from = function (version) {
+	        return new Logger(version);
+	    };
+	    Logger.errors = ErrorCode;
+	    Logger.levels = LogLevel;
+	    return Logger;
+	}());
+	exports.Logger = Logger;
+
+	});
+
 	var index$9 = /*@__PURE__*/getDefaultExportFromCjs(lib$9);
+
+	var _version$m = createCommonjsModule(function (module, exports) {
+	"use strict";
+	Object.defineProperty(exports, "__esModule", { value: true });
+	exports.version = void 0;
+	exports.version = "bytes/5.7.0";
+
+	});
+
+	var _version$n = /*@__PURE__*/getDefaultExportFromCjs(_version$m);
+
+	var lib$a = createCommonjsModule(function (module, exports) {
+	"use strict";
+	Object.defineProperty(exports, "__esModule", { value: true });
+	exports.joinSignature = exports.splitSignature = exports.hexZeroPad = exports.hexStripZeros = exports.hexValue = exports.hexConcat = exports.hexDataSlice = exports.hexDataLength = exports.hexlify = exports.isHexString = exports.zeroPad = exports.stripZeros = exports.concat = exports.arrayify = exports.isBytes = exports.isBytesLike = void 0;
+
+
+	var logger = new lib$9.Logger(_version$m.version);
+	///////////////////////////////
+	function isHexable(value) {
+	    return !!(value.toHexString);
+	}
+	function addSlice(array) {
+	    if (array.slice) {
+	        return array;
+	    }
+	    array.slice = function () {
+	        var args = Array.prototype.slice.call(arguments);
+	        return addSlice(new Uint8Array(Array.prototype.slice.apply(array, args)));
+	    };
+	    return array;
+	}
+	function isBytesLike(value) {
+	    return ((isHexString(value) && !(value.length % 2)) || isBytes(value));
+	}
+	exports.isBytesLike = isBytesLike;
+	function isInteger(value) {
+	    return (typeof (value) === "number" && value == value && (value % 1) === 0);
+	}
+	function isBytes(value) {
+	    if (value == null) {
+	        return false;
+	    }
+	    if (value.constructor === Uint8Array) {
+	        return true;
+	    }
+	    if (typeof (value) === "string") {
+	        return false;
+	    }
+	    if (!isInteger(value.length) || value.length < 0) {
+	        return false;
+	    }
+	    for (var i = 0; i < value.length; i++) {
+	        var v = value[i];
+	        if (!isInteger(v) || v < 0 || v >= 256) {
+	            return false;
+	        }
+	    }
+	    return true;
+	}
+	exports.isBytes = isBytes;
+	function arrayify(value, options) {
+	    if (!options) {
+	        options = {};
+	    }
+	    if (typeof (value) === "number") {
+	        logger.checkSafeUint53(value, "invalid arrayify value");
+	        var result = [];
+	        while (value) {
+	            result.unshift(value & 0xff);
+	            value = parseInt(String(value / 256));
+	        }
+	        if (result.length === 0) {
+	            result.push(0);
+	        }
+	        return addSlice(new Uint8Array(result));
+	    }
+	    if (options.allowMissingPrefix && typeof (value) === "string" && value.substring(0, 2) !== "0x") {
+	        value = "0x" + value;
+	    }
+	    if (isHexable(value)) {
+	        value = value.toHexString();
+	    }
+	    if (isHexString(value)) {
+	        var hex = value.substring(2);
+	        if (hex.length % 2) {
+	            if (options.hexPad === "left") {
+	                hex = "0" + hex;
+	            }
+	            else if (options.hexPad === "right") {
+	                hex += "0";
+	            }
+	            else {
+	                logger.throwArgumentError("hex data is odd-length", "value", value);
+	            }
+	        }
+	        var result = [];
+	        for (var i = 0; i < hex.length; i += 2) {
+	            result.push(parseInt(hex.substring(i, i + 2), 16));
+	        }
+	        return addSlice(new Uint8Array(result));
+	    }
+	    if (isBytes(value)) {
+	        return addSlice(new Uint8Array(value));
+	    }
+	    return logger.throwArgumentError("invalid arrayify value", "value", value);
+	}
+	exports.arrayify = arrayify;
+	function concat(items) {
+	    var objects = items.map(function (item) { return arrayify(item); });
+	    var length = objects.reduce(function (accum, item) { return (accum + item.length); }, 0);
+	    var result = new Uint8Array(length);
+	    objects.reduce(function (offset, object) {
+	        result.set(object, offset);
+	        return offset + object.length;
+	    }, 0);
+	    return addSlice(result);
+	}
+	exports.concat = concat;
+	function stripZeros(value) {
+	    var result = arrayify(value);
+	    if (result.length === 0) {
+	        return result;
+	    }
+	    // Find the first non-zero entry
+	    var start = 0;
+	    while (start < result.length && result[start] === 0) {
+	        start++;
+	    }
+	    // If we started with zeros, strip them
+	    if (start) {
+	        result = result.slice(start);
+	    }
+	    return result;
+	}
+	exports.stripZeros = stripZeros;
+	function zeroPad(value, length) {
+	    value = arrayify(value);
+	    if (value.length > length) {
+	        logger.throwArgumentError("value out of range", "value", arguments[0]);
+	    }
+	    var result = new Uint8Array(length);
+	    result.set(value, length - value.length);
+	    return addSlice(result);
+	}
+	exports.zeroPad = zeroPad;
+	function isHexString(value, length) {
+	    if (typeof (value) !== "string" || !value.match(/^0x[0-9A-Fa-f]*$/)) {
+	        return false;
+	    }
+	    if (length && value.length !== 2 + 2 * length) {
+	        return false;
+	    }
+	    return true;
+	}
+	exports.isHexString = isHexString;
+	var HexCharacters = "0123456789abcdef";
+	function hexlify(value, options) {
+	    if (!options) {
+	        options = {};
+	    }
+	    if (typeof (value) === "number") {
+	        logger.checkSafeUint53(value, "invalid hexlify value");
+	        var hex = "";
+	        while (value) {
+	            hex = HexCharacters[value & 0xf] + hex;
+	            value = Math.floor(value / 16);
+	        }
+	        if (hex.length) {
+	            if (hex.length % 2) {
+	                hex = "0" + hex;
+	            }
+	            return "0x" + hex;
+	        }
+	        return "0x00";
+	    }
+	    if (typeof (value) === "bigint") {
+	        value = value.toString(16);
+	        if (value.length % 2) {
+	            return ("0x0" + value);
+	        }
+	        return "0x" + value;
+	    }
+	    if (options.allowMissingPrefix && typeof (value) === "string" && value.substring(0, 2) !== "0x") {
+	        value = "0x" + value;
+	    }
+	    if (isHexable(value)) {
+	        return value.toHexString();
+	    }
+	    if (isHexString(value)) {
+	        if (value.length % 2) {
+	            if (options.hexPad === "left") {
+	                value = "0x0" + value.substring(2);
+	            }
+	            else if (options.hexPad === "right") {
+	                value += "0";
+	            }
+	            else {
+	                logger.throwArgumentError("hex data is odd-length", "value", value);
+	            }
+	        }
+	        return value.toLowerCase();
+	    }
+	    if (isBytes(value)) {
+	        var result = "0x";
+	        for (var i = 0; i < value.length; i++) {
+	            var v = value[i];
+	            result += HexCharacters[(v & 0xf0) >> 4] + HexCharacters[v & 0x0f];
+	        }
+	        return result;
+	    }
+	    return logger.throwArgumentError("invalid hexlify value", "value", value);
+	}
+	exports.hexlify = hexlify;
+	/*
+	function unoddify(value: BytesLike | Hexable | number): BytesLike | Hexable | number {
+	    if (typeof(value) === "string" && value.length % 2 && value.substring(0, 2) === "0x") {
+	        return "0x0" + value.substring(2);
+	    }
+	    return value;
+	}
+	*/
+	function hexDataLength(data) {
+	    if (typeof (data) !== "string") {
+	        data = hexlify(data);
+	    }
+	    else if (!isHexString(data) || (data.length % 2)) {
+	        return null;
+	    }
+	    return (data.length - 2) / 2;
+	}
+	exports.hexDataLength = hexDataLength;
+	function hexDataSlice(data, offset, endOffset) {
+	    if (typeof (data) !== "string") {
+	        data = hexlify(data);
+	    }
+	    else if (!isHexString(data) || (data.length % 2)) {
+	        logger.throwArgumentError("invalid hexData", "value", data);
+	    }
+	    offset = 2 + 2 * offset;
+	    if (endOffset != null) {
+	        return "0x" + data.substring(offset, 2 + 2 * endOffset);
+	    }
+	    return "0x" + data.substring(offset);
+	}
+	exports.hexDataSlice = hexDataSlice;
+	function hexConcat(items) {
+	    var result = "0x";
+	    items.forEach(function (item) {
+	        result += hexlify(item).substring(2);
+	    });
+	    return result;
+	}
+	exports.hexConcat = hexConcat;
+	function hexValue(value) {
+	    var trimmed = hexStripZeros(hexlify(value, { hexPad: "left" }));
+	    if (trimmed === "0x") {
+	        return "0x0";
+	    }
+	    return trimmed;
+	}
+	exports.hexValue = hexValue;
+	function hexStripZeros(value) {
+	    if (typeof (value) !== "string") {
+	        value = hexlify(value);
+	    }
+	    if (!isHexString(value)) {
+	        logger.throwArgumentError("invalid hex string", "value", value);
+	    }
+	    value = value.substring(2);
+	    var offset = 0;
+	    while (offset < value.length && value[offset] === "0") {
+	        offset++;
+	    }
+	    return "0x" + value.substring(offset);
+	}
+	exports.hexStripZeros = hexStripZeros;
+	function hexZeroPad(value, length) {
+	    if (typeof (value) !== "string") {
+	        value = hexlify(value);
+	    }
+	    else if (!isHexString(value)) {
+	        logger.throwArgumentError("invalid hex string", "value", value);
+	    }
+	    if (value.length > 2 * length + 2) {
+	        logger.throwArgumentError("value out of range", "value", arguments[1]);
+	    }
+	    while (value.length < 2 * length + 2) {
+	        value = "0x0" + value.substring(2);
+	    }
+	    return value;
+	}
+	exports.hexZeroPad = hexZeroPad;
+	function splitSignature(signature) {
+	    var result = {
+	        r: "0x",
+	        s: "0x",
+	        _vs: "0x",
+	        recoveryParam: 0,
+	        v: 0,
+	        yParityAndS: "0x",
+	        compact: "0x"
+	    };
+	    if (isBytesLike(signature)) {
+	        var bytes = arrayify(signature);
+	        // Get the r, s and v
+	        if (bytes.length === 64) {
+	            // EIP-2098; pull the v from the top bit of s and clear it
+	            result.v = 27 + (bytes[32] >> 7);
+	            bytes[32] &= 0x7f;
+	            result.r = hexlify(bytes.slice(0, 32));
+	            result.s = hexlify(bytes.slice(32, 64));
+	        }
+	        else if (bytes.length === 65) {
+	            result.r = hexlify(bytes.slice(0, 32));
+	            result.s = hexlify(bytes.slice(32, 64));
+	            result.v = bytes[64];
+	        }
+	        else {
+	            logger.throwArgumentError("invalid signature string", "signature", signature);
+	        }
+	        // Allow a recid to be used as the v
+	        if (result.v < 27) {
+	            if (result.v === 0 || result.v === 1) {
+	                result.v += 27;
+	            }
+	            else {
+	                logger.throwArgumentError("signature invalid v byte", "signature", signature);
+	            }
+	        }
+	        // Compute recoveryParam from v
+	        result.recoveryParam = 1 - (result.v % 2);
+	        // Compute _vs from recoveryParam and s
+	        if (result.recoveryParam) {
+	            bytes[32] |= 0x80;
+	        }
+	        result._vs = hexlify(bytes.slice(32, 64));
+	    }
+	    else {
+	        result.r = signature.r;
+	        result.s = signature.s;
+	        result.v = signature.v;
+	        result.recoveryParam = signature.recoveryParam;
+	        result._vs = signature._vs;
+	        // If the _vs is available, use it to populate missing s, v and recoveryParam
+	        // and verify non-missing s, v and recoveryParam
+	        if (result._vs != null) {
+	            var vs_1 = zeroPad(arrayify(result._vs), 32);
+	            result._vs = hexlify(vs_1);
+	            // Set or check the recid
+	            var recoveryParam = ((vs_1[0] >= 128) ? 1 : 0);
+	            if (result.recoveryParam == null) {
+	                result.recoveryParam = recoveryParam;
+	            }
+	            else if (result.recoveryParam !== recoveryParam) {
+	                logger.throwArgumentError("signature recoveryParam mismatch _vs", "signature", signature);
+	            }
+	            // Set or check the s
+	            vs_1[0] &= 0x7f;
+	            var s = hexlify(vs_1);
+	            if (result.s == null) {
+	                result.s = s;
+	            }
+	            else if (result.s !== s) {
+	                logger.throwArgumentError("signature v mismatch _vs", "signature", signature);
+	            }
+	        }
+	        // Use recid and v to populate each other
+	        if (result.recoveryParam == null) {
+	            if (result.v == null) {
+	                logger.throwArgumentError("signature missing v and recoveryParam", "signature", signature);
+	            }
+	            else if (result.v === 0 || result.v === 1) {
+	                result.recoveryParam = result.v;
+	            }
+	            else {
+	                result.recoveryParam = 1 - (result.v % 2);
+	            }
+	        }
+	        else {
+	            if (result.v == null) {
+	                result.v = 27 + result.recoveryParam;
+	            }
+	            else {
+	                var recId = (result.v === 0 || result.v === 1) ? result.v : (1 - (result.v % 2));
+	                if (result.recoveryParam !== recId) {
+	                    logger.throwArgumentError("signature recoveryParam mismatch v", "signature", signature);
+	                }
+	            }
+	        }
+	        if (result.r == null || !isHexString(result.r)) {
+	            logger.throwArgumentError("signature missing or invalid r", "signature", signature);
+	        }
+	        else {
+	            result.r = hexZeroPad(result.r, 32);
+	        }
+	        if (result.s == null || !isHexString(result.s)) {
+	            logger.throwArgumentError("signature missing or invalid s", "signature", signature);
+	        }
+	        else {
+	            result.s = hexZeroPad(result.s, 32);
+	        }
+	        var vs = arrayify(result.s);
+	        if (vs[0] >= 128) {
+	            logger.throwArgumentError("signature s out of range", "signature", signature);
+	        }
+	        if (result.recoveryParam) {
+	            vs[0] |= 0x80;
+	        }
+	        var _vs = hexlify(vs);
+	        if (result._vs) {
+	            if (!isHexString(result._vs)) {
+	                logger.throwArgumentError("signature invalid _vs", "signature", signature);
+	            }
+	            result._vs = hexZeroPad(result._vs, 32);
+	        }
+	        // Set or check the _vs
+	        if (result._vs == null) {
+	            result._vs = _vs;
+	        }
+	        else if (result._vs !== _vs) {
+	            logger.throwArgumentError("signature _vs mismatch v and s", "signature", signature);
+	        }
+	    }
+	    result.yParityAndS = result._vs;
+	    result.compact = result.r + result.yParityAndS.substring(2);
+	    return result;
+	}
+	exports.splitSignature = splitSignature;
+	function joinSignature(signature) {
+	    signature = splitSignature(signature);
+	    return hexlify(concat([
+	        signature.r,
+	        signature.s,
+	        (signature.recoveryParam ? "0x1c" : "0x1b")
+	    ]));
+	}
+	exports.joinSignature = joinSignature;
+
+	});
+
+	var index$a = /*@__PURE__*/getDefaultExportFromCjs(lib$a);
 
 	var bn$1 = createCommonjsModule(function (module) {
 	(function (module, exports) {
@@ -12406,7 +12792,7 @@
 	})('object' === 'undefined' || module, commonjsGlobal);
 	});
 
-	var _version$m = createCommonjsModule(function (module, exports) {
+	var _version$o = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.version = void 0;
@@ -12414,9 +12800,9 @@
 
 	});
 
-	var _version$n = /*@__PURE__*/getDefaultExportFromCjs(_version$m);
+	var _version$p = /*@__PURE__*/getDefaultExportFromCjs(_version$o);
 
-	var lib$a = createCommonjsModule(function (module, exports) {
+	var lib$b = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.Logger = exports.ErrorCode = exports.LogLevel = void 0;
@@ -12750,7 +13136,7 @@
 	    };
 	    Logger.globalLogger = function () {
 	        if (!_globalLogger) {
-	            _globalLogger = new Logger(_version$m.version);
+	            _globalLogger = new Logger(_version$o.version);
 	        }
 	        return _globalLogger;
 	    };
@@ -12790,9 +13176,9 @@
 
 	});
 
-	var index$a = /*@__PURE__*/getDefaultExportFromCjs(lib$a);
+	var index$b = /*@__PURE__*/getDefaultExportFromCjs(lib$b);
 
-	var _version$o = createCommonjsModule(function (module, exports) {
+	var _version$q = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.version = void 0;
@@ -12800,15 +13186,15 @@
 
 	});
 
-	var _version$p = /*@__PURE__*/getDefaultExportFromCjs(_version$o);
+	var _version$r = /*@__PURE__*/getDefaultExportFromCjs(_version$q);
 
-	var lib$b = createCommonjsModule(function (module, exports) {
+	var lib$c = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.joinSignature = exports.splitSignature = exports.hexZeroPad = exports.hexStripZeros = exports.hexValue = exports.hexConcat = exports.hexDataSlice = exports.hexDataLength = exports.hexlify = exports.isHexString = exports.zeroPad = exports.stripZeros = exports.concat = exports.arrayify = exports.isBytes = exports.isBytesLike = void 0;
 
 
-	var logger = new lib$a.Logger(_version$o.version);
+	var logger = new lib$b.Logger(_version$q.version);
 	///////////////////////////////
 	function isHexable(value) {
 	    return !!(value.toHexString);
@@ -13232,9 +13618,9 @@
 
 	});
 
-	var index$b = /*@__PURE__*/getDefaultExportFromCjs(lib$b);
+	var index$c = /*@__PURE__*/getDefaultExportFromCjs(lib$c);
 
-	var _version$q = createCommonjsModule(function (module, exports) {
+	var _version$s = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.version = void 0;
@@ -13242,7 +13628,7 @@
 
 	});
 
-	var _version$r = /*@__PURE__*/getDefaultExportFromCjs(_version$q);
+	var _version$t = /*@__PURE__*/getDefaultExportFromCjs(_version$s);
 
 	var bignumber$2 = createCommonjsModule(function (module, exports) {
 	"use strict";
@@ -13263,16 +13649,16 @@
 
 
 
-	var logger = new lib$a.Logger(_version$q.version);
+	var logger = new lib$b.Logger(_version$s.version);
 	var _constructorGuard = {};
 	var MAX_SAFE = 0x1fffffffffffff;
 	function isBigNumberish(value) {
 	    return (value != null) && (BigNumber.isBigNumber(value) ||
 	        (typeof (value) === "number" && (value % 1) === 0) ||
 	        (typeof (value) === "string" && !!value.match(/^-?[0-9]+$/)) ||
-	        (0, lib$b.isHexString)(value) ||
+	        (0, lib$c.isHexString)(value) ||
 	        (typeof (value) === "bigint") ||
-	        (0, lib$b.isBytes)(value));
+	        (0, lib$c.isBytes)(value));
 	}
 	exports.isBigNumberish = isBigNumberish;
 	// Only warn about passing 10 into radix once
@@ -13280,7 +13666,7 @@
 	var BigNumber = /** @class */ (function () {
 	    function BigNumber(constructorGuard, hex) {
 	        if (constructorGuard !== _constructorGuard) {
-	            logger.throwError("cannot call constructor directly; use BigNumber.from", lib$a.Logger.errors.UNSUPPORTED_OPERATION, {
+	            logger.throwError("cannot call constructor directly; use BigNumber.from", lib$b.Logger.errors.UNSUPPORTED_OPERATION, {
 	                operation: "new (BigNumber)"
 	            });
 	        }
@@ -13404,7 +13790,7 @@
 	            return BigInt(this.toString());
 	        }
 	        catch (e) { }
-	        return logger.throwError("this platform does not support BigInt", lib$a.Logger.errors.UNSUPPORTED_OPERATION, {
+	        return logger.throwError("this platform does not support BigInt", lib$b.Logger.errors.UNSUPPORTED_OPERATION, {
 	            value: this.toString()
 	        });
 	    };
@@ -13418,10 +13804,10 @@
 	                }
 	            }
 	            else if (arguments[0] === 16) {
-	                logger.throwError("BigNumber.toString does not accept any parameters; use bigNumber.toHexString()", lib$a.Logger.errors.UNEXPECTED_ARGUMENT, {});
+	                logger.throwError("BigNumber.toString does not accept any parameters; use bigNumber.toHexString()", lib$b.Logger.errors.UNEXPECTED_ARGUMENT, {});
 	            }
 	            else {
-	                logger.throwError("BigNumber.toString does not accept parameters", lib$a.Logger.errors.UNEXPECTED_ARGUMENT, {});
+	                logger.throwError("BigNumber.toString does not accept parameters", lib$b.Logger.errors.UNEXPECTED_ARGUMENT, {});
 	            }
 	        }
 	        return toBN(this).toString(10);
@@ -13458,8 +13844,8 @@
 	        if (typeof (anyValue) === "bigint") {
 	            return BigNumber.from(anyValue.toString());
 	        }
-	        if ((0, lib$b.isBytes)(anyValue)) {
-	            return BigNumber.from((0, lib$b.hexlify)(anyValue));
+	        if ((0, lib$c.isBytes)(anyValue)) {
+	            return BigNumber.from((0, lib$c.hexlify)(anyValue));
 	        }
 	        if (anyValue) {
 	            // Hexable interface (takes priority)
@@ -13477,7 +13863,7 @@
 	                    hex = anyValue.hex;
 	                }
 	                if (typeof (hex) === "string") {
-	                    if ((0, lib$b.isHexString)(hex) || (hex[0] === "-" && (0, lib$b.isHexString)(hex.substring(1)))) {
+	                    if ((0, lib$c.isHexString)(hex) || (hex[0] === "-" && (0, lib$c.isHexString)(hex.substring(1)))) {
 	                        return BigNumber.from(hex);
 	                    }
 	                }
@@ -13547,7 +13933,7 @@
 	    if (value != null) {
 	        params.value = value;
 	    }
-	    return logger.throwError(fault, lib$a.Logger.errors.NUMERIC_FAULT, params);
+	    return logger.throwError(fault, lib$b.Logger.errors.NUMERIC_FAULT, params);
 	}
 	// value should have no prefix
 	function _base36To16(value) {
@@ -13571,7 +13957,7 @@
 
 
 
-	var logger = new lib$a.Logger(_version$q.version);
+	var logger = new lib$b.Logger(_version$s.version);
 
 	var _constructorGuard = {};
 	var Zero = bignumber$2.BigNumber.from(0);
@@ -13581,7 +13967,7 @@
 	    if (value !== undefined) {
 	        params.value = value;
 	    }
-	    return logger.throwError(message, lib$a.Logger.errors.NUMERIC_FAULT, params);
+	    return logger.throwError(message, lib$b.Logger.errors.NUMERIC_FAULT, params);
 	}
 	// Constant to pull zeros from for multipliers
 	var zeros = "0";
@@ -13687,7 +14073,7 @@
 	var FixedFormat = /** @class */ (function () {
 	    function FixedFormat(constructorGuard, signed, width, decimals) {
 	        if (constructorGuard !== _constructorGuard) {
-	            logger.throwError("cannot use FixedFormat constructor; use FixedFormat.from", lib$a.Logger.errors.UNSUPPORTED_OPERATION, {
+	            logger.throwError("cannot use FixedFormat constructor; use FixedFormat.from", lib$b.Logger.errors.UNSUPPORTED_OPERATION, {
 	                operation: "new FixedFormat"
 	            });
 	        }
@@ -13753,7 +14139,7 @@
 	var FixedNumber = /** @class */ (function () {
 	    function FixedNumber(constructorGuard, hex, value, format) {
 	        if (constructorGuard !== _constructorGuard) {
-	            logger.throwError("cannot use FixedNumber constructor; use FixedNumber.from", lib$a.Logger.errors.UNSUPPORTED_OPERATION, {
+	            logger.throwError("cannot use FixedNumber constructor; use FixedNumber.from", lib$b.Logger.errors.UNSUPPORTED_OPERATION, {
 	                operation: "new FixedFormat"
 	            });
 	        }
@@ -13851,7 +14237,7 @@
 	            logger.throwArgumentError("invalid byte width", "width", width);
 	        }
 	        var hex = bignumber$2.BigNumber.from(this._hex).fromTwos(this.format.width).toTwos(width).toHexString();
-	        return (0, lib$b.hexZeroPad)(hex, width / 8);
+	        return (0, lib$c.hexZeroPad)(hex, width / 8);
 	    };
 	    FixedNumber.prototype.toUnsafeFloat = function () { return parseFloat(this.toString()); };
 	    FixedNumber.prototype.toFormat = function (format) {
@@ -13886,7 +14272,7 @@
 	        }
 	        else {
 	            hex = numeric.toHexString();
-	            hex = (0, lib$b.hexZeroPad)(hex, fixedFormat.width / 8);
+	            hex = (0, lib$c.hexZeroPad)(hex, fixedFormat.width / 8);
 	        }
 	        var decimal = formatFixed(numeric, fixedFormat.decimals);
 	        return new FixedNumber(_constructorGuard, hex, decimal, fixedFormat);
@@ -13896,7 +14282,7 @@
 	            format = "fixed";
 	        }
 	        var fixedFormat = FixedFormat.from(format);
-	        if ((0, lib$b.arrayify)(value).length > fixedFormat.width / 8) {
+	        if ((0, lib$c.arrayify)(value).length > fixedFormat.width / 8) {
 	            throw new Error("overflow");
 	        }
 	        var numeric = bignumber$2.BigNumber.from(value);
@@ -13911,7 +14297,7 @@
 	        if (typeof (value) === "string") {
 	            return FixedNumber.fromString(value, format);
 	        }
-	        if ((0, lib$b.isBytes)(value)) {
+	        if ((0, lib$c.isBytes)(value)) {
 	            return FixedNumber.fromBytes(value, format);
 	        }
 	        try {
@@ -13919,7 +14305,7 @@
 	        }
 	        catch (error) {
 	            // Allow NUMERIC_FAULT to bubble up
-	            if (error.code !== lib$a.Logger.errors.INVALID_ARGUMENT) {
+	            if (error.code !== lib$b.Logger.errors.INVALID_ARGUMENT) {
 	                throw error;
 	            }
 	        }
@@ -13938,7 +14324,7 @@
 
 	var fixednumber$3 = /*@__PURE__*/getDefaultExportFromCjs(fixednumber$2);
 
-	var lib$c = createCommonjsModule(function (module, exports) {
+	var lib$d = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports._base36To16 = exports._base16To36 = exports.parseFixed = exports.FixedNumber = exports.FixedFormat = exports.formatFixed = exports.BigNumber = void 0;
@@ -13956,7 +14342,7 @@
 
 	});
 
-	var index$c = /*@__PURE__*/getDefaultExportFromCjs(lib$c);
+	var index$d = /*@__PURE__*/getDefaultExportFromCjs(lib$d);
 
 	var sha3 = createCommonjsModule(function (module) {
 	/**
@@ -14617,7 +15003,7 @@
 	})();
 	});
 
-	var _version$s = createCommonjsModule(function (module, exports) {
+	var _version$u = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.version = void 0;
@@ -14625,9 +15011,9 @@
 
 	});
 
-	var _version$t = /*@__PURE__*/getDefaultExportFromCjs(_version$s);
+	var _version$v = /*@__PURE__*/getDefaultExportFromCjs(_version$u);
 
-	var lib$d = createCommonjsModule(function (module, exports) {
+	var lib$e = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.Logger = exports.ErrorCode = exports.LogLevel = void 0;
@@ -14961,7 +15347,7 @@
 	    };
 	    Logger.globalLogger = function () {
 	        if (!_globalLogger) {
-	            _globalLogger = new Logger(_version$s.version);
+	            _globalLogger = new Logger(_version$u.version);
 	        }
 	        return _globalLogger;
 	    };
@@ -15001,9 +15387,9 @@
 
 	});
 
-	var index$d = /*@__PURE__*/getDefaultExportFromCjs(lib$d);
+	var index$e = /*@__PURE__*/getDefaultExportFromCjs(lib$e);
 
-	var _version$u = createCommonjsModule(function (module, exports) {
+	var _version$w = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.version = void 0;
@@ -15011,15 +15397,15 @@
 
 	});
 
-	var _version$v = /*@__PURE__*/getDefaultExportFromCjs(_version$u);
+	var _version$x = /*@__PURE__*/getDefaultExportFromCjs(_version$w);
 
-	var lib$e = createCommonjsModule(function (module, exports) {
+	var lib$f = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.joinSignature = exports.splitSignature = exports.hexZeroPad = exports.hexStripZeros = exports.hexValue = exports.hexConcat = exports.hexDataSlice = exports.hexDataLength = exports.hexlify = exports.isHexString = exports.zeroPad = exports.stripZeros = exports.concat = exports.arrayify = exports.isBytes = exports.isBytesLike = void 0;
 
 
-	var logger = new lib$d.Logger(_version$u.version);
+	var logger = new lib$e.Logger(_version$w.version);
 	///////////////////////////////
 	function isHexable(value) {
 	    return !!(value.toHexString);
@@ -15443,9 +15829,9 @@
 
 	});
 
-	var index$e = /*@__PURE__*/getDefaultExportFromCjs(lib$e);
+	var index$f = /*@__PURE__*/getDefaultExportFromCjs(lib$f);
 
-	var lib$f = createCommonjsModule(function (module, exports) {
+	var lib$g = createCommonjsModule(function (module, exports) {
 	"use strict";
 	var __importDefault = (commonjsGlobal && commonjsGlobal.__importDefault) || function (mod) {
 	    return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -15455,15 +15841,15 @@
 	var js_sha3_1 = __importDefault(sha3);
 
 	function keccak256(data) {
-	    return '0x' + js_sha3_1.default.keccak_256((0, lib$e.arrayify)(data));
+	    return '0x' + js_sha3_1.default.keccak_256((0, lib$f.arrayify)(data));
 	}
 	exports.keccak256 = keccak256;
 
 	});
 
-	var index$f = /*@__PURE__*/getDefaultExportFromCjs(lib$f);
+	var index$g = /*@__PURE__*/getDefaultExportFromCjs(lib$g);
 
-	var _version$w = createCommonjsModule(function (module, exports) {
+	var _version$y = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.version = void 0;
@@ -15471,9 +15857,9 @@
 
 	});
 
-	var _version$x = /*@__PURE__*/getDefaultExportFromCjs(_version$w);
+	var _version$z = /*@__PURE__*/getDefaultExportFromCjs(_version$y);
 
-	var lib$g = createCommonjsModule(function (module, exports) {
+	var lib$h = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.Logger = exports.ErrorCode = exports.LogLevel = void 0;
@@ -15807,7 +16193,7 @@
 	    };
 	    Logger.globalLogger = function () {
 	        if (!_globalLogger) {
-	            _globalLogger = new Logger(_version$w.version);
+	            _globalLogger = new Logger(_version$y.version);
 	        }
 	        return _globalLogger;
 	    };
@@ -15847,9 +16233,9 @@
 
 	});
 
-	var index$g = /*@__PURE__*/getDefaultExportFromCjs(lib$g);
+	var index$h = /*@__PURE__*/getDefaultExportFromCjs(lib$h);
 
-	var _version$y = createCommonjsModule(function (module, exports) {
+	var _version$A = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.version = void 0;
@@ -15857,15 +16243,15 @@
 
 	});
 
-	var _version$z = /*@__PURE__*/getDefaultExportFromCjs(_version$y);
+	var _version$B = /*@__PURE__*/getDefaultExportFromCjs(_version$A);
 
-	var lib$h = createCommonjsModule(function (module, exports) {
+	var lib$i = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.joinSignature = exports.splitSignature = exports.hexZeroPad = exports.hexStripZeros = exports.hexValue = exports.hexConcat = exports.hexDataSlice = exports.hexDataLength = exports.hexlify = exports.isHexString = exports.zeroPad = exports.stripZeros = exports.concat = exports.arrayify = exports.isBytes = exports.isBytesLike = void 0;
 
 
-	var logger = new lib$g.Logger(_version$y.version);
+	var logger = new lib$h.Logger(_version$A.version);
 	///////////////////////////////
 	function isHexable(value) {
 	    return !!(value.toHexString);
@@ -16289,9 +16675,9 @@
 
 	});
 
-	var index$h = /*@__PURE__*/getDefaultExportFromCjs(lib$h);
+	var index$i = /*@__PURE__*/getDefaultExportFromCjs(lib$i);
 
-	var _version$A = createCommonjsModule(function (module, exports) {
+	var _version$C = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.version = void 0;
@@ -16299,9 +16685,9 @@
 
 	});
 
-	var _version$B = /*@__PURE__*/getDefaultExportFromCjs(_version$A);
+	var _version$D = /*@__PURE__*/getDefaultExportFromCjs(_version$C);
 
-	var lib$i = createCommonjsModule(function (module, exports) {
+	var lib$j = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.decode = exports.encode = void 0;
@@ -16309,7 +16695,7 @@
 
 
 
-	var logger = new lib$g.Logger(_version$A.version);
+	var logger = new lib$h.Logger(_version$C.version);
 	function arrayifyInteger(value) {
 	    var result = [];
 	    while (value) {
@@ -16339,10 +16725,10 @@
 	        length_1.unshift(0xf7 + length_1.length);
 	        return length_1.concat(payload_1);
 	    }
-	    if (!(0, lib$h.isBytesLike)(object)) {
+	    if (!(0, lib$i.isBytesLike)(object)) {
 	        logger.throwArgumentError("RLP object must be BytesLike", "object", object);
 	    }
-	    var data = Array.prototype.slice.call((0, lib$h.arrayify)(object));
+	    var data = Array.prototype.slice.call((0, lib$i.arrayify)(object));
 	    if (data.length === 1 && data[0] <= 0x7f) {
 	        return data;
 	    }
@@ -16355,7 +16741,7 @@
 	    return length.concat(data);
 	}
 	function encode(object) {
-	    return (0, lib$h.hexlify)(_encode(object));
+	    return (0, lib$i.hexlify)(_encode(object));
 	}
 	exports.encode = encode;
 	function _decodeChildren(data, offset, childOffset, length) {
@@ -16365,7 +16751,7 @@
 	        result.push(decoded.result);
 	        childOffset += decoded.consumed;
 	        if (childOffset > offset + 1 + length) {
-	            logger.throwError("child data too short", lib$g.Logger.errors.BUFFER_OVERRUN, {});
+	            logger.throwError("child data too short", lib$h.Logger.errors.BUFFER_OVERRUN, {});
 	        }
 	    }
 	    return { consumed: (1 + length), result: result };
@@ -16373,51 +16759,51 @@
 	// returns { consumed: number, result: Object }
 	function _decode(data, offset) {
 	    if (data.length === 0) {
-	        logger.throwError("data too short", lib$g.Logger.errors.BUFFER_OVERRUN, {});
+	        logger.throwError("data too short", lib$h.Logger.errors.BUFFER_OVERRUN, {});
 	    }
 	    // Array with extra length prefix
 	    if (data[offset] >= 0xf8) {
 	        var lengthLength = data[offset] - 0xf7;
 	        if (offset + 1 + lengthLength > data.length) {
-	            logger.throwError("data short segment too short", lib$g.Logger.errors.BUFFER_OVERRUN, {});
+	            logger.throwError("data short segment too short", lib$h.Logger.errors.BUFFER_OVERRUN, {});
 	        }
 	        var length_2 = unarrayifyInteger(data, offset + 1, lengthLength);
 	        if (offset + 1 + lengthLength + length_2 > data.length) {
-	            logger.throwError("data long segment too short", lib$g.Logger.errors.BUFFER_OVERRUN, {});
+	            logger.throwError("data long segment too short", lib$h.Logger.errors.BUFFER_OVERRUN, {});
 	        }
 	        return _decodeChildren(data, offset, offset + 1 + lengthLength, lengthLength + length_2);
 	    }
 	    else if (data[offset] >= 0xc0) {
 	        var length_3 = data[offset] - 0xc0;
 	        if (offset + 1 + length_3 > data.length) {
-	            logger.throwError("data array too short", lib$g.Logger.errors.BUFFER_OVERRUN, {});
+	            logger.throwError("data array too short", lib$h.Logger.errors.BUFFER_OVERRUN, {});
 	        }
 	        return _decodeChildren(data, offset, offset + 1, length_3);
 	    }
 	    else if (data[offset] >= 0xb8) {
 	        var lengthLength = data[offset] - 0xb7;
 	        if (offset + 1 + lengthLength > data.length) {
-	            logger.throwError("data array too short", lib$g.Logger.errors.BUFFER_OVERRUN, {});
+	            logger.throwError("data array too short", lib$h.Logger.errors.BUFFER_OVERRUN, {});
 	        }
 	        var length_4 = unarrayifyInteger(data, offset + 1, lengthLength);
 	        if (offset + 1 + lengthLength + length_4 > data.length) {
-	            logger.throwError("data array too short", lib$g.Logger.errors.BUFFER_OVERRUN, {});
+	            logger.throwError("data array too short", lib$h.Logger.errors.BUFFER_OVERRUN, {});
 	        }
-	        var result = (0, lib$h.hexlify)(data.slice(offset + 1 + lengthLength, offset + 1 + lengthLength + length_4));
+	        var result = (0, lib$i.hexlify)(data.slice(offset + 1 + lengthLength, offset + 1 + lengthLength + length_4));
 	        return { consumed: (1 + lengthLength + length_4), result: result };
 	    }
 	    else if (data[offset] >= 0x80) {
 	        var length_5 = data[offset] - 0x80;
 	        if (offset + 1 + length_5 > data.length) {
-	            logger.throwError("data too short", lib$g.Logger.errors.BUFFER_OVERRUN, {});
+	            logger.throwError("data too short", lib$h.Logger.errors.BUFFER_OVERRUN, {});
 	        }
-	        var result = (0, lib$h.hexlify)(data.slice(offset + 1, offset + 1 + length_5));
+	        var result = (0, lib$i.hexlify)(data.slice(offset + 1, offset + 1 + length_5));
 	        return { consumed: (1 + length_5), result: result };
 	    }
-	    return { consumed: 1, result: (0, lib$h.hexlify)(data[offset]) };
+	    return { consumed: 1, result: (0, lib$i.hexlify)(data[offset]) };
 	}
 	function decode(data) {
-	    var bytes = (0, lib$h.arrayify)(data);
+	    var bytes = (0, lib$i.arrayify)(data);
 	    var decoded = _decode(bytes, 0);
 	    if (decoded.consumed !== bytes.length) {
 	        logger.throwArgumentError("invalid rlp data", "data", data);
@@ -16428,9 +16814,9 @@
 
 	});
 
-	var index$i = /*@__PURE__*/getDefaultExportFromCjs(lib$i);
+	var index$j = /*@__PURE__*/getDefaultExportFromCjs(lib$j);
 
-	var _version$C = createCommonjsModule(function (module, exports) {
+	var _version$E = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.version = void 0;
@@ -16438,9 +16824,9 @@
 
 	});
 
-	var _version$D = /*@__PURE__*/getDefaultExportFromCjs(_version$C);
+	var _version$F = /*@__PURE__*/getDefaultExportFromCjs(_version$E);
 
-	var lib$j = createCommonjsModule(function (module, exports) {
+	var lib$k = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.Logger = exports.ErrorCode = exports.LogLevel = void 0;
@@ -16774,7 +17160,7 @@
 	    };
 	    Logger.globalLogger = function () {
 	        if (!_globalLogger) {
-	            _globalLogger = new Logger(_version$C.version);
+	            _globalLogger = new Logger(_version$E.version);
 	        }
 	        return _globalLogger;
 	    };
@@ -16814,9 +17200,9 @@
 
 	});
 
-	var index$j = /*@__PURE__*/getDefaultExportFromCjs(lib$j);
+	var index$k = /*@__PURE__*/getDefaultExportFromCjs(lib$k);
 
-	var _version$E = createCommonjsModule(function (module, exports) {
+	var _version$G = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.version = void 0;
@@ -16824,9 +17210,9 @@
 
 	});
 
-	var _version$F = /*@__PURE__*/getDefaultExportFromCjs(_version$E);
+	var _version$H = /*@__PURE__*/getDefaultExportFromCjs(_version$G);
 
-	var lib$k = createCommonjsModule(function (module, exports) {
+	var lib$l = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.getCreate2Address = exports.getContractAddress = exports.getIcapAddress = exports.isAddress = exports.getAddress = void 0;
@@ -16836,9 +17222,9 @@
 
 
 
-	var logger = new lib$j.Logger(_version$E.version);
+	var logger = new lib$k.Logger(_version$G.version);
 	function getChecksumAddress(address) {
-	    if (!(0, lib$9.isHexString)(address, 20)) {
+	    if (!(0, lib$a.isHexString)(address, 20)) {
 	        logger.throwArgumentError("invalid address", "address", address);
 	    }
 	    address = address.toLowerCase();
@@ -16847,7 +17233,7 @@
 	    for (var i = 0; i < 40; i++) {
 	        expanded[i] = chars[i].charCodeAt(0);
 	    }
-	    var hashed = (0, lib$9.arrayify)((0, lib$f.keccak256)(expanded));
+	    var hashed = (0, lib$a.arrayify)((0, lib$g.keccak256)(expanded));
 	    for (var i = 0; i < 40; i += 2) {
 	        if ((hashed[i >> 1] >> 4) >= 8) {
 	            chars[i] = chars[i].toUpperCase();
@@ -16915,7 +17301,7 @@
 	        if (address.substring(2, 4) !== ibanChecksum(address)) {
 	            logger.throwArgumentError("bad icap checksum", "address", address);
 	        }
-	        result = (0, lib$c._base36To16)(address.substring(4));
+	        result = (0, lib$d._base36To16)(address.substring(4));
 	        while (result.length < 40) {
 	            result = "0" + result;
 	        }
@@ -16937,7 +17323,7 @@
 	}
 	exports.isAddress = isAddress;
 	function getIcapAddress(address) {
-	    var base36 = (0, lib$c._base16To36)(getAddress(address).substring(2)).toUpperCase();
+	    var base36 = (0, lib$d._base16To36)(getAddress(address).substring(2)).toUpperCase();
 	    while (base36.length < 30) {
 	        base36 = "0" + base36;
 	    }
@@ -16953,24 +17339,24 @@
 	    catch (error) {
 	        logger.throwArgumentError("missing from address", "transaction", transaction);
 	    }
-	    var nonce = (0, lib$9.stripZeros)((0, lib$9.arrayify)(lib$c.BigNumber.from(transaction.nonce).toHexString()));
-	    return getAddress((0, lib$9.hexDataSlice)((0, lib$f.keccak256)((0, lib$i.encode)([from, nonce])), 12));
+	    var nonce = (0, lib$a.stripZeros)((0, lib$a.arrayify)(lib$d.BigNumber.from(transaction.nonce).toHexString()));
+	    return getAddress((0, lib$a.hexDataSlice)((0, lib$g.keccak256)((0, lib$j.encode)([from, nonce])), 12));
 	}
 	exports.getContractAddress = getContractAddress;
 	function getCreate2Address(from, salt, initCodeHash) {
-	    if ((0, lib$9.hexDataLength)(salt) !== 32) {
+	    if ((0, lib$a.hexDataLength)(salt) !== 32) {
 	        logger.throwArgumentError("salt must be 32 bytes", "salt", salt);
 	    }
-	    if ((0, lib$9.hexDataLength)(initCodeHash) !== 32) {
+	    if ((0, lib$a.hexDataLength)(initCodeHash) !== 32) {
 	        logger.throwArgumentError("initCodeHash must be 32 bytes", "initCodeHash", initCodeHash);
 	    }
-	    return getAddress((0, lib$9.hexDataSlice)((0, lib$f.keccak256)((0, lib$9.concat)(["0xff", getAddress(from), salt, initCodeHash])), 12));
+	    return getAddress((0, lib$a.hexDataSlice)((0, lib$g.keccak256)((0, lib$a.concat)(["0xff", getAddress(from), salt, initCodeHash])), 12));
 	}
 	exports.getCreate2Address = getCreate2Address;
 
 	});
 
-	var index$k = /*@__PURE__*/getDefaultExportFromCjs(lib$k);
+	var index$l = /*@__PURE__*/getDefaultExportFromCjs(lib$l);
 
 	var address = createCommonjsModule(function (module, exports) {
 	"use strict";
@@ -17004,7 +17390,7 @@
 	    };
 	    AddressCoder.prototype.encode = function (writer, value) {
 	        try {
-	            value = (0, lib$k.getAddress)(value);
+	            value = (0, lib$l.getAddress)(value);
 	        }
 	        catch (error) {
 	            this._throwError(error.message, value);
@@ -17012,7 +17398,7 @@
 	        return writer.writeValue(value);
 	    };
 	    AddressCoder.prototype.decode = function (reader) {
-	        return (0, lib$k.getAddress)((0, lib$7.hexZeroPad)(reader.readValue().toHexString(), 20));
+	        return (0, lib$l.getAddress)((0, lib$8.hexZeroPad)(reader.readValue().toHexString(), 20));
 	    };
 	    return AddressCoder;
 	}(abstractCoder.Coder));
@@ -17088,7 +17474,7 @@
 	exports.ArrayCoder = exports.unpack = exports.pack = void 0;
 
 
-	var logger = new lib$4.Logger(_version$c.version);
+	var logger = new lib$6.Logger(_version$e.version);
 
 
 	function pack(writer, coders, values) {
@@ -17101,14 +17487,14 @@
 	        arrayValues = coders.map(function (coder) {
 	            var name = coder.localName;
 	            if (!name) {
-	                logger.throwError("cannot encode object for signature with missing names", lib$4.Logger.errors.INVALID_ARGUMENT, {
+	                logger.throwError("cannot encode object for signature with missing names", lib$6.Logger.errors.INVALID_ARGUMENT, {
 	                    argument: "values",
 	                    coder: coder,
 	                    value: values
 	                });
 	            }
 	            if (unique_1[name]) {
-	                logger.throwError("cannot encode object for signature with duplicate names", lib$4.Logger.errors.INVALID_ARGUMENT, {
+	                logger.throwError("cannot encode object for signature with duplicate names", lib$6.Logger.errors.INVALID_ARGUMENT, {
 	                    argument: "values",
 	                    coder: coder,
 	                    value: values
@@ -17165,7 +17551,7 @@
 	            }
 	            catch (error) {
 	                // Cannot recover from this
-	                if (error.code === lib$4.Logger.errors.BUFFER_OVERRUN) {
+	                if (error.code === lib$6.Logger.errors.BUFFER_OVERRUN) {
 	                    throw error;
 	                }
 	                value = error;
@@ -17180,7 +17566,7 @@
 	            }
 	            catch (error) {
 	                // Cannot recover from this
-	                if (error.code === lib$4.Logger.errors.BUFFER_OVERRUN) {
+	                if (error.code === lib$6.Logger.errors.BUFFER_OVERRUN) {
 	                    throw error;
 	                }
 	                value = error;
@@ -17288,7 +17674,7 @@
 	            // bytes as a link to the data). This could use a much
 	            // tighter bound, but we are erroring on the side of safety.
 	            if (count * 32 > reader._data.length) {
-	                logger.throwError("insufficient data length", lib$4.Logger.errors.BUFFER_OVERRUN, {
+	                logger.throwError("insufficient data length", lib$6.Logger.errors.BUFFER_OVERRUN, {
 	                    length: reader._data.length,
 	                    count: count
 	                });
@@ -17380,7 +17766,7 @@
 	        return "0x";
 	    };
 	    DynamicBytesCoder.prototype.encode = function (writer, value) {
-	        value = (0, lib$7.arrayify)(value);
+	        value = (0, lib$8.arrayify)(value);
 	        var length = writer.writeValue(value.length);
 	        length += writer.writeBytes(value);
 	        return length;
@@ -17397,7 +17783,7 @@
 	        return _super.call(this, "bytes", localName) || this;
 	    }
 	    BytesCoder.prototype.decode = function (reader) {
-	        return reader.coerce(this.name, (0, lib$7.hexlify)(_super.prototype.decode.call(this, reader)));
+	        return reader.coerce(this.name, (0, lib$8.hexlify)(_super.prototype.decode.call(this, reader)));
 	    };
 	    return BytesCoder;
 	}(DynamicBytesCoder));
@@ -17442,14 +17828,14 @@
 	        return ("0x0000000000000000000000000000000000000000000000000000000000000000").substring(0, 2 + this.size * 2);
 	    };
 	    FixedBytesCoder.prototype.encode = function (writer, value) {
-	        var data = (0, lib$7.arrayify)(value);
+	        var data = (0, lib$8.arrayify)(value);
 	        if (data.length !== this.size) {
 	            this._throwError("incorrect data length", value);
 	        }
 	        return writer.writeBytes(data);
 	    };
 	    FixedBytesCoder.prototype.decode = function (reader) {
-	        return reader.coerce(this.name, (0, lib$7.hexlify)(reader.readBytes(this.size)));
+	        return reader.coerce(this.name, (0, lib$8.hexlify)(reader.readBytes(this.size)));
 	    };
 	    return FixedBytesCoder;
 	}(abstractCoder.Coder));
@@ -21065,7 +21451,7 @@
 	})('object' === 'undefined' || module, commonjsGlobal);
 	});
 
-	var _version$G = createCommonjsModule(function (module, exports) {
+	var _version$I = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.version = void 0;
@@ -21073,9 +21459,9 @@
 
 	});
 
-	var _version$H = /*@__PURE__*/getDefaultExportFromCjs(_version$G);
+	var _version$J = /*@__PURE__*/getDefaultExportFromCjs(_version$I);
 
-	var lib$l = createCommonjsModule(function (module, exports) {
+	var lib$m = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.Logger = exports.ErrorCode = exports.LogLevel = void 0;
@@ -21409,7 +21795,7 @@
 	    };
 	    Logger.globalLogger = function () {
 	        if (!_globalLogger) {
-	            _globalLogger = new Logger(_version$G.version);
+	            _globalLogger = new Logger(_version$I.version);
 	        }
 	        return _globalLogger;
 	    };
@@ -21449,9 +21835,9 @@
 
 	});
 
-	var index$l = /*@__PURE__*/getDefaultExportFromCjs(lib$l);
+	var index$m = /*@__PURE__*/getDefaultExportFromCjs(lib$m);
 
-	var _version$I = createCommonjsModule(function (module, exports) {
+	var _version$K = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.version = void 0;
@@ -21459,15 +21845,15 @@
 
 	});
 
-	var _version$J = /*@__PURE__*/getDefaultExportFromCjs(_version$I);
+	var _version$L = /*@__PURE__*/getDefaultExportFromCjs(_version$K);
 
-	var lib$m = createCommonjsModule(function (module, exports) {
+	var lib$n = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.joinSignature = exports.splitSignature = exports.hexZeroPad = exports.hexStripZeros = exports.hexValue = exports.hexConcat = exports.hexDataSlice = exports.hexDataLength = exports.hexlify = exports.isHexString = exports.zeroPad = exports.stripZeros = exports.concat = exports.arrayify = exports.isBytes = exports.isBytesLike = void 0;
 
 
-	var logger = new lib$l.Logger(_version$I.version);
+	var logger = new lib$m.Logger(_version$K.version);
 	///////////////////////////////
 	function isHexable(value) {
 	    return !!(value.toHexString);
@@ -21891,9 +22277,9 @@
 
 	});
 
-	var index$m = /*@__PURE__*/getDefaultExportFromCjs(lib$m);
+	var index$n = /*@__PURE__*/getDefaultExportFromCjs(lib$n);
 
-	var _version$K = createCommonjsModule(function (module, exports) {
+	var _version$M = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.version = void 0;
@@ -21901,7 +22287,7 @@
 
 	});
 
-	var _version$L = /*@__PURE__*/getDefaultExportFromCjs(_version$K);
+	var _version$N = /*@__PURE__*/getDefaultExportFromCjs(_version$M);
 
 	var bignumber$4 = createCommonjsModule(function (module, exports) {
 	"use strict";
@@ -21922,16 +22308,16 @@
 
 
 
-	var logger = new lib$l.Logger(_version$K.version);
+	var logger = new lib$m.Logger(_version$M.version);
 	var _constructorGuard = {};
 	var MAX_SAFE = 0x1fffffffffffff;
 	function isBigNumberish(value) {
 	    return (value != null) && (BigNumber.isBigNumber(value) ||
 	        (typeof (value) === "number" && (value % 1) === 0) ||
 	        (typeof (value) === "string" && !!value.match(/^-?[0-9]+$/)) ||
-	        (0, lib$m.isHexString)(value) ||
+	        (0, lib$n.isHexString)(value) ||
 	        (typeof (value) === "bigint") ||
-	        (0, lib$m.isBytes)(value));
+	        (0, lib$n.isBytes)(value));
 	}
 	exports.isBigNumberish = isBigNumberish;
 	// Only warn about passing 10 into radix once
@@ -21939,7 +22325,7 @@
 	var BigNumber = /** @class */ (function () {
 	    function BigNumber(constructorGuard, hex) {
 	        if (constructorGuard !== _constructorGuard) {
-	            logger.throwError("cannot call constructor directly; use BigNumber.from", lib$l.Logger.errors.UNSUPPORTED_OPERATION, {
+	            logger.throwError("cannot call constructor directly; use BigNumber.from", lib$m.Logger.errors.UNSUPPORTED_OPERATION, {
 	                operation: "new (BigNumber)"
 	            });
 	        }
@@ -22063,7 +22449,7 @@
 	            return BigInt(this.toString());
 	        }
 	        catch (e) { }
-	        return logger.throwError("this platform does not support BigInt", lib$l.Logger.errors.UNSUPPORTED_OPERATION, {
+	        return logger.throwError("this platform does not support BigInt", lib$m.Logger.errors.UNSUPPORTED_OPERATION, {
 	            value: this.toString()
 	        });
 	    };
@@ -22077,10 +22463,10 @@
 	                }
 	            }
 	            else if (arguments[0] === 16) {
-	                logger.throwError("BigNumber.toString does not accept any parameters; use bigNumber.toHexString()", lib$l.Logger.errors.UNEXPECTED_ARGUMENT, {});
+	                logger.throwError("BigNumber.toString does not accept any parameters; use bigNumber.toHexString()", lib$m.Logger.errors.UNEXPECTED_ARGUMENT, {});
 	            }
 	            else {
-	                logger.throwError("BigNumber.toString does not accept parameters", lib$l.Logger.errors.UNEXPECTED_ARGUMENT, {});
+	                logger.throwError("BigNumber.toString does not accept parameters", lib$m.Logger.errors.UNEXPECTED_ARGUMENT, {});
 	            }
 	        }
 	        return toBN(this).toString(10);
@@ -22117,8 +22503,8 @@
 	        if (typeof (anyValue) === "bigint") {
 	            return BigNumber.from(anyValue.toString());
 	        }
-	        if ((0, lib$m.isBytes)(anyValue)) {
-	            return BigNumber.from((0, lib$m.hexlify)(anyValue));
+	        if ((0, lib$n.isBytes)(anyValue)) {
+	            return BigNumber.from((0, lib$n.hexlify)(anyValue));
 	        }
 	        if (anyValue) {
 	            // Hexable interface (takes priority)
@@ -22136,7 +22522,7 @@
 	                    hex = anyValue.hex;
 	                }
 	                if (typeof (hex) === "string") {
-	                    if ((0, lib$m.isHexString)(hex) || (hex[0] === "-" && (0, lib$m.isHexString)(hex.substring(1)))) {
+	                    if ((0, lib$n.isHexString)(hex) || (hex[0] === "-" && (0, lib$n.isHexString)(hex.substring(1)))) {
 	                        return BigNumber.from(hex);
 	                    }
 	                }
@@ -22206,7 +22592,7 @@
 	    if (value != null) {
 	        params.value = value;
 	    }
-	    return logger.throwError(fault, lib$l.Logger.errors.NUMERIC_FAULT, params);
+	    return logger.throwError(fault, lib$m.Logger.errors.NUMERIC_FAULT, params);
 	}
 	// value should have no prefix
 	function _base36To16(value) {
@@ -22230,7 +22616,7 @@
 
 
 
-	var logger = new lib$l.Logger(_version$K.version);
+	var logger = new lib$m.Logger(_version$M.version);
 
 	var _constructorGuard = {};
 	var Zero = bignumber$4.BigNumber.from(0);
@@ -22240,7 +22626,7 @@
 	    if (value !== undefined) {
 	        params.value = value;
 	    }
-	    return logger.throwError(message, lib$l.Logger.errors.NUMERIC_FAULT, params);
+	    return logger.throwError(message, lib$m.Logger.errors.NUMERIC_FAULT, params);
 	}
 	// Constant to pull zeros from for multipliers
 	var zeros = "0";
@@ -22346,7 +22732,7 @@
 	var FixedFormat = /** @class */ (function () {
 	    function FixedFormat(constructorGuard, signed, width, decimals) {
 	        if (constructorGuard !== _constructorGuard) {
-	            logger.throwError("cannot use FixedFormat constructor; use FixedFormat.from", lib$l.Logger.errors.UNSUPPORTED_OPERATION, {
+	            logger.throwError("cannot use FixedFormat constructor; use FixedFormat.from", lib$m.Logger.errors.UNSUPPORTED_OPERATION, {
 	                operation: "new FixedFormat"
 	            });
 	        }
@@ -22412,7 +22798,7 @@
 	var FixedNumber = /** @class */ (function () {
 	    function FixedNumber(constructorGuard, hex, value, format) {
 	        if (constructorGuard !== _constructorGuard) {
-	            logger.throwError("cannot use FixedNumber constructor; use FixedNumber.from", lib$l.Logger.errors.UNSUPPORTED_OPERATION, {
+	            logger.throwError("cannot use FixedNumber constructor; use FixedNumber.from", lib$m.Logger.errors.UNSUPPORTED_OPERATION, {
 	                operation: "new FixedFormat"
 	            });
 	        }
@@ -22510,7 +22896,7 @@
 	            logger.throwArgumentError("invalid byte width", "width", width);
 	        }
 	        var hex = bignumber$4.BigNumber.from(this._hex).fromTwos(this.format.width).toTwos(width).toHexString();
-	        return (0, lib$m.hexZeroPad)(hex, width / 8);
+	        return (0, lib$n.hexZeroPad)(hex, width / 8);
 	    };
 	    FixedNumber.prototype.toUnsafeFloat = function () { return parseFloat(this.toString()); };
 	    FixedNumber.prototype.toFormat = function (format) {
@@ -22545,7 +22931,7 @@
 	        }
 	        else {
 	            hex = numeric.toHexString();
-	            hex = (0, lib$m.hexZeroPad)(hex, fixedFormat.width / 8);
+	            hex = (0, lib$n.hexZeroPad)(hex, fixedFormat.width / 8);
 	        }
 	        var decimal = formatFixed(numeric, fixedFormat.decimals);
 	        return new FixedNumber(_constructorGuard, hex, decimal, fixedFormat);
@@ -22555,7 +22941,7 @@
 	            format = "fixed";
 	        }
 	        var fixedFormat = FixedFormat.from(format);
-	        if ((0, lib$m.arrayify)(value).length > fixedFormat.width / 8) {
+	        if ((0, lib$n.arrayify)(value).length > fixedFormat.width / 8) {
 	            throw new Error("overflow");
 	        }
 	        var numeric = bignumber$4.BigNumber.from(value);
@@ -22570,7 +22956,7 @@
 	        if (typeof (value) === "string") {
 	            return FixedNumber.fromString(value, format);
 	        }
-	        if ((0, lib$m.isBytes)(value)) {
+	        if ((0, lib$n.isBytes)(value)) {
 	            return FixedNumber.fromBytes(value, format);
 	        }
 	        try {
@@ -22578,7 +22964,7 @@
 	        }
 	        catch (error) {
 	            // Allow NUMERIC_FAULT to bubble up
-	            if (error.code !== lib$l.Logger.errors.INVALID_ARGUMENT) {
+	            if (error.code !== lib$m.Logger.errors.INVALID_ARGUMENT) {
 	                throw error;
 	            }
 	        }
@@ -22597,7 +22983,7 @@
 
 	var fixednumber$5 = /*@__PURE__*/getDefaultExportFromCjs(fixednumber$4);
 
-	var lib$n = createCommonjsModule(function (module, exports) {
+	var lib$o = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports._base36To16 = exports._base16To36 = exports.parseFixed = exports.FixedNumber = exports.FixedFormat = exports.formatFixed = exports.BigNumber = void 0;
@@ -22615,28 +23001,28 @@
 
 	});
 
-	var index$n = /*@__PURE__*/getDefaultExportFromCjs(lib$n);
+	var index$o = /*@__PURE__*/getDefaultExportFromCjs(lib$o);
 
 	var bignumbers = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.MaxInt256 = exports.MinInt256 = exports.MaxUint256 = exports.WeiPerEther = exports.Two = exports.One = exports.Zero = exports.NegativeOne = void 0;
 
-	var NegativeOne = ( /*#__PURE__*/lib$n.BigNumber.from(-1));
+	var NegativeOne = ( /*#__PURE__*/lib$o.BigNumber.from(-1));
 	exports.NegativeOne = NegativeOne;
-	var Zero = ( /*#__PURE__*/lib$n.BigNumber.from(0));
+	var Zero = ( /*#__PURE__*/lib$o.BigNumber.from(0));
 	exports.Zero = Zero;
-	var One = ( /*#__PURE__*/lib$n.BigNumber.from(1));
+	var One = ( /*#__PURE__*/lib$o.BigNumber.from(1));
 	exports.One = One;
-	var Two = ( /*#__PURE__*/lib$n.BigNumber.from(2));
+	var Two = ( /*#__PURE__*/lib$o.BigNumber.from(2));
 	exports.Two = Two;
-	var WeiPerEther = ( /*#__PURE__*/lib$n.BigNumber.from("1000000000000000000"));
+	var WeiPerEther = ( /*#__PURE__*/lib$o.BigNumber.from("1000000000000000000"));
 	exports.WeiPerEther = WeiPerEther;
-	var MaxUint256 = ( /*#__PURE__*/lib$n.BigNumber.from("0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"));
+	var MaxUint256 = ( /*#__PURE__*/lib$o.BigNumber.from("0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"));
 	exports.MaxUint256 = MaxUint256;
-	var MinInt256 = ( /*#__PURE__*/lib$n.BigNumber.from("-0x8000000000000000000000000000000000000000000000000000000000000000"));
+	var MinInt256 = ( /*#__PURE__*/lib$o.BigNumber.from("-0x8000000000000000000000000000000000000000000000000000000000000000"));
 	exports.MinInt256 = MinInt256;
-	var MaxInt256 = ( /*#__PURE__*/lib$n.BigNumber.from("0x7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"));
+	var MaxInt256 = ( /*#__PURE__*/lib$o.BigNumber.from("0x7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"));
 	exports.MaxInt256 = MaxInt256;
 
 	});
@@ -22664,7 +23050,7 @@
 
 	var strings$1 = /*@__PURE__*/getDefaultExportFromCjs(strings);
 
-	var lib$o = createCommonjsModule(function (module, exports) {
+	var lib$p = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.EtherSymbol = exports.HashZero = exports.MaxInt256 = exports.MinInt256 = exports.MaxUint256 = exports.WeiPerEther = exports.Two = exports.One = exports.Zero = exports.NegativeOne = exports.AddressZero = void 0;
@@ -22686,7 +23072,7 @@
 
 	});
 
-	var index$o = /*@__PURE__*/getDefaultExportFromCjs(lib$o);
+	var index$p = /*@__PURE__*/getDefaultExportFromCjs(lib$p);
 
 	var number = createCommonjsModule(function (module, exports) {
 	"use strict";
@@ -22726,14 +23112,14 @@
 	    NumberCoder.prototype.encode = function (writer, value) {
 	        var v = lib$3.BigNumber.from(value);
 	        // Check bounds are safe for encoding
-	        var maxUintValue = lib$o.MaxUint256.mask(writer.wordSize * 8);
+	        var maxUintValue = lib$p.MaxUint256.mask(writer.wordSize * 8);
 	        if (this.signed) {
 	            var bounds = maxUintValue.mask(this.size * 8 - 1);
-	            if (v.gt(bounds) || v.lt(bounds.add(lib$o.One).mul(lib$o.NegativeOne))) {
+	            if (v.gt(bounds) || v.lt(bounds.add(lib$p.One).mul(lib$p.NegativeOne))) {
 	                this._throwError("value out-of-bounds", value);
 	            }
 	        }
-	        else if (v.lt(lib$o.Zero) || v.gt(maxUintValue.mask(this.size * 8))) {
+	        else if (v.lt(lib$p.Zero) || v.gt(maxUintValue.mask(this.size * 8))) {
 	            this._throwError("value out-of-bounds", value);
 	        }
 	        v = v.toTwos(this.size * 8).mask(this.size * 8);
@@ -22814,7 +23200,7 @@
 
 	var strings$3 = /*@__PURE__*/getDefaultExportFromCjs(strings$2);
 
-	var lib$p = createCommonjsModule(function (module, exports) {
+	var lib$q = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.EtherSymbol = exports.HashZero = exports.MaxInt256 = exports.MinInt256 = exports.MaxUint256 = exports.WeiPerEther = exports.Two = exports.One = exports.Zero = exports.NegativeOne = exports.AddressZero = void 0;
@@ -22836,9 +23222,9 @@
 
 	});
 
-	var index$p = /*@__PURE__*/getDefaultExportFromCjs(lib$p);
+	var index$q = /*@__PURE__*/getDefaultExportFromCjs(lib$q);
 
-	var _version$M = createCommonjsModule(function (module, exports) {
+	var _version$O = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.version = void 0;
@@ -22846,15 +23232,15 @@
 
 	});
 
-	var _version$N = /*@__PURE__*/getDefaultExportFromCjs(_version$M);
+	var _version$P = /*@__PURE__*/getDefaultExportFromCjs(_version$O);
 
-	var lib$q = createCommonjsModule(function (module, exports) {
+	var lib$r = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.joinSignature = exports.splitSignature = exports.hexZeroPad = exports.hexStripZeros = exports.hexValue = exports.hexConcat = exports.hexDataSlice = exports.hexDataLength = exports.hexlify = exports.isHexString = exports.zeroPad = exports.stripZeros = exports.concat = exports.arrayify = exports.isBytes = exports.isBytesLike = void 0;
 
 
-	var logger = new lib$4.Logger(_version$M.version);
+	var logger = new lib$6.Logger(_version$O.version);
 	///////////////////////////////
 	function isHexable(value) {
 	    return !!(value.toHexString);
@@ -23278,9 +23664,9 @@
 
 	});
 
-	var index$q = /*@__PURE__*/getDefaultExportFromCjs(lib$q);
+	var index$r = /*@__PURE__*/getDefaultExportFromCjs(lib$r);
 
-	var _version$O = createCommonjsModule(function (module, exports) {
+	var _version$Q = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.version = void 0;
@@ -23288,9 +23674,9 @@
 
 	});
 
-	var _version$P = /*@__PURE__*/getDefaultExportFromCjs(_version$O);
+	var _version$R = /*@__PURE__*/getDefaultExportFromCjs(_version$Q);
 
-	var lib$r = createCommonjsModule(function (module, exports) {
+	var lib$s = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.Logger = exports.ErrorCode = exports.LogLevel = void 0;
@@ -23624,7 +24010,7 @@
 	    };
 	    Logger.globalLogger = function () {
 	        if (!_globalLogger) {
-	            _globalLogger = new Logger(_version$O.version);
+	            _globalLogger = new Logger(_version$Q.version);
 	        }
 	        return _globalLogger;
 	    };
@@ -23664,9 +24050,9 @@
 
 	});
 
-	var index$r = /*@__PURE__*/getDefaultExportFromCjs(lib$r);
+	var index$s = /*@__PURE__*/getDefaultExportFromCjs(lib$s);
 
-	var _version$Q = createCommonjsModule(function (module, exports) {
+	var _version$S = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.version = void 0;
@@ -23674,7 +24060,7 @@
 
 	});
 
-	var _version$R = /*@__PURE__*/getDefaultExportFromCjs(_version$Q);
+	var _version$T = /*@__PURE__*/getDefaultExportFromCjs(_version$S);
 
 	var utf8 = createCommonjsModule(function (module, exports) {
 	"use strict";
@@ -23683,7 +24069,7 @@
 
 
 
-	var logger = new lib$r.Logger(_version$Q.version);
+	var logger = new lib$s.Logger(_version$S.version);
 	///////////////////////////////
 	var UnicodeNormalizationForm;
 	(function (UnicodeNormalizationForm) {
@@ -23767,7 +24153,7 @@
 	    if (onError == null) {
 	        onError = exports.Utf8ErrorFuncs.error;
 	    }
-	    bytes = (0, lib$q.arrayify)(bytes);
+	    bytes = (0, lib$r.arrayify)(bytes);
 	    var result = [];
 	    var i = 0;
 	    // Invalid bytes are ignored
@@ -23883,7 +24269,7 @@
 	            result.push((c & 0x3f) | 0x80);
 	        }
 	    }
-	    return (0, lib$q.arrayify)(result);
+	    return (0, lib$r.arrayify)(result);
 	}
 	exports.toUtf8Bytes = toUtf8Bytes;
 	;
@@ -23953,11 +24339,11 @@
 	        throw new Error("bytes32 string must be less than 32 bytes");
 	    }
 	    // Zero-pad (implicitly null-terminates)
-	    return (0, lib$q.hexlify)((0, lib$q.concat)([bytes, lib$p.HashZero]).slice(0, 32));
+	    return (0, lib$r.hexlify)((0, lib$r.concat)([bytes, lib$q.HashZero]).slice(0, 32));
 	}
 	exports.formatBytes32String = formatBytes32String;
 	function parseBytes32String(bytes) {
-	    var data = (0, lib$q.arrayify)(bytes);
+	    var data = (0, lib$r.arrayify)(bytes);
 	    // Must be 32 bytes with a null-termination
 	    if (data.length !== 32) {
 	        throw new Error("invalid bytes32 - not 32 bytes long");
@@ -24174,7 +24560,7 @@
 
 	var idna$1 = /*@__PURE__*/getDefaultExportFromCjs(idna);
 
-	var lib$s = createCommonjsModule(function (module, exports) {
+	var lib$t = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.nameprep = exports.parseBytes32String = exports.formatBytes32String = exports.UnicodeNormalizationForm = exports.Utf8ErrorReason = exports.Utf8ErrorFuncs = exports.toUtf8String = exports.toUtf8CodePoints = exports.toUtf8Bytes = exports._toEscapedUtf8String = void 0;
@@ -24194,7 +24580,7 @@
 
 	});
 
-	var index$s = /*@__PURE__*/getDefaultExportFromCjs(lib$s);
+	var index$t = /*@__PURE__*/getDefaultExportFromCjs(lib$t);
 
 	var string = createCommonjsModule(function (module, exports) {
 	"use strict";
@@ -24226,10 +24612,10 @@
 	        return "";
 	    };
 	    StringCoder.prototype.encode = function (writer, value) {
-	        return _super.prototype.encode.call(this, writer, (0, lib$s.toUtf8Bytes)(value));
+	        return _super.prototype.encode.call(this, writer, (0, lib$t.toUtf8Bytes)(value));
 	    };
 	    StringCoder.prototype.decode = function (reader) {
-	        return (0, lib$s.toUtf8String)(_super.prototype.decode.call(this, reader));
+	        return (0, lib$t.toUtf8String)(_super.prototype.decode.call(this, reader));
 	    };
 	    return StringCoder;
 	}(bytes.DynamicBytesCoder));
@@ -24332,7 +24718,7 @@
 
 
 
-	var logger = new lib$4.Logger(_version$c.version);
+	var logger = new lib$6.Logger(_version$e.version);
 
 
 
@@ -24406,7 +24792,7 @@
 	    AbiCoder.prototype.encode = function (types, values) {
 	        var _this = this;
 	        if (types.length !== values.length) {
-	            logger.throwError("types/values length mismatch", lib$4.Logger.errors.INVALID_ARGUMENT, {
+	            logger.throwError("types/values length mismatch", lib$6.Logger.errors.INVALID_ARGUMENT, {
 	                count: { types: types.length, values: values.length },
 	                value: { types: types, values: values }
 	            });
@@ -24421,7 +24807,7 @@
 	        var _this = this;
 	        var coders = types.map(function (type) { return _this._getCoder(fragments.ParamType.from(type)); });
 	        var coder = new tuple.TupleCoder(coders, "_");
-	        return coder.decode(this._getReader((0, lib$7.arrayify)(data), loose));
+	        return coder.decode(this._getReader((0, lib$8.arrayify)(data), loose));
 	    };
 	    return AbiCoder;
 	}());
@@ -25091,7 +25477,7 @@
 	})();
 	});
 
-	var _version$S = createCommonjsModule(function (module, exports) {
+	var _version$U = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.version = void 0;
@@ -25099,9 +25485,9 @@
 
 	});
 
-	var _version$T = /*@__PURE__*/getDefaultExportFromCjs(_version$S);
+	var _version$V = /*@__PURE__*/getDefaultExportFromCjs(_version$U);
 
-	var lib$t = createCommonjsModule(function (module, exports) {
+	var lib$u = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.Logger = exports.ErrorCode = exports.LogLevel = void 0;
@@ -25435,7 +25821,7 @@
 	    };
 	    Logger.globalLogger = function () {
 	        if (!_globalLogger) {
-	            _globalLogger = new Logger(_version$S.version);
+	            _globalLogger = new Logger(_version$U.version);
 	        }
 	        return _globalLogger;
 	    };
@@ -25475,9 +25861,9 @@
 
 	});
 
-	var index$t = /*@__PURE__*/getDefaultExportFromCjs(lib$t);
+	var index$u = /*@__PURE__*/getDefaultExportFromCjs(lib$u);
 
-	var _version$U = createCommonjsModule(function (module, exports) {
+	var _version$W = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.version = void 0;
@@ -25485,15 +25871,15 @@
 
 	});
 
-	var _version$V = /*@__PURE__*/getDefaultExportFromCjs(_version$U);
+	var _version$X = /*@__PURE__*/getDefaultExportFromCjs(_version$W);
 
-	var lib$u = createCommonjsModule(function (module, exports) {
+	var lib$v = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.joinSignature = exports.splitSignature = exports.hexZeroPad = exports.hexStripZeros = exports.hexValue = exports.hexConcat = exports.hexDataSlice = exports.hexDataLength = exports.hexlify = exports.isHexString = exports.zeroPad = exports.stripZeros = exports.concat = exports.arrayify = exports.isBytes = exports.isBytesLike = void 0;
 
 
-	var logger = new lib$t.Logger(_version$U.version);
+	var logger = new lib$u.Logger(_version$W.version);
 	///////////////////////////////
 	function isHexable(value) {
 	    return !!(value.toHexString);
@@ -25917,9 +26303,9 @@
 
 	});
 
-	var index$u = /*@__PURE__*/getDefaultExportFromCjs(lib$u);
+	var index$v = /*@__PURE__*/getDefaultExportFromCjs(lib$v);
 
-	var lib$v = createCommonjsModule(function (module, exports) {
+	var lib$w = createCommonjsModule(function (module, exports) {
 	"use strict";
 	var __importDefault = (commonjsGlobal && commonjsGlobal.__importDefault) || function (mod) {
 	    return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -25929,13 +26315,13 @@
 	var js_sha3_1 = __importDefault(sha3$1);
 
 	function keccak256(data) {
-	    return '0x' + js_sha3_1.default.keccak_256((0, lib$u.arrayify)(data));
+	    return '0x' + js_sha3_1.default.keccak_256((0, lib$v.arrayify)(data));
 	}
 	exports.keccak256 = keccak256;
 
 	});
 
-	var index$v = /*@__PURE__*/getDefaultExportFromCjs(lib$v);
+	var index$w = /*@__PURE__*/getDefaultExportFromCjs(lib$w);
 
 	var addresses$4 = createCommonjsModule(function (module, exports) {
 	"use strict";
@@ -29497,7 +29883,7 @@
 	})('object' === 'undefined' || module, commonjsGlobal);
 	});
 
-	var _version$W = createCommonjsModule(function (module, exports) {
+	var _version$Y = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.version = void 0;
@@ -29505,9 +29891,9 @@
 
 	});
 
-	var _version$X = /*@__PURE__*/getDefaultExportFromCjs(_version$W);
+	var _version$Z = /*@__PURE__*/getDefaultExportFromCjs(_version$Y);
 
-	var lib$w = createCommonjsModule(function (module, exports) {
+	var lib$x = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.Logger = exports.ErrorCode = exports.LogLevel = void 0;
@@ -29841,7 +30227,7 @@
 	    };
 	    Logger.globalLogger = function () {
 	        if (!_globalLogger) {
-	            _globalLogger = new Logger(_version$W.version);
+	            _globalLogger = new Logger(_version$Y.version);
 	        }
 	        return _globalLogger;
 	    };
@@ -29881,9 +30267,9 @@
 
 	});
 
-	var index$w = /*@__PURE__*/getDefaultExportFromCjs(lib$w);
+	var index$x = /*@__PURE__*/getDefaultExportFromCjs(lib$x);
 
-	var _version$Y = createCommonjsModule(function (module, exports) {
+	var _version$_ = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.version = void 0;
@@ -29891,15 +30277,15 @@
 
 	});
 
-	var _version$Z = /*@__PURE__*/getDefaultExportFromCjs(_version$Y);
+	var _version$$ = /*@__PURE__*/getDefaultExportFromCjs(_version$_);
 
-	var lib$x = createCommonjsModule(function (module, exports) {
+	var lib$y = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.joinSignature = exports.splitSignature = exports.hexZeroPad = exports.hexStripZeros = exports.hexValue = exports.hexConcat = exports.hexDataSlice = exports.hexDataLength = exports.hexlify = exports.isHexString = exports.zeroPad = exports.stripZeros = exports.concat = exports.arrayify = exports.isBytes = exports.isBytesLike = void 0;
 
 
-	var logger = new lib$w.Logger(_version$Y.version);
+	var logger = new lib$x.Logger(_version$_.version);
 	///////////////////////////////
 	function isHexable(value) {
 	    return !!(value.toHexString);
@@ -30323,9 +30709,9 @@
 
 	});
 
-	var index$x = /*@__PURE__*/getDefaultExportFromCjs(lib$x);
+	var index$y = /*@__PURE__*/getDefaultExportFromCjs(lib$y);
 
-	var _version$_ = createCommonjsModule(function (module, exports) {
+	var _version$10 = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.version = void 0;
@@ -30333,7 +30719,7 @@
 
 	});
 
-	var _version$$ = /*@__PURE__*/getDefaultExportFromCjs(_version$_);
+	var _version$11 = /*@__PURE__*/getDefaultExportFromCjs(_version$10);
 
 	var bignumber$6 = createCommonjsModule(function (module, exports) {
 	"use strict";
@@ -30354,16 +30740,16 @@
 
 
 
-	var logger = new lib$w.Logger(_version$_.version);
+	var logger = new lib$x.Logger(_version$10.version);
 	var _constructorGuard = {};
 	var MAX_SAFE = 0x1fffffffffffff;
 	function isBigNumberish(value) {
 	    return (value != null) && (BigNumber.isBigNumber(value) ||
 	        (typeof (value) === "number" && (value % 1) === 0) ||
 	        (typeof (value) === "string" && !!value.match(/^-?[0-9]+$/)) ||
-	        (0, lib$x.isHexString)(value) ||
+	        (0, lib$y.isHexString)(value) ||
 	        (typeof (value) === "bigint") ||
-	        (0, lib$x.isBytes)(value));
+	        (0, lib$y.isBytes)(value));
 	}
 	exports.isBigNumberish = isBigNumberish;
 	// Only warn about passing 10 into radix once
@@ -30371,7 +30757,7 @@
 	var BigNumber = /** @class */ (function () {
 	    function BigNumber(constructorGuard, hex) {
 	        if (constructorGuard !== _constructorGuard) {
-	            logger.throwError("cannot call constructor directly; use BigNumber.from", lib$w.Logger.errors.UNSUPPORTED_OPERATION, {
+	            logger.throwError("cannot call constructor directly; use BigNumber.from", lib$x.Logger.errors.UNSUPPORTED_OPERATION, {
 	                operation: "new (BigNumber)"
 	            });
 	        }
@@ -30495,7 +30881,7 @@
 	            return BigInt(this.toString());
 	        }
 	        catch (e) { }
-	        return logger.throwError("this platform does not support BigInt", lib$w.Logger.errors.UNSUPPORTED_OPERATION, {
+	        return logger.throwError("this platform does not support BigInt", lib$x.Logger.errors.UNSUPPORTED_OPERATION, {
 	            value: this.toString()
 	        });
 	    };
@@ -30509,10 +30895,10 @@
 	                }
 	            }
 	            else if (arguments[0] === 16) {
-	                logger.throwError("BigNumber.toString does not accept any parameters; use bigNumber.toHexString()", lib$w.Logger.errors.UNEXPECTED_ARGUMENT, {});
+	                logger.throwError("BigNumber.toString does not accept any parameters; use bigNumber.toHexString()", lib$x.Logger.errors.UNEXPECTED_ARGUMENT, {});
 	            }
 	            else {
-	                logger.throwError("BigNumber.toString does not accept parameters", lib$w.Logger.errors.UNEXPECTED_ARGUMENT, {});
+	                logger.throwError("BigNumber.toString does not accept parameters", lib$x.Logger.errors.UNEXPECTED_ARGUMENT, {});
 	            }
 	        }
 	        return toBN(this).toString(10);
@@ -30549,8 +30935,8 @@
 	        if (typeof (anyValue) === "bigint") {
 	            return BigNumber.from(anyValue.toString());
 	        }
-	        if ((0, lib$x.isBytes)(anyValue)) {
-	            return BigNumber.from((0, lib$x.hexlify)(anyValue));
+	        if ((0, lib$y.isBytes)(anyValue)) {
+	            return BigNumber.from((0, lib$y.hexlify)(anyValue));
 	        }
 	        if (anyValue) {
 	            // Hexable interface (takes priority)
@@ -30568,7 +30954,7 @@
 	                    hex = anyValue.hex;
 	                }
 	                if (typeof (hex) === "string") {
-	                    if ((0, lib$x.isHexString)(hex) || (hex[0] === "-" && (0, lib$x.isHexString)(hex.substring(1)))) {
+	                    if ((0, lib$y.isHexString)(hex) || (hex[0] === "-" && (0, lib$y.isHexString)(hex.substring(1)))) {
 	                        return BigNumber.from(hex);
 	                    }
 	                }
@@ -30638,7 +31024,7 @@
 	    if (value != null) {
 	        params.value = value;
 	    }
-	    return logger.throwError(fault, lib$w.Logger.errors.NUMERIC_FAULT, params);
+	    return logger.throwError(fault, lib$x.Logger.errors.NUMERIC_FAULT, params);
 	}
 	// value should have no prefix
 	function _base36To16(value) {
@@ -30662,7 +31048,7 @@
 
 
 
-	var logger = new lib$w.Logger(_version$_.version);
+	var logger = new lib$x.Logger(_version$10.version);
 
 	var _constructorGuard = {};
 	var Zero = bignumber$6.BigNumber.from(0);
@@ -30672,7 +31058,7 @@
 	    if (value !== undefined) {
 	        params.value = value;
 	    }
-	    return logger.throwError(message, lib$w.Logger.errors.NUMERIC_FAULT, params);
+	    return logger.throwError(message, lib$x.Logger.errors.NUMERIC_FAULT, params);
 	}
 	// Constant to pull zeros from for multipliers
 	var zeros = "0";
@@ -30778,7 +31164,7 @@
 	var FixedFormat = /** @class */ (function () {
 	    function FixedFormat(constructorGuard, signed, width, decimals) {
 	        if (constructorGuard !== _constructorGuard) {
-	            logger.throwError("cannot use FixedFormat constructor; use FixedFormat.from", lib$w.Logger.errors.UNSUPPORTED_OPERATION, {
+	            logger.throwError("cannot use FixedFormat constructor; use FixedFormat.from", lib$x.Logger.errors.UNSUPPORTED_OPERATION, {
 	                operation: "new FixedFormat"
 	            });
 	        }
@@ -30844,7 +31230,7 @@
 	var FixedNumber = /** @class */ (function () {
 	    function FixedNumber(constructorGuard, hex, value, format) {
 	        if (constructorGuard !== _constructorGuard) {
-	            logger.throwError("cannot use FixedNumber constructor; use FixedNumber.from", lib$w.Logger.errors.UNSUPPORTED_OPERATION, {
+	            logger.throwError("cannot use FixedNumber constructor; use FixedNumber.from", lib$x.Logger.errors.UNSUPPORTED_OPERATION, {
 	                operation: "new FixedFormat"
 	            });
 	        }
@@ -30942,7 +31328,7 @@
 	            logger.throwArgumentError("invalid byte width", "width", width);
 	        }
 	        var hex = bignumber$6.BigNumber.from(this._hex).fromTwos(this.format.width).toTwos(width).toHexString();
-	        return (0, lib$x.hexZeroPad)(hex, width / 8);
+	        return (0, lib$y.hexZeroPad)(hex, width / 8);
 	    };
 	    FixedNumber.prototype.toUnsafeFloat = function () { return parseFloat(this.toString()); };
 	    FixedNumber.prototype.toFormat = function (format) {
@@ -30977,7 +31363,7 @@
 	        }
 	        else {
 	            hex = numeric.toHexString();
-	            hex = (0, lib$x.hexZeroPad)(hex, fixedFormat.width / 8);
+	            hex = (0, lib$y.hexZeroPad)(hex, fixedFormat.width / 8);
 	        }
 	        var decimal = formatFixed(numeric, fixedFormat.decimals);
 	        return new FixedNumber(_constructorGuard, hex, decimal, fixedFormat);
@@ -30987,7 +31373,7 @@
 	            format = "fixed";
 	        }
 	        var fixedFormat = FixedFormat.from(format);
-	        if ((0, lib$x.arrayify)(value).length > fixedFormat.width / 8) {
+	        if ((0, lib$y.arrayify)(value).length > fixedFormat.width / 8) {
 	            throw new Error("overflow");
 	        }
 	        var numeric = bignumber$6.BigNumber.from(value);
@@ -31002,7 +31388,7 @@
 	        if (typeof (value) === "string") {
 	            return FixedNumber.fromString(value, format);
 	        }
-	        if ((0, lib$x.isBytes)(value)) {
+	        if ((0, lib$y.isBytes)(value)) {
 	            return FixedNumber.fromBytes(value, format);
 	        }
 	        try {
@@ -31010,7 +31396,7 @@
 	        }
 	        catch (error) {
 	            // Allow NUMERIC_FAULT to bubble up
-	            if (error.code !== lib$w.Logger.errors.INVALID_ARGUMENT) {
+	            if (error.code !== lib$x.Logger.errors.INVALID_ARGUMENT) {
 	                throw error;
 	            }
 	        }
@@ -31029,7 +31415,7 @@
 
 	var fixednumber$7 = /*@__PURE__*/getDefaultExportFromCjs(fixednumber$6);
 
-	var lib$y = createCommonjsModule(function (module, exports) {
+	var lib$z = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports._base36To16 = exports._base16To36 = exports.parseFixed = exports.FixedNumber = exports.FixedFormat = exports.formatFixed = exports.BigNumber = void 0;
@@ -31047,28 +31433,28 @@
 
 	});
 
-	var index$y = /*@__PURE__*/getDefaultExportFromCjs(lib$y);
+	var index$z = /*@__PURE__*/getDefaultExportFromCjs(lib$z);
 
 	var bignumbers$4 = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.MaxInt256 = exports.MinInt256 = exports.MaxUint256 = exports.WeiPerEther = exports.Two = exports.One = exports.Zero = exports.NegativeOne = void 0;
 
-	var NegativeOne = ( /*#__PURE__*/lib$y.BigNumber.from(-1));
+	var NegativeOne = ( /*#__PURE__*/lib$z.BigNumber.from(-1));
 	exports.NegativeOne = NegativeOne;
-	var Zero = ( /*#__PURE__*/lib$y.BigNumber.from(0));
+	var Zero = ( /*#__PURE__*/lib$z.BigNumber.from(0));
 	exports.Zero = Zero;
-	var One = ( /*#__PURE__*/lib$y.BigNumber.from(1));
+	var One = ( /*#__PURE__*/lib$z.BigNumber.from(1));
 	exports.One = One;
-	var Two = ( /*#__PURE__*/lib$y.BigNumber.from(2));
+	var Two = ( /*#__PURE__*/lib$z.BigNumber.from(2));
 	exports.Two = Two;
-	var WeiPerEther = ( /*#__PURE__*/lib$y.BigNumber.from("1000000000000000000"));
+	var WeiPerEther = ( /*#__PURE__*/lib$z.BigNumber.from("1000000000000000000"));
 	exports.WeiPerEther = WeiPerEther;
-	var MaxUint256 = ( /*#__PURE__*/lib$y.BigNumber.from("0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"));
+	var MaxUint256 = ( /*#__PURE__*/lib$z.BigNumber.from("0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"));
 	exports.MaxUint256 = MaxUint256;
-	var MinInt256 = ( /*#__PURE__*/lib$y.BigNumber.from("-0x8000000000000000000000000000000000000000000000000000000000000000"));
+	var MinInt256 = ( /*#__PURE__*/lib$z.BigNumber.from("-0x8000000000000000000000000000000000000000000000000000000000000000"));
 	exports.MinInt256 = MinInt256;
-	var MaxInt256 = ( /*#__PURE__*/lib$y.BigNumber.from("0x7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"));
+	var MaxInt256 = ( /*#__PURE__*/lib$z.BigNumber.from("0x7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"));
 	exports.MaxInt256 = MaxInt256;
 
 	});
@@ -31096,7 +31482,7 @@
 
 	var strings$5 = /*@__PURE__*/getDefaultExportFromCjs(strings$4);
 
-	var lib$z = createCommonjsModule(function (module, exports) {
+	var lib$A = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.EtherSymbol = exports.HashZero = exports.MaxInt256 = exports.MinInt256 = exports.MaxUint256 = exports.WeiPerEther = exports.Two = exports.One = exports.Zero = exports.NegativeOne = exports.AddressZero = void 0;
@@ -31118,9 +31504,9 @@
 
 	});
 
-	var index$z = /*@__PURE__*/getDefaultExportFromCjs(lib$z);
+	var index$A = /*@__PURE__*/getDefaultExportFromCjs(lib$A);
 
-	var _version$10 = createCommonjsModule(function (module, exports) {
+	var _version$12 = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.version = void 0;
@@ -31128,7 +31514,7 @@
 
 	});
 
-	var _version$11 = /*@__PURE__*/getDefaultExportFromCjs(_version$10);
+	var _version$13 = /*@__PURE__*/getDefaultExportFromCjs(_version$12);
 
 	var utf8$2 = createCommonjsModule(function (module, exports) {
 	"use strict";
@@ -31137,7 +31523,7 @@
 
 
 
-	var logger = new lib$w.Logger(_version$10.version);
+	var logger = new lib$x.Logger(_version$12.version);
 	///////////////////////////////
 	var UnicodeNormalizationForm;
 	(function (UnicodeNormalizationForm) {
@@ -31221,7 +31607,7 @@
 	    if (onError == null) {
 	        onError = exports.Utf8ErrorFuncs.error;
 	    }
-	    bytes = (0, lib$x.arrayify)(bytes);
+	    bytes = (0, lib$y.arrayify)(bytes);
 	    var result = [];
 	    var i = 0;
 	    // Invalid bytes are ignored
@@ -31337,7 +31723,7 @@
 	            result.push((c & 0x3f) | 0x80);
 	        }
 	    }
-	    return (0, lib$x.arrayify)(result);
+	    return (0, lib$y.arrayify)(result);
 	}
 	exports.toUtf8Bytes = toUtf8Bytes;
 	;
@@ -31407,11 +31793,11 @@
 	        throw new Error("bytes32 string must be less than 32 bytes");
 	    }
 	    // Zero-pad (implicitly null-terminates)
-	    return (0, lib$x.hexlify)((0, lib$x.concat)([bytes, lib$z.HashZero]).slice(0, 32));
+	    return (0, lib$y.hexlify)((0, lib$y.concat)([bytes, lib$A.HashZero]).slice(0, 32));
 	}
 	exports.formatBytes32String = formatBytes32String;
 	function parseBytes32String(bytes) {
-	    var data = (0, lib$x.arrayify)(bytes);
+	    var data = (0, lib$y.arrayify)(bytes);
 	    // Must be 32 bytes with a null-termination
 	    if (data.length !== 32) {
 	        throw new Error("invalid bytes32 - not 32 bytes long");
@@ -31628,7 +32014,7 @@
 
 	var idna$3 = /*@__PURE__*/getDefaultExportFromCjs(idna$2);
 
-	var lib$A = createCommonjsModule(function (module, exports) {
+	var lib$B = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.nameprep = exports.parseBytes32String = exports.formatBytes32String = exports.UnicodeNormalizationForm = exports.Utf8ErrorReason = exports.Utf8ErrorFuncs = exports.toUtf8String = exports.toUtf8CodePoints = exports.toUtf8Bytes = exports._toEscapedUtf8String = void 0;
@@ -31648,7 +32034,7 @@
 
 	});
 
-	var index$A = /*@__PURE__*/getDefaultExportFromCjs(lib$A);
+	var index$B = /*@__PURE__*/getDefaultExportFromCjs(lib$B);
 
 	var id_1 = createCommonjsModule(function (module, exports) {
 	"use strict";
@@ -31657,7 +32043,7 @@
 
 
 	function id(text) {
-	    return (0, lib$v.keccak256)((0, lib$A.toUtf8Bytes)(text));
+	    return (0, lib$w.keccak256)((0, lib$B.toUtf8Bytes)(text));
 	}
 	exports.id = id;
 
@@ -31665,7 +32051,7 @@
 
 	var id = /*@__PURE__*/getDefaultExportFromCjs(id_1);
 
-	var _version$12 = createCommonjsModule(function (module, exports) {
+	var _version$14 = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.version = void 0;
@@ -31673,9 +32059,9 @@
 
 	});
 
-	var _version$13 = /*@__PURE__*/getDefaultExportFromCjs(_version$12);
+	var _version$15 = /*@__PURE__*/getDefaultExportFromCjs(_version$14);
 
-	var lib$B = createCommonjsModule(function (module, exports) {
+	var lib$C = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.Logger = exports.ErrorCode = exports.LogLevel = void 0;
@@ -32009,7 +32395,7 @@
 	    };
 	    Logger.globalLogger = function () {
 	        if (!_globalLogger) {
-	            _globalLogger = new Logger(_version$12.version);
+	            _globalLogger = new Logger(_version$14.version);
 	        }
 	        return _globalLogger;
 	    };
@@ -32049,9 +32435,9 @@
 
 	});
 
-	var index$B = /*@__PURE__*/getDefaultExportFromCjs(lib$B);
+	var index$C = /*@__PURE__*/getDefaultExportFromCjs(lib$C);
 
-	var _version$14 = createCommonjsModule(function (module, exports) {
+	var _version$16 = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.version = void 0;
@@ -32059,15 +32445,15 @@
 
 	});
 
-	var _version$15 = /*@__PURE__*/getDefaultExportFromCjs(_version$14);
+	var _version$17 = /*@__PURE__*/getDefaultExportFromCjs(_version$16);
 
-	var lib$C = createCommonjsModule(function (module, exports) {
+	var lib$D = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.joinSignature = exports.splitSignature = exports.hexZeroPad = exports.hexStripZeros = exports.hexValue = exports.hexConcat = exports.hexDataSlice = exports.hexDataLength = exports.hexlify = exports.isHexString = exports.zeroPad = exports.stripZeros = exports.concat = exports.arrayify = exports.isBytes = exports.isBytesLike = void 0;
 
 
-	var logger = new lib$B.Logger(_version$14.version);
+	var logger = new lib$C.Logger(_version$16.version);
 	///////////////////////////////
 	function isHexable(value) {
 	    return !!(value.toHexString);
@@ -32491,413 +32877,17 @@
 
 	});
 
-	var index$C = /*@__PURE__*/getDefaultExportFromCjs(lib$C);
-
-	var _version$16 = createCommonjsModule(function (module, exports) {
-	"use strict";
-	Object.defineProperty(exports, "__esModule", { value: true });
-	exports.version = void 0;
-	exports.version = "logger/5.7.0";
-
-	});
-
-	var _version$17 = /*@__PURE__*/getDefaultExportFromCjs(_version$16);
-
-	var lib$D = createCommonjsModule(function (module, exports) {
-	"use strict";
-	Object.defineProperty(exports, "__esModule", { value: true });
-	exports.Logger = exports.ErrorCode = exports.LogLevel = void 0;
-	var _permanentCensorErrors = false;
-	var _censorErrors = false;
-	var LogLevels = { debug: 1, "default": 2, info: 2, warning: 3, error: 4, off: 5 };
-	var _logLevel = LogLevels["default"];
-
-	var _globalLogger = null;
-	function _checkNormalize() {
-	    try {
-	        var missing_1 = [];
-	        // Make sure all forms of normalization are supported
-	        ["NFD", "NFC", "NFKD", "NFKC"].forEach(function (form) {
-	            try {
-	                if ("test".normalize(form) !== "test") {
-	                    throw new Error("bad normalize");
-	                }
-	                ;
-	            }
-	            catch (error) {
-	                missing_1.push(form);
-	            }
-	        });
-	        if (missing_1.length) {
-	            throw new Error("missing " + missing_1.join(", "));
-	        }
-	        if (String.fromCharCode(0xe9).normalize("NFD") !== String.fromCharCode(0x65, 0x0301)) {
-	            throw new Error("broken implementation");
-	        }
-	    }
-	    catch (error) {
-	        return error.message;
-	    }
-	    return null;
-	}
-	var _normalizeError = _checkNormalize();
-	var LogLevel;
-	(function (LogLevel) {
-	    LogLevel["DEBUG"] = "DEBUG";
-	    LogLevel["INFO"] = "INFO";
-	    LogLevel["WARNING"] = "WARNING";
-	    LogLevel["ERROR"] = "ERROR";
-	    LogLevel["OFF"] = "OFF";
-	})(LogLevel = exports.LogLevel || (exports.LogLevel = {}));
-	var ErrorCode;
-	(function (ErrorCode) {
-	    ///////////////////
-	    // Generic Errors
-	    // Unknown Error
-	    ErrorCode["UNKNOWN_ERROR"] = "UNKNOWN_ERROR";
-	    // Not Implemented
-	    ErrorCode["NOT_IMPLEMENTED"] = "NOT_IMPLEMENTED";
-	    // Unsupported Operation
-	    //   - operation
-	    ErrorCode["UNSUPPORTED_OPERATION"] = "UNSUPPORTED_OPERATION";
-	    // Network Error (i.e. Ethereum Network, such as an invalid chain ID)
-	    //   - event ("noNetwork" is not re-thrown in provider.ready; otherwise thrown)
-	    ErrorCode["NETWORK_ERROR"] = "NETWORK_ERROR";
-	    // Some sort of bad response from the server
-	    ErrorCode["SERVER_ERROR"] = "SERVER_ERROR";
-	    // Timeout
-	    ErrorCode["TIMEOUT"] = "TIMEOUT";
-	    ///////////////////
-	    // Operational  Errors
-	    // Buffer Overrun
-	    ErrorCode["BUFFER_OVERRUN"] = "BUFFER_OVERRUN";
-	    // Numeric Fault
-	    //   - operation: the operation being executed
-	    //   - fault: the reason this faulted
-	    ErrorCode["NUMERIC_FAULT"] = "NUMERIC_FAULT";
-	    ///////////////////
-	    // Argument Errors
-	    // Missing new operator to an object
-	    //  - name: The name of the class
-	    ErrorCode["MISSING_NEW"] = "MISSING_NEW";
-	    // Invalid argument (e.g. value is incompatible with type) to a function:
-	    //   - argument: The argument name that was invalid
-	    //   - value: The value of the argument
-	    ErrorCode["INVALID_ARGUMENT"] = "INVALID_ARGUMENT";
-	    // Missing argument to a function:
-	    //   - count: The number of arguments received
-	    //   - expectedCount: The number of arguments expected
-	    ErrorCode["MISSING_ARGUMENT"] = "MISSING_ARGUMENT";
-	    // Too many arguments
-	    //   - count: The number of arguments received
-	    //   - expectedCount: The number of arguments expected
-	    ErrorCode["UNEXPECTED_ARGUMENT"] = "UNEXPECTED_ARGUMENT";
-	    ///////////////////
-	    // Blockchain Errors
-	    // Call exception
-	    //  - transaction: the transaction
-	    //  - address?: the contract address
-	    //  - args?: The arguments passed into the function
-	    //  - method?: The Solidity method signature
-	    //  - errorSignature?: The EIP848 error signature
-	    //  - errorArgs?: The EIP848 error parameters
-	    //  - reason: The reason (only for EIP848 "Error(string)")
-	    ErrorCode["CALL_EXCEPTION"] = "CALL_EXCEPTION";
-	    // Insufficient funds (< value + gasLimit * gasPrice)
-	    //   - transaction: the transaction attempted
-	    ErrorCode["INSUFFICIENT_FUNDS"] = "INSUFFICIENT_FUNDS";
-	    // Nonce has already been used
-	    //   - transaction: the transaction attempted
-	    ErrorCode["NONCE_EXPIRED"] = "NONCE_EXPIRED";
-	    // The replacement fee for the transaction is too low
-	    //   - transaction: the transaction attempted
-	    ErrorCode["REPLACEMENT_UNDERPRICED"] = "REPLACEMENT_UNDERPRICED";
-	    // The gas limit could not be estimated
-	    //   - transaction: the transaction passed to estimateGas
-	    ErrorCode["UNPREDICTABLE_GAS_LIMIT"] = "UNPREDICTABLE_GAS_LIMIT";
-	    // The transaction was replaced by one with a higher gas price
-	    //   - reason: "cancelled", "replaced" or "repriced"
-	    //   - cancelled: true if reason == "cancelled" or reason == "replaced")
-	    //   - hash: original transaction hash
-	    //   - replacement: the full TransactionsResponse for the replacement
-	    //   - receipt: the receipt of the replacement
-	    ErrorCode["TRANSACTION_REPLACED"] = "TRANSACTION_REPLACED";
-	    ///////////////////
-	    // Interaction Errors
-	    // The user rejected the action, such as signing a message or sending
-	    // a transaction
-	    ErrorCode["ACTION_REJECTED"] = "ACTION_REJECTED";
-	})(ErrorCode = exports.ErrorCode || (exports.ErrorCode = {}));
-	;
-	var HEX = "0123456789abcdef";
-	var Logger = /** @class */ (function () {
-	    function Logger(version) {
-	        Object.defineProperty(this, "version", {
-	            enumerable: true,
-	            value: version,
-	            writable: false
-	        });
-	    }
-	    Logger.prototype._log = function (logLevel, args) {
-	        var level = logLevel.toLowerCase();
-	        if (LogLevels[level] == null) {
-	            this.throwArgumentError("invalid log level name", "logLevel", logLevel);
-	        }
-	        if (_logLevel > LogLevels[level]) {
-	            return;
-	        }
-	        console.log.apply(console, args);
-	    };
-	    Logger.prototype.debug = function () {
-	        var args = [];
-	        for (var _i = 0; _i < arguments.length; _i++) {
-	            args[_i] = arguments[_i];
-	        }
-	        this._log(Logger.levels.DEBUG, args);
-	    };
-	    Logger.prototype.info = function () {
-	        var args = [];
-	        for (var _i = 0; _i < arguments.length; _i++) {
-	            args[_i] = arguments[_i];
-	        }
-	        this._log(Logger.levels.INFO, args);
-	    };
-	    Logger.prototype.warn = function () {
-	        var args = [];
-	        for (var _i = 0; _i < arguments.length; _i++) {
-	            args[_i] = arguments[_i];
-	        }
-	        this._log(Logger.levels.WARNING, args);
-	    };
-	    Logger.prototype.makeError = function (message, code, params) {
-	        // Errors are being censored
-	        if (_censorErrors) {
-	            return this.makeError("censored error", code, {});
-	        }
-	        if (!code) {
-	            code = Logger.errors.UNKNOWN_ERROR;
-	        }
-	        if (!params) {
-	            params = {};
-	        }
-	        var messageDetails = [];
-	        Object.keys(params).forEach(function (key) {
-	            var value = params[key];
-	            try {
-	                if (value instanceof Uint8Array) {
-	                    var hex = "";
-	                    for (var i = 0; i < value.length; i++) {
-	                        hex += HEX[value[i] >> 4];
-	                        hex += HEX[value[i] & 0x0f];
-	                    }
-	                    messageDetails.push(key + "=Uint8Array(0x" + hex + ")");
-	                }
-	                else {
-	                    messageDetails.push(key + "=" + JSON.stringify(value));
-	                }
-	            }
-	            catch (error) {
-	                messageDetails.push(key + "=" + JSON.stringify(params[key].toString()));
-	            }
-	        });
-	        messageDetails.push("code=" + code);
-	        messageDetails.push("version=" + this.version);
-	        var reason = message;
-	        var url = "";
-	        switch (code) {
-	            case ErrorCode.NUMERIC_FAULT: {
-	                url = "NUMERIC_FAULT";
-	                var fault = message;
-	                switch (fault) {
-	                    case "overflow":
-	                    case "underflow":
-	                    case "division-by-zero":
-	                        url += "-" + fault;
-	                        break;
-	                    case "negative-power":
-	                    case "negative-width":
-	                        url += "-unsupported";
-	                        break;
-	                    case "unbound-bitwise-result":
-	                        url += "-unbound-result";
-	                        break;
-	                }
-	                break;
-	            }
-	            case ErrorCode.CALL_EXCEPTION:
-	            case ErrorCode.INSUFFICIENT_FUNDS:
-	            case ErrorCode.MISSING_NEW:
-	            case ErrorCode.NONCE_EXPIRED:
-	            case ErrorCode.REPLACEMENT_UNDERPRICED:
-	            case ErrorCode.TRANSACTION_REPLACED:
-	            case ErrorCode.UNPREDICTABLE_GAS_LIMIT:
-	                url = code;
-	                break;
-	        }
-	        if (url) {
-	            message += " [ See: https:/\/links.quais.org/v5-errors-" + url + " ]";
-	        }
-	        if (messageDetails.length) {
-	            message += " (" + messageDetails.join(", ") + ")";
-	        }
-	        // @TODO: Any??
-	        var error = new Error(message);
-	        error.reason = reason;
-	        error.code = code;
-	        Object.keys(params).forEach(function (key) {
-	            error[key] = params[key];
-	        });
-	        return error;
-	    };
-	    Logger.prototype.throwError = function (message, code, params) {
-	        throw this.makeError(message, code, params);
-	    };
-	    Logger.prototype.throwArgumentError = function (message, name, value) {
-	        return this.throwError(message, Logger.errors.INVALID_ARGUMENT, {
-	            argument: name,
-	            value: value
-	        });
-	    };
-	    Logger.prototype.assert = function (condition, message, code, params) {
-	        if (!!condition) {
-	            return;
-	        }
-	        this.throwError(message, code, params);
-	    };
-	    Logger.prototype.assertArgument = function (condition, message, name, value) {
-	        if (!!condition) {
-	            return;
-	        }
-	        this.throwArgumentError(message, name, value);
-	    };
-	    Logger.prototype.checkNormalize = function (message) {
-	        if (message == null) {
-	            message = "platform missing String.prototype.normalize";
-	        }
-	        if (_normalizeError) {
-	            this.throwError("platform missing String.prototype.normalize", Logger.errors.UNSUPPORTED_OPERATION, {
-	                operation: "String.prototype.normalize", form: _normalizeError
-	            });
-	        }
-	    };
-	    Logger.prototype.checkSafeUint53 = function (value, message) {
-	        if (typeof (value) !== "number") {
-	            return;
-	        }
-	        if (message == null) {
-	            message = "value not safe";
-	        }
-	        if (value < 0 || value >= 0x1fffffffffffff) {
-	            this.throwError(message, Logger.errors.NUMERIC_FAULT, {
-	                operation: "checkSafeInteger",
-	                fault: "out-of-safe-range",
-	                value: value
-	            });
-	        }
-	        if (value % 1) {
-	            this.throwError(message, Logger.errors.NUMERIC_FAULT, {
-	                operation: "checkSafeInteger",
-	                fault: "non-integer",
-	                value: value
-	            });
-	        }
-	    };
-	    Logger.prototype.checkArgumentCount = function (count, expectedCount, message) {
-	        if (message) {
-	            message = ": " + message;
-	        }
-	        else {
-	            message = "";
-	        }
-	        if (count < expectedCount) {
-	            this.throwError("missing argument" + message, Logger.errors.MISSING_ARGUMENT, {
-	                count: count,
-	                expectedCount: expectedCount
-	            });
-	        }
-	        if (count > expectedCount) {
-	            this.throwError("too many arguments" + message, Logger.errors.UNEXPECTED_ARGUMENT, {
-	                count: count,
-	                expectedCount: expectedCount
-	            });
-	        }
-	    };
-	    Logger.prototype.checkNew = function (target, kind) {
-	        if (target === Object || target == null) {
-	            this.throwError("missing new", Logger.errors.MISSING_NEW, { name: kind.name });
-	        }
-	    };
-	    Logger.prototype.checkAbstract = function (target, kind) {
-	        if (target === kind) {
-	            this.throwError("cannot instantiate abstract class " + JSON.stringify(kind.name) + " directly; use a sub-class", Logger.errors.UNSUPPORTED_OPERATION, { name: target.name, operation: "new" });
-	        }
-	        else if (target === Object || target == null) {
-	            this.throwError("missing new", Logger.errors.MISSING_NEW, { name: kind.name });
-	        }
-	    };
-	    Logger.globalLogger = function () {
-	        if (!_globalLogger) {
-	            _globalLogger = new Logger(_version$16.version);
-	        }
-	        return _globalLogger;
-	    };
-	    Logger.setCensorship = function (censorship, permanent) {
-	        if (!censorship && permanent) {
-	            this.globalLogger().throwError("cannot permanently disable censorship", Logger.errors.UNSUPPORTED_OPERATION, {
-	                operation: "setCensorship"
-	            });
-	        }
-	        if (_permanentCensorErrors) {
-	            if (!censorship) {
-	                return;
-	            }
-	            this.globalLogger().throwError("error censorship permanent", Logger.errors.UNSUPPORTED_OPERATION, {
-	                operation: "setCensorship"
-	            });
-	        }
-	        _censorErrors = !!censorship;
-	        _permanentCensorErrors = !!permanent;
-	    };
-	    Logger.setLogLevel = function (logLevel) {
-	        var level = LogLevels[logLevel.toLowerCase()];
-	        if (level == null) {
-	            Logger.globalLogger().warn("invalid log level - " + logLevel);
-	            return;
-	        }
-	        _logLevel = level;
-	    };
-	    Logger.from = function (version) {
-	        return new Logger(version);
-	    };
-	    Logger.errors = ErrorCode;
-	    Logger.levels = LogLevel;
-	    return Logger;
-	}());
-	exports.Logger = Logger;
-
-	});
-
 	var index$D = /*@__PURE__*/getDefaultExportFromCjs(lib$D);
 
 	var _version$18 = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.version = void 0;
-	exports.version = "hash/0.1.0";
-
-	});
-
-	var _version$19 = /*@__PURE__*/getDefaultExportFromCjs(_version$18);
-
-	var _version$1a = createCommonjsModule(function (module, exports) {
-	"use strict";
-	Object.defineProperty(exports, "__esModule", { value: true });
-	exports.version = void 0;
 	exports.version = "logger/5.7.0";
 
 	});
 
-	var _version$1b = /*@__PURE__*/getDefaultExportFromCjs(_version$1a);
+	var _version$19 = /*@__PURE__*/getDefaultExportFromCjs(_version$18);
 
 	var lib$E = createCommonjsModule(function (module, exports) {
 	"use strict";
@@ -33233,7 +33223,7 @@
 	    };
 	    Logger.globalLogger = function () {
 	        if (!_globalLogger) {
-	            _globalLogger = new Logger(_version$1a.version);
+	            _globalLogger = new Logger(_version$18.version);
 	        }
 	        return _globalLogger;
 	    };
@@ -33275,1064 +33265,17 @@
 
 	var index$E = /*@__PURE__*/getDefaultExportFromCjs(lib$E);
 
-	var _version$1c = createCommonjsModule(function (module, exports) {
+	var _version$1a = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.version = void 0;
-	exports.version = "bytes/5.7.0";
+	exports.version = "hash/0.1.0";
 
 	});
 
-	var _version$1d = /*@__PURE__*/getDefaultExportFromCjs(_version$1c);
+	var _version$1b = /*@__PURE__*/getDefaultExportFromCjs(_version$1a);
 
-	var lib$F = createCommonjsModule(function (module, exports) {
-	"use strict";
-	Object.defineProperty(exports, "__esModule", { value: true });
-	exports.joinSignature = exports.splitSignature = exports.hexZeroPad = exports.hexStripZeros = exports.hexValue = exports.hexConcat = exports.hexDataSlice = exports.hexDataLength = exports.hexlify = exports.isHexString = exports.zeroPad = exports.stripZeros = exports.concat = exports.arrayify = exports.isBytes = exports.isBytesLike = void 0;
-
-
-	var logger = new lib$E.Logger(_version$1c.version);
-	///////////////////////////////
-	function isHexable(value) {
-	    return !!(value.toHexString);
-	}
-	function addSlice(array) {
-	    if (array.slice) {
-	        return array;
-	    }
-	    array.slice = function () {
-	        var args = Array.prototype.slice.call(arguments);
-	        return addSlice(new Uint8Array(Array.prototype.slice.apply(array, args)));
-	    };
-	    return array;
-	}
-	function isBytesLike(value) {
-	    return ((isHexString(value) && !(value.length % 2)) || isBytes(value));
-	}
-	exports.isBytesLike = isBytesLike;
-	function isInteger(value) {
-	    return (typeof (value) === "number" && value == value && (value % 1) === 0);
-	}
-	function isBytes(value) {
-	    if (value == null) {
-	        return false;
-	    }
-	    if (value.constructor === Uint8Array) {
-	        return true;
-	    }
-	    if (typeof (value) === "string") {
-	        return false;
-	    }
-	    if (!isInteger(value.length) || value.length < 0) {
-	        return false;
-	    }
-	    for (var i = 0; i < value.length; i++) {
-	        var v = value[i];
-	        if (!isInteger(v) || v < 0 || v >= 256) {
-	            return false;
-	        }
-	    }
-	    return true;
-	}
-	exports.isBytes = isBytes;
-	function arrayify(value, options) {
-	    if (!options) {
-	        options = {};
-	    }
-	    if (typeof (value) === "number") {
-	        logger.checkSafeUint53(value, "invalid arrayify value");
-	        var result = [];
-	        while (value) {
-	            result.unshift(value & 0xff);
-	            value = parseInt(String(value / 256));
-	        }
-	        if (result.length === 0) {
-	            result.push(0);
-	        }
-	        return addSlice(new Uint8Array(result));
-	    }
-	    if (options.allowMissingPrefix && typeof (value) === "string" && value.substring(0, 2) !== "0x") {
-	        value = "0x" + value;
-	    }
-	    if (isHexable(value)) {
-	        value = value.toHexString();
-	    }
-	    if (isHexString(value)) {
-	        var hex = value.substring(2);
-	        if (hex.length % 2) {
-	            if (options.hexPad === "left") {
-	                hex = "0" + hex;
-	            }
-	            else if (options.hexPad === "right") {
-	                hex += "0";
-	            }
-	            else {
-	                logger.throwArgumentError("hex data is odd-length", "value", value);
-	            }
-	        }
-	        var result = [];
-	        for (var i = 0; i < hex.length; i += 2) {
-	            result.push(parseInt(hex.substring(i, i + 2), 16));
-	        }
-	        return addSlice(new Uint8Array(result));
-	    }
-	    if (isBytes(value)) {
-	        return addSlice(new Uint8Array(value));
-	    }
-	    return logger.throwArgumentError("invalid arrayify value", "value", value);
-	}
-	exports.arrayify = arrayify;
-	function concat(items) {
-	    var objects = items.map(function (item) { return arrayify(item); });
-	    var length = objects.reduce(function (accum, item) { return (accum + item.length); }, 0);
-	    var result = new Uint8Array(length);
-	    objects.reduce(function (offset, object) {
-	        result.set(object, offset);
-	        return offset + object.length;
-	    }, 0);
-	    return addSlice(result);
-	}
-	exports.concat = concat;
-	function stripZeros(value) {
-	    var result = arrayify(value);
-	    if (result.length === 0) {
-	        return result;
-	    }
-	    // Find the first non-zero entry
-	    var start = 0;
-	    while (start < result.length && result[start] === 0) {
-	        start++;
-	    }
-	    // If we started with zeros, strip them
-	    if (start) {
-	        result = result.slice(start);
-	    }
-	    return result;
-	}
-	exports.stripZeros = stripZeros;
-	function zeroPad(value, length) {
-	    value = arrayify(value);
-	    if (value.length > length) {
-	        logger.throwArgumentError("value out of range", "value", arguments[0]);
-	    }
-	    var result = new Uint8Array(length);
-	    result.set(value, length - value.length);
-	    return addSlice(result);
-	}
-	exports.zeroPad = zeroPad;
-	function isHexString(value, length) {
-	    if (typeof (value) !== "string" || !value.match(/^0x[0-9A-Fa-f]*$/)) {
-	        return false;
-	    }
-	    if (length && value.length !== 2 + 2 * length) {
-	        return false;
-	    }
-	    return true;
-	}
-	exports.isHexString = isHexString;
-	var HexCharacters = "0123456789abcdef";
-	function hexlify(value, options) {
-	    if (!options) {
-	        options = {};
-	    }
-	    if (typeof (value) === "number") {
-	        logger.checkSafeUint53(value, "invalid hexlify value");
-	        var hex = "";
-	        while (value) {
-	            hex = HexCharacters[value & 0xf] + hex;
-	            value = Math.floor(value / 16);
-	        }
-	        if (hex.length) {
-	            if (hex.length % 2) {
-	                hex = "0" + hex;
-	            }
-	            return "0x" + hex;
-	        }
-	        return "0x00";
-	    }
-	    if (typeof (value) === "bigint") {
-	        value = value.toString(16);
-	        if (value.length % 2) {
-	            return ("0x0" + value);
-	        }
-	        return "0x" + value;
-	    }
-	    if (options.allowMissingPrefix && typeof (value) === "string" && value.substring(0, 2) !== "0x") {
-	        value = "0x" + value;
-	    }
-	    if (isHexable(value)) {
-	        return value.toHexString();
-	    }
-	    if (isHexString(value)) {
-	        if (value.length % 2) {
-	            if (options.hexPad === "left") {
-	                value = "0x0" + value.substring(2);
-	            }
-	            else if (options.hexPad === "right") {
-	                value += "0";
-	            }
-	            else {
-	                logger.throwArgumentError("hex data is odd-length", "value", value);
-	            }
-	        }
-	        return value.toLowerCase();
-	    }
-	    if (isBytes(value)) {
-	        var result = "0x";
-	        for (var i = 0; i < value.length; i++) {
-	            var v = value[i];
-	            result += HexCharacters[(v & 0xf0) >> 4] + HexCharacters[v & 0x0f];
-	        }
-	        return result;
-	    }
-	    return logger.throwArgumentError("invalid hexlify value", "value", value);
-	}
-	exports.hexlify = hexlify;
-	/*
-	function unoddify(value: BytesLike | Hexable | number): BytesLike | Hexable | number {
-	    if (typeof(value) === "string" && value.length % 2 && value.substring(0, 2) === "0x") {
-	        return "0x0" + value.substring(2);
-	    }
-	    return value;
-	}
-	*/
-	function hexDataLength(data) {
-	    if (typeof (data) !== "string") {
-	        data = hexlify(data);
-	    }
-	    else if (!isHexString(data) || (data.length % 2)) {
-	        return null;
-	    }
-	    return (data.length - 2) / 2;
-	}
-	exports.hexDataLength = hexDataLength;
-	function hexDataSlice(data, offset, endOffset) {
-	    if (typeof (data) !== "string") {
-	        data = hexlify(data);
-	    }
-	    else if (!isHexString(data) || (data.length % 2)) {
-	        logger.throwArgumentError("invalid hexData", "value", data);
-	    }
-	    offset = 2 + 2 * offset;
-	    if (endOffset != null) {
-	        return "0x" + data.substring(offset, 2 + 2 * endOffset);
-	    }
-	    return "0x" + data.substring(offset);
-	}
-	exports.hexDataSlice = hexDataSlice;
-	function hexConcat(items) {
-	    var result = "0x";
-	    items.forEach(function (item) {
-	        result += hexlify(item).substring(2);
-	    });
-	    return result;
-	}
-	exports.hexConcat = hexConcat;
-	function hexValue(value) {
-	    var trimmed = hexStripZeros(hexlify(value, { hexPad: "left" }));
-	    if (trimmed === "0x") {
-	        return "0x0";
-	    }
-	    return trimmed;
-	}
-	exports.hexValue = hexValue;
-	function hexStripZeros(value) {
-	    if (typeof (value) !== "string") {
-	        value = hexlify(value);
-	    }
-	    if (!isHexString(value)) {
-	        logger.throwArgumentError("invalid hex string", "value", value);
-	    }
-	    value = value.substring(2);
-	    var offset = 0;
-	    while (offset < value.length && value[offset] === "0") {
-	        offset++;
-	    }
-	    return "0x" + value.substring(offset);
-	}
-	exports.hexStripZeros = hexStripZeros;
-	function hexZeroPad(value, length) {
-	    if (typeof (value) !== "string") {
-	        value = hexlify(value);
-	    }
-	    else if (!isHexString(value)) {
-	        logger.throwArgumentError("invalid hex string", "value", value);
-	    }
-	    if (value.length > 2 * length + 2) {
-	        logger.throwArgumentError("value out of range", "value", arguments[1]);
-	    }
-	    while (value.length < 2 * length + 2) {
-	        value = "0x0" + value.substring(2);
-	    }
-	    return value;
-	}
-	exports.hexZeroPad = hexZeroPad;
-	function splitSignature(signature) {
-	    var result = {
-	        r: "0x",
-	        s: "0x",
-	        _vs: "0x",
-	        recoveryParam: 0,
-	        v: 0,
-	        yParityAndS: "0x",
-	        compact: "0x"
-	    };
-	    if (isBytesLike(signature)) {
-	        var bytes = arrayify(signature);
-	        // Get the r, s and v
-	        if (bytes.length === 64) {
-	            // EIP-2098; pull the v from the top bit of s and clear it
-	            result.v = 27 + (bytes[32] >> 7);
-	            bytes[32] &= 0x7f;
-	            result.r = hexlify(bytes.slice(0, 32));
-	            result.s = hexlify(bytes.slice(32, 64));
-	        }
-	        else if (bytes.length === 65) {
-	            result.r = hexlify(bytes.slice(0, 32));
-	            result.s = hexlify(bytes.slice(32, 64));
-	            result.v = bytes[64];
-	        }
-	        else {
-	            logger.throwArgumentError("invalid signature string", "signature", signature);
-	        }
-	        // Allow a recid to be used as the v
-	        if (result.v < 27) {
-	            if (result.v === 0 || result.v === 1) {
-	                result.v += 27;
-	            }
-	            else {
-	                logger.throwArgumentError("signature invalid v byte", "signature", signature);
-	            }
-	        }
-	        // Compute recoveryParam from v
-	        result.recoveryParam = 1 - (result.v % 2);
-	        // Compute _vs from recoveryParam and s
-	        if (result.recoveryParam) {
-	            bytes[32] |= 0x80;
-	        }
-	        result._vs = hexlify(bytes.slice(32, 64));
-	    }
-	    else {
-	        result.r = signature.r;
-	        result.s = signature.s;
-	        result.v = signature.v;
-	        result.recoveryParam = signature.recoveryParam;
-	        result._vs = signature._vs;
-	        // If the _vs is available, use it to populate missing s, v and recoveryParam
-	        // and verify non-missing s, v and recoveryParam
-	        if (result._vs != null) {
-	            var vs_1 = zeroPad(arrayify(result._vs), 32);
-	            result._vs = hexlify(vs_1);
-	            // Set or check the recid
-	            var recoveryParam = ((vs_1[0] >= 128) ? 1 : 0);
-	            if (result.recoveryParam == null) {
-	                result.recoveryParam = recoveryParam;
-	            }
-	            else if (result.recoveryParam !== recoveryParam) {
-	                logger.throwArgumentError("signature recoveryParam mismatch _vs", "signature", signature);
-	            }
-	            // Set or check the s
-	            vs_1[0] &= 0x7f;
-	            var s = hexlify(vs_1);
-	            if (result.s == null) {
-	                result.s = s;
-	            }
-	            else if (result.s !== s) {
-	                logger.throwArgumentError("signature v mismatch _vs", "signature", signature);
-	            }
-	        }
-	        // Use recid and v to populate each other
-	        if (result.recoveryParam == null) {
-	            if (result.v == null) {
-	                logger.throwArgumentError("signature missing v and recoveryParam", "signature", signature);
-	            }
-	            else if (result.v === 0 || result.v === 1) {
-	                result.recoveryParam = result.v;
-	            }
-	            else {
-	                result.recoveryParam = 1 - (result.v % 2);
-	            }
-	        }
-	        else {
-	            if (result.v == null) {
-	                result.v = 27 + result.recoveryParam;
-	            }
-	            else {
-	                var recId = (result.v === 0 || result.v === 1) ? result.v : (1 - (result.v % 2));
-	                if (result.recoveryParam !== recId) {
-	                    logger.throwArgumentError("signature recoveryParam mismatch v", "signature", signature);
-	                }
-	            }
-	        }
-	        if (result.r == null || !isHexString(result.r)) {
-	            logger.throwArgumentError("signature missing or invalid r", "signature", signature);
-	        }
-	        else {
-	            result.r = hexZeroPad(result.r, 32);
-	        }
-	        if (result.s == null || !isHexString(result.s)) {
-	            logger.throwArgumentError("signature missing or invalid s", "signature", signature);
-	        }
-	        else {
-	            result.s = hexZeroPad(result.s, 32);
-	        }
-	        var vs = arrayify(result.s);
-	        if (vs[0] >= 128) {
-	            logger.throwArgumentError("signature s out of range", "signature", signature);
-	        }
-	        if (result.recoveryParam) {
-	            vs[0] |= 0x80;
-	        }
-	        var _vs = hexlify(vs);
-	        if (result._vs) {
-	            if (!isHexString(result._vs)) {
-	                logger.throwArgumentError("signature invalid _vs", "signature", signature);
-	            }
-	            result._vs = hexZeroPad(result._vs, 32);
-	        }
-	        // Set or check the _vs
-	        if (result._vs == null) {
-	            result._vs = _vs;
-	        }
-	        else if (result._vs !== _vs) {
-	            logger.throwArgumentError("signature _vs mismatch v and s", "signature", signature);
-	        }
-	    }
-	    result.yParityAndS = result._vs;
-	    result.compact = result.r + result.yParityAndS.substring(2);
-	    return result;
-	}
-	exports.splitSignature = splitSignature;
-	function joinSignature(signature) {
-	    signature = splitSignature(signature);
-	    return hexlify(concat([
-	        signature.r,
-	        signature.s,
-	        (signature.recoveryParam ? "0x1c" : "0x1b")
-	    ]));
-	}
-	exports.joinSignature = joinSignature;
-
-	});
-
-	var index$F = /*@__PURE__*/getDefaultExportFromCjs(lib$F);
-
-	var browserBase64 = createCommonjsModule(function (module, exports) {
-	"use strict";
-	Object.defineProperty(exports, "__esModule", { value: true });
-	exports.encode = exports.decode = void 0;
-
-	function decode(textData) {
-	    textData = atob(textData);
-	    var data = [];
-	    for (var i = 0; i < textData.length; i++) {
-	        data.push(textData.charCodeAt(i));
-	    }
-	    return (0, lib$F.arrayify)(data);
-	}
-	exports.decode = decode;
-	function encode(data) {
-	    data = (0, lib$F.arrayify)(data);
-	    var textData = "";
-	    for (var i = 0; i < data.length; i++) {
-	        textData += String.fromCharCode(data[i]);
-	    }
-	    return btoa(textData);
-	}
-	exports.encode = encode;
-
-	});
-
-	var browserBase64$1 = /*@__PURE__*/getDefaultExportFromCjs(browserBase64);
-
-	var lib$G = createCommonjsModule(function (module, exports) {
-	"use strict";
-	Object.defineProperty(exports, "__esModule", { value: true });
-	exports.encode = exports.decode = void 0;
-
-	Object.defineProperty(exports, "decode", { enumerable: true, get: function () { return browserBase64.decode; } });
-	Object.defineProperty(exports, "encode", { enumerable: true, get: function () { return browserBase64.encode; } });
-
-	});
-
-	var index$G = /*@__PURE__*/getDefaultExportFromCjs(lib$G);
-
-	var decoder = createCommonjsModule(function (module, exports) {
-	"use strict";
-	/**
-	 * MIT License
-	 *
-	 * Copyright (c) 2021 Andrew Raffensperger
-	 *
-	 * Permission is hereby granted, free of charge, to any person obtaining a copy
-	 * of this software and associated documentation files (the "Software"), to deal
-	 * in the Software without restriction, including without limitation the rights
-	 * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-	 * copies of the Software, and to permit persons to whom the Software is
-	 * furnished to do so, subject to the following conditions:
-	 *
-	 * The above copyright notice and this permission notice shall be included in all
-	 * copies or substantial portions of the Software.
-	 *
-	 * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-	 * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-	 * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-	 * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-	 * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-	 * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-	 * SOFTWARE.
-	 *
-	 * This is a near carbon-copy of the original source (link below) with the
-	 * TypeScript typings added and a few tweaks to make it ES3-compatible.
-	 *
-	 * See: https://github.com/adraffy/ens-normalize.js
-	 */
-	Object.defineProperty(exports, "__esModule", { value: true });
-	exports.read_emoji_trie = exports.read_zero_terminated_array = exports.read_mapped_map = exports.read_member_array = exports.signed = exports.read_compressed_payload = exports.read_payload = exports.decode_arithmetic = void 0;
-	// https://github.com/behnammodi/polyfill/blob/master/array.polyfill.js
-	function flat(array, depth) {
-	    if (depth == null) {
-	        depth = 1;
-	    }
-	    var result = [];
-	    var forEach = result.forEach;
-	    var flatDeep = function (arr, depth) {
-	        forEach.call(arr, function (val) {
-	            if (depth > 0 && Array.isArray(val)) {
-	                flatDeep(val, depth - 1);
-	            }
-	            else {
-	                result.push(val);
-	            }
-	        });
-	    };
-	    flatDeep(array, depth);
-	    return result;
-	}
-	function fromEntries(array) {
-	    var result = {};
-	    for (var i = 0; i < array.length; i++) {
-	        var value = array[i];
-	        result[value[0]] = value[1];
-	    }
-	    return result;
-	}
-	function decode_arithmetic(bytes) {
-	    var pos = 0;
-	    function u16() { return (bytes[pos++] << 8) | bytes[pos++]; }
-	    // decode the frequency table
-	    var symbol_count = u16();
-	    var total = 1;
-	    var acc = [0, 1]; // first symbol has frequency 1
-	    for (var i = 1; i < symbol_count; i++) {
-	        acc.push(total += u16());
-	    }
-	    // skip the sized-payload that the last 3 symbols index into
-	    var skip = u16();
-	    var pos_payload = pos;
-	    pos += skip;
-	    var read_width = 0;
-	    var read_buffer = 0;
-	    function read_bit() {
-	        if (read_width == 0) {
-	            // this will read beyond end of buffer
-	            // but (undefined|0) => zero pad
-	            read_buffer = (read_buffer << 8) | bytes[pos++];
-	            read_width = 8;
-	        }
-	        return (read_buffer >> --read_width) & 1;
-	    }
-	    var N = 31;
-	    var FULL = Math.pow(2, N);
-	    var HALF = FULL >>> 1;
-	    var QRTR = HALF >> 1;
-	    var MASK = FULL - 1;
-	    // fill register
-	    var register = 0;
-	    for (var i = 0; i < N; i++)
-	        register = (register << 1) | read_bit();
-	    var symbols = [];
-	    var low = 0;
-	    var range = FULL; // treat like a float
-	    while (true) {
-	        var value = Math.floor((((register - low + 1) * total) - 1) / range);
-	        var start = 0;
-	        var end = symbol_count;
-	        while (end - start > 1) { // binary search
-	            var mid = (start + end) >>> 1;
-	            if (value < acc[mid]) {
-	                end = mid;
-	            }
-	            else {
-	                start = mid;
-	            }
-	        }
-	        if (start == 0)
-	            break; // first symbol is end mark
-	        symbols.push(start);
-	        var a = low + Math.floor(range * acc[start] / total);
-	        var b = low + Math.floor(range * acc[start + 1] / total) - 1;
-	        while (((a ^ b) & HALF) == 0) {
-	            register = (register << 1) & MASK | read_bit();
-	            a = (a << 1) & MASK;
-	            b = (b << 1) & MASK | 1;
-	        }
-	        while (a & ~b & QRTR) {
-	            register = (register & HALF) | ((register << 1) & (MASK >>> 1)) | read_bit();
-	            a = (a << 1) ^ HALF;
-	            b = ((b ^ HALF) << 1) | HALF | 1;
-	        }
-	        low = a;
-	        range = 1 + b - a;
-	    }
-	    var offset = symbol_count - 4;
-	    return symbols.map(function (x) {
-	        switch (x - offset) {
-	            case 3: return offset + 0x10100 + ((bytes[pos_payload++] << 16) | (bytes[pos_payload++] << 8) | bytes[pos_payload++]);
-	            case 2: return offset + 0x100 + ((bytes[pos_payload++] << 8) | bytes[pos_payload++]);
-	            case 1: return offset + bytes[pos_payload++];
-	            default: return x - 1;
-	        }
-	    });
-	}
-	exports.decode_arithmetic = decode_arithmetic;
-	// returns an iterator which returns the next symbol
-	function read_payload(v) {
-	    var pos = 0;
-	    return function () { return v[pos++]; };
-	}
-	exports.read_payload = read_payload;
-	function read_compressed_payload(bytes) {
-	    return read_payload(decode_arithmetic(bytes));
-	}
-	exports.read_compressed_payload = read_compressed_payload;
-	// eg. [0,1,2,3...] => [0,-1,1,-2,...]
-	function signed(i) {
-	    return (i & 1) ? (~i >> 1) : (i >> 1);
-	}
-	exports.signed = signed;
-	function read_counts(n, next) {
-	    var v = Array(n);
-	    for (var i = 0; i < n; i++)
-	        v[i] = 1 + next();
-	    return v;
-	}
-	function read_ascending(n, next) {
-	    var v = Array(n);
-	    for (var i = 0, x = -1; i < n; i++)
-	        v[i] = x += 1 + next();
-	    return v;
-	}
-	function read_deltas(n, next) {
-	    var v = Array(n);
-	    for (var i = 0, x = 0; i < n; i++)
-	        v[i] = x += signed(next());
-	    return v;
-	}
-	function read_member_array(next, lookup) {
-	    var v = read_ascending(next(), next);
-	    var n = next();
-	    var vX = read_ascending(n, next);
-	    var vN = read_counts(n, next);
-	    for (var i = 0; i < n; i++) {
-	        for (var j = 0; j < vN[i]; j++) {
-	            v.push(vX[i] + j);
-	        }
-	    }
-	    return lookup ? v.map(function (x) { return lookup[x]; }) : v;
-	}
-	exports.read_member_array = read_member_array;
-	// returns array of 
-	// [x, ys] => single replacement rule
-	// [x, ys, n, dx, dx] => linear map
-	function read_mapped_map(next) {
-	    var ret = [];
-	    while (true) {
-	        var w = next();
-	        if (w == 0)
-	            break;
-	        ret.push(read_linear_table(w, next));
-	    }
-	    while (true) {
-	        var w = next() - 1;
-	        if (w < 0)
-	            break;
-	        ret.push(read_replacement_table(w, next));
-	    }
-	    return fromEntries(flat(ret));
-	}
-	exports.read_mapped_map = read_mapped_map;
-	function read_zero_terminated_array(next) {
-	    var v = [];
-	    while (true) {
-	        var i = next();
-	        if (i == 0)
-	            break;
-	        v.push(i);
-	    }
-	    return v;
-	}
-	exports.read_zero_terminated_array = read_zero_terminated_array;
-	function read_transposed(n, w, next) {
-	    var m = Array(n).fill(undefined).map(function () { return []; });
-	    for (var i = 0; i < w; i++) {
-	        read_deltas(n, next).forEach(function (x, j) { return m[j].push(x); });
-	    }
-	    return m;
-	}
-	function read_linear_table(w, next) {
-	    var dx = 1 + next();
-	    var dy = next();
-	    var vN = read_zero_terminated_array(next);
-	    var m = read_transposed(vN.length, 1 + w, next);
-	    return flat(m.map(function (v, i) {
-	        var x = v[0], ys = v.slice(1);
-	        //let [x, ...ys] = v;
-	        //return Array(vN[i]).fill().map((_, j) => {
-	        return Array(vN[i]).fill(undefined).map(function (_, j) {
-	            var j_dy = j * dy;
-	            return [x + j * dx, ys.map(function (y) { return y + j_dy; })];
-	        });
-	    }));
-	}
-	function read_replacement_table(w, next) {
-	    var n = 1 + next();
-	    var m = read_transposed(n, 1 + w, next);
-	    return m.map(function (v) { return [v[0], v.slice(1)]; });
-	}
-	function read_emoji_trie(next) {
-	    var sorted = read_member_array(next).sort(function (a, b) { return a - b; });
-	    return read();
-	    function read() {
-	        var branches = [];
-	        while (true) {
-	            var keys = read_member_array(next, sorted);
-	            if (keys.length == 0)
-	                break;
-	            branches.push({ set: new Set(keys), node: read() });
-	        }
-	        branches.sort(function (a, b) { return b.set.size - a.set.size; }); // sort by likelihood
-	        var temp = next();
-	        var valid = temp % 3;
-	        temp = (temp / 3) | 0;
-	        var fe0f = !!(temp & 1);
-	        temp >>= 1;
-	        var save = temp == 1;
-	        var check = temp == 2;
-	        return { branches: branches, valid: valid, fe0f: fe0f, save: save, check: check };
-	    }
-	}
-	exports.read_emoji_trie = read_emoji_trie;
-
-	});
-
-	var decoder$1 = /*@__PURE__*/getDefaultExportFromCjs(decoder);
-
-	var include = createCommonjsModule(function (module, exports) {
-	"use strict";
-	/**
-	 * MIT License
-	 *
-	 * Copyright (c) 2021 Andrew Raffensperger
-	 *
-	 * Permission is hereby granted, free of charge, to any person obtaining a copy
-	 * of this software and associated documentation files (the "Software"), to deal
-	 * in the Software without restriction, including without limitation the rights
-	 * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-	 * copies of the Software, and to permit persons to whom the Software is
-	 * furnished to do so, subject to the following conditions:
-	 *
-	 * The above copyright notice and this permission notice shall be included in all
-	 * copies or substantial portions of the Software.
-	 *
-	 * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-	 * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-	 * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-	 * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-	 * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-	 * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-	 * SOFTWARE.
-	 *
-	 * This is a near carbon-copy of the original source (link below) with the
-	 * TypeScript typings added and a few tweaks to make it ES3-compatible.
-	 *
-	 * See: https://github.com/adraffy/ens-normalize.js
-	 */
-	Object.defineProperty(exports, "__esModule", { value: true });
-	exports.getData = void 0;
-
-
-	function getData() {
-	    return (0, decoder.read_compressed_payload)((0, lib$G.decode)('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'));
-	}
-	exports.getData = getData;
-
-	});
-
-	var include$1 = /*@__PURE__*/getDefaultExportFromCjs(include);
-
-	var lib$H = createCommonjsModule(function (module, exports) {
-	"use strict";
-	/**
-	 * MIT License
-	 *
-	 * Copyright (c) 2021 Andrew Raffensperger
-	 *
-	 * Permission is hereby granted, free of charge, to any person obtaining a copy
-	 * of this software and associated documentation files (the "Software"), to deal
-	 * in the Software without restriction, including without limitation the rights
-	 * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-	 * copies of the Software, and to permit persons to whom the Software is
-	 * furnished to do so, subject to the following conditions:
-	 *
-	 * The above copyright notice and this permission notice shall be included in all
-	 * copies or substantial portions of the Software.
-	 *
-	 * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-	 * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-	 * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-	 * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-	 * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-	 * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-	 * SOFTWARE.
-	 *
-	 * This is a near carbon-copy of the original source (link below) with the
-	 * TypeScript typings added and a few tweaks to make it ES3-compatible.
-	 *
-	 * See: https://github.com/adraffy/ens-normalize.js
-	 */
-	Object.defineProperty(exports, "__esModule", { value: true });
-	exports.ens_normalize = exports.ens_normalize_post_check = void 0;
-
-
-	var r = (0, include.getData)();
-
-	// @TODO: This should be lazily loaded
-	var VALID = new Set((0, decoder.read_member_array)(r));
-	var IGNORED = new Set((0, decoder.read_member_array)(r));
-	var MAPPED = (0, decoder.read_mapped_map)(r);
-	var EMOJI_ROOT = (0, decoder.read_emoji_trie)(r);
-	//const NFC_CHECK = new Set(read_member_array(r, Array.from(VALID.values()).sort((a, b) => a - b)));
-	//const STOP = 0x2E;
-	var HYPHEN = 0x2D;
-	var UNDERSCORE = 0x5F;
-	function explode_cp(name) {
-	    return (0, lib$A.toUtf8CodePoints)(name);
-	}
-	function filter_fe0f(cps) {
-	    return cps.filter(function (cp) { return cp != 0xFE0F; });
-	}
-	function ens_normalize_post_check(name) {
-	    for (var _i = 0, _a = name.split('.'); _i < _a.length; _i++) {
-	        var label = _a[_i];
-	        var cps = explode_cp(label);
-	        try {
-	            for (var i = cps.lastIndexOf(UNDERSCORE) - 1; i >= 0; i--) {
-	                if (cps[i] !== UNDERSCORE) {
-	                    throw new Error("underscore only allowed at start");
-	                }
-	            }
-	            if (cps.length >= 4 && cps.every(function (cp) { return cp < 0x80; }) && cps[2] === HYPHEN && cps[3] === HYPHEN) {
-	                throw new Error("invalid label extension");
-	            }
-	        }
-	        catch (err) {
-	            throw new Error("Invalid label \"" + label + "\": " + err.message);
-	        }
-	    }
-	    return name;
-	}
-	exports.ens_normalize_post_check = ens_normalize_post_check;
-	function ens_normalize(name) {
-	    return ens_normalize_post_check(normalize(name, filter_fe0f));
-	}
-	exports.ens_normalize = ens_normalize;
-	function normalize(name, emoji_filter) {
-	    var input = explode_cp(name).reverse(); // flip for pop
-	    var output = [];
-	    while (input.length) {
-	        var emoji = consume_emoji_reversed(input);
-	        if (emoji) {
-	            output.push.apply(output, emoji_filter(emoji));
-	            continue;
-	        }
-	        var cp = input.pop();
-	        if (VALID.has(cp)) {
-	            output.push(cp);
-	            continue;
-	        }
-	        if (IGNORED.has(cp)) {
-	            continue;
-	        }
-	        var cps = MAPPED[cp];
-	        if (cps) {
-	            output.push.apply(output, cps);
-	            continue;
-	        }
-	        throw new Error("Disallowed codepoint: 0x" + cp.toString(16).toUpperCase());
-	    }
-	    return ens_normalize_post_check(nfc(String.fromCodePoint.apply(String, output)));
-	}
-	function nfc(s) {
-	    return s.normalize('NFC');
-	}
-	function consume_emoji_reversed(cps, eaten) {
-	    var _a;
-	    var node = EMOJI_ROOT;
-	    var emoji;
-	    var saved;
-	    var stack = [];
-	    var pos = cps.length;
-	    if (eaten)
-	        eaten.length = 0; // clear input buffer (if needed)
-	    var _loop_1 = function () {
-	        var cp = cps[--pos];
-	        node = (_a = node.branches.find(function (x) { return x.set.has(cp); })) === null || _a === void 0 ? void 0 : _a.node;
-	        if (!node)
-	            return "break";
-	        if (node.save) { // remember
-	            saved = cp;
-	        }
-	        else if (node.check) { // check exclusion
-	            if (cp === saved)
-	                return "break";
-	        }
-	        stack.push(cp);
-	        if (node.fe0f) {
-	            stack.push(0xFE0F);
-	            if (pos > 0 && cps[pos - 1] == 0xFE0F)
-	                pos--; // consume optional FE0F
-	        }
-	        if (node.valid) { // this is a valid emoji (so far)
-	            emoji = stack.slice(); // copy stack
-	            if (node.valid == 2)
-	                emoji.splice(1, 1); // delete FE0F at position 1 (RGI ZWJ don't follow spec!)
-	            if (eaten)
-	                eaten.push.apply(eaten, cps.slice(pos).reverse()); // copy input (if needed)
-	            cps.length = pos; // truncate
-	        }
-	    };
-	    while (pos) {
-	        var state_1 = _loop_1();
-	        if (state_1 === "break")
-	            break;
-	    }
-	    return emoji;
-	}
-
-	});
-
-	var lib$I = /*@__PURE__*/getDefaultExportFromCjs(lib$H);
-
-	var namehash_1 = createCommonjsModule(function (module, exports) {
-	"use strict";
-	Object.defineProperty(exports, "__esModule", { value: true });
-	exports.dnsEncode = exports.namehash = exports.isValidName = exports.ensNormalize = void 0;
-
-
-
-
-
-	var logger = new lib$D.Logger(_version$18.version);
-
-	var Zeros = new Uint8Array(32);
-	Zeros.fill(0);
-	function checkComponent(comp) {
-	    if (comp.length === 0) {
-	        throw new Error("invalid ENS name; empty component");
-	    }
-	    return comp;
-	}
-	function ensNameSplit(name) {
-	    var bytes = (0, lib$A.toUtf8Bytes)((0, lib$H.ens_normalize)(name));
-	    var comps = [];
-	    if (name.length === 0) {
-	        return comps;
-	    }
-	    var last = 0;
-	    for (var i = 0; i < bytes.length; i++) {
-	        var d = bytes[i];
-	        // A separator (i.e. "."); copy this component
-	        if (d === 0x2e) {
-	            comps.push(checkComponent(bytes.slice(last, i)));
-	            last = i + 1;
-	        }
-	    }
-	    // There was a stray separator at the end of the name
-	    if (last >= bytes.length) {
-	        throw new Error("invalid ENS name; empty component");
-	    }
-	    comps.push(checkComponent(bytes.slice(last)));
-	    return comps;
-	}
-	function ensNormalize(name) {
-	    return ensNameSplit(name).map(function (comp) { return (0, lib$A.toUtf8String)(comp); }).join(".");
-	}
-	exports.ensNormalize = ensNormalize;
-	function isValidName(name) {
-	    try {
-	        return (ensNameSplit(name).length !== 0);
-	    }
-	    catch (error) { }
-	    return false;
-	}
-	exports.isValidName = isValidName;
-	function namehash(name) {
-	    /* istanbul ignore if */
-	    if (typeof (name) !== "string") {
-	        logger.throwArgumentError("invalid ENS name; not a string", "name", name);
-	    }
-	    var result = Zeros;
-	    var comps = ensNameSplit(name);
-	    while (comps.length) {
-	        result = (0, lib$v.keccak256)((0, lib$C.concat)([result, (0, lib$v.keccak256)(comps.pop())]));
-	    }
-	    return (0, lib$C.hexlify)(result);
-	}
-	exports.namehash = namehash;
-	function dnsEncode(name) {
-	    return (0, lib$C.hexlify)((0, lib$C.concat)(ensNameSplit(name).map(function (comp) {
-	        // DNS does not allow components over 63 bytes in length
-	        if (comp.length > 63) {
-	            throw new Error("invalid DNS encoded entry; length exceeds 63 bytes");
-	        }
-	        var bytes = new Uint8Array(comp.length + 1);
-	        bytes.set(comp, 1);
-	        bytes[0] = bytes.length - 1;
-	        return bytes;
-	    }))) + "00";
-	}
-	exports.dnsEncode = dnsEncode;
-
-	});
-
-	var namehash = /*@__PURE__*/getDefaultExportFromCjs(namehash_1);
-
-	var message = createCommonjsModule(function (module, exports) {
-	"use strict";
-	Object.defineProperty(exports, "__esModule", { value: true });
-	exports.hashMessage = exports.messagePrefix = void 0;
-
-
-
-	exports.messagePrefix = "\x19Ethereum Signed Message:\n";
-	function hashMessage(message) {
-	    if (typeof (message) === "string") {
-	        message = (0, lib$A.toUtf8Bytes)(message);
-	    }
-	    return (0, lib$v.keccak256)((0, lib$C.concat)([
-	        (0, lib$A.toUtf8Bytes)(exports.messagePrefix),
-	        (0, lib$A.toUtf8Bytes)(String(message.length)),
-	        message
-	    ]));
-	}
-	exports.hashMessage = hashMessage;
-
-	});
-
-	var message$1 = /*@__PURE__*/getDefaultExportFromCjs(message);
-
-	var _version$1e = createCommonjsModule(function (module, exports) {
+	var _version$1c = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.version = void 0;
@@ -34340,9 +33283,9 @@
 
 	});
 
-	var _version$1f = /*@__PURE__*/getDefaultExportFromCjs(_version$1e);
+	var _version$1d = /*@__PURE__*/getDefaultExportFromCjs(_version$1c);
 
-	var lib$J = createCommonjsModule(function (module, exports) {
+	var lib$F = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.Logger = exports.ErrorCode = exports.LogLevel = void 0;
@@ -34676,7 +33619,7 @@
 	    };
 	    Logger.globalLogger = function () {
 	        if (!_globalLogger) {
-	            _globalLogger = new Logger(_version$1e.version);
+	            _globalLogger = new Logger(_version$1c.version);
 	        }
 	        return _globalLogger;
 	    };
@@ -34716,9 +33659,9 @@
 
 	});
 
-	var index$H = /*@__PURE__*/getDefaultExportFromCjs(lib$J);
+	var index$F = /*@__PURE__*/getDefaultExportFromCjs(lib$F);
 
-	var _version$1g = createCommonjsModule(function (module, exports) {
+	var _version$1e = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.version = void 0;
@@ -34726,15 +33669,15 @@
 
 	});
 
-	var _version$1h = /*@__PURE__*/getDefaultExportFromCjs(_version$1g);
+	var _version$1f = /*@__PURE__*/getDefaultExportFromCjs(_version$1e);
 
-	var lib$K = createCommonjsModule(function (module, exports) {
+	var lib$G = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.joinSignature = exports.splitSignature = exports.hexZeroPad = exports.hexStripZeros = exports.hexValue = exports.hexConcat = exports.hexDataSlice = exports.hexDataLength = exports.hexlify = exports.isHexString = exports.zeroPad = exports.stripZeros = exports.concat = exports.arrayify = exports.isBytes = exports.isBytesLike = void 0;
 
 
-	var logger = new lib$J.Logger(_version$1g.version);
+	var logger = new lib$F.Logger(_version$1e.version);
 	///////////////////////////////
 	function isHexable(value) {
 	    return !!(value.toHexString);
@@ -35158,7 +34101,1450 @@
 
 	});
 
+	var index$G = /*@__PURE__*/getDefaultExportFromCjs(lib$G);
+
+	var browserBase64 = createCommonjsModule(function (module, exports) {
+	"use strict";
+	Object.defineProperty(exports, "__esModule", { value: true });
+	exports.encode = exports.decode = void 0;
+
+	function decode(textData) {
+	    textData = atob(textData);
+	    var data = [];
+	    for (var i = 0; i < textData.length; i++) {
+	        data.push(textData.charCodeAt(i));
+	    }
+	    return (0, lib$G.arrayify)(data);
+	}
+	exports.decode = decode;
+	function encode(data) {
+	    data = (0, lib$G.arrayify)(data);
+	    var textData = "";
+	    for (var i = 0; i < data.length; i++) {
+	        textData += String.fromCharCode(data[i]);
+	    }
+	    return btoa(textData);
+	}
+	exports.encode = encode;
+
+	});
+
+	var browserBase64$1 = /*@__PURE__*/getDefaultExportFromCjs(browserBase64);
+
+	var lib$H = createCommonjsModule(function (module, exports) {
+	"use strict";
+	Object.defineProperty(exports, "__esModule", { value: true });
+	exports.encode = exports.decode = void 0;
+
+	Object.defineProperty(exports, "decode", { enumerable: true, get: function () { return browserBase64.decode; } });
+	Object.defineProperty(exports, "encode", { enumerable: true, get: function () { return browserBase64.encode; } });
+
+	});
+
+	var index$H = /*@__PURE__*/getDefaultExportFromCjs(lib$H);
+
+	var decoder = createCommonjsModule(function (module, exports) {
+	"use strict";
+	/**
+	 * MIT License
+	 *
+	 * Copyright (c) 2021 Andrew Raffensperger
+	 *
+	 * Permission is hereby granted, free of charge, to any person obtaining a copy
+	 * of this software and associated documentation files (the "Software"), to deal
+	 * in the Software without restriction, including without limitation the rights
+	 * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+	 * copies of the Software, and to permit persons to whom the Software is
+	 * furnished to do so, subject to the following conditions:
+	 *
+	 * The above copyright notice and this permission notice shall be included in all
+	 * copies or substantial portions of the Software.
+	 *
+	 * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+	 * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+	 * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+	 * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+	 * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+	 * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+	 * SOFTWARE.
+	 *
+	 * This is a near carbon-copy of the original source (link below) with the
+	 * TypeScript typings added and a few tweaks to make it ES3-compatible.
+	 *
+	 * See: https://github.com/adraffy/ens-normalize.js
+	 */
+	Object.defineProperty(exports, "__esModule", { value: true });
+	exports.read_emoji_trie = exports.read_zero_terminated_array = exports.read_mapped_map = exports.read_member_array = exports.signed = exports.read_compressed_payload = exports.read_payload = exports.decode_arithmetic = void 0;
+	// https://github.com/behnammodi/polyfill/blob/master/array.polyfill.js
+	function flat(array, depth) {
+	    if (depth == null) {
+	        depth = 1;
+	    }
+	    var result = [];
+	    var forEach = result.forEach;
+	    var flatDeep = function (arr, depth) {
+	        forEach.call(arr, function (val) {
+	            if (depth > 0 && Array.isArray(val)) {
+	                flatDeep(val, depth - 1);
+	            }
+	            else {
+	                result.push(val);
+	            }
+	        });
+	    };
+	    flatDeep(array, depth);
+	    return result;
+	}
+	function fromEntries(array) {
+	    var result = {};
+	    for (var i = 0; i < array.length; i++) {
+	        var value = array[i];
+	        result[value[0]] = value[1];
+	    }
+	    return result;
+	}
+	function decode_arithmetic(bytes) {
+	    var pos = 0;
+	    function u16() { return (bytes[pos++] << 8) | bytes[pos++]; }
+	    // decode the frequency table
+	    var symbol_count = u16();
+	    var total = 1;
+	    var acc = [0, 1]; // first symbol has frequency 1
+	    for (var i = 1; i < symbol_count; i++) {
+	        acc.push(total += u16());
+	    }
+	    // skip the sized-payload that the last 3 symbols index into
+	    var skip = u16();
+	    var pos_payload = pos;
+	    pos += skip;
+	    var read_width = 0;
+	    var read_buffer = 0;
+	    function read_bit() {
+	        if (read_width == 0) {
+	            // this will read beyond end of buffer
+	            // but (undefined|0) => zero pad
+	            read_buffer = (read_buffer << 8) | bytes[pos++];
+	            read_width = 8;
+	        }
+	        return (read_buffer >> --read_width) & 1;
+	    }
+	    var N = 31;
+	    var FULL = Math.pow(2, N);
+	    var HALF = FULL >>> 1;
+	    var QRTR = HALF >> 1;
+	    var MASK = FULL - 1;
+	    // fill register
+	    var register = 0;
+	    for (var i = 0; i < N; i++)
+	        register = (register << 1) | read_bit();
+	    var symbols = [];
+	    var low = 0;
+	    var range = FULL; // treat like a float
+	    while (true) {
+	        var value = Math.floor((((register - low + 1) * total) - 1) / range);
+	        var start = 0;
+	        var end = symbol_count;
+	        while (end - start > 1) { // binary search
+	            var mid = (start + end) >>> 1;
+	            if (value < acc[mid]) {
+	                end = mid;
+	            }
+	            else {
+	                start = mid;
+	            }
+	        }
+	        if (start == 0)
+	            break; // first symbol is end mark
+	        symbols.push(start);
+	        var a = low + Math.floor(range * acc[start] / total);
+	        var b = low + Math.floor(range * acc[start + 1] / total) - 1;
+	        while (((a ^ b) & HALF) == 0) {
+	            register = (register << 1) & MASK | read_bit();
+	            a = (a << 1) & MASK;
+	            b = (b << 1) & MASK | 1;
+	        }
+	        while (a & ~b & QRTR) {
+	            register = (register & HALF) | ((register << 1) & (MASK >>> 1)) | read_bit();
+	            a = (a << 1) ^ HALF;
+	            b = ((b ^ HALF) << 1) | HALF | 1;
+	        }
+	        low = a;
+	        range = 1 + b - a;
+	    }
+	    var offset = symbol_count - 4;
+	    return symbols.map(function (x) {
+	        switch (x - offset) {
+	            case 3: return offset + 0x10100 + ((bytes[pos_payload++] << 16) | (bytes[pos_payload++] << 8) | bytes[pos_payload++]);
+	            case 2: return offset + 0x100 + ((bytes[pos_payload++] << 8) | bytes[pos_payload++]);
+	            case 1: return offset + bytes[pos_payload++];
+	            default: return x - 1;
+	        }
+	    });
+	}
+	exports.decode_arithmetic = decode_arithmetic;
+	// returns an iterator which returns the next symbol
+	function read_payload(v) {
+	    var pos = 0;
+	    return function () { return v[pos++]; };
+	}
+	exports.read_payload = read_payload;
+	function read_compressed_payload(bytes) {
+	    return read_payload(decode_arithmetic(bytes));
+	}
+	exports.read_compressed_payload = read_compressed_payload;
+	// eg. [0,1,2,3...] => [0,-1,1,-2,...]
+	function signed(i) {
+	    return (i & 1) ? (~i >> 1) : (i >> 1);
+	}
+	exports.signed = signed;
+	function read_counts(n, next) {
+	    var v = Array(n);
+	    for (var i = 0; i < n; i++)
+	        v[i] = 1 + next();
+	    return v;
+	}
+	function read_ascending(n, next) {
+	    var v = Array(n);
+	    for (var i = 0, x = -1; i < n; i++)
+	        v[i] = x += 1 + next();
+	    return v;
+	}
+	function read_deltas(n, next) {
+	    var v = Array(n);
+	    for (var i = 0, x = 0; i < n; i++)
+	        v[i] = x += signed(next());
+	    return v;
+	}
+	function read_member_array(next, lookup) {
+	    var v = read_ascending(next(), next);
+	    var n = next();
+	    var vX = read_ascending(n, next);
+	    var vN = read_counts(n, next);
+	    for (var i = 0; i < n; i++) {
+	        for (var j = 0; j < vN[i]; j++) {
+	            v.push(vX[i] + j);
+	        }
+	    }
+	    return lookup ? v.map(function (x) { return lookup[x]; }) : v;
+	}
+	exports.read_member_array = read_member_array;
+	// returns array of 
+	// [x, ys] => single replacement rule
+	// [x, ys, n, dx, dx] => linear map
+	function read_mapped_map(next) {
+	    var ret = [];
+	    while (true) {
+	        var w = next();
+	        if (w == 0)
+	            break;
+	        ret.push(read_linear_table(w, next));
+	    }
+	    while (true) {
+	        var w = next() - 1;
+	        if (w < 0)
+	            break;
+	        ret.push(read_replacement_table(w, next));
+	    }
+	    return fromEntries(flat(ret));
+	}
+	exports.read_mapped_map = read_mapped_map;
+	function read_zero_terminated_array(next) {
+	    var v = [];
+	    while (true) {
+	        var i = next();
+	        if (i == 0)
+	            break;
+	        v.push(i);
+	    }
+	    return v;
+	}
+	exports.read_zero_terminated_array = read_zero_terminated_array;
+	function read_transposed(n, w, next) {
+	    var m = Array(n).fill(undefined).map(function () { return []; });
+	    for (var i = 0; i < w; i++) {
+	        read_deltas(n, next).forEach(function (x, j) { return m[j].push(x); });
+	    }
+	    return m;
+	}
+	function read_linear_table(w, next) {
+	    var dx = 1 + next();
+	    var dy = next();
+	    var vN = read_zero_terminated_array(next);
+	    var m = read_transposed(vN.length, 1 + w, next);
+	    return flat(m.map(function (v, i) {
+	        var x = v[0], ys = v.slice(1);
+	        //let [x, ...ys] = v;
+	        //return Array(vN[i]).fill().map((_, j) => {
+	        return Array(vN[i]).fill(undefined).map(function (_, j) {
+	            var j_dy = j * dy;
+	            return [x + j * dx, ys.map(function (y) { return y + j_dy; })];
+	        });
+	    }));
+	}
+	function read_replacement_table(w, next) {
+	    var n = 1 + next();
+	    var m = read_transposed(n, 1 + w, next);
+	    return m.map(function (v) { return [v[0], v.slice(1)]; });
+	}
+	function read_emoji_trie(next) {
+	    var sorted = read_member_array(next).sort(function (a, b) { return a - b; });
+	    return read();
+	    function read() {
+	        var branches = [];
+	        while (true) {
+	            var keys = read_member_array(next, sorted);
+	            if (keys.length == 0)
+	                break;
+	            branches.push({ set: new Set(keys), node: read() });
+	        }
+	        branches.sort(function (a, b) { return b.set.size - a.set.size; }); // sort by likelihood
+	        var temp = next();
+	        var valid = temp % 3;
+	        temp = (temp / 3) | 0;
+	        var fe0f = !!(temp & 1);
+	        temp >>= 1;
+	        var save = temp == 1;
+	        var check = temp == 2;
+	        return { branches: branches, valid: valid, fe0f: fe0f, save: save, check: check };
+	    }
+	}
+	exports.read_emoji_trie = read_emoji_trie;
+
+	});
+
+	var decoder$1 = /*@__PURE__*/getDefaultExportFromCjs(decoder);
+
+	var include = createCommonjsModule(function (module, exports) {
+	"use strict";
+	/**
+	 * MIT License
+	 *
+	 * Copyright (c) 2021 Andrew Raffensperger
+	 *
+	 * Permission is hereby granted, free of charge, to any person obtaining a copy
+	 * of this software and associated documentation files (the "Software"), to deal
+	 * in the Software without restriction, including without limitation the rights
+	 * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+	 * copies of the Software, and to permit persons to whom the Software is
+	 * furnished to do so, subject to the following conditions:
+	 *
+	 * The above copyright notice and this permission notice shall be included in all
+	 * copies or substantial portions of the Software.
+	 *
+	 * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+	 * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+	 * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+	 * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+	 * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+	 * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+	 * SOFTWARE.
+	 *
+	 * This is a near carbon-copy of the original source (link below) with the
+	 * TypeScript typings added and a few tweaks to make it ES3-compatible.
+	 *
+	 * See: https://github.com/adraffy/ens-normalize.js
+	 */
+	Object.defineProperty(exports, "__esModule", { value: true });
+	exports.getData = void 0;
+
+
+	function getData() {
+	    return (0, decoder.read_compressed_payload)((0, lib$H.decode)('AEQF2AO2DEsA2wIrAGsBRABxAN8AZwCcAEwAqgA0AGwAUgByADcATAAVAFYAIQAyACEAKAAYAFgAGwAjABQAMAAmADIAFAAfABQAKwATACoADgAbAA8AHQAYABoAGQAxADgALAAoADwAEwA9ABMAGgARAA4ADwAWABMAFgAIAA8AHgQXBYMA5BHJAS8JtAYoAe4AExozi0UAH21tAaMnBT8CrnIyhrMDhRgDygIBUAEHcoFHUPe8AXBjAewCjgDQR8IICIcEcQLwATXCDgzvHwBmBoHNAqsBdBcUAykgDhAMShskMgo8AY8jqAQfAUAfHw8BDw87MioGlCIPBwZCa4ELatMAAMspJVgsDl8AIhckSg8XAHdvTwBcIQEiDT4OPhUqbyECAEoAS34Aej8Ybx83JgT/Xw8gHxZ/7w8RICxPHA9vBw+Pfw8PHwAPFv+fAsAvCc8vEr8ivwD/EQ8Bol8OEBa/A78hrwAPCU8vESNvvwWfHwNfAVoDHr+ZAAED34YaAdJPAK7PLwSEgDLHAGo1Pz8Pvx9fUwMrpb8O/58VTzAPIBoXIyQJNF8hpwIVAT8YGAUADDNBaX3RAMomJCg9EhUeA29MABsZBTMNJipjOhc19gcIDR8bBwQHEggCWi6DIgLuAQYA+BAFCha3A5XiAEsqM7UFFgFLhAMjFTMYE1Klnw74nRVBG/ASCm0BYRN/BrsU3VoWy+S0vV8LQx+vN8gF2AC2AK5EAWwApgYDKmAAroQ0NDQ0AT+OCg7wAAIHRAbpNgVcBV0APTA5BfbPFgMLzcYL/QqqA82eBALKCjQCjqYCht0/k2+OAsXQAoP3ASTKDgDw6ACKAUYCMpIKJpRaAE4A5womABzZvs0REEKiACIQAd5QdAECAj4Ywg/wGqY2AVgAYADYvAoCGAEubA0gvAY2ALAAbpbvqpyEAGAEpgQAJgAG7gAgAEACmghUFwCqAMpAINQIwC4DthRAAPcycKgApoIdABwBfCisABoATwBqASIAvhnSBP8aH/ECeAKXAq40NjgDBTwFYQU6AXs3oABgAD4XNgmcCY1eCl5tIFZeUqGgyoNHABgAEQAaABNwWQAmABMATPMa3T34ADldyprmM1M2XociUQgLzvwAXT3xABgAEQAaABNwIGFAnADD8AAgAD4BBJWzaCcIAIEBFMAWwKoAAdq9BWAF5wLQpALEtQAKUSGkahR4GnJM+gsAwCgeFAiUAECQ0BQuL8AAIAAAADKeIheclvFqQAAETr4iAMxIARMgAMIoHhQIAn0E0pDQFC4HhznoAAAAIAI2C0/4lvFqQAAETgBJJwYCAy4ABgYAFAA8MBKYEH4eRhTkAjYeFcgACAYAeABsOqyQ5gRwDayqugEgaIIAtgoACgDmEABmBAWGme5OBJJA2m4cDeoAmITWAXwrMgOgAGwBCh6CBXYF1Tzg1wKAAFdiuABRAFwAXQBsAG8AdgBrAHYAbwCEAHEwfxQBVE5TEQADVFhTBwBDANILAqcCzgLTApQCrQL6vAAMAL8APLhNBKkE6glGKTAU4Dr4N2EYEwBCkABKk8rHAbYBmwIoAiU4Ajf/Aq4CowCAANIChzgaNBsCsTgeODcFXrgClQKdAqQBiQGYAqsCsjTsNHsfNPA0ixsAWTWiOAMFPDQSNCk2BDZHNow2TTZUNhk28Jk9VzI3QkEoAoICoQKwAqcAQAAxBV4FXbS9BW47YkIXP1ciUqs05DS/FwABUwJW11e6nHuYZmSh/RAYA8oMKvZ8KASoUAJYWAJ6ILAsAZSoqjpgA0ocBIhmDgDWAAawRDQoAAcuAj5iAHABZiR2AIgiHgCaAU68ACxuHAG0ygM8MiZIAlgBdF4GagJqAPZOHAMuBgoATkYAsABiAHgAMLoGDPj0HpKEBAAOJgAuALggTAHWAeAMEDbd20Uege0ADwAWADkAQgA9OHd+2MUQZBBhBgNNDkxxPxUQArEPqwvqERoM1irQ090ANK4H8ANYB/ADWANYB/AH8ANYB/ADWANYA1gDWBwP8B/YxRBkD00EcgWTBZAE2wiIJk4RhgctCNdUEnQjHEwDSgEBIypJITuYMxAlR0wRTQgIATZHbKx9PQNMMbBU+pCnA9AyVDlxBgMedhKlAC8PeCE1uk6DekxxpQpQT7NX9wBFBgASqwAS5gBJDSgAUCwGPQBI4zTYABNGAE2bAE3KAExdGABKaAbgAFBXAFCOAFBJABI2SWdObALDOq0//QomCZhvwHdTBkIQHCemEPgMNAG2ATwN7kvZBPIGPATKH34ZGg/OlZ0Ipi3eDO4m5C6igFsj9iqEBe5L9TzeC05RaQ9aC2YJ5DpkgU8DIgEOIowK3g06CG4Q9ArKbA3mEUYHOgPWSZsApgcCCxIdNhW2JhFirQsKOXgG/Br3C5AmsBMqev0F1BoiBk4BKhsAANAu6IWxWjJcHU9gBgQLJiPIFKlQIQ0mQLh4SRocBxYlqgKSQ3FKiFE3HpQh9zw+DWcuFFF9B/Y8BhlQC4I8n0asRQ8R0z6OPUkiSkwtBDaALDAnjAnQD4YMunxzAVoJIgmyDHITMhEYN8YIOgcaLpclJxYIIkaWYJsE+KAD9BPSAwwFQAlCBxQDthwuEy8VKgUOgSXYAvQ21i60ApBWgQEYBcwPJh/gEFFH4Q7qCJwCZgOEJewALhUiABginAhEZABgj9lTBi7MCMhqbSN1A2gU6GIRdAeSDlgHqBw0FcAc4nDJXgyGCSiksAlcAXYJmgFgBOQICjVcjKEgQmdUi1kYnCBiQUBd/QIyDGYVoES+h3kCjA9sEhwBNgF0BzoNAgJ4Ee4RbBCWCOyGBTW2M/k6JgRQIYQgEgooA1BszwsoJvoM+WoBpBJjAw00PnfvZ6xgtyUX/gcaMsZBYSHyC5NPzgydGsIYQ1QvGeUHwAP0GvQn60FYBgADpAQUOk4z7wS+C2oIjAlAAEoOpBgH2BhrCnKM0QEyjAG4mgNYkoQCcJAGOAcMAGgMiAV65gAeAqgIpAAGANADWAA6Aq4HngAaAIZCAT4DKDABIuYCkAOUCDLMAZYwAfQqBBzEDBYA+DhuSwLDsgKAa2ajBd5ZAo8CSjYBTiYEBk9IUgOwcuIA3ABMBhTgSAEWrEvMG+REAeBwLADIAPwABjYHBkIBzgH0bgC4AWALMgmjtLYBTuoqAIQAFmwB2AKKAN4ANgCA8gFUAE4FWvoF1AJQSgESMhksWGIBvAMgATQBDgB6BsyOpsoIIARuB9QCEBwV4gLvLwe2AgMi4BPOQsYCvd9WADIXUu5eZwqoCqdeaAC0YTQHMnM9UQAPH6k+yAdy/BZIiQImSwBQ5gBQQzSaNTFWSTYBpwGqKQK38AFtqwBI/wK37gK3rQK3sAK6280C0gK33AK3zxAAUEIAUD9SklKDArekArw5AEQAzAHCO147WTteO1k7XjtZO147WTteO1kDmChYI03AVU0oJqkKbV9GYewMpw3VRMk6ShPcYFJgMxPJLbgUwhXPJVcZPhq9JwYl5VUKDwUt1GYxCC00dhe9AEApaYNCY4ceMQpMHOhTklT5LRwAskujM7ANrRsWREEFSHXuYisWDwojAmSCAmJDXE6wXDchAqH4AmiZAmYKAp+FOBwMAmY8AmYnBG8EgAN/FAN+kzkHOXgYOYM6JCQCbB4CMjc4CwJtyAJtr/CLADRoRiwBaADfAOIASwYHmQyOAP8MwwAOtgJ3MAJ2o0ACeUxEAni7Hl3cRa9G9AJ8QAJ6yQJ9CgJ88UgBSH5kJQAsFklZSlwWGErNAtECAtDNSygDiFADh+dExpEzAvKiXQQDA69Lz0wuJgTQTU1NsAKLQAKK2cIcCB5EaAa4Ao44Ao5dQZiCAo7aAo5deVG1UzYLUtVUhgKT/AKTDQDqAB1VH1WwVdEHLBwplocy4nhnRTw6ApegAu+zWCKpAFomApaQApZ9nQCqWa1aCoJOADwClrYClk9cRVzSApnMApllXMtdCBoCnJw5wzqeApwXAp+cAp65iwAeEDIrEAKd8gKekwC2PmE1YfACntQCoG8BqgKeoCACnk+mY8lkKCYsAiewAiZ/AqD8AqBN2AKmMAKlzwKoAAB+AqfzaH1osgAESmodatICrOQCrK8CrWgCrQMCVx4CVd0CseLYAx9PbJgCsr4OArLpGGzhbWRtSWADJc4Ctl08QG6RAylGArhfArlIFgK5K3hwN3DiAr0aAy2zAzISAr6JcgMDM3ICvhtzI3NQAsPMAsMFc4N0TDZGdOEDPKgDPJsDPcACxX0CxkgCxhGKAshqUgLIRQLJUALJLwJkngLd03h6YniveSZL0QMYpGcDAmH1GfSVJXsMXpNevBICz2wCz20wTFTT9BSgAMeuAs90ASrrA04TfkwGAtwoAtuLAtJQA1JdA1NgAQIDVY2AikABzBfuYUZ2AILPg44C2sgC2d+EEYRKpz0DhqYAMANkD4ZyWvoAVgLfZgLeuXR4AuIw7RUB8zEoAfScAfLTiALr9ALpcXoAAur6AurlAPpIAboC7ooC652Wq5cEAu5AA4XhmHpw4XGiAvMEAGoDjheZlAL3FAORbwOSiAL3mQL52gL4Z5odmqy8OJsfA52EAv77ARwAOp8dn7QDBY4DpmsDptoA0sYDBmuhiaIGCgMMSgFgASACtgNGAJwEgLpoBgC8BGzAEowcggCEDC6kdjoAJAM0C5IKRoABZCgiAIzw3AYBLACkfng9ogigkgNmWAN6AEQCvrkEVqTGAwCsBRbAA+4iQkMCHR072jI2PTbUNsk2RjY5NvA23TZKNiU3EDcZN5I+RTxDRTBCJkK5VBYKFhZfwQCWygU3AJBRHpu+OytgNxa61A40GMsYjsn7BVwFXQVcBV0FaAVdBVwFXQVcBV0FXAVdBVwFXUsaCNyKAK4AAQUHBwKU7oICoW1e7jAEzgPxA+YDwgCkBFDAwADABKzAAOxFLhitA1UFTDeyPkM+bj51QkRCuwTQWWQ8X+0AWBYzsACNA8xwzAGm7EZ/QisoCTAbLDs6fnLfb8H2GccsbgFw13M1HAVkBW/Jxsm9CNRO8E8FDD0FBQw9FkcClOYCoMFegpDfADgcMiA2AJQACB8AsigKAIzIEAJKeBIApY5yPZQIAKQiHb4fvj5BKSRPQrZCOz0oXyxgOywfKAnGbgMClQaCAkILXgdeCD9IIGUgQj5fPoY+dT52Ao5CM0dAX9BTVG9SDzFwWTQAbxBzJF/lOEIQQglCCkKJIAls5AcClQICoKPMODEFxhi6KSAbiyfIRrMjtCgdWCAkPlFBIitCsEJRzAbMAV/OEyQzDg0OAQQEJ36i328/Mk9AybDJsQlq3tDRApUKAkFzXf1d/j9uALYP6hCoFgCTGD8kPsFKQiobrm0+zj0KSD8kPnVCRBwMDyJRTHFgMTJa5rwXQiQ2YfI/JD7BMEJEHGINTw4TOFlIRzwJO0icMQpyPyQ+wzJCRBv6DVgnKB01NgUKj2bwYzMqCoBkznBgEF+zYDIocwRIX+NgHj4HICNfh2C4CwdwFWpTG/lgUhYGAwRfv2Ts8mAaXzVgml/XYIJfuWC4HI1gUF9pYJZgMR6ilQHMAOwLAlDRefC0in4AXAEJA6PjCwc0IamOANMMCAECRQDFNRTZBgd+CwQlRA+r6+gLBDEFBnwUBXgKATIArwAGRAAHA3cDdAN2A3kDdwN9A3oDdQN7A30DfAN4A3oDfQAYEAAlAtYASwMAUAFsAHcKAHcAmgB3AHUAdQB2AHVu8UgAygDAAHcAdQB1AHYAdQALCgB3AAsAmgB3AAsCOwB3AAtu8UgAygDAAHgKAJoAdwB3AHUAdQB2AHUAeAB1AHUAdgB1bvFIAMoAwAALCgCaAHcACwB3AAsCOwB3AAtu8UgAygDAAH4ACwGgALcBpwC6AahdAu0COwLtbvFIAMoAwAALCgCaAu0ACwLtAAsCOwLtAAtu8UgAygDAA24ACwNvAAu0VsQAAzsAABCkjUIpAAsAUIusOggWcgMeBxVsGwL67U/2HlzmWOEeOgALASvuAAseAfpKUpnpGgYJDCIZM6YyARUE9ThqAD5iXQgnAJYJPnOzw0ZAEZxEKsIAkA4DhAHnTAIDxxUDK0lxCQlPYgIvIQVYJQBVqE1GakUAKGYiDToSBA1EtAYAXQJYAIF8GgMHRyAAIAjOe9YncekRAA0KACUrjwE7Ayc6AAYWAqaiKG4McEcqANoN3+Mg9TwCBhIkuCny+JwUQ29L008JluRxu3K+oAdqiHOqFH0AG5SUIfUJ5SxCGfxdipRzqTmT4V5Zb+r1Uo4Vm+NqSSEl2mNvR2JhIa8SpYO6ntdwFXHCWTCK8f2+Hxo7uiG3drDycAuKIMP5bhi06ACnqArH1rz4Rqg//lm6SgJGEVbF9xJHISaR6HxqxSnkw6shDnelHKNEfGUXSJRJ1GcsmtJw25xrZMDK9gXSm1/YMkdX4/6NKYOdtk/NQ3/NnDASjTc3fPjIjW/5sVfVObX2oTDWkr1dF9f3kxBsD3/3aQO8hPfRz+e0uEiJqt1161griu7gz8hDDwtpy+F+BWtefnKHZPAxcZoWbnznhJpy0e842j36bcNzGnIEusgGX0a8ZxsnjcSsPDZ09yZ36fCQbriHeQ72JRMILNl6ePPf2HWoVwgWAm1fb3V2sAY0+B6rAXqSwPBgseVmoqsBTSrm91+XasMYYySI8eeRxH3ZvHkMz3BQ5aJ3iUVbYPNM3/7emRtjlsMgv/9VyTsyt/mK+8fgWeT6SoFaclXqn42dAIsvAarF5vNNWHzKSkKQ/8Hfk5ZWK7r9yliOsooyBjRhfkHP4Q2DkWXQi6FG/9r/IwbmkV5T7JSopHKn1pJwm9tb5Ot0oyN1Z2mPpKXHTxx2nlK08fKk1hEYA8WgVVWL5lgx0iTv+KdojJeU23ZDjmiubXOxVXJKKi2Wjuh2HLZOFLiSC7Tls5SMh4f+Pj6xUSrNjFqLGehRNB8lC0QSLNmkJJx/wSG3MnjE9T1CkPwJI0wH2lfzwETIiVqUxg0dfu5q39Gt+hwdcxkhhNvQ4TyrBceof3Mhs/IxFci1HmHr4FMZgXEEczPiGCx0HRwzAqDq2j9AVm1kwN0mRVLWLylgtoPNapF5cY4Y1wJh/e0BBwZj44YgZrDNqvD/9Hv7GFYdUQeDJuQ3EWI4HaKqavU1XjC/n41kT4L79kqGq0kLhdTZvgP3TA3fS0ozVz+5piZsoOtIvBUFoMKbNcmBL6YxxaUAusHB38XrS8dQMnQwJfUUkpRoGr5AUeWicvBTzyK9g77+yCkf5PAysL7r/JjcZgrbvRpMW9iyaxZvKO6ceZN2EwIxKwVFPuvFuiEPGCoagbMo+SpydLrXqBzNCDGFCrO/rkcwa2xhokQZ5CdZ0AsU3JfSqJ6n5I14YA+P/uAgfhPU84Tlw7cEFfp7AEE8ey4sP12PTt4Cods1GRgDOB5xvyiR5m+Bx8O5nBCNctU8BevfV5A08x6RHd5jcwPTMDSZJOedIZ1cGQ704lxbAzqZOP05ZxaOghzSdvFBHYqomATARyAADK4elP8Ly3IrUZKfWh23Xy20uBUmLS4Pfagu9+oyVa2iPgqRP3F2CTUsvJ7+RYnN8fFZbU/HVvxvcFFDKkiTqV5UBZ3Gz54JAKByi9hkKMZJvuGgcSYXFmw08UyoQyVdfTD1/dMkCHXcTGAKeROgArsvmRrQTLUOXioOHGK2QkjHuoYFgXciZoTJd6Fs5q1QX1G+p/e26hYsEf7QZD1nnIyl/SFkNtYYmmBhpBrxl9WbY0YpHWRuw2Ll/tj9mD8P4snVzJl4F9J+1arVeTb9E5r2ILH04qStjxQNwn3m4YNqxmaNbLAqW2TN6LidwuJRqS+NXbtqxoeDXpxeGWmxzSkWxjkyCkX4NQRme6q5SAcC+M7+9ETfA/EwrzQajKakCwYyeunP6ZFlxU2oMEn1Pz31zeStW74G406ZJFCl1wAXIoUKkWotYEpOuXB1uVNxJ63dpJEqfxBeptwIHNrPz8BllZoIcBoXwgfJ+8VAUnVPvRvexnw0Ma/WiGYuJO5y8QTvEYBigFmhUxY5RqzE8OcywN/8m4UYrlaniJO75XQ6KSo9+tWHlu+hMi0UVdiKQp7NelnoZUzNaIyBPVeOwK6GNp+FfHuPOoyhaWuNvTYFkvxscMQWDh+zeFCFkgwbXftiV23ywJ4+uwRqmg9k3KzwIQpzppt8DBBOMbrqwQM5Gb05sEwdKzMiAqOloaA/lr0KA+1pr0/+HiWoiIjHA/wir2nIuS3PeU/ji3O6ZwoxcR1SZ9FhtLC5S0FIzFhbBWcGVP/KpxOPSiUoAdWUpqKH++6Scz507iCcxYI6rdMBICPJZea7OcmeFw5mObJSiqpjg2UoWNIs+cFhyDSt6geV5qgi3FunmwwDoGSMgerFOZGX1m0dMCYo5XOruxO063dwENK9DbnVM9wYFREzh4vyU1WYYJ/LRRp6oxgjqP/X5a8/4Af6p6NWkQferzBmXme0zY/4nwMJm/wd1tIqSwGz+E3xPEAOoZlJit3XddD7/BT1pllzOx+8bmQtANQ/S6fZexc6qi3W+Q2xcmXTUhuS5mpHQRvcxZUN0S5+PL9lXWUAaRZhEH8hTdAcuNMMCuVNKTEGtSUKNi3O6KhSaTzck8csZ2vWRZ+d7mW8c4IKwXIYd25S/zIftPkwPzufjEvOHWVD1m+FjpDVUTV0DGDuHj6QnaEwLu/dEgdLQOg9E1Sro9XHJ8ykLAwtPu+pxqKDuFexqON1sKQm7rwbE1E68UCfA/erovrTCG+DBSNg0l4goDQvZN6uNlbyLpcZAwj2UclycvLpIZMgv4yRlpb3YuMftozorbcGVHt/VeDV3+Fdf1TP0iuaCsPi2G4XeGhsyF1ubVDxkoJhmniQ0/jSg/eYML9KLfnCFgISWkp91eauR3IQvED0nAPXK+6hPCYs+n3+hCZbiskmVMG2da+0EsZPonUeIY8EbfusQXjsK/eFDaosbPjEfQS0RKG7yj5GG69M7MeO1HmiUYocgygJHL6M1qzUDDwUSmr99V7Sdr2F3JjQAJY+F0yH33Iv3+C9M38eML7gTgmNu/r2bUMiPvpYbZ6v1/IaESirBHNa7mPKn4dEmYg7v/+HQgPN1G79jBQ1+soydfDC2r+h2Bl/KIc5KjMK7OH6nb1jLsNf0EHVe2KBiE51ox636uyG6Lho0t3J34L5QY/ilE3mikaF4HKXG1mG1rCevT1Vv6GavltxoQe/bMrpZvRggnBxSEPEeEzkEdOxTnPXHVjUYdw8JYvjB/o7Eegc3Ma+NUxLLnsK0kJlinPmUHzHGtrk5+CAbVzFOBqpyy3QVUnzTDfC/0XD94/okH+OB+i7g9lolhWIjSnfIb+Eq43ZXOWmwvjyV/qqD+t0e+7mTEM74qP/Ozt8nmC7mRpyu63OB4KnUzFc074SqoyPUAgM+/TJGFo6T44EHnQU4X4z6qannVqgw/U7zCpwcmXV1AubIrvOmkKHazJAR55ePjp5tLBsN8vAqs3NAHdcEHOR2xQ0lsNAFzSUuxFQCFYvXLZJdOj9p4fNq6p0HBGUik2YzaI4xySy91KzhQ0+q1hjxvImRwPRf76tChlRkhRCi74NXZ9qUNeIwP+s5p+3m5nwPdNOHgSLD79n7O9m1n1uDHiMntq4nkYwV5OZ1ENbXxFd4PgrlvavZsyUO4MqYlqqn1O8W/I1dEZq5dXhrbETLaZIbC2Kj/Aa/QM+fqUOHdf0tXAQ1huZ3cmWECWSXy/43j35+Mvq9xws7JKseriZ1pEWKc8qlzNrGPUGcVgOa9cPJYIJsGnJTAUsEcDOEVULO5x0rXBijc1lgXEzQQKhROf8zIV82w8eswc78YX11KYLWQRcgHNJElBxfXr72lS2RBSl07qTKorO2uUDZr3sFhYsvnhLZn0A94KRzJ/7DEGIAhW5ZWFpL8gEwu1aLA9MuWZzNwl8Oze9Y+bX+v9gywRVnoB5I/8kXTXU3141yRLYrIOOz6SOnyHNy4SieqzkBXharjfjqq1q6tklaEbA8Qfm2DaIPs7OTq/nvJBjKfO2H9bH2cCMh1+5gspfycu8f/cuuRmtDjyqZ7uCIMyjdV3a+p3fqmXsRx4C8lujezIFHnQiVTXLXuI1XrwN3+siYYj2HHTvESUx8DlOTXpak9qFRK+L3mgJ1WsD7F4cu1aJoFoYQnu+wGDMOjJM3kiBQWHCcvhJ/HRdxodOQp45YZaOTA22Nb4XKCVxqkbwMYFhzYQYIAnCW8FW14uf98jhUG2zrKhQQ0q0CEq0t5nXyvUyvR8DvD69LU+g3i+HFWQMQ8PqZuHD+sNKAV0+M6EJC0szq7rEr7B5bQ8BcNHzvDMc9eqB5ZCQdTf80Obn4uzjwpYU7SISdtV0QGa9D3Wrh2BDQtpBKxaNFV+/Cy2P/Sv+8s7Ud0Fd74X4+o/TNztWgETUapy+majNQ68Lq3ee0ZO48VEbTZYiH1Co4OlfWef82RWeyUXo7woM03PyapGfikTnQinoNq5z5veLpeMV3HCAMTaZmA1oGLAn7XS3XYsz+XK7VMQsc4XKrmDXOLU/pSXVNUq8dIqTba///3x6LiLS6xs1xuCAYSfcQ3+rQgmu7uvf3THKt5Ooo97TqcbRqxx7EASizaQCBQllG/rYxVapMLgtLbZS64w1MDBMXX+PQpBKNwqUKOf2DDRDUXQf9EhOS0Qj4nTmlA8dzSLz/G1d+Ud8MTy/6ghhdiLpeerGY/UlDOfiuqFsMUU5/UYlP+BAmgRLuNpvrUaLlVkrqDievNVEAwF+4CoM1MZTmjxjJMsKJq+u8Zd7tNCUFy6LiyYXRJQ4VyvEQFFaCGKsxIwQkk7EzZ6LTJq2hUuPhvAW+gQnSG6J+MszC+7QCRHcnqDdyNRJ6T9xyS87A6MDutbzKGvGktpbXqtzWtXb9HsfK2cBMomjN9a4y+TaJLnXxAeX/HWzmf4cR4vALt/P4w4qgKY04ml4ZdLOinFYS6cup3G/1ie4+t1eOnpBNlqGqs75ilzkT4+DsZQxNvaSKJ//6zIbbk/M7LOhFmRc/1R+kBtz7JFGdZm/COotIdvQoXpTqP/1uqEUmCb/QWoGLMwO5ANcHzxdY48IGP5+J+zKOTBFZ4Pid+GTM+Wq12MV/H86xEJptBa6T+p3kgpwLedManBHC2GgNrFpoN2xnrMz9WFWX/8/ygSBkavq2Uv7FdCsLEYLu9LLIvAU0bNRDtzYl+/vXmjpIvuJFYjmI0im6QEYqnIeMsNjXG4vIutIGHijeAG/9EDBozKV5cldkHbLxHh25vT+ZEzbhXlqvpzKJwcEgfNwLAKFeo0/pvEE10XDB+EXRTXtSzJozQKFFAJhMxYkVaCW+E9AL7tMeU8acxidHqzb6lX4691UsDpy/LLRmT+epgW56+5Cw8tB4kMUv6s9lh3eRKbyGs+H/4mQMaYzPTf2OOdokEn+zzgvoD3FqNKk8QqGAXVsqcGdXrT62fSPkR2vROFi68A6se86UxRUk4cajfPyCC4G5wDhD+zNq4jodQ4u4n/m37Lr36n4LIAAsVr02dFi9AiwA81MYs2rm4eDlDNmdMRvEKRHfBwW5DdMNp0jPFZMeARqF/wL4XBfd+EMLBfMzpH5GH6NaW+1vrvMdg+VxDzatk3MXgO3ro3P/DpcC6+Mo4MySJhKJhSR01SGGGp5hPWmrrUgrv3lDnP+HhcI3nt3YqBoVAVTBAQT5iuhTg8nvPtd8ZeYj6w1x6RqGUBrSku7+N1+BaasZvjTk64RoIDlL8brpEcJx3OmY7jLoZsswdtmhfC/G21llXhITOwmvRDDeTTPbyASOa16cF5/A1fZAidJpqju3wYAy9avPR1ya6eNp9K8XYrrtuxlqi+bDKwlfrYdR0RRiKRVTLOH85+ZY7XSmzRpfZBJjaTa81VDcJHpZnZnSQLASGYW9l51ZV/h7eVzTi3Hv6hUsgc/51AqJRTkpbFVLXXszoBL8nBX0u/0jBLT8nH+fJePbrwURT58OY+UieRjd1vs04w0VG5VN2U6MoGZkQzKN/ptz0Q366dxoTGmj7i1NQGHi9GgnquXFYdrCfZBmeb7s0T6yrdlZH5cZuwHFyIJ/kAtGsTg0xH5taAAq44BAk1CPk9KVVbqQzrCUiFdF/6gtlPQ8bHHc1G1W92MXGZ5HEHftyLYs8mbD/9xYRUWkHmlM0zC2ilJlnNgV4bfALpQghxOUoZL7VTqtCHIaQSXm+YUMnpkXybnV+A6xlm2CVy8fn0Xlm2XRa0+zzOa21JWWmixfiPMSCZ7qA4rS93VN3pkpF1s5TonQjisHf7iU9ZGvUPOAKZcR1pbeVf/Ul7OhepGCaId9wOtqo7pJ7yLcBZ0pFkOF28y4zEI/kcUNmutBHaQpBdNM8vjCS6HZRokkeo88TBAjGyG7SR+6vUgTcyK9Imalj0kuxz0wmK+byQU11AiJFk/ya5dNduRClcnU64yGu/ieWSeOos1t3ep+RPIWQ2pyTYVbZltTbsb7NiwSi3AV+8KLWk7LxCnfZUetEM8ThnsSoGH38/nyAwFguJp8FjvlHtcWZuU4hPva0rHfr0UhOOJ/F6vS62FW7KzkmRll2HEc7oUq4fyi5T70Vl7YVIfsPHUCdHesf9Lk7WNVWO75JDkYbMI8TOW8JKVtLY9d6UJRITO8oKo0xS+o99Yy04iniGHAaGj88kEWgwv0OrHdY/nr76DOGNS59hXCGXzTKUvDl9iKpLSWYN1lxIeyywdNpTkhay74w2jFT6NS8qkjo5CxA1yfSYwp6AJIZNKIeEK5PJAW7ORgWgwp0VgzYpqovMrWxbu+DGZ6Lhie1RAqpzm8VUzKJOH3mCzWuTOLsN3VT/dv2eeYe9UjbR8YTBsLz7q60VN1sU51k+um1f8JxD5pPhbhSC8rRaB454tmh6YUWrJI3+GWY0qeWioj/tbkYITOkJaeuGt4JrJvHA+l0Gu7kY7XOaa05alMnRWVCXqFgLIwSY4uF59Ue5SU4QKuc/HamDxbr0x6csCetXGoP7Qn1Bk/J9DsynO/UD6iZ1Hyrz+jit0hDCwi/E9OjgKTbB3ZQKQ/0ZOvevfNHG0NK4Aj3Cp7NpRk07RT1i/S0EL93Ag8GRgKI9CfpajKyK6+Jj/PI1KO5/85VAwz2AwzP8FTBb075IxCXv6T9RVvWT2tUaqxDS92zrGUbWzUYk9mSs82pECH+fkqsDt93VW++4YsR/dHCYcQSYTO/KaBMDj9LSD/J/+z20Kq8XvZUAIHtm9hRPP3ItbuAu2Hm5lkPs92pd7kCxgRs0xOVBnZ13ccdA0aunrwv9SdqElJRC3g+oCu+nXyCgmXUs9yMjTMAIHfxZV+aPKcZeUBWt057Xo85Ks1Ir5gzEHCWqZEhrLZMuF11ziGtFQUds/EESajhagzcKsxamcSZxGth4UII+adPhQkUnx2WyN+4YWR+r3f8MnkyGFuR4zjzxJS8WsQYR5PTyRaD9ixa6Mh741nBHbzfjXHskGDq179xaRNrCIB1z1xRfWfjqw2pHc1zk9xlPpL8sQWAIuETZZhbnmL54rceXVNRvUiKrrqIkeogsl0XXb17ylNb0f4GA9Wd44vffEG8FSZGHEL2fbaTGRcSiCeA8PmA/f6Hz8HCS76fXUHwgwkzSwlI71ekZ7Fapmlk/KC+Hs8hUcw3N2LN5LhkVYyizYFl/uPeVP5lsoJHhhfWvvSWruCUW1ZcJOeuTbrDgywJ/qG07gZJplnTvLcYdNaH0KMYOYMGX+rB4NGPFmQsNaIwlWrfCezxre8zXBrsMT+edVLbLqN1BqB76JH4BvZTqUIMfGwPGEn+EnmTV86fPBaYbFL3DFEhjB45CewkXEAtJxk4/Ms2pPXnaRqdky0HOYdcUcE2zcXq4vaIvW2/v0nHFJH2XXe22ueDmq/18XGtELSq85j9X8q0tcNSSKJIX8FTuJF/Pf8j5PhqG2u+osvsLxYrvvfeVJL+4tkcXcr9JV7v0ERmj/X6fM3NC4j6dS1+9Umr2oPavqiAydTZPLMNRGY23LO9zAVDly7jD+70G5TPPLdhRIl4WxcYjLnM+SNcJ26FOrkrISUtPObIz5Zb3AG612krnpy15RMW+1cQjlnWFI6538qky9axd2oJmHIHP08KyP0ubGO+TQNOYuv2uh17yCIvR8VcStw7o1g0NM60sk+8Tq7YfIBJrtp53GkvzXH7OA0p8/n/u1satf/VJhtR1l8Wa6Gmaug7haSpaCaYQax6ta0mkutlb+eAOSG1aobM81D9A4iS1RRlzBBoVX6tU1S6WE2N9ORY6DfeLRC4l9Rvr5h95XDWB2mR1d4WFudpsgVYwiTwT31ljskD8ZyDOlm5DkGh9N/UB/0AI5Xvb8ZBmai2hQ4BWMqFwYnzxwB26YHSOv9WgY3JXnvoN+2R4rqGVh/LLDMtpFP+SpMGJNWvbIl5SOodbCczW2RKleksPoUeGEzrjtKHVdtZA+kfqO+rVx/iclCqwoopepvJpSTDjT+b9GWylGRF8EDbGlw6eUzmJM95Ovoz+kwLX3c2fTjFeYEsE7vUZm3mqdGJuKh2w9/QGSaqRHs99aScGOdDqkFcACoqdbBoQqqjamhH6Q9ng39JCg3lrGJwd50Qk9ovnqBTr8MME7Ps2wiVfygUmPoUBJJfJWX5Nda0nuncbFkA=='));
+	}
+	exports.getData = getData;
+
+	});
+
+	var include$1 = /*@__PURE__*/getDefaultExportFromCjs(include);
+
+	var lib$I = createCommonjsModule(function (module, exports) {
+	"use strict";
+	/**
+	 * MIT License
+	 *
+	 * Copyright (c) 2021 Andrew Raffensperger
+	 *
+	 * Permission is hereby granted, free of charge, to any person obtaining a copy
+	 * of this software and associated documentation files (the "Software"), to deal
+	 * in the Software without restriction, including without limitation the rights
+	 * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+	 * copies of the Software, and to permit persons to whom the Software is
+	 * furnished to do so, subject to the following conditions:
+	 *
+	 * The above copyright notice and this permission notice shall be included in all
+	 * copies or substantial portions of the Software.
+	 *
+	 * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+	 * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+	 * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+	 * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+	 * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+	 * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+	 * SOFTWARE.
+	 *
+	 * This is a near carbon-copy of the original source (link below) with the
+	 * TypeScript typings added and a few tweaks to make it ES3-compatible.
+	 *
+	 * See: https://github.com/adraffy/ens-normalize.js
+	 */
+	Object.defineProperty(exports, "__esModule", { value: true });
+	exports.ens_normalize = exports.ens_normalize_post_check = void 0;
+
+
+	var r = (0, include.getData)();
+
+	// @TODO: This should be lazily loaded
+	var VALID = new Set((0, decoder.read_member_array)(r));
+	var IGNORED = new Set((0, decoder.read_member_array)(r));
+	var MAPPED = (0, decoder.read_mapped_map)(r);
+	var EMOJI_ROOT = (0, decoder.read_emoji_trie)(r);
+	//const NFC_CHECK = new Set(read_member_array(r, Array.from(VALID.values()).sort((a, b) => a - b)));
+	//const STOP = 0x2E;
+	var HYPHEN = 0x2D;
+	var UNDERSCORE = 0x5F;
+	function explode_cp(name) {
+	    return (0, lib$B.toUtf8CodePoints)(name);
+	}
+	function filter_fe0f(cps) {
+	    return cps.filter(function (cp) { return cp != 0xFE0F; });
+	}
+	function ens_normalize_post_check(name) {
+	    for (var _i = 0, _a = name.split('.'); _i < _a.length; _i++) {
+	        var label = _a[_i];
+	        var cps = explode_cp(label);
+	        try {
+	            for (var i = cps.lastIndexOf(UNDERSCORE) - 1; i >= 0; i--) {
+	                if (cps[i] !== UNDERSCORE) {
+	                    throw new Error("underscore only allowed at start");
+	                }
+	            }
+	            if (cps.length >= 4 && cps.every(function (cp) { return cp < 0x80; }) && cps[2] === HYPHEN && cps[3] === HYPHEN) {
+	                throw new Error("invalid label extension");
+	            }
+	        }
+	        catch (err) {
+	            throw new Error("Invalid label \"" + label + "\": " + err.message);
+	        }
+	    }
+	    return name;
+	}
+	exports.ens_normalize_post_check = ens_normalize_post_check;
+	function ens_normalize(name) {
+	    return ens_normalize_post_check(normalize(name, filter_fe0f));
+	}
+	exports.ens_normalize = ens_normalize;
+	function normalize(name, emoji_filter) {
+	    var input = explode_cp(name).reverse(); // flip for pop
+	    var output = [];
+	    while (input.length) {
+	        var emoji = consume_emoji_reversed(input);
+	        if (emoji) {
+	            output.push.apply(output, emoji_filter(emoji));
+	            continue;
+	        }
+	        var cp = input.pop();
+	        if (VALID.has(cp)) {
+	            output.push(cp);
+	            continue;
+	        }
+	        if (IGNORED.has(cp)) {
+	            continue;
+	        }
+	        var cps = MAPPED[cp];
+	        if (cps) {
+	            output.push.apply(output, cps);
+	            continue;
+	        }
+	        throw new Error("Disallowed codepoint: 0x" + cp.toString(16).toUpperCase());
+	    }
+	    return ens_normalize_post_check(nfc(String.fromCodePoint.apply(String, output)));
+	}
+	function nfc(s) {
+	    return s.normalize('NFC');
+	}
+	function consume_emoji_reversed(cps, eaten) {
+	    var _a;
+	    var node = EMOJI_ROOT;
+	    var emoji;
+	    var saved;
+	    var stack = [];
+	    var pos = cps.length;
+	    if (eaten)
+	        eaten.length = 0; // clear input buffer (if needed)
+	    var _loop_1 = function () {
+	        var cp = cps[--pos];
+	        node = (_a = node.branches.find(function (x) { return x.set.has(cp); })) === null || _a === void 0 ? void 0 : _a.node;
+	        if (!node)
+	            return "break";
+	        if (node.save) { // remember
+	            saved = cp;
+	        }
+	        else if (node.check) { // check exclusion
+	            if (cp === saved)
+	                return "break";
+	        }
+	        stack.push(cp);
+	        if (node.fe0f) {
+	            stack.push(0xFE0F);
+	            if (pos > 0 && cps[pos - 1] == 0xFE0F)
+	                pos--; // consume optional FE0F
+	        }
+	        if (node.valid) { // this is a valid emoji (so far)
+	            emoji = stack.slice(); // copy stack
+	            if (node.valid == 2)
+	                emoji.splice(1, 1); // delete FE0F at position 1 (RGI ZWJ don't follow spec!)
+	            if (eaten)
+	                eaten.push.apply(eaten, cps.slice(pos).reverse()); // copy input (if needed)
+	            cps.length = pos; // truncate
+	        }
+	    };
+	    while (pos) {
+	        var state_1 = _loop_1();
+	        if (state_1 === "break")
+	            break;
+	    }
+	    return emoji;
+	}
+
+	});
+
+	var lib$J = /*@__PURE__*/getDefaultExportFromCjs(lib$I);
+
+	var namehash_1 = createCommonjsModule(function (module, exports) {
+	"use strict";
+	Object.defineProperty(exports, "__esModule", { value: true });
+	exports.dnsEncode = exports.namehash = exports.isValidName = exports.ensNormalize = void 0;
+
+
+
+
+
+	var logger = new lib$E.Logger(_version$1a.version);
+
+	var Zeros = new Uint8Array(32);
+	Zeros.fill(0);
+	function checkComponent(comp) {
+	    if (comp.length === 0) {
+	        throw new Error("invalid ENS name; empty component");
+	    }
+	    return comp;
+	}
+	function ensNameSplit(name) {
+	    var bytes = (0, lib$B.toUtf8Bytes)((0, lib$I.ens_normalize)(name));
+	    var comps = [];
+	    if (name.length === 0) {
+	        return comps;
+	    }
+	    var last = 0;
+	    for (var i = 0; i < bytes.length; i++) {
+	        var d = bytes[i];
+	        // A separator (i.e. "."); copy this component
+	        if (d === 0x2e) {
+	            comps.push(checkComponent(bytes.slice(last, i)));
+	            last = i + 1;
+	        }
+	    }
+	    // There was a stray separator at the end of the name
+	    if (last >= bytes.length) {
+	        throw new Error("invalid ENS name; empty component");
+	    }
+	    comps.push(checkComponent(bytes.slice(last)));
+	    return comps;
+	}
+	function ensNormalize(name) {
+	    return ensNameSplit(name).map(function (comp) { return (0, lib$B.toUtf8String)(comp); }).join(".");
+	}
+	exports.ensNormalize = ensNormalize;
+	function isValidName(name) {
+	    try {
+	        return (ensNameSplit(name).length !== 0);
+	    }
+	    catch (error) { }
+	    return false;
+	}
+	exports.isValidName = isValidName;
+	function namehash(name) {
+	    /* istanbul ignore if */
+	    if (typeof (name) !== "string") {
+	        logger.throwArgumentError("invalid ENS name; not a string", "name", name);
+	    }
+	    var result = Zeros;
+	    var comps = ensNameSplit(name);
+	    while (comps.length) {
+	        result = (0, lib$w.keccak256)((0, lib$D.concat)([result, (0, lib$w.keccak256)(comps.pop())]));
+	    }
+	    return (0, lib$D.hexlify)(result);
+	}
+	exports.namehash = namehash;
+	function dnsEncode(name) {
+	    return (0, lib$D.hexlify)((0, lib$D.concat)(ensNameSplit(name).map(function (comp) {
+	        // DNS does not allow components over 63 bytes in length
+	        if (comp.length > 63) {
+	            throw new Error("invalid DNS encoded entry; length exceeds 63 bytes");
+	        }
+	        var bytes = new Uint8Array(comp.length + 1);
+	        bytes.set(comp, 1);
+	        bytes[0] = bytes.length - 1;
+	        return bytes;
+	    }))) + "00";
+	}
+	exports.dnsEncode = dnsEncode;
+
+	});
+
+	var namehash = /*@__PURE__*/getDefaultExportFromCjs(namehash_1);
+
+	var message = createCommonjsModule(function (module, exports) {
+	"use strict";
+	Object.defineProperty(exports, "__esModule", { value: true });
+	exports.hashMessage = exports.messagePrefix = void 0;
+
+
+
+	exports.messagePrefix = "\x19Ethereum Signed Message:\n";
+	function hashMessage(message) {
+	    if (typeof (message) === "string") {
+	        message = (0, lib$B.toUtf8Bytes)(message);
+	    }
+	    return (0, lib$w.keccak256)((0, lib$D.concat)([
+	        (0, lib$B.toUtf8Bytes)(exports.messagePrefix),
+	        (0, lib$B.toUtf8Bytes)(String(message.length)),
+	        message
+	    ]));
+	}
+	exports.hashMessage = hashMessage;
+
+	});
+
+	var message$1 = /*@__PURE__*/getDefaultExportFromCjs(message);
+
+	var _version$1g = createCommonjsModule(function (module, exports) {
+	"use strict";
+	Object.defineProperty(exports, "__esModule", { value: true });
+	exports.version = void 0;
+	exports.version = "logger/5.7.0";
+
+	});
+
+	var _version$1h = /*@__PURE__*/getDefaultExportFromCjs(_version$1g);
+
+	var lib$K = createCommonjsModule(function (module, exports) {
+	"use strict";
+	Object.defineProperty(exports, "__esModule", { value: true });
+	exports.Logger = exports.ErrorCode = exports.LogLevel = void 0;
+	var _permanentCensorErrors = false;
+	var _censorErrors = false;
+	var LogLevels = { debug: 1, "default": 2, info: 2, warning: 3, error: 4, off: 5 };
+	var _logLevel = LogLevels["default"];
+
+	var _globalLogger = null;
+	function _checkNormalize() {
+	    try {
+	        var missing_1 = [];
+	        // Make sure all forms of normalization are supported
+	        ["NFD", "NFC", "NFKD", "NFKC"].forEach(function (form) {
+	            try {
+	                if ("test".normalize(form) !== "test") {
+	                    throw new Error("bad normalize");
+	                }
+	                ;
+	            }
+	            catch (error) {
+	                missing_1.push(form);
+	            }
+	        });
+	        if (missing_1.length) {
+	            throw new Error("missing " + missing_1.join(", "));
+	        }
+	        if (String.fromCharCode(0xe9).normalize("NFD") !== String.fromCharCode(0x65, 0x0301)) {
+	            throw new Error("broken implementation");
+	        }
+	    }
+	    catch (error) {
+	        return error.message;
+	    }
+	    return null;
+	}
+	var _normalizeError = _checkNormalize();
+	var LogLevel;
+	(function (LogLevel) {
+	    LogLevel["DEBUG"] = "DEBUG";
+	    LogLevel["INFO"] = "INFO";
+	    LogLevel["WARNING"] = "WARNING";
+	    LogLevel["ERROR"] = "ERROR";
+	    LogLevel["OFF"] = "OFF";
+	})(LogLevel = exports.LogLevel || (exports.LogLevel = {}));
+	var ErrorCode;
+	(function (ErrorCode) {
+	    ///////////////////
+	    // Generic Errors
+	    // Unknown Error
+	    ErrorCode["UNKNOWN_ERROR"] = "UNKNOWN_ERROR";
+	    // Not Implemented
+	    ErrorCode["NOT_IMPLEMENTED"] = "NOT_IMPLEMENTED";
+	    // Unsupported Operation
+	    //   - operation
+	    ErrorCode["UNSUPPORTED_OPERATION"] = "UNSUPPORTED_OPERATION";
+	    // Network Error (i.e. Ethereum Network, such as an invalid chain ID)
+	    //   - event ("noNetwork" is not re-thrown in provider.ready; otherwise thrown)
+	    ErrorCode["NETWORK_ERROR"] = "NETWORK_ERROR";
+	    // Some sort of bad response from the server
+	    ErrorCode["SERVER_ERROR"] = "SERVER_ERROR";
+	    // Timeout
+	    ErrorCode["TIMEOUT"] = "TIMEOUT";
+	    ///////////////////
+	    // Operational  Errors
+	    // Buffer Overrun
+	    ErrorCode["BUFFER_OVERRUN"] = "BUFFER_OVERRUN";
+	    // Numeric Fault
+	    //   - operation: the operation being executed
+	    //   - fault: the reason this faulted
+	    ErrorCode["NUMERIC_FAULT"] = "NUMERIC_FAULT";
+	    ///////////////////
+	    // Argument Errors
+	    // Missing new operator to an object
+	    //  - name: The name of the class
+	    ErrorCode["MISSING_NEW"] = "MISSING_NEW";
+	    // Invalid argument (e.g. value is incompatible with type) to a function:
+	    //   - argument: The argument name that was invalid
+	    //   - value: The value of the argument
+	    ErrorCode["INVALID_ARGUMENT"] = "INVALID_ARGUMENT";
+	    // Missing argument to a function:
+	    //   - count: The number of arguments received
+	    //   - expectedCount: The number of arguments expected
+	    ErrorCode["MISSING_ARGUMENT"] = "MISSING_ARGUMENT";
+	    // Too many arguments
+	    //   - count: The number of arguments received
+	    //   - expectedCount: The number of arguments expected
+	    ErrorCode["UNEXPECTED_ARGUMENT"] = "UNEXPECTED_ARGUMENT";
+	    ///////////////////
+	    // Blockchain Errors
+	    // Call exception
+	    //  - transaction: the transaction
+	    //  - address?: the contract address
+	    //  - args?: The arguments passed into the function
+	    //  - method?: The Solidity method signature
+	    //  - errorSignature?: The EIP848 error signature
+	    //  - errorArgs?: The EIP848 error parameters
+	    //  - reason: The reason (only for EIP848 "Error(string)")
+	    ErrorCode["CALL_EXCEPTION"] = "CALL_EXCEPTION";
+	    // Insufficient funds (< value + gasLimit * gasPrice)
+	    //   - transaction: the transaction attempted
+	    ErrorCode["INSUFFICIENT_FUNDS"] = "INSUFFICIENT_FUNDS";
+	    // Nonce has already been used
+	    //   - transaction: the transaction attempted
+	    ErrorCode["NONCE_EXPIRED"] = "NONCE_EXPIRED";
+	    // The replacement fee for the transaction is too low
+	    //   - transaction: the transaction attempted
+	    ErrorCode["REPLACEMENT_UNDERPRICED"] = "REPLACEMENT_UNDERPRICED";
+	    // The gas limit could not be estimated
+	    //   - transaction: the transaction passed to estimateGas
+	    ErrorCode["UNPREDICTABLE_GAS_LIMIT"] = "UNPREDICTABLE_GAS_LIMIT";
+	    // The transaction was replaced by one with a higher gas price
+	    //   - reason: "cancelled", "replaced" or "repriced"
+	    //   - cancelled: true if reason == "cancelled" or reason == "replaced")
+	    //   - hash: original transaction hash
+	    //   - replacement: the full TransactionsResponse for the replacement
+	    //   - receipt: the receipt of the replacement
+	    ErrorCode["TRANSACTION_REPLACED"] = "TRANSACTION_REPLACED";
+	    ///////////////////
+	    // Interaction Errors
+	    // The user rejected the action, such as signing a message or sending
+	    // a transaction
+	    ErrorCode["ACTION_REJECTED"] = "ACTION_REJECTED";
+	})(ErrorCode = exports.ErrorCode || (exports.ErrorCode = {}));
+	;
+	var HEX = "0123456789abcdef";
+	var Logger = /** @class */ (function () {
+	    function Logger(version) {
+	        Object.defineProperty(this, "version", {
+	            enumerable: true,
+	            value: version,
+	            writable: false
+	        });
+	    }
+	    Logger.prototype._log = function (logLevel, args) {
+	        var level = logLevel.toLowerCase();
+	        if (LogLevels[level] == null) {
+	            this.throwArgumentError("invalid log level name", "logLevel", logLevel);
+	        }
+	        if (_logLevel > LogLevels[level]) {
+	            return;
+	        }
+	        console.log.apply(console, args);
+	    };
+	    Logger.prototype.debug = function () {
+	        var args = [];
+	        for (var _i = 0; _i < arguments.length; _i++) {
+	            args[_i] = arguments[_i];
+	        }
+	        this._log(Logger.levels.DEBUG, args);
+	    };
+	    Logger.prototype.info = function () {
+	        var args = [];
+	        for (var _i = 0; _i < arguments.length; _i++) {
+	            args[_i] = arguments[_i];
+	        }
+	        this._log(Logger.levels.INFO, args);
+	    };
+	    Logger.prototype.warn = function () {
+	        var args = [];
+	        for (var _i = 0; _i < arguments.length; _i++) {
+	            args[_i] = arguments[_i];
+	        }
+	        this._log(Logger.levels.WARNING, args);
+	    };
+	    Logger.prototype.makeError = function (message, code, params) {
+	        // Errors are being censored
+	        if (_censorErrors) {
+	            return this.makeError("censored error", code, {});
+	        }
+	        if (!code) {
+	            code = Logger.errors.UNKNOWN_ERROR;
+	        }
+	        if (!params) {
+	            params = {};
+	        }
+	        var messageDetails = [];
+	        Object.keys(params).forEach(function (key) {
+	            var value = params[key];
+	            try {
+	                if (value instanceof Uint8Array) {
+	                    var hex = "";
+	                    for (var i = 0; i < value.length; i++) {
+	                        hex += HEX[value[i] >> 4];
+	                        hex += HEX[value[i] & 0x0f];
+	                    }
+	                    messageDetails.push(key + "=Uint8Array(0x" + hex + ")");
+	                }
+	                else {
+	                    messageDetails.push(key + "=" + JSON.stringify(value));
+	                }
+	            }
+	            catch (error) {
+	                messageDetails.push(key + "=" + JSON.stringify(params[key].toString()));
+	            }
+	        });
+	        messageDetails.push("code=" + code);
+	        messageDetails.push("version=" + this.version);
+	        var reason = message;
+	        var url = "";
+	        switch (code) {
+	            case ErrorCode.NUMERIC_FAULT: {
+	                url = "NUMERIC_FAULT";
+	                var fault = message;
+	                switch (fault) {
+	                    case "overflow":
+	                    case "underflow":
+	                    case "division-by-zero":
+	                        url += "-" + fault;
+	                        break;
+	                    case "negative-power":
+	                    case "negative-width":
+	                        url += "-unsupported";
+	                        break;
+	                    case "unbound-bitwise-result":
+	                        url += "-unbound-result";
+	                        break;
+	                }
+	                break;
+	            }
+	            case ErrorCode.CALL_EXCEPTION:
+	            case ErrorCode.INSUFFICIENT_FUNDS:
+	            case ErrorCode.MISSING_NEW:
+	            case ErrorCode.NONCE_EXPIRED:
+	            case ErrorCode.REPLACEMENT_UNDERPRICED:
+	            case ErrorCode.TRANSACTION_REPLACED:
+	            case ErrorCode.UNPREDICTABLE_GAS_LIMIT:
+	                url = code;
+	                break;
+	        }
+	        if (url) {
+	            message += " [ See: https:/\/links.quais.org/v5-errors-" + url + " ]";
+	        }
+	        if (messageDetails.length) {
+	            message += " (" + messageDetails.join(", ") + ")";
+	        }
+	        // @TODO: Any??
+	        var error = new Error(message);
+	        error.reason = reason;
+	        error.code = code;
+	        Object.keys(params).forEach(function (key) {
+	            error[key] = params[key];
+	        });
+	        return error;
+	    };
+	    Logger.prototype.throwError = function (message, code, params) {
+	        throw this.makeError(message, code, params);
+	    };
+	    Logger.prototype.throwArgumentError = function (message, name, value) {
+	        return this.throwError(message, Logger.errors.INVALID_ARGUMENT, {
+	            argument: name,
+	            value: value
+	        });
+	    };
+	    Logger.prototype.assert = function (condition, message, code, params) {
+	        if (!!condition) {
+	            return;
+	        }
+	        this.throwError(message, code, params);
+	    };
+	    Logger.prototype.assertArgument = function (condition, message, name, value) {
+	        if (!!condition) {
+	            return;
+	        }
+	        this.throwArgumentError(message, name, value);
+	    };
+	    Logger.prototype.checkNormalize = function (message) {
+	        if (message == null) {
+	            message = "platform missing String.prototype.normalize";
+	        }
+	        if (_normalizeError) {
+	            this.throwError("platform missing String.prototype.normalize", Logger.errors.UNSUPPORTED_OPERATION, {
+	                operation: "String.prototype.normalize", form: _normalizeError
+	            });
+	        }
+	    };
+	    Logger.prototype.checkSafeUint53 = function (value, message) {
+	        if (typeof (value) !== "number") {
+	            return;
+	        }
+	        if (message == null) {
+	            message = "value not safe";
+	        }
+	        if (value < 0 || value >= 0x1fffffffffffff) {
+	            this.throwError(message, Logger.errors.NUMERIC_FAULT, {
+	                operation: "checkSafeInteger",
+	                fault: "out-of-safe-range",
+	                value: value
+	            });
+	        }
+	        if (value % 1) {
+	            this.throwError(message, Logger.errors.NUMERIC_FAULT, {
+	                operation: "checkSafeInteger",
+	                fault: "non-integer",
+	                value: value
+	            });
+	        }
+	    };
+	    Logger.prototype.checkArgumentCount = function (count, expectedCount, message) {
+	        if (message) {
+	            message = ": " + message;
+	        }
+	        else {
+	            message = "";
+	        }
+	        if (count < expectedCount) {
+	            this.throwError("missing argument" + message, Logger.errors.MISSING_ARGUMENT, {
+	                count: count,
+	                expectedCount: expectedCount
+	            });
+	        }
+	        if (count > expectedCount) {
+	            this.throwError("too many arguments" + message, Logger.errors.UNEXPECTED_ARGUMENT, {
+	                count: count,
+	                expectedCount: expectedCount
+	            });
+	        }
+	    };
+	    Logger.prototype.checkNew = function (target, kind) {
+	        if (target === Object || target == null) {
+	            this.throwError("missing new", Logger.errors.MISSING_NEW, { name: kind.name });
+	        }
+	    };
+	    Logger.prototype.checkAbstract = function (target, kind) {
+	        if (target === kind) {
+	            this.throwError("cannot instantiate abstract class " + JSON.stringify(kind.name) + " directly; use a sub-class", Logger.errors.UNSUPPORTED_OPERATION, { name: target.name, operation: "new" });
+	        }
+	        else if (target === Object || target == null) {
+	            this.throwError("missing new", Logger.errors.MISSING_NEW, { name: kind.name });
+	        }
+	    };
+	    Logger.globalLogger = function () {
+	        if (!_globalLogger) {
+	            _globalLogger = new Logger(_version$1g.version);
+	        }
+	        return _globalLogger;
+	    };
+	    Logger.setCensorship = function (censorship, permanent) {
+	        if (!censorship && permanent) {
+	            this.globalLogger().throwError("cannot permanently disable censorship", Logger.errors.UNSUPPORTED_OPERATION, {
+	                operation: "setCensorship"
+	            });
+	        }
+	        if (_permanentCensorErrors) {
+	            if (!censorship) {
+	                return;
+	            }
+	            this.globalLogger().throwError("error censorship permanent", Logger.errors.UNSUPPORTED_OPERATION, {
+	                operation: "setCensorship"
+	            });
+	        }
+	        _censorErrors = !!censorship;
+	        _permanentCensorErrors = !!permanent;
+	    };
+	    Logger.setLogLevel = function (logLevel) {
+	        var level = LogLevels[logLevel.toLowerCase()];
+	        if (level == null) {
+	            Logger.globalLogger().warn("invalid log level - " + logLevel);
+	            return;
+	        }
+	        _logLevel = level;
+	    };
+	    Logger.from = function (version) {
+	        return new Logger(version);
+	    };
+	    Logger.errors = ErrorCode;
+	    Logger.levels = LogLevel;
+	    return Logger;
+	}());
+	exports.Logger = Logger;
+
+	});
+
 	var index$I = /*@__PURE__*/getDefaultExportFromCjs(lib$K);
+
+	var _version$1i = createCommonjsModule(function (module, exports) {
+	"use strict";
+	Object.defineProperty(exports, "__esModule", { value: true });
+	exports.version = void 0;
+	exports.version = "bytes/5.7.0";
+
+	});
+
+	var _version$1j = /*@__PURE__*/getDefaultExportFromCjs(_version$1i);
+
+	var lib$L = createCommonjsModule(function (module, exports) {
+	"use strict";
+	Object.defineProperty(exports, "__esModule", { value: true });
+	exports.joinSignature = exports.splitSignature = exports.hexZeroPad = exports.hexStripZeros = exports.hexValue = exports.hexConcat = exports.hexDataSlice = exports.hexDataLength = exports.hexlify = exports.isHexString = exports.zeroPad = exports.stripZeros = exports.concat = exports.arrayify = exports.isBytes = exports.isBytesLike = void 0;
+
+
+	var logger = new lib$K.Logger(_version$1i.version);
+	///////////////////////////////
+	function isHexable(value) {
+	    return !!(value.toHexString);
+	}
+	function addSlice(array) {
+	    if (array.slice) {
+	        return array;
+	    }
+	    array.slice = function () {
+	        var args = Array.prototype.slice.call(arguments);
+	        return addSlice(new Uint8Array(Array.prototype.slice.apply(array, args)));
+	    };
+	    return array;
+	}
+	function isBytesLike(value) {
+	    return ((isHexString(value) && !(value.length % 2)) || isBytes(value));
+	}
+	exports.isBytesLike = isBytesLike;
+	function isInteger(value) {
+	    return (typeof (value) === "number" && value == value && (value % 1) === 0);
+	}
+	function isBytes(value) {
+	    if (value == null) {
+	        return false;
+	    }
+	    if (value.constructor === Uint8Array) {
+	        return true;
+	    }
+	    if (typeof (value) === "string") {
+	        return false;
+	    }
+	    if (!isInteger(value.length) || value.length < 0) {
+	        return false;
+	    }
+	    for (var i = 0; i < value.length; i++) {
+	        var v = value[i];
+	        if (!isInteger(v) || v < 0 || v >= 256) {
+	            return false;
+	        }
+	    }
+	    return true;
+	}
+	exports.isBytes = isBytes;
+	function arrayify(value, options) {
+	    if (!options) {
+	        options = {};
+	    }
+	    if (typeof (value) === "number") {
+	        logger.checkSafeUint53(value, "invalid arrayify value");
+	        var result = [];
+	        while (value) {
+	            result.unshift(value & 0xff);
+	            value = parseInt(String(value / 256));
+	        }
+	        if (result.length === 0) {
+	            result.push(0);
+	        }
+	        return addSlice(new Uint8Array(result));
+	    }
+	    if (options.allowMissingPrefix && typeof (value) === "string" && value.substring(0, 2) !== "0x") {
+	        value = "0x" + value;
+	    }
+	    if (isHexable(value)) {
+	        value = value.toHexString();
+	    }
+	    if (isHexString(value)) {
+	        var hex = value.substring(2);
+	        if (hex.length % 2) {
+	            if (options.hexPad === "left") {
+	                hex = "0" + hex;
+	            }
+	            else if (options.hexPad === "right") {
+	                hex += "0";
+	            }
+	            else {
+	                logger.throwArgumentError("hex data is odd-length", "value", value);
+	            }
+	        }
+	        var result = [];
+	        for (var i = 0; i < hex.length; i += 2) {
+	            result.push(parseInt(hex.substring(i, i + 2), 16));
+	        }
+	        return addSlice(new Uint8Array(result));
+	    }
+	    if (isBytes(value)) {
+	        return addSlice(new Uint8Array(value));
+	    }
+	    return logger.throwArgumentError("invalid arrayify value", "value", value);
+	}
+	exports.arrayify = arrayify;
+	function concat(items) {
+	    var objects = items.map(function (item) { return arrayify(item); });
+	    var length = objects.reduce(function (accum, item) { return (accum + item.length); }, 0);
+	    var result = new Uint8Array(length);
+	    objects.reduce(function (offset, object) {
+	        result.set(object, offset);
+	        return offset + object.length;
+	    }, 0);
+	    return addSlice(result);
+	}
+	exports.concat = concat;
+	function stripZeros(value) {
+	    var result = arrayify(value);
+	    if (result.length === 0) {
+	        return result;
+	    }
+	    // Find the first non-zero entry
+	    var start = 0;
+	    while (start < result.length && result[start] === 0) {
+	        start++;
+	    }
+	    // If we started with zeros, strip them
+	    if (start) {
+	        result = result.slice(start);
+	    }
+	    return result;
+	}
+	exports.stripZeros = stripZeros;
+	function zeroPad(value, length) {
+	    value = arrayify(value);
+	    if (value.length > length) {
+	        logger.throwArgumentError("value out of range", "value", arguments[0]);
+	    }
+	    var result = new Uint8Array(length);
+	    result.set(value, length - value.length);
+	    return addSlice(result);
+	}
+	exports.zeroPad = zeroPad;
+	function isHexString(value, length) {
+	    if (typeof (value) !== "string" || !value.match(/^0x[0-9A-Fa-f]*$/)) {
+	        return false;
+	    }
+	    if (length && value.length !== 2 + 2 * length) {
+	        return false;
+	    }
+	    return true;
+	}
+	exports.isHexString = isHexString;
+	var HexCharacters = "0123456789abcdef";
+	function hexlify(value, options) {
+	    if (!options) {
+	        options = {};
+	    }
+	    if (typeof (value) === "number") {
+	        logger.checkSafeUint53(value, "invalid hexlify value");
+	        var hex = "";
+	        while (value) {
+	            hex = HexCharacters[value & 0xf] + hex;
+	            value = Math.floor(value / 16);
+	        }
+	        if (hex.length) {
+	            if (hex.length % 2) {
+	                hex = "0" + hex;
+	            }
+	            return "0x" + hex;
+	        }
+	        return "0x00";
+	    }
+	    if (typeof (value) === "bigint") {
+	        value = value.toString(16);
+	        if (value.length % 2) {
+	            return ("0x0" + value);
+	        }
+	        return "0x" + value;
+	    }
+	    if (options.allowMissingPrefix && typeof (value) === "string" && value.substring(0, 2) !== "0x") {
+	        value = "0x" + value;
+	    }
+	    if (isHexable(value)) {
+	        return value.toHexString();
+	    }
+	    if (isHexString(value)) {
+	        if (value.length % 2) {
+	            if (options.hexPad === "left") {
+	                value = "0x0" + value.substring(2);
+	            }
+	            else if (options.hexPad === "right") {
+	                value += "0";
+	            }
+	            else {
+	                logger.throwArgumentError("hex data is odd-length", "value", value);
+	            }
+	        }
+	        return value.toLowerCase();
+	    }
+	    if (isBytes(value)) {
+	        var result = "0x";
+	        for (var i = 0; i < value.length; i++) {
+	            var v = value[i];
+	            result += HexCharacters[(v & 0xf0) >> 4] + HexCharacters[v & 0x0f];
+	        }
+	        return result;
+	    }
+	    return logger.throwArgumentError("invalid hexlify value", "value", value);
+	}
+	exports.hexlify = hexlify;
+	/*
+	function unoddify(value: BytesLike | Hexable | number): BytesLike | Hexable | number {
+	    if (typeof(value) === "string" && value.length % 2 && value.substring(0, 2) === "0x") {
+	        return "0x0" + value.substring(2);
+	    }
+	    return value;
+	}
+	*/
+	function hexDataLength(data) {
+	    if (typeof (data) !== "string") {
+	        data = hexlify(data);
+	    }
+	    else if (!isHexString(data) || (data.length % 2)) {
+	        return null;
+	    }
+	    return (data.length - 2) / 2;
+	}
+	exports.hexDataLength = hexDataLength;
+	function hexDataSlice(data, offset, endOffset) {
+	    if (typeof (data) !== "string") {
+	        data = hexlify(data);
+	    }
+	    else if (!isHexString(data) || (data.length % 2)) {
+	        logger.throwArgumentError("invalid hexData", "value", data);
+	    }
+	    offset = 2 + 2 * offset;
+	    if (endOffset != null) {
+	        return "0x" + data.substring(offset, 2 + 2 * endOffset);
+	    }
+	    return "0x" + data.substring(offset);
+	}
+	exports.hexDataSlice = hexDataSlice;
+	function hexConcat(items) {
+	    var result = "0x";
+	    items.forEach(function (item) {
+	        result += hexlify(item).substring(2);
+	    });
+	    return result;
+	}
+	exports.hexConcat = hexConcat;
+	function hexValue(value) {
+	    var trimmed = hexStripZeros(hexlify(value, { hexPad: "left" }));
+	    if (trimmed === "0x") {
+	        return "0x0";
+	    }
+	    return trimmed;
+	}
+	exports.hexValue = hexValue;
+	function hexStripZeros(value) {
+	    if (typeof (value) !== "string") {
+	        value = hexlify(value);
+	    }
+	    if (!isHexString(value)) {
+	        logger.throwArgumentError("invalid hex string", "value", value);
+	    }
+	    value = value.substring(2);
+	    var offset = 0;
+	    while (offset < value.length && value[offset] === "0") {
+	        offset++;
+	    }
+	    return "0x" + value.substring(offset);
+	}
+	exports.hexStripZeros = hexStripZeros;
+	function hexZeroPad(value, length) {
+	    if (typeof (value) !== "string") {
+	        value = hexlify(value);
+	    }
+	    else if (!isHexString(value)) {
+	        logger.throwArgumentError("invalid hex string", "value", value);
+	    }
+	    if (value.length > 2 * length + 2) {
+	        logger.throwArgumentError("value out of range", "value", arguments[1]);
+	    }
+	    while (value.length < 2 * length + 2) {
+	        value = "0x0" + value.substring(2);
+	    }
+	    return value;
+	}
+	exports.hexZeroPad = hexZeroPad;
+	function splitSignature(signature) {
+	    var result = {
+	        r: "0x",
+	        s: "0x",
+	        _vs: "0x",
+	        recoveryParam: 0,
+	        v: 0,
+	        yParityAndS: "0x",
+	        compact: "0x"
+	    };
+	    if (isBytesLike(signature)) {
+	        var bytes = arrayify(signature);
+	        // Get the r, s and v
+	        if (bytes.length === 64) {
+	            // EIP-2098; pull the v from the top bit of s and clear it
+	            result.v = 27 + (bytes[32] >> 7);
+	            bytes[32] &= 0x7f;
+	            result.r = hexlify(bytes.slice(0, 32));
+	            result.s = hexlify(bytes.slice(32, 64));
+	        }
+	        else if (bytes.length === 65) {
+	            result.r = hexlify(bytes.slice(0, 32));
+	            result.s = hexlify(bytes.slice(32, 64));
+	            result.v = bytes[64];
+	        }
+	        else {
+	            logger.throwArgumentError("invalid signature string", "signature", signature);
+	        }
+	        // Allow a recid to be used as the v
+	        if (result.v < 27) {
+	            if (result.v === 0 || result.v === 1) {
+	                result.v += 27;
+	            }
+	            else {
+	                logger.throwArgumentError("signature invalid v byte", "signature", signature);
+	            }
+	        }
+	        // Compute recoveryParam from v
+	        result.recoveryParam = 1 - (result.v % 2);
+	        // Compute _vs from recoveryParam and s
+	        if (result.recoveryParam) {
+	            bytes[32] |= 0x80;
+	        }
+	        result._vs = hexlify(bytes.slice(32, 64));
+	    }
+	    else {
+	        result.r = signature.r;
+	        result.s = signature.s;
+	        result.v = signature.v;
+	        result.recoveryParam = signature.recoveryParam;
+	        result._vs = signature._vs;
+	        // If the _vs is available, use it to populate missing s, v and recoveryParam
+	        // and verify non-missing s, v and recoveryParam
+	        if (result._vs != null) {
+	            var vs_1 = zeroPad(arrayify(result._vs), 32);
+	            result._vs = hexlify(vs_1);
+	            // Set or check the recid
+	            var recoveryParam = ((vs_1[0] >= 128) ? 1 : 0);
+	            if (result.recoveryParam == null) {
+	                result.recoveryParam = recoveryParam;
+	            }
+	            else if (result.recoveryParam !== recoveryParam) {
+	                logger.throwArgumentError("signature recoveryParam mismatch _vs", "signature", signature);
+	            }
+	            // Set or check the s
+	            vs_1[0] &= 0x7f;
+	            var s = hexlify(vs_1);
+	            if (result.s == null) {
+	                result.s = s;
+	            }
+	            else if (result.s !== s) {
+	                logger.throwArgumentError("signature v mismatch _vs", "signature", signature);
+	            }
+	        }
+	        // Use recid and v to populate each other
+	        if (result.recoveryParam == null) {
+	            if (result.v == null) {
+	                logger.throwArgumentError("signature missing v and recoveryParam", "signature", signature);
+	            }
+	            else if (result.v === 0 || result.v === 1) {
+	                result.recoveryParam = result.v;
+	            }
+	            else {
+	                result.recoveryParam = 1 - (result.v % 2);
+	            }
+	        }
+	        else {
+	            if (result.v == null) {
+	                result.v = 27 + result.recoveryParam;
+	            }
+	            else {
+	                var recId = (result.v === 0 || result.v === 1) ? result.v : (1 - (result.v % 2));
+	                if (result.recoveryParam !== recId) {
+	                    logger.throwArgumentError("signature recoveryParam mismatch v", "signature", signature);
+	                }
+	            }
+	        }
+	        if (result.r == null || !isHexString(result.r)) {
+	            logger.throwArgumentError("signature missing or invalid r", "signature", signature);
+	        }
+	        else {
+	            result.r = hexZeroPad(result.r, 32);
+	        }
+	        if (result.s == null || !isHexString(result.s)) {
+	            logger.throwArgumentError("signature missing or invalid s", "signature", signature);
+	        }
+	        else {
+	            result.s = hexZeroPad(result.s, 32);
+	        }
+	        var vs = arrayify(result.s);
+	        if (vs[0] >= 128) {
+	            logger.throwArgumentError("signature s out of range", "signature", signature);
+	        }
+	        if (result.recoveryParam) {
+	            vs[0] |= 0x80;
+	        }
+	        var _vs = hexlify(vs);
+	        if (result._vs) {
+	            if (!isHexString(result._vs)) {
+	                logger.throwArgumentError("signature invalid _vs", "signature", signature);
+	            }
+	            result._vs = hexZeroPad(result._vs, 32);
+	        }
+	        // Set or check the _vs
+	        if (result._vs == null) {
+	            result._vs = _vs;
+	        }
+	        else if (result._vs !== _vs) {
+	            logger.throwArgumentError("signature _vs mismatch v and s", "signature", signature);
+	        }
+	    }
+	    result.yParityAndS = result._vs;
+	    result.compact = result.r + result.yParityAndS.substring(2);
+	    return result;
+	}
+	exports.splitSignature = splitSignature;
+	function joinSignature(signature) {
+	    signature = splitSignature(signature);
+	    return hexlify(concat([
+	        signature.r,
+	        signature.s,
+	        (signature.recoveryParam ? "0x1c" : "0x1b")
+	    ]));
+	}
+	exports.joinSignature = joinSignature;
+
+	});
+
+	var index$J = /*@__PURE__*/getDefaultExportFromCjs(lib$L);
 
 	var bn$4 = createCommonjsModule(function (module) {
 	(function (module, exports) {
@@ -38710,7 +39096,7 @@
 	})('object' === 'undefined' || module, commonjsGlobal);
 	});
 
-	var _version$1i = createCommonjsModule(function (module, exports) {
+	var _version$1k = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.version = void 0;
@@ -38718,7 +39104,7 @@
 
 	});
 
-	var _version$1j = /*@__PURE__*/getDefaultExportFromCjs(_version$1i);
+	var _version$1l = /*@__PURE__*/getDefaultExportFromCjs(_version$1k);
 
 	var bignumber$8 = createCommonjsModule(function (module, exports) {
 	"use strict";
@@ -38739,16 +39125,16 @@
 
 
 
-	var logger = new lib$J.Logger(_version$1i.version);
+	var logger = new lib$K.Logger(_version$1k.version);
 	var _constructorGuard = {};
 	var MAX_SAFE = 0x1fffffffffffff;
 	function isBigNumberish(value) {
 	    return (value != null) && (BigNumber.isBigNumber(value) ||
 	        (typeof (value) === "number" && (value % 1) === 0) ||
 	        (typeof (value) === "string" && !!value.match(/^-?[0-9]+$/)) ||
-	        (0, lib$K.isHexString)(value) ||
+	        (0, lib$L.isHexString)(value) ||
 	        (typeof (value) === "bigint") ||
-	        (0, lib$K.isBytes)(value));
+	        (0, lib$L.isBytes)(value));
 	}
 	exports.isBigNumberish = isBigNumberish;
 	// Only warn about passing 10 into radix once
@@ -38756,7 +39142,7 @@
 	var BigNumber = /** @class */ (function () {
 	    function BigNumber(constructorGuard, hex) {
 	        if (constructorGuard !== _constructorGuard) {
-	            logger.throwError("cannot call constructor directly; use BigNumber.from", lib$J.Logger.errors.UNSUPPORTED_OPERATION, {
+	            logger.throwError("cannot call constructor directly; use BigNumber.from", lib$K.Logger.errors.UNSUPPORTED_OPERATION, {
 	                operation: "new (BigNumber)"
 	            });
 	        }
@@ -38880,7 +39266,7 @@
 	            return BigInt(this.toString());
 	        }
 	        catch (e) { }
-	        return logger.throwError("this platform does not support BigInt", lib$J.Logger.errors.UNSUPPORTED_OPERATION, {
+	        return logger.throwError("this platform does not support BigInt", lib$K.Logger.errors.UNSUPPORTED_OPERATION, {
 	            value: this.toString()
 	        });
 	    };
@@ -38894,10 +39280,10 @@
 	                }
 	            }
 	            else if (arguments[0] === 16) {
-	                logger.throwError("BigNumber.toString does not accept any parameters; use bigNumber.toHexString()", lib$J.Logger.errors.UNEXPECTED_ARGUMENT, {});
+	                logger.throwError("BigNumber.toString does not accept any parameters; use bigNumber.toHexString()", lib$K.Logger.errors.UNEXPECTED_ARGUMENT, {});
 	            }
 	            else {
-	                logger.throwError("BigNumber.toString does not accept parameters", lib$J.Logger.errors.UNEXPECTED_ARGUMENT, {});
+	                logger.throwError("BigNumber.toString does not accept parameters", lib$K.Logger.errors.UNEXPECTED_ARGUMENT, {});
 	            }
 	        }
 	        return toBN(this).toString(10);
@@ -38934,8 +39320,8 @@
 	        if (typeof (anyValue) === "bigint") {
 	            return BigNumber.from(anyValue.toString());
 	        }
-	        if ((0, lib$K.isBytes)(anyValue)) {
-	            return BigNumber.from((0, lib$K.hexlify)(anyValue));
+	        if ((0, lib$L.isBytes)(anyValue)) {
+	            return BigNumber.from((0, lib$L.hexlify)(anyValue));
 	        }
 	        if (anyValue) {
 	            // Hexable interface (takes priority)
@@ -38953,7 +39339,7 @@
 	                    hex = anyValue.hex;
 	                }
 	                if (typeof (hex) === "string") {
-	                    if ((0, lib$K.isHexString)(hex) || (hex[0] === "-" && (0, lib$K.isHexString)(hex.substring(1)))) {
+	                    if ((0, lib$L.isHexString)(hex) || (hex[0] === "-" && (0, lib$L.isHexString)(hex.substring(1)))) {
 	                        return BigNumber.from(hex);
 	                    }
 	                }
@@ -39023,7 +39409,7 @@
 	    if (value != null) {
 	        params.value = value;
 	    }
-	    return logger.throwError(fault, lib$J.Logger.errors.NUMERIC_FAULT, params);
+	    return logger.throwError(fault, lib$K.Logger.errors.NUMERIC_FAULT, params);
 	}
 	// value should have no prefix
 	function _base36To16(value) {
@@ -39047,7 +39433,7 @@
 
 
 
-	var logger = new lib$J.Logger(_version$1i.version);
+	var logger = new lib$K.Logger(_version$1k.version);
 
 	var _constructorGuard = {};
 	var Zero = bignumber$8.BigNumber.from(0);
@@ -39057,7 +39443,7 @@
 	    if (value !== undefined) {
 	        params.value = value;
 	    }
-	    return logger.throwError(message, lib$J.Logger.errors.NUMERIC_FAULT, params);
+	    return logger.throwError(message, lib$K.Logger.errors.NUMERIC_FAULT, params);
 	}
 	// Constant to pull zeros from for multipliers
 	var zeros = "0";
@@ -39163,7 +39549,7 @@
 	var FixedFormat = /** @class */ (function () {
 	    function FixedFormat(constructorGuard, signed, width, decimals) {
 	        if (constructorGuard !== _constructorGuard) {
-	            logger.throwError("cannot use FixedFormat constructor; use FixedFormat.from", lib$J.Logger.errors.UNSUPPORTED_OPERATION, {
+	            logger.throwError("cannot use FixedFormat constructor; use FixedFormat.from", lib$K.Logger.errors.UNSUPPORTED_OPERATION, {
 	                operation: "new FixedFormat"
 	            });
 	        }
@@ -39229,7 +39615,7 @@
 	var FixedNumber = /** @class */ (function () {
 	    function FixedNumber(constructorGuard, hex, value, format) {
 	        if (constructorGuard !== _constructorGuard) {
-	            logger.throwError("cannot use FixedNumber constructor; use FixedNumber.from", lib$J.Logger.errors.UNSUPPORTED_OPERATION, {
+	            logger.throwError("cannot use FixedNumber constructor; use FixedNumber.from", lib$K.Logger.errors.UNSUPPORTED_OPERATION, {
 	                operation: "new FixedFormat"
 	            });
 	        }
@@ -39327,7 +39713,7 @@
 	            logger.throwArgumentError("invalid byte width", "width", width);
 	        }
 	        var hex = bignumber$8.BigNumber.from(this._hex).fromTwos(this.format.width).toTwos(width).toHexString();
-	        return (0, lib$K.hexZeroPad)(hex, width / 8);
+	        return (0, lib$L.hexZeroPad)(hex, width / 8);
 	    };
 	    FixedNumber.prototype.toUnsafeFloat = function () { return parseFloat(this.toString()); };
 	    FixedNumber.prototype.toFormat = function (format) {
@@ -39362,7 +39748,7 @@
 	        }
 	        else {
 	            hex = numeric.toHexString();
-	            hex = (0, lib$K.hexZeroPad)(hex, fixedFormat.width / 8);
+	            hex = (0, lib$L.hexZeroPad)(hex, fixedFormat.width / 8);
 	        }
 	        var decimal = formatFixed(numeric, fixedFormat.decimals);
 	        return new FixedNumber(_constructorGuard, hex, decimal, fixedFormat);
@@ -39372,7 +39758,7 @@
 	            format = "fixed";
 	        }
 	        var fixedFormat = FixedFormat.from(format);
-	        if ((0, lib$K.arrayify)(value).length > fixedFormat.width / 8) {
+	        if ((0, lib$L.arrayify)(value).length > fixedFormat.width / 8) {
 	            throw new Error("overflow");
 	        }
 	        var numeric = bignumber$8.BigNumber.from(value);
@@ -39387,7 +39773,7 @@
 	        if (typeof (value) === "string") {
 	            return FixedNumber.fromString(value, format);
 	        }
-	        if ((0, lib$K.isBytes)(value)) {
+	        if ((0, lib$L.isBytes)(value)) {
 	            return FixedNumber.fromBytes(value, format);
 	        }
 	        try {
@@ -39395,7 +39781,7 @@
 	        }
 	        catch (error) {
 	            // Allow NUMERIC_FAULT to bubble up
-	            if (error.code !== lib$J.Logger.errors.INVALID_ARGUMENT) {
+	            if (error.code !== lib$K.Logger.errors.INVALID_ARGUMENT) {
 	                throw error;
 	            }
 	        }
@@ -39414,7 +39800,7 @@
 
 	var fixednumber$9 = /*@__PURE__*/getDefaultExportFromCjs(fixednumber$8);
 
-	var lib$L = createCommonjsModule(function (module, exports) {
+	var lib$M = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports._base36To16 = exports._base16To36 = exports.parseFixed = exports.FixedNumber = exports.FixedFormat = exports.formatFixed = exports.BigNumber = void 0;
@@ -39432,7 +39818,7 @@
 
 	});
 
-	var index$J = /*@__PURE__*/getDefaultExportFromCjs(lib$L);
+	var index$K = /*@__PURE__*/getDefaultExportFromCjs(lib$M);
 
 	var sha3$2 = createCommonjsModule(function (module) {
 	/**
@@ -40093,7 +40479,7 @@
 	})();
 	});
 
-	var lib$M = createCommonjsModule(function (module, exports) {
+	var lib$N = createCommonjsModule(function (module, exports) {
 	"use strict";
 	var __importDefault = (commonjsGlobal && commonjsGlobal.__importDefault) || function (mod) {
 	    return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -40103,15 +40489,15 @@
 	var js_sha3_1 = __importDefault(sha3$2);
 
 	function keccak256(data) {
-	    return '0x' + js_sha3_1.default.keccak_256((0, lib$K.arrayify)(data));
+	    return '0x' + js_sha3_1.default.keccak_256((0, lib$L.arrayify)(data));
 	}
 	exports.keccak256 = keccak256;
 
 	});
 
-	var index$K = /*@__PURE__*/getDefaultExportFromCjs(lib$M);
+	var index$L = /*@__PURE__*/getDefaultExportFromCjs(lib$N);
 
-	var _version$1k = createCommonjsModule(function (module, exports) {
+	var _version$1m = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.version = void 0;
@@ -40119,9 +40505,9 @@
 
 	});
 
-	var _version$1l = /*@__PURE__*/getDefaultExportFromCjs(_version$1k);
+	var _version$1n = /*@__PURE__*/getDefaultExportFromCjs(_version$1m);
 
-	var lib$N = createCommonjsModule(function (module, exports) {
+	var lib$O = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.decode = exports.encode = void 0;
@@ -40129,7 +40515,7 @@
 
 
 
-	var logger = new lib$J.Logger(_version$1k.version);
+	var logger = new lib$K.Logger(_version$1m.version);
 	function arrayifyInteger(value) {
 	    var result = [];
 	    while (value) {
@@ -40159,10 +40545,10 @@
 	        length_1.unshift(0xf7 + length_1.length);
 	        return length_1.concat(payload_1);
 	    }
-	    if (!(0, lib$K.isBytesLike)(object)) {
+	    if (!(0, lib$L.isBytesLike)(object)) {
 	        logger.throwArgumentError("RLP object must be BytesLike", "object", object);
 	    }
-	    var data = Array.prototype.slice.call((0, lib$K.arrayify)(object));
+	    var data = Array.prototype.slice.call((0, lib$L.arrayify)(object));
 	    if (data.length === 1 && data[0] <= 0x7f) {
 	        return data;
 	    }
@@ -40175,7 +40561,7 @@
 	    return length.concat(data);
 	}
 	function encode(object) {
-	    return (0, lib$K.hexlify)(_encode(object));
+	    return (0, lib$L.hexlify)(_encode(object));
 	}
 	exports.encode = encode;
 	function _decodeChildren(data, offset, childOffset, length) {
@@ -40185,7 +40571,7 @@
 	        result.push(decoded.result);
 	        childOffset += decoded.consumed;
 	        if (childOffset > offset + 1 + length) {
-	            logger.throwError("child data too short", lib$J.Logger.errors.BUFFER_OVERRUN, {});
+	            logger.throwError("child data too short", lib$K.Logger.errors.BUFFER_OVERRUN, {});
 	        }
 	    }
 	    return { consumed: (1 + length), result: result };
@@ -40193,51 +40579,51 @@
 	// returns { consumed: number, result: Object }
 	function _decode(data, offset) {
 	    if (data.length === 0) {
-	        logger.throwError("data too short", lib$J.Logger.errors.BUFFER_OVERRUN, {});
+	        logger.throwError("data too short", lib$K.Logger.errors.BUFFER_OVERRUN, {});
 	    }
 	    // Array with extra length prefix
 	    if (data[offset] >= 0xf8) {
 	        var lengthLength = data[offset] - 0xf7;
 	        if (offset + 1 + lengthLength > data.length) {
-	            logger.throwError("data short segment too short", lib$J.Logger.errors.BUFFER_OVERRUN, {});
+	            logger.throwError("data short segment too short", lib$K.Logger.errors.BUFFER_OVERRUN, {});
 	        }
 	        var length_2 = unarrayifyInteger(data, offset + 1, lengthLength);
 	        if (offset + 1 + lengthLength + length_2 > data.length) {
-	            logger.throwError("data long segment too short", lib$J.Logger.errors.BUFFER_OVERRUN, {});
+	            logger.throwError("data long segment too short", lib$K.Logger.errors.BUFFER_OVERRUN, {});
 	        }
 	        return _decodeChildren(data, offset, offset + 1 + lengthLength, lengthLength + length_2);
 	    }
 	    else if (data[offset] >= 0xc0) {
 	        var length_3 = data[offset] - 0xc0;
 	        if (offset + 1 + length_3 > data.length) {
-	            logger.throwError("data array too short", lib$J.Logger.errors.BUFFER_OVERRUN, {});
+	            logger.throwError("data array too short", lib$K.Logger.errors.BUFFER_OVERRUN, {});
 	        }
 	        return _decodeChildren(data, offset, offset + 1, length_3);
 	    }
 	    else if (data[offset] >= 0xb8) {
 	        var lengthLength = data[offset] - 0xb7;
 	        if (offset + 1 + lengthLength > data.length) {
-	            logger.throwError("data array too short", lib$J.Logger.errors.BUFFER_OVERRUN, {});
+	            logger.throwError("data array too short", lib$K.Logger.errors.BUFFER_OVERRUN, {});
 	        }
 	        var length_4 = unarrayifyInteger(data, offset + 1, lengthLength);
 	        if (offset + 1 + lengthLength + length_4 > data.length) {
-	            logger.throwError("data array too short", lib$J.Logger.errors.BUFFER_OVERRUN, {});
+	            logger.throwError("data array too short", lib$K.Logger.errors.BUFFER_OVERRUN, {});
 	        }
-	        var result = (0, lib$K.hexlify)(data.slice(offset + 1 + lengthLength, offset + 1 + lengthLength + length_4));
+	        var result = (0, lib$L.hexlify)(data.slice(offset + 1 + lengthLength, offset + 1 + lengthLength + length_4));
 	        return { consumed: (1 + lengthLength + length_4), result: result };
 	    }
 	    else if (data[offset] >= 0x80) {
 	        var length_5 = data[offset] - 0x80;
 	        if (offset + 1 + length_5 > data.length) {
-	            logger.throwError("data too short", lib$J.Logger.errors.BUFFER_OVERRUN, {});
+	            logger.throwError("data too short", lib$K.Logger.errors.BUFFER_OVERRUN, {});
 	        }
-	        var result = (0, lib$K.hexlify)(data.slice(offset + 1, offset + 1 + length_5));
+	        var result = (0, lib$L.hexlify)(data.slice(offset + 1, offset + 1 + length_5));
 	        return { consumed: (1 + length_5), result: result };
 	    }
-	    return { consumed: 1, result: (0, lib$K.hexlify)(data[offset]) };
+	    return { consumed: 1, result: (0, lib$L.hexlify)(data[offset]) };
 	}
 	function decode(data) {
-	    var bytes = (0, lib$K.arrayify)(data);
+	    var bytes = (0, lib$L.arrayify)(data);
 	    var decoded = _decode(bytes, 0);
 	    if (decoded.consumed !== bytes.length) {
 	        logger.throwArgumentError("invalid rlp data", "data", data);
@@ -40248,9 +40634,9 @@
 
 	});
 
-	var index$L = /*@__PURE__*/getDefaultExportFromCjs(lib$N);
+	var index$M = /*@__PURE__*/getDefaultExportFromCjs(lib$O);
 
-	var _version$1m = createCommonjsModule(function (module, exports) {
+	var _version$1o = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.version = void 0;
@@ -40258,9 +40644,9 @@
 
 	});
 
-	var _version$1n = /*@__PURE__*/getDefaultExportFromCjs(_version$1m);
+	var _version$1p = /*@__PURE__*/getDefaultExportFromCjs(_version$1o);
 
-	var lib$O = createCommonjsModule(function (module, exports) {
+	var lib$P = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.getCreate2Address = exports.getContractAddress = exports.getIcapAddress = exports.isAddress = exports.getAddress = void 0;
@@ -40270,9 +40656,9 @@
 
 
 
-	var logger = new lib$J.Logger(_version$1m.version);
+	var logger = new lib$K.Logger(_version$1o.version);
 	function getChecksumAddress(address) {
-	    if (!(0, lib$K.isHexString)(address, 20)) {
+	    if (!(0, lib$L.isHexString)(address, 20)) {
 	        logger.throwArgumentError("invalid address", "address", address);
 	    }
 	    address = address.toLowerCase();
@@ -40281,7 +40667,7 @@
 	    for (var i = 0; i < 40; i++) {
 	        expanded[i] = chars[i].charCodeAt(0);
 	    }
-	    var hashed = (0, lib$K.arrayify)((0, lib$M.keccak256)(expanded));
+	    var hashed = (0, lib$L.arrayify)((0, lib$N.keccak256)(expanded));
 	    for (var i = 0; i < 40; i += 2) {
 	        if ((hashed[i >> 1] >> 4) >= 8) {
 	            chars[i] = chars[i].toUpperCase();
@@ -40349,7 +40735,7 @@
 	        if (address.substring(2, 4) !== ibanChecksum(address)) {
 	            logger.throwArgumentError("bad icap checksum", "address", address);
 	        }
-	        result = (0, lib$L._base36To16)(address.substring(4));
+	        result = (0, lib$M._base36To16)(address.substring(4));
 	        while (result.length < 40) {
 	            result = "0" + result;
 	        }
@@ -40371,7 +40757,7 @@
 	}
 	exports.isAddress = isAddress;
 	function getIcapAddress(address) {
-	    var base36 = (0, lib$L._base16To36)(getAddress(address).substring(2)).toUpperCase();
+	    var base36 = (0, lib$M._base16To36)(getAddress(address).substring(2)).toUpperCase();
 	    while (base36.length < 30) {
 	        base36 = "0" + base36;
 	    }
@@ -40387,24 +40773,24 @@
 	    catch (error) {
 	        logger.throwArgumentError("missing from address", "transaction", transaction);
 	    }
-	    var nonce = (0, lib$K.stripZeros)((0, lib$K.arrayify)(lib$L.BigNumber.from(transaction.nonce).toHexString()));
-	    return getAddress((0, lib$K.hexDataSlice)((0, lib$M.keccak256)((0, lib$N.encode)([from, nonce])), 12));
+	    var nonce = (0, lib$L.stripZeros)((0, lib$L.arrayify)(lib$M.BigNumber.from(transaction.nonce).toHexString()));
+	    return getAddress((0, lib$L.hexDataSlice)((0, lib$N.keccak256)((0, lib$O.encode)([from, nonce])), 12));
 	}
 	exports.getContractAddress = getContractAddress;
 	function getCreate2Address(from, salt, initCodeHash) {
-	    if ((0, lib$K.hexDataLength)(salt) !== 32) {
+	    if ((0, lib$L.hexDataLength)(salt) !== 32) {
 	        logger.throwArgumentError("salt must be 32 bytes", "salt", salt);
 	    }
-	    if ((0, lib$K.hexDataLength)(initCodeHash) !== 32) {
+	    if ((0, lib$L.hexDataLength)(initCodeHash) !== 32) {
 	        logger.throwArgumentError("initCodeHash must be 32 bytes", "initCodeHash", initCodeHash);
 	    }
-	    return getAddress((0, lib$K.hexDataSlice)((0, lib$M.keccak256)((0, lib$K.concat)(["0xff", getAddress(from), salt, initCodeHash])), 12));
+	    return getAddress((0, lib$L.hexDataSlice)((0, lib$N.keccak256)((0, lib$L.concat)(["0xff", getAddress(from), salt, initCodeHash])), 12));
 	}
 	exports.getCreate2Address = getCreate2Address;
 
 	});
 
-	var index$M = /*@__PURE__*/getDefaultExportFromCjs(lib$O);
+	var index$N = /*@__PURE__*/getDefaultExportFromCjs(lib$P);
 
 	var bn$5 = createCommonjsModule(function (module) {
 	(function (module, exports) {
@@ -43956,7 +44342,7 @@
 	})('object' === 'undefined' || module, commonjsGlobal);
 	});
 
-	var _version$1o = createCommonjsModule(function (module, exports) {
+	var _version$1q = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.version = void 0;
@@ -43964,9 +44350,9 @@
 
 	});
 
-	var _version$1p = /*@__PURE__*/getDefaultExportFromCjs(_version$1o);
+	var _version$1r = /*@__PURE__*/getDefaultExportFromCjs(_version$1q);
 
-	var lib$P = createCommonjsModule(function (module, exports) {
+	var lib$Q = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.Logger = exports.ErrorCode = exports.LogLevel = void 0;
@@ -44300,7 +44686,7 @@
 	    };
 	    Logger.globalLogger = function () {
 	        if (!_globalLogger) {
-	            _globalLogger = new Logger(_version$1o.version);
+	            _globalLogger = new Logger(_version$1q.version);
 	        }
 	        return _globalLogger;
 	    };
@@ -44340,9 +44726,9 @@
 
 	});
 
-	var index$N = /*@__PURE__*/getDefaultExportFromCjs(lib$P);
+	var index$O = /*@__PURE__*/getDefaultExportFromCjs(lib$Q);
 
-	var _version$1q = createCommonjsModule(function (module, exports) {
+	var _version$1s = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.version = void 0;
@@ -44350,15 +44736,15 @@
 
 	});
 
-	var _version$1r = /*@__PURE__*/getDefaultExportFromCjs(_version$1q);
+	var _version$1t = /*@__PURE__*/getDefaultExportFromCjs(_version$1s);
 
-	var lib$Q = createCommonjsModule(function (module, exports) {
+	var lib$R = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.joinSignature = exports.splitSignature = exports.hexZeroPad = exports.hexStripZeros = exports.hexValue = exports.hexConcat = exports.hexDataSlice = exports.hexDataLength = exports.hexlify = exports.isHexString = exports.zeroPad = exports.stripZeros = exports.concat = exports.arrayify = exports.isBytes = exports.isBytesLike = void 0;
 
 
-	var logger = new lib$P.Logger(_version$1q.version);
+	var logger = new lib$Q.Logger(_version$1s.version);
 	///////////////////////////////
 	function isHexable(value) {
 	    return !!(value.toHexString);
@@ -44782,9 +45168,9 @@
 
 	});
 
-	var index$O = /*@__PURE__*/getDefaultExportFromCjs(lib$Q);
+	var index$P = /*@__PURE__*/getDefaultExportFromCjs(lib$R);
 
-	var _version$1s = createCommonjsModule(function (module, exports) {
+	var _version$1u = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.version = void 0;
@@ -44792,7 +45178,7 @@
 
 	});
 
-	var _version$1t = /*@__PURE__*/getDefaultExportFromCjs(_version$1s);
+	var _version$1v = /*@__PURE__*/getDefaultExportFromCjs(_version$1u);
 
 	var bignumber$a = createCommonjsModule(function (module, exports) {
 	"use strict";
@@ -44813,16 +45199,16 @@
 
 
 
-	var logger = new lib$P.Logger(_version$1s.version);
+	var logger = new lib$Q.Logger(_version$1u.version);
 	var _constructorGuard = {};
 	var MAX_SAFE = 0x1fffffffffffff;
 	function isBigNumberish(value) {
 	    return (value != null) && (BigNumber.isBigNumber(value) ||
 	        (typeof (value) === "number" && (value % 1) === 0) ||
 	        (typeof (value) === "string" && !!value.match(/^-?[0-9]+$/)) ||
-	        (0, lib$Q.isHexString)(value) ||
+	        (0, lib$R.isHexString)(value) ||
 	        (typeof (value) === "bigint") ||
-	        (0, lib$Q.isBytes)(value));
+	        (0, lib$R.isBytes)(value));
 	}
 	exports.isBigNumberish = isBigNumberish;
 	// Only warn about passing 10 into radix once
@@ -44830,7 +45216,7 @@
 	var BigNumber = /** @class */ (function () {
 	    function BigNumber(constructorGuard, hex) {
 	        if (constructorGuard !== _constructorGuard) {
-	            logger.throwError("cannot call constructor directly; use BigNumber.from", lib$P.Logger.errors.UNSUPPORTED_OPERATION, {
+	            logger.throwError("cannot call constructor directly; use BigNumber.from", lib$Q.Logger.errors.UNSUPPORTED_OPERATION, {
 	                operation: "new (BigNumber)"
 	            });
 	        }
@@ -44954,7 +45340,7 @@
 	            return BigInt(this.toString());
 	        }
 	        catch (e) { }
-	        return logger.throwError("this platform does not support BigInt", lib$P.Logger.errors.UNSUPPORTED_OPERATION, {
+	        return logger.throwError("this platform does not support BigInt", lib$Q.Logger.errors.UNSUPPORTED_OPERATION, {
 	            value: this.toString()
 	        });
 	    };
@@ -44968,10 +45354,10 @@
 	                }
 	            }
 	            else if (arguments[0] === 16) {
-	                logger.throwError("BigNumber.toString does not accept any parameters; use bigNumber.toHexString()", lib$P.Logger.errors.UNEXPECTED_ARGUMENT, {});
+	                logger.throwError("BigNumber.toString does not accept any parameters; use bigNumber.toHexString()", lib$Q.Logger.errors.UNEXPECTED_ARGUMENT, {});
 	            }
 	            else {
-	                logger.throwError("BigNumber.toString does not accept parameters", lib$P.Logger.errors.UNEXPECTED_ARGUMENT, {});
+	                logger.throwError("BigNumber.toString does not accept parameters", lib$Q.Logger.errors.UNEXPECTED_ARGUMENT, {});
 	            }
 	        }
 	        return toBN(this).toString(10);
@@ -45008,8 +45394,8 @@
 	        if (typeof (anyValue) === "bigint") {
 	            return BigNumber.from(anyValue.toString());
 	        }
-	        if ((0, lib$Q.isBytes)(anyValue)) {
-	            return BigNumber.from((0, lib$Q.hexlify)(anyValue));
+	        if ((0, lib$R.isBytes)(anyValue)) {
+	            return BigNumber.from((0, lib$R.hexlify)(anyValue));
 	        }
 	        if (anyValue) {
 	            // Hexable interface (takes priority)
@@ -45027,7 +45413,7 @@
 	                    hex = anyValue.hex;
 	                }
 	                if (typeof (hex) === "string") {
-	                    if ((0, lib$Q.isHexString)(hex) || (hex[0] === "-" && (0, lib$Q.isHexString)(hex.substring(1)))) {
+	                    if ((0, lib$R.isHexString)(hex) || (hex[0] === "-" && (0, lib$R.isHexString)(hex.substring(1)))) {
 	                        return BigNumber.from(hex);
 	                    }
 	                }
@@ -45097,7 +45483,7 @@
 	    if (value != null) {
 	        params.value = value;
 	    }
-	    return logger.throwError(fault, lib$P.Logger.errors.NUMERIC_FAULT, params);
+	    return logger.throwError(fault, lib$Q.Logger.errors.NUMERIC_FAULT, params);
 	}
 	// value should have no prefix
 	function _base36To16(value) {
@@ -45121,7 +45507,7 @@
 
 
 
-	var logger = new lib$P.Logger(_version$1s.version);
+	var logger = new lib$Q.Logger(_version$1u.version);
 
 	var _constructorGuard = {};
 	var Zero = bignumber$a.BigNumber.from(0);
@@ -45131,7 +45517,7 @@
 	    if (value !== undefined) {
 	        params.value = value;
 	    }
-	    return logger.throwError(message, lib$P.Logger.errors.NUMERIC_FAULT, params);
+	    return logger.throwError(message, lib$Q.Logger.errors.NUMERIC_FAULT, params);
 	}
 	// Constant to pull zeros from for multipliers
 	var zeros = "0";
@@ -45237,7 +45623,7 @@
 	var FixedFormat = /** @class */ (function () {
 	    function FixedFormat(constructorGuard, signed, width, decimals) {
 	        if (constructorGuard !== _constructorGuard) {
-	            logger.throwError("cannot use FixedFormat constructor; use FixedFormat.from", lib$P.Logger.errors.UNSUPPORTED_OPERATION, {
+	            logger.throwError("cannot use FixedFormat constructor; use FixedFormat.from", lib$Q.Logger.errors.UNSUPPORTED_OPERATION, {
 	                operation: "new FixedFormat"
 	            });
 	        }
@@ -45303,7 +45689,7 @@
 	var FixedNumber = /** @class */ (function () {
 	    function FixedNumber(constructorGuard, hex, value, format) {
 	        if (constructorGuard !== _constructorGuard) {
-	            logger.throwError("cannot use FixedNumber constructor; use FixedNumber.from", lib$P.Logger.errors.UNSUPPORTED_OPERATION, {
+	            logger.throwError("cannot use FixedNumber constructor; use FixedNumber.from", lib$Q.Logger.errors.UNSUPPORTED_OPERATION, {
 	                operation: "new FixedFormat"
 	            });
 	        }
@@ -45401,7 +45787,7 @@
 	            logger.throwArgumentError("invalid byte width", "width", width);
 	        }
 	        var hex = bignumber$a.BigNumber.from(this._hex).fromTwos(this.format.width).toTwos(width).toHexString();
-	        return (0, lib$Q.hexZeroPad)(hex, width / 8);
+	        return (0, lib$R.hexZeroPad)(hex, width / 8);
 	    };
 	    FixedNumber.prototype.toUnsafeFloat = function () { return parseFloat(this.toString()); };
 	    FixedNumber.prototype.toFormat = function (format) {
@@ -45436,7 +45822,7 @@
 	        }
 	        else {
 	            hex = numeric.toHexString();
-	            hex = (0, lib$Q.hexZeroPad)(hex, fixedFormat.width / 8);
+	            hex = (0, lib$R.hexZeroPad)(hex, fixedFormat.width / 8);
 	        }
 	        var decimal = formatFixed(numeric, fixedFormat.decimals);
 	        return new FixedNumber(_constructorGuard, hex, decimal, fixedFormat);
@@ -45446,7 +45832,7 @@
 	            format = "fixed";
 	        }
 	        var fixedFormat = FixedFormat.from(format);
-	        if ((0, lib$Q.arrayify)(value).length > fixedFormat.width / 8) {
+	        if ((0, lib$R.arrayify)(value).length > fixedFormat.width / 8) {
 	            throw new Error("overflow");
 	        }
 	        var numeric = bignumber$a.BigNumber.from(value);
@@ -45461,7 +45847,7 @@
 	        if (typeof (value) === "string") {
 	            return FixedNumber.fromString(value, format);
 	        }
-	        if ((0, lib$Q.isBytes)(value)) {
+	        if ((0, lib$R.isBytes)(value)) {
 	            return FixedNumber.fromBytes(value, format);
 	        }
 	        try {
@@ -45469,7 +45855,7 @@
 	        }
 	        catch (error) {
 	            // Allow NUMERIC_FAULT to bubble up
-	            if (error.code !== lib$P.Logger.errors.INVALID_ARGUMENT) {
+	            if (error.code !== lib$Q.Logger.errors.INVALID_ARGUMENT) {
 	                throw error;
 	            }
 	        }
@@ -45488,7 +45874,7 @@
 
 	var fixednumber$b = /*@__PURE__*/getDefaultExportFromCjs(fixednumber$a);
 
-	var lib$R = createCommonjsModule(function (module, exports) {
+	var lib$S = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports._base36To16 = exports._base16To36 = exports.parseFixed = exports.FixedNumber = exports.FixedFormat = exports.formatFixed = exports.BigNumber = void 0;
@@ -45506,9 +45892,9 @@
 
 	});
 
-	var index$P = /*@__PURE__*/getDefaultExportFromCjs(lib$R);
+	var index$Q = /*@__PURE__*/getDefaultExportFromCjs(lib$S);
 
-	var _version$1u = createCommonjsModule(function (module, exports) {
+	var _version$1w = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.version = void 0;
@@ -45516,9 +45902,9 @@
 
 	});
 
-	var _version$1v = /*@__PURE__*/getDefaultExportFromCjs(_version$1u);
+	var _version$1x = /*@__PURE__*/getDefaultExportFromCjs(_version$1w);
 
-	var lib$S = createCommonjsModule(function (module, exports) {
+	var lib$T = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.Logger = exports.ErrorCode = exports.LogLevel = void 0;
@@ -45852,7 +46238,7 @@
 	    };
 	    Logger.globalLogger = function () {
 	        if (!_globalLogger) {
-	            _globalLogger = new Logger(_version$1u.version);
+	            _globalLogger = new Logger(_version$1w.version);
 	        }
 	        return _globalLogger;
 	    };
@@ -45892,9 +46278,9 @@
 
 	});
 
-	var index$Q = /*@__PURE__*/getDefaultExportFromCjs(lib$S);
+	var index$R = /*@__PURE__*/getDefaultExportFromCjs(lib$T);
 
-	var _version$1w = createCommonjsModule(function (module, exports) {
+	var _version$1y = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.version = void 0;
@@ -45902,9 +46288,9 @@
 
 	});
 
-	var _version$1x = /*@__PURE__*/getDefaultExportFromCjs(_version$1w);
+	var _version$1z = /*@__PURE__*/getDefaultExportFromCjs(_version$1y);
 
-	var lib$T = createCommonjsModule(function (module, exports) {
+	var lib$U = createCommonjsModule(function (module, exports) {
 	"use strict";
 	var __awaiter = (commonjsGlobal && commonjsGlobal.__awaiter) || function (thisArg, _arguments, P, generator) {
 	    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
@@ -45946,7 +46332,7 @@
 	exports.Description = exports.deepCopy = exports.shallowCopy = exports.checkProperties = exports.resolveProperties = exports.getStatic = exports.defineReadOnly = void 0;
 
 
-	var logger = new lib$S.Logger(_version$1w.version);
+	var logger = new lib$T.Logger(_version$1y.version);
 	function defineReadOnly(object, name, value) {
 	    Object.defineProperty(object, name, {
 	        enumerable: true,
@@ -46078,7 +46464,7 @@
 
 	});
 
-	var index$R = /*@__PURE__*/getDefaultExportFromCjs(lib$T);
+	var index$S = /*@__PURE__*/getDefaultExportFromCjs(lib$U);
 
 	var typedData = createCommonjsModule(function (module, exports) {
 	"use strict";
@@ -46127,24 +46513,24 @@
 
 
 
-	var logger = new lib$D.Logger(_version$18.version);
+	var logger = new lib$E.Logger(_version$1a.version);
 
 	var padding = new Uint8Array(32);
 	padding.fill(0);
-	var NegativeOne = lib$R.BigNumber.from(-1);
-	var Zero = lib$R.BigNumber.from(0);
-	var One = lib$R.BigNumber.from(1);
-	var MaxUint256 = lib$R.BigNumber.from("0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+	var NegativeOne = lib$S.BigNumber.from(-1);
+	var Zero = lib$S.BigNumber.from(0);
+	var One = lib$S.BigNumber.from(1);
+	var MaxUint256 = lib$S.BigNumber.from("0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
 	function hexPadRight(value) {
-	    var bytes = (0, lib$C.arrayify)(value);
+	    var bytes = (0, lib$D.arrayify)(value);
 	    var padOffset = bytes.length % 32;
 	    if (padOffset) {
-	        return (0, lib$C.hexConcat)([bytes, padding.slice(padOffset)]);
+	        return (0, lib$D.hexConcat)([bytes, padding.slice(padOffset)]);
 	    }
-	    return (0, lib$C.hexlify)(bytes);
+	    return (0, lib$D.hexlify)(bytes);
 	}
-	var hexTrue = (0, lib$C.hexZeroPad)(One.toHexString(), 32);
-	var hexFalse = (0, lib$C.hexZeroPad)(Zero.toHexString(), 32);
+	var hexTrue = (0, lib$D.hexZeroPad)(One.toHexString(), 32);
+	var hexFalse = (0, lib$D.hexZeroPad)(Zero.toHexString(), 32);
 	var domainFieldTypes = {
 	    name: "string",
 	    version: "string",
@@ -46168,25 +46554,25 @@
 	    version: checkString("version"),
 	    chainId: function (value) {
 	        try {
-	            return lib$R.BigNumber.from(value).toString();
+	            return lib$S.BigNumber.from(value).toString();
 	        }
 	        catch (error) { }
 	        return logger.throwArgumentError("invalid domain value for \"chainId\"", "domain.chainId", value);
 	    },
 	    verifyingContract: function (value) {
 	        try {
-	            return (0, lib$O.getAddress)(value).toLowerCase();
+	            return (0, lib$P.getAddress)(value).toLowerCase();
 	        }
 	        catch (error) { }
 	        return logger.throwArgumentError("invalid domain value \"verifyingContract\"", "domain.verifyingContract", value);
 	    },
 	    salt: function (value) {
 	        try {
-	            var bytes = (0, lib$C.arrayify)(value);
+	            var bytes = (0, lib$D.arrayify)(value);
 	            if (bytes.length !== 32) {
 	                throw new Error("bad length");
 	            }
-	            return (0, lib$C.hexlify)(bytes);
+	            return (0, lib$D.hexlify)(bytes);
 	        }
 	        catch (error) { }
 	        return logger.throwArgumentError("invalid domain value \"salt\"", "domain.salt", value);
@@ -46205,11 +46591,11 @@
 	            var boundsUpper_1 = MaxUint256.mask(signed ? (width - 1) : width);
 	            var boundsLower_1 = signed ? boundsUpper_1.add(One).mul(NegativeOne) : Zero;
 	            return function (value) {
-	                var v = lib$R.BigNumber.from(value);
+	                var v = lib$S.BigNumber.from(value);
 	                if (v.lt(boundsLower_1) || v.gt(boundsUpper_1)) {
 	                    logger.throwArgumentError("value out-of-bounds for " + type, "value", value);
 	                }
-	                return (0, lib$C.hexZeroPad)(v.toTwos(256).toHexString(), 32);
+	                return (0, lib$D.hexZeroPad)(v.toTwos(256).toHexString(), 32);
 	            };
 	        }
 	    }
@@ -46222,7 +46608,7 @@
 	                logger.throwArgumentError("invalid bytes width", "type", type);
 	            }
 	            return function (value) {
-	                var bytes = (0, lib$C.arrayify)(value);
+	                var bytes = (0, lib$D.arrayify)(value);
 	                if (bytes.length !== width_1) {
 	                    logger.throwArgumentError("invalid length for " + type, "value", value);
 	                }
@@ -46232,13 +46618,13 @@
 	    }
 	    switch (type) {
 	        case "address": return function (value) {
-	            return (0, lib$C.hexZeroPad)((0, lib$O.getAddress)(value), 32);
+	            return (0, lib$D.hexZeroPad)((0, lib$P.getAddress)(value), 32);
 	        };
 	        case "bool": return function (value) {
 	            return ((!value) ? hexFalse : hexTrue);
 	        };
 	        case "bytes": return function (value) {
-	            return (0, lib$v.keccak256)(value);
+	            return (0, lib$w.keccak256)(value);
 	        };
 	        case "string": return function (value) {
 	            return (0, id_1.id)(value);
@@ -46254,9 +46640,9 @@
 	}
 	var TypedDataEncoder = /** @class */ (function () {
 	    function TypedDataEncoder(types) {
-	        (0, lib$T.defineReadOnly)(this, "types", Object.freeze((0, lib$T.deepCopy)(types)));
-	        (0, lib$T.defineReadOnly)(this, "_encoderCache", {});
-	        (0, lib$T.defineReadOnly)(this, "_types", {});
+	        (0, lib$U.defineReadOnly)(this, "types", Object.freeze((0, lib$U.deepCopy)(types)));
+	        (0, lib$U.defineReadOnly)(this, "_encoderCache", {});
+	        (0, lib$U.defineReadOnly)(this, "_types", {});
 	        // Link struct types to their direct child structs
 	        var links = {};
 	        // Link structs to structs which contain them as a child
@@ -46305,7 +46691,7 @@
 	        else if (primaryTypes.length > 1) {
 	            logger.throwArgumentError("ambiguous primary types or unused types: " + primaryTypes.map(function (t) { return (JSON.stringify(t)); }).join(", "), "types", types);
 	        }
-	        (0, lib$T.defineReadOnly)(this, "primaryType", primaryTypes[0]);
+	        (0, lib$U.defineReadOnly)(this, "primaryType", primaryTypes[0]);
 	        // Check for circular type references
 	        function checkCircular(type, found) {
 	            if (found[type]) {
@@ -46361,9 +46747,9 @@
 	                }
 	                var result = value.map(subEncoder_1);
 	                if (_this._types[subtype_1]) {
-	                    result = result.map(lib$v.keccak256);
+	                    result = result.map(lib$w.keccak256);
 	                }
-	                return (0, lib$v.keccak256)((0, lib$C.hexConcat)(result));
+	                return (0, lib$w.keccak256)((0, lib$D.hexConcat)(result));
 	            };
 	        }
 	        // Struct
@@ -46375,12 +46761,12 @@
 	                    var name = _a.name, type = _a.type;
 	                    var result = _this.getEncoder(type)(value[name]);
 	                    if (_this._types[type]) {
-	                        return (0, lib$v.keccak256)(result);
+	                        return (0, lib$w.keccak256)(result);
 	                    }
 	                    return result;
 	                });
 	                values.unshift(encodedType_1);
-	                return (0, lib$C.hexConcat)(values);
+	                return (0, lib$D.hexConcat)(values);
 	            };
 	        }
 	        return logger.throwArgumentError("unknown type: " + type, "type", type);
@@ -46396,7 +46782,7 @@
 	        return this.getEncoder(type)(value);
 	    };
 	    TypedDataEncoder.prototype.hashStruct = function (name, value) {
-	        return (0, lib$v.keccak256)(this.encodeData(name, value));
+	        return (0, lib$w.keccak256)(this.encodeData(name, value));
 	    };
 	    TypedDataEncoder.prototype.encode = function (value) {
 	        return this.encodeData(this.primaryType, value);
@@ -46461,14 +46847,14 @@
 	        return TypedDataEncoder.hashStruct("EIP712Domain", { EIP712Domain: domainFields }, domain);
 	    };
 	    TypedDataEncoder.encode = function (domain, types, value) {
-	        return (0, lib$C.hexConcat)([
+	        return (0, lib$D.hexConcat)([
 	            "0x1901",
 	            TypedDataEncoder.hashDomain(domain),
 	            TypedDataEncoder.from(types).hash(value)
 	        ]);
 	    };
 	    TypedDataEncoder.hash = function (domain, types, value) {
-	        return (0, lib$v.keccak256)(TypedDataEncoder.encode(domain, types, value));
+	        return (0, lib$w.keccak256)(TypedDataEncoder.encode(domain, types, value));
 	    };
 	    // Replaces all address types with ENS names with their looked up address
 	    TypedDataEncoder.resolveNames = function (domain, types, value, resolveName) {
@@ -46478,16 +46864,16 @@
 	                switch (_e.label) {
 	                    case 0:
 	                        // Make a copy to isolate it from the object passed in
-	                        domain = (0, lib$T.shallowCopy)(domain);
+	                        domain = (0, lib$U.shallowCopy)(domain);
 	                        ensCache = {};
 	                        // Do we need to look up the domain's verifyingContract?
-	                        if (domain.verifyingContract && !(0, lib$C.isHexString)(domain.verifyingContract, 20)) {
+	                        if (domain.verifyingContract && !(0, lib$D.isHexString)(domain.verifyingContract, 20)) {
 	                            ensCache[domain.verifyingContract] = "0x";
 	                        }
 	                        encoder = TypedDataEncoder.from(types);
 	                        // Get a list of all the addresses
 	                        encoder.visit(value, function (type, value) {
-	                            if (type === "address" && !(0, lib$C.isHexString)(value, 20)) {
+	                            if (type === "address" && !(0, lib$D.isHexString)(value, 20)) {
 	                                ensCache[value] = "0x";
 	                            }
 	                            return value;
@@ -46541,7 +46927,7 @@
 	            domainTypes.push({ name: name, type: domainFieldTypes[name] });
 	        });
 	        var encoder = TypedDataEncoder.from(types);
-	        var typesWithDomain = (0, lib$T.shallowCopy)(types);
+	        var typesWithDomain = (0, lib$U.shallowCopy)(types);
 	        if (typesWithDomain.EIP712Domain) {
 	            logger.throwArgumentError("types must not contain EIP712Domain type", "types.EIP712Domain", types);
 	        }
@@ -46557,11 +46943,11 @@
 	            message: encoder.visit(value, function (type, value) {
 	                // bytes
 	                if (type.match(/^bytes(\d*)/)) {
-	                    return (0, lib$C.hexlify)((0, lib$C.arrayify)(value));
+	                    return (0, lib$D.hexlify)((0, lib$D.arrayify)(value));
 	                }
 	                // uint or int
 	                if (type.match(/^u?int/)) {
-	                    return lib$R.BigNumber.from(value).toString();
+	                    return lib$S.BigNumber.from(value).toString();
 	                }
 	                switch (type) {
 	                    case "address":
@@ -46586,7 +46972,7 @@
 
 	var typedData$1 = /*@__PURE__*/getDefaultExportFromCjs(typedData);
 
-	var lib$U = createCommonjsModule(function (module, exports) {
+	var lib$V = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports._TypedDataEncoder = exports.hashMessage = exports.messagePrefix = exports.ensNormalize = exports.isValidName = exports.namehash = exports.dnsEncode = exports.id = void 0;
@@ -46606,7 +46992,7 @@
 
 	});
 
-	var index$S = /*@__PURE__*/getDefaultExportFromCjs(lib$U);
+	var index$T = /*@__PURE__*/getDefaultExportFromCjs(lib$V);
 
 	var sha3$3 = createCommonjsModule(function (module) {
 	/**
@@ -47267,7 +47653,7 @@
 	})();
 	});
 
-	var _version$1y = createCommonjsModule(function (module, exports) {
+	var _version$1A = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.version = void 0;
@@ -47275,15 +47661,15 @@
 
 	});
 
-	var _version$1z = /*@__PURE__*/getDefaultExportFromCjs(_version$1y);
+	var _version$1B = /*@__PURE__*/getDefaultExportFromCjs(_version$1A);
 
-	var lib$V = createCommonjsModule(function (module, exports) {
+	var lib$W = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.joinSignature = exports.splitSignature = exports.hexZeroPad = exports.hexStripZeros = exports.hexValue = exports.hexConcat = exports.hexDataSlice = exports.hexDataLength = exports.hexlify = exports.isHexString = exports.zeroPad = exports.stripZeros = exports.concat = exports.arrayify = exports.isBytes = exports.isBytesLike = void 0;
 
 
-	var logger = new lib$4.Logger(_version$1y.version);
+	var logger = new lib$6.Logger(_version$1A.version);
 	///////////////////////////////
 	function isHexable(value) {
 	    return !!(value.toHexString);
@@ -47707,9 +48093,9 @@
 
 	});
 
-	var index$T = /*@__PURE__*/getDefaultExportFromCjs(lib$V);
+	var index$U = /*@__PURE__*/getDefaultExportFromCjs(lib$W);
 
-	var lib$W = createCommonjsModule(function (module, exports) {
+	var lib$X = createCommonjsModule(function (module, exports) {
 	"use strict";
 	var __importDefault = (commonjsGlobal && commonjsGlobal.__importDefault) || function (mod) {
 	    return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -47719,13 +48105,13 @@
 	var js_sha3_1 = __importDefault(sha3$3);
 
 	function keccak256(data) {
-	    return '0x' + js_sha3_1.default.keccak_256((0, lib$V.arrayify)(data));
+	    return '0x' + js_sha3_1.default.keccak_256((0, lib$W.arrayify)(data));
 	}
 	exports.keccak256 = keccak256;
 
 	});
 
-	var index$U = /*@__PURE__*/getDefaultExportFromCjs(lib$W);
+	var index$V = /*@__PURE__*/getDefaultExportFromCjs(lib$X);
 
 	var _interface = createCommonjsModule(function (module, exports) {
 	"use strict";
@@ -47758,7 +48144,7 @@
 
 
 
-	var logger = new lib$4.Logger(_version$c.version);
+	var logger = new lib$6.Logger(_version$e.version);
 	var LogDescription = /** @class */ (function (_super) {
 	    __extends(LogDescription, _super);
 	    function LogDescription() {
@@ -47897,17 +48283,17 @@
 	        return abiCoder.defaultAbiCoder;
 	    };
 	    Interface.getAddress = function (address) {
-	        return (0, lib$k.getAddress)(address);
+	        return (0, lib$l.getAddress)(address);
 	    };
 	    Interface.getSighash = function (fragment) {
-	        return (0, lib$7.hexDataSlice)((0, lib$U.id)(fragment.format()), 0, 4);
+	        return (0, lib$8.hexDataSlice)((0, lib$V.id)(fragment.format()), 0, 4);
 	    };
 	    Interface.getEventTopic = function (eventFragment) {
-	        return (0, lib$U.id)(eventFragment.format());
+	        return (0, lib$V.id)(eventFragment.format());
 	    };
 	    // Find a function definition by any means necessary (unless it is ambiguous)
 	    Interface.prototype.getFunction = function (nameOrSignatureOrSighash) {
-	        if ((0, lib$7.isHexString)(nameOrSignatureOrSighash)) {
+	        if ((0, lib$8.isHexString)(nameOrSignatureOrSighash)) {
 	            for (var name_1 in this.functions) {
 	                if (nameOrSignatureOrSighash === this.getSighash(name_1)) {
 	                    return this.functions[name_1];
@@ -47936,7 +48322,7 @@
 	    };
 	    // Find an event definition by any means necessary (unless it is ambiguous)
 	    Interface.prototype.getEvent = function (nameOrSignatureOrTopic) {
-	        if ((0, lib$7.isHexString)(nameOrSignatureOrTopic)) {
+	        if ((0, lib$8.isHexString)(nameOrSignatureOrTopic)) {
 	            var topichash = nameOrSignatureOrTopic.toLowerCase();
 	            for (var name_3 in this.events) {
 	                if (topichash === this.getEventTopic(name_3)) {
@@ -47966,7 +48352,7 @@
 	    };
 	    // Find a function definition by any means necessary (unless it is ambiguous)
 	    Interface.prototype.getError = function (nameOrSignatureOrSighash) {
-	        if ((0, lib$7.isHexString)(nameOrSignatureOrSighash)) {
+	        if ((0, lib$8.isHexString)(nameOrSignatureOrSighash)) {
 	            var getSighash = (0, lib$5.getStatic)(this.constructor, "getSighash");
 	            for (var name_5 in this.errors) {
 	                var error = this.errors[name_5];
@@ -48032,9 +48418,9 @@
 	        if (typeof (fragment) === "string") {
 	            fragment = this.getError(fragment);
 	        }
-	        var bytes = (0, lib$7.arrayify)(data);
-	        if ((0, lib$7.hexlify)(bytes.slice(0, 4)) !== this.getSighash(fragment)) {
-	            logger.throwArgumentError("data signature does not match error " + fragment.name + ".", "data", (0, lib$7.hexlify)(bytes));
+	        var bytes = (0, lib$8.arrayify)(data);
+	        if ((0, lib$8.hexlify)(bytes.slice(0, 4)) !== this.getSighash(fragment)) {
+	            logger.throwArgumentError("data signature does not match error " + fragment.name + ".", "data", (0, lib$8.hexlify)(bytes));
 	        }
 	        return this._decodeParams(fragment.inputs, bytes.slice(4));
 	    };
@@ -48042,7 +48428,7 @@
 	        if (typeof (fragment) === "string") {
 	            fragment = this.getError(fragment);
 	        }
-	        return (0, lib$7.hexlify)((0, lib$7.concat)([
+	        return (0, lib$8.hexlify)((0, lib$8.concat)([
 	            this.getSighash(fragment),
 	            this._encodeParams(fragment.inputs, values || [])
 	        ]));
@@ -48052,9 +48438,9 @@
 	        if (typeof (functionFragment) === "string") {
 	            functionFragment = this.getFunction(functionFragment);
 	        }
-	        var bytes = (0, lib$7.arrayify)(data);
-	        if ((0, lib$7.hexlify)(bytes.slice(0, 4)) !== this.getSighash(functionFragment)) {
-	            logger.throwArgumentError("data signature does not match function " + functionFragment.name + ".", "data", (0, lib$7.hexlify)(bytes));
+	        var bytes = (0, lib$8.arrayify)(data);
+	        if ((0, lib$8.hexlify)(bytes.slice(0, 4)) !== this.getSighash(functionFragment)) {
+	            logger.throwArgumentError("data signature does not match function " + functionFragment.name + ".", "data", (0, lib$8.hexlify)(bytes));
 	        }
 	        return this._decodeParams(functionFragment.inputs, bytes.slice(4));
 	    };
@@ -48063,7 +48449,7 @@
 	        if (typeof (functionFragment) === "string") {
 	            functionFragment = this.getFunction(functionFragment);
 	        }
-	        return (0, lib$7.hexlify)((0, lib$7.concat)([
+	        return (0, lib$8.hexlify)((0, lib$8.concat)([
 	            this.getSighash(functionFragment),
 	            this._encodeParams(functionFragment.inputs, values || [])
 	        ]));
@@ -48073,7 +48459,7 @@
 	        if (typeof (functionFragment) === "string") {
 	            functionFragment = this.getFunction(functionFragment);
 	        }
-	        var bytes = (0, lib$7.arrayify)(data);
+	        var bytes = (0, lib$8.arrayify)(data);
 	        var reason = null;
 	        var message = "";
 	        var errorArgs = null;
@@ -48087,7 +48473,7 @@
 	                catch (error) { }
 	                break;
 	            case 4: {
-	                var selector = (0, lib$7.hexlify)(bytes.slice(0, 4));
+	                var selector = (0, lib$8.hexlify)(bytes.slice(0, 4));
 	                var builtin = BuiltinErrors[selector];
 	                if (builtin) {
 	                    errorArgs = this._abiCoder.decode(builtin.inputs, bytes.slice(4));
@@ -48115,9 +48501,9 @@
 	                break;
 	            }
 	        }
-	        return logger.throwError("call revert exception" + message, lib$4.Logger.errors.CALL_EXCEPTION, {
+	        return logger.throwError("call revert exception" + message, lib$6.Logger.errors.CALL_EXCEPTION, {
 	            method: functionFragment.format(),
-	            data: (0, lib$7.hexlify)(data),
+	            data: (0, lib$8.hexlify)(data),
 	            errorArgs: errorArgs,
 	            errorName: errorName,
 	            errorSignature: errorSignature,
@@ -48129,7 +48515,7 @@
 	        if (typeof (functionFragment) === "string") {
 	            functionFragment = this.getFunction(functionFragment);
 	        }
-	        return (0, lib$7.hexlify)(this._abiCoder.encode(functionFragment.outputs, values || []));
+	        return (0, lib$8.hexlify)(this._abiCoder.encode(functionFragment.outputs, values || []));
 	    };
 	    // Create the filter for the event with search criteria (e.g. for eth_filterLog)
 	    Interface.prototype.encodeFilterTopics = function (eventFragment, values) {
@@ -48138,7 +48524,7 @@
 	            eventFragment = this.getEvent(eventFragment);
 	        }
 	        if (values.length > eventFragment.inputs.length) {
-	            logger.throwError("too many arguments for " + eventFragment.format(), lib$4.Logger.errors.UNEXPECTED_ARGUMENT, {
+	            logger.throwError("too many arguments for " + eventFragment.format(), lib$6.Logger.errors.UNEXPECTED_ARGUMENT, {
 	                argument: "values",
 	                value: values
 	            });
@@ -48149,10 +48535,10 @@
 	        }
 	        var encodeTopic = function (param, value) {
 	            if (param.type === "string") {
-	                return (0, lib$U.id)(value);
+	                return (0, lib$V.id)(value);
 	            }
 	            else if (param.type === "bytes") {
-	                return (0, lib$W.keccak256)((0, lib$7.hexlify)(value));
+	                return (0, lib$X.keccak256)((0, lib$8.hexlify)(value));
 	            }
 	            if (param.type === "bool" && typeof (value) === "boolean") {
 	                value = (value ? "0x01" : "0x00");
@@ -48164,7 +48550,7 @@
 	            if (param.type === "address") {
 	                _this._abiCoder.encode(["address"], [value]);
 	            }
-	            return (0, lib$7.hexZeroPad)((0, lib$7.hexlify)(value), 32);
+	            return (0, lib$8.hexZeroPad)((0, lib$8.hexlify)(value), 32);
 	        };
 	        values.forEach(function (value, index) {
 	            var param = eventFragment.inputs[index];
@@ -48211,10 +48597,10 @@
 	            var value = values[index];
 	            if (param.indexed) {
 	                if (param.type === "string") {
-	                    topics.push((0, lib$U.id)(value));
+	                    topics.push((0, lib$V.id)(value));
 	                }
 	                else if (param.type === "bytes") {
-	                    topics.push((0, lib$W.keccak256)(value));
+	                    topics.push((0, lib$X.keccak256)(value));
 	                }
 	                else if (param.baseType === "tuple" || param.baseType === "array") {
 	                    // @TODO
@@ -48241,8 +48627,8 @@
 	        }
 	        if (topics != null && !eventFragment.anonymous) {
 	            var topicHash = this.getEventTopic(eventFragment);
-	            if (!(0, lib$7.isHexString)(topics[0], 32) || topics[0].toLowerCase() !== topicHash) {
-	                logger.throwError("fragment/topic mismatch", lib$4.Logger.errors.INVALID_ARGUMENT, { argument: "topics[0]", expected: topicHash, value: topics[0] });
+	            if (!(0, lib$8.isHexString)(topics[0], 32) || topics[0].toLowerCase() !== topicHash) {
+	                logger.throwError("fragment/topic mismatch", lib$6.Logger.errors.INVALID_ARGUMENT, { argument: "topics[0]", expected: topicHash, value: topics[0] });
 	            }
 	            topics = topics.slice(1);
 	        }
@@ -48265,7 +48651,7 @@
 	                dynamic.push(false);
 	            }
 	        });
-	        var resultIndexed = (topics != null) ? this._abiCoder.decode(indexed, (0, lib$7.concat)(topics)) : null;
+	        var resultIndexed = (topics != null) ? this._abiCoder.decode(indexed, (0, lib$8.concat)(topics)) : null;
 	        var resultNonIndexed = this._abiCoder.decode(nonIndexed, data, true);
 	        var result = [];
 	        var nonIndexedIndex = 0, indexedIndex = 0;
@@ -48361,7 +48747,7 @@
 	        });
 	    };
 	    Interface.prototype.parseError = function (data) {
-	        var hexData = (0, lib$7.hexlify)(data);
+	        var hexData = (0, lib$8.hexlify)(data);
 	        var fragment = this.getError(hexData.substring(0, 10).toLowerCase());
 	        if (!fragment) {
 	            return null;
@@ -48396,7 +48782,7 @@
 
 	var _interface$1 = /*@__PURE__*/getDefaultExportFromCjs(_interface);
 
-	var lib$X = createCommonjsModule(function (module, exports) {
+	var lib$Y = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.TransactionDescription = exports.LogDescription = exports.checkResultErrors = exports.Indexed = exports.Interface = exports.defaultAbiCoder = exports.AbiCoder = exports.FormatTypes = exports.ParamType = exports.FunctionFragment = exports.Fragment = exports.EventFragment = exports.ErrorFragment = exports.ConstructorFragment = void 0;
@@ -48420,9 +48806,9 @@
 
 	});
 
-	var index$V = /*@__PURE__*/getDefaultExportFromCjs(lib$X);
+	var index$W = /*@__PURE__*/getDefaultExportFromCjs(lib$Y);
 
-	var _version$1A = createCommonjsModule(function (module, exports) {
+	var _version$1C = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.version = void 0;
@@ -48430,15 +48816,15 @@
 
 	});
 
-	var _version$1B = /*@__PURE__*/getDefaultExportFromCjs(_version$1A);
+	var _version$1D = /*@__PURE__*/getDefaultExportFromCjs(_version$1C);
 
-	var lib$Y = createCommonjsModule(function (module, exports) {
+	var lib$Z = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.joinSignature = exports.splitSignature = exports.hexZeroPad = exports.hexStripZeros = exports.hexValue = exports.hexConcat = exports.hexDataSlice = exports.hexDataLength = exports.hexlify = exports.isHexString = exports.zeroPad = exports.stripZeros = exports.concat = exports.arrayify = exports.isBytes = exports.isBytesLike = void 0;
 
 
-	var logger = new lib$4.Logger(_version$1A.version);
+	var logger = new lib$6.Logger(_version$1C.version);
 	///////////////////////////////
 	function isHexable(value) {
 	    return !!(value.toHexString);
@@ -48862,9 +49248,9 @@
 
 	});
 
-	var index$W = /*@__PURE__*/getDefaultExportFromCjs(lib$Y);
+	var index$X = /*@__PURE__*/getDefaultExportFromCjs(lib$Z);
 
-	var _version$1C = createCommonjsModule(function (module, exports) {
+	var _version$1E = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.version = void 0;
@@ -48872,9 +49258,9 @@
 
 	});
 
-	var _version$1D = /*@__PURE__*/getDefaultExportFromCjs(_version$1C);
+	var _version$1F = /*@__PURE__*/getDefaultExportFromCjs(_version$1E);
 
-	var lib$Z = createCommonjsModule(function (module, exports) {
+	var lib$_ = createCommonjsModule(function (module, exports) {
 	"use strict";
 	var __awaiter = (commonjsGlobal && commonjsGlobal.__awaiter) || function (thisArg, _arguments, P, generator) {
 	    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
@@ -48916,7 +49302,7 @@
 	exports.Description = exports.deepCopy = exports.shallowCopy = exports.checkProperties = exports.resolveProperties = exports.getStatic = exports.defineReadOnly = void 0;
 
 
-	var logger = new lib$4.Logger(_version$1C.version);
+	var logger = new lib$6.Logger(_version$1E.version);
 	function defineReadOnly(object, name, value) {
 	    Object.defineProperty(object, name, {
 	        enumerable: true,
@@ -49048,9 +49434,9 @@
 
 	});
 
-	var index$X = /*@__PURE__*/getDefaultExportFromCjs(lib$Z);
+	var index$Y = /*@__PURE__*/getDefaultExportFromCjs(lib$_);
 
-	var _version$1E = createCommonjsModule(function (module, exports) {
+	var _version$1G = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.version = void 0;
@@ -49058,9 +49444,9 @@
 
 	});
 
-	var _version$1F = /*@__PURE__*/getDefaultExportFromCjs(_version$1E);
+	var _version$1H = /*@__PURE__*/getDefaultExportFromCjs(_version$1G);
 
-	var lib$_ = createCommonjsModule(function (module, exports) {
+	var lib$$ = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.Logger = exports.ErrorCode = exports.LogLevel = void 0;
@@ -49394,7 +49780,7 @@
 	    };
 	    Logger.globalLogger = function () {
 	        if (!_globalLogger) {
-	            _globalLogger = new Logger(_version$1E.version);
+	            _globalLogger = new Logger(_version$1G.version);
 	        }
 	        return _globalLogger;
 	    };
@@ -49434,9 +49820,9 @@
 
 	});
 
-	var index$Y = /*@__PURE__*/getDefaultExportFromCjs(lib$_);
+	var index$Z = /*@__PURE__*/getDefaultExportFromCjs(lib$$);
 
-	var _version$1G = createCommonjsModule(function (module, exports) {
+	var _version$1I = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.version = void 0;
@@ -49444,9 +49830,9 @@
 
 	});
 
-	var _version$1H = /*@__PURE__*/getDefaultExportFromCjs(_version$1G);
+	var _version$1J = /*@__PURE__*/getDefaultExportFromCjs(_version$1I);
 
-	var lib$$ = createCommonjsModule(function (module, exports) {
+	var lib$10 = createCommonjsModule(function (module, exports) {
 	"use strict";
 	var __extends = (commonjsGlobal && commonjsGlobal.__extends) || (function () {
 	    var extendStatics = function (d, b) {
@@ -49505,7 +49891,7 @@
 
 
 
-	var logger = new lib$_.Logger(_version$1G.version);
+	var logger = new lib$$.Logger(_version$1I.version);
 	;
 	;
 	//export type CallTransactionable = {
@@ -49520,13 +49906,13 @@
 	        return !!(value && value._isForkEvent);
 	    };
 	    return ForkEvent;
-	}(lib$Z.Description));
+	}(lib$_.Description));
 	exports.ForkEvent = ForkEvent;
 	var BlockForkEvent = /** @class */ (function (_super) {
 	    __extends(BlockForkEvent, _super);
 	    function BlockForkEvent(blockHash, expiry) {
 	        var _this = this;
-	        if (!(0, lib$Y.isHexString)(blockHash, 32)) {
+	        if (!(0, lib$Z.isHexString)(blockHash, 32)) {
 	            logger.throwArgumentError("invalid blockHash", "blockHash", blockHash);
 	        }
 	        _this = _super.call(this, {
@@ -49544,7 +49930,7 @@
 	    __extends(TransactionForkEvent, _super);
 	    function TransactionForkEvent(hash, expiry) {
 	        var _this = this;
-	        if (!(0, lib$Y.isHexString)(hash, 32)) {
+	        if (!(0, lib$Z.isHexString)(hash, 32)) {
 	            logger.throwArgumentError("invalid transaction hash", "hash", hash);
 	        }
 	        _this = _super.call(this, {
@@ -49562,10 +49948,10 @@
 	    __extends(TransactionOrderForkEvent, _super);
 	    function TransactionOrderForkEvent(beforeHash, afterHash, expiry) {
 	        var _this = this;
-	        if (!(0, lib$Y.isHexString)(beforeHash, 32)) {
+	        if (!(0, lib$Z.isHexString)(beforeHash, 32)) {
 	            logger.throwArgumentError("invalid transaction hash", "beforeHash", beforeHash);
 	        }
-	        if (!(0, lib$Y.isHexString)(afterHash, 32)) {
+	        if (!(0, lib$Z.isHexString)(afterHash, 32)) {
 	            logger.throwArgumentError("invalid transaction hash", "afterHash", afterHash);
 	        }
 	        _this = _super.call(this, {
@@ -49586,14 +49972,14 @@
 	    function Provider() {
 	        var _newTarget = this.constructor;
 	        logger.checkAbstract(_newTarget, Provider);
-	        (0, lib$Z.defineReadOnly)(this, "_isProvider", true);
+	        (0, lib$_.defineReadOnly)(this, "_isProvider", true);
 	    }
 	    Provider.prototype.getFeeData = function () {
 	        return __awaiter(this, void 0, void 0, function () {
 	            var _a, block, gasPrice, maxFeePerGas, maxPriorityFeePerGas, lastBaseFeePerGas;
 	            return __generator(this, function (_b) {
 	                switch (_b.label) {
-	                    case 0: return [4 /*yield*/, (0, lib$Z.resolveProperties)({
+	                    case 0: return [4 /*yield*/, (0, lib$_.resolveProperties)({
 	                            block: this.getBlock("latest"),
 	                            gasPrice: this.getGasPrice().catch(function (error) {
 	                                console.log(error);
@@ -49641,9 +50027,9 @@
 
 	});
 
-	var index$Z = /*@__PURE__*/getDefaultExportFromCjs(lib$$);
+	var index$_ = /*@__PURE__*/getDefaultExportFromCjs(lib$10);
 
-	var _version$1I = createCommonjsModule(function (module, exports) {
+	var _version$1K = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.version = void 0;
@@ -49651,9 +50037,9 @@
 
 	});
 
-	var _version$1J = /*@__PURE__*/getDefaultExportFromCjs(_version$1I);
+	var _version$1L = /*@__PURE__*/getDefaultExportFromCjs(_version$1K);
 
-	var lib$10 = createCommonjsModule(function (module, exports) {
+	var lib$11 = createCommonjsModule(function (module, exports) {
 	"use strict";
 	var __awaiter = (commonjsGlobal && commonjsGlobal.__awaiter) || function (thisArg, _arguments, P, generator) {
 	    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
@@ -49695,7 +50081,7 @@
 	exports.Description = exports.deepCopy = exports.shallowCopy = exports.checkProperties = exports.resolveProperties = exports.getStatic = exports.defineReadOnly = void 0;
 
 
-	var logger = new lib$4.Logger(_version$1I.version);
+	var logger = new lib$6.Logger(_version$1K.version);
 	function defineReadOnly(object, name, value) {
 	    Object.defineProperty(object, name, {
 	        enumerable: true,
@@ -49827,9 +50213,9 @@
 
 	});
 
-	var index$_ = /*@__PURE__*/getDefaultExportFromCjs(lib$10);
+	var index$$ = /*@__PURE__*/getDefaultExportFromCjs(lib$11);
 
-	var _version$1K = createCommonjsModule(function (module, exports) {
+	var _version$1M = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.version = void 0;
@@ -49837,9 +50223,9 @@
 
 	});
 
-	var _version$1L = /*@__PURE__*/getDefaultExportFromCjs(_version$1K);
+	var _version$1N = /*@__PURE__*/getDefaultExportFromCjs(_version$1M);
 
-	var lib$11 = createCommonjsModule(function (module, exports) {
+	var lib$12 = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.Logger = exports.ErrorCode = exports.LogLevel = void 0;
@@ -50173,7 +50559,7 @@
 	    };
 	    Logger.globalLogger = function () {
 	        if (!_globalLogger) {
-	            _globalLogger = new Logger(_version$1K.version);
+	            _globalLogger = new Logger(_version$1M.version);
 	        }
 	        return _globalLogger;
 	    };
@@ -50213,9 +50599,9 @@
 
 	});
 
-	var index$$ = /*@__PURE__*/getDefaultExportFromCjs(lib$11);
+	var index$10 = /*@__PURE__*/getDefaultExportFromCjs(lib$12);
 
-	var _version$1M = createCommonjsModule(function (module, exports) {
+	var _version$1O = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.version = void 0;
@@ -50223,9 +50609,9 @@
 
 	});
 
-	var _version$1N = /*@__PURE__*/getDefaultExportFromCjs(_version$1M);
+	var _version$1P = /*@__PURE__*/getDefaultExportFromCjs(_version$1O);
 
-	var lib$12 = createCommonjsModule(function (module, exports) {
+	var lib$13 = createCommonjsModule(function (module, exports) {
 	"use strict";
 	var __extends = (commonjsGlobal && commonjsGlobal.__extends) || (function () {
 	    var extendStatics = function (d, b) {
@@ -50283,14 +50669,14 @@
 
 
 
-	var logger = new lib$11.Logger(_version$1M.version);
+	var logger = new lib$12.Logger(_version$1O.version);
 	var allowedTransactionKeys = [
 	    "accessList", "ccipReadEnabled", "chainId", "customData", "data", "from", "gasLimit", "gasPrice", "maxFeePerGas", "maxPriorityFeePerGas", "nonce", "to", "type", "value", "externalGasLimit", "externalGasPrice", "externalGasTip", "externalAccessList", "externalData"
 	];
 	var forwardErrors = [
-	    lib$11.Logger.errors.INSUFFICIENT_FUNDS,
-	    lib$11.Logger.errors.NONCE_EXPIRED,
-	    lib$11.Logger.errors.REPLACEMENT_UNDERPRICED,
+	    lib$12.Logger.errors.INSUFFICIENT_FUNDS,
+	    lib$12.Logger.errors.NONCE_EXPIRED,
+	    lib$12.Logger.errors.REPLACEMENT_UNDERPRICED,
 	];
 	;
 	;
@@ -50300,7 +50686,7 @@
 	    function Signer() {
 	        var _newTarget = this.constructor;
 	        logger.checkAbstract(_newTarget, Signer);
-	        (0, lib$10.defineReadOnly)(this, "_isSigner", true);
+	        (0, lib$11.defineReadOnly)(this, "_isSigner", true);
 	    }
 	    ///////////////////
 	    // Sub-classes MAY override these
@@ -50336,7 +50722,7 @@
 	                switch (_a.label) {
 	                    case 0:
 	                        this._checkProvider("estimateGas");
-	                        return [4 /*yield*/, (0, lib$10.resolveProperties)(this.checkTransaction(transaction))];
+	                        return [4 /*yield*/, (0, lib$11.resolveProperties)(this.checkTransaction(transaction))];
 	                    case 1:
 	                        tx = _a.sent();
 	                        return [4 /*yield*/, this.provider.estimateGas(tx)];
@@ -50353,7 +50739,7 @@
 	                switch (_a.label) {
 	                    case 0:
 	                        this._checkProvider("call");
-	                        return [4 /*yield*/, (0, lib$10.resolveProperties)(this.checkTransaction(transaction))];
+	                        return [4 /*yield*/, (0, lib$11.resolveProperties)(this.checkTransaction(transaction))];
 	                    case 1:
 	                        tx = _a.sent();
 	                        return [4 /*yield*/, this.provider.call(tx, blockTag)];
@@ -50460,7 +50846,7 @@
 	                logger.throwArgumentError("invalid transaction key: " + key, "transaction", transaction);
 	            }
 	        }
-	        var tx = (0, lib$10.shallowCopy)(transaction);
+	        var tx = (0, lib$11.shallowCopy)(transaction);
 	        if (tx.from == null) {
 	            tx.from = this.getAddress();
 	        }
@@ -50491,7 +50877,7 @@
 	            var _this = this;
 	            return __generator(this, function (_a) {
 	                switch (_a.label) {
-	                    case 0: return [4 /*yield*/, (0, lib$10.resolveProperties)(this.checkTransaction(transaction))];
+	                    case 0: return [4 /*yield*/, (0, lib$11.resolveProperties)(this.checkTransaction(transaction))];
 	                    case 1:
 	                        tx = _a.sent();
 	                        if (tx.to != null) {
@@ -50524,6 +50910,7 @@
 	                    case 2: return [4 /*yield*/, this.getFeeData()];
 	                    case 3:
 	                        feeData = _a.sent();
+	                        console.log("FEE DATA:", feeData);
 	                        if (tx.type == null) {
 	                            // We need to auto-detect the intended type of this transaction...
 	                            if (feeData.maxFeePerGas != null && feeData.maxPriorityFeePerGas != null) {
@@ -50537,7 +50924,7 @@
 	                                    // Populate missing fee data, assume the receiving context is operating in similar 
 	                                    if (tx.externalGasLimit == null || tx.externalGasPrice == null || tx.externalGasTip == null) {
 	                                        // Missing external fields
-	                                        logger.throwError("attempting to send an external transaction without all necessary data fields", lib$11.Logger.errors.UNSUPPORTED_OPERATION, {
+	                                        logger.throwError("attempting to send an external transaction without all necessary data fields", lib$12.Logger.errors.UNSUPPORTED_OPERATION, {
 	                                            operation: "populateTransaction"
 	                                        });
 	                                    }
@@ -50552,13 +50939,13 @@
 	                            }
 	                            else if (feeData.gasPrice != null) {
 	                                // Network doesn't support EIP-1559...
-	                                logger.throwError("network does not support EIP-1559", lib$11.Logger.errors.UNSUPPORTED_OPERATION, {
+	                                logger.throwError("network does not support EIP-1559", lib$12.Logger.errors.UNSUPPORTED_OPERATION, {
 	                                    operation: "populateTransaction"
 	                                });
 	                            }
 	                            else {
 	                                // getFeeData has failed us.
-	                                logger.throwError("failed to get consistent fee data", lib$11.Logger.errors.UNSUPPORTED_OPERATION, {
+	                                logger.throwError("failed to get consistent fee data", lib$12.Logger.errors.UNSUPPORTED_OPERATION, {
 	                                    operation: "signer.getFeeData"
 	                                });
 	                            }
@@ -50573,7 +50960,7 @@
 	                                if (forwardErrors.indexOf(error.code) >= 0) {
 	                                    throw error;
 	                                }
-	                                return logger.throwError("abstract-signer: cannot estimate gas; transaction may fail or may require manual gas limit", lib$11.Logger.errors.UNPREDICTABLE_GAS_LIMIT, {
+	                                return logger.throwError("abstract-signer: cannot estimate gas; transaction may fail or may require manual gas limit", lib$12.Logger.errors.UNPREDICTABLE_GAS_LIMIT, {
 	                                    error: error,
 	                                    tx: tx
 	                                });
@@ -50593,7 +50980,7 @@
 	                                return results[0];
 	                            });
 	                        }
-	                        return [4 /*yield*/, (0, lib$10.resolveProperties)(tx)];
+	                        return [4 /*yield*/, (0, lib$11.resolveProperties)(tx)];
 	                    case 5: return [2 /*return*/, _a.sent()];
 	                }
 	            });
@@ -50603,7 +50990,7 @@
 	    // Sub-classes SHOULD leave these alone
 	    Signer.prototype._checkProvider = function (operation) {
 	        if (!this.provider) {
-	            logger.throwError("missing provider", lib$11.Logger.errors.UNSUPPORTED_OPERATION, {
+	            logger.throwError("missing provider", lib$12.Logger.errors.UNSUPPORTED_OPERATION, {
 	                operation: (operation || "_checkProvider")
 	            });
 	        }
@@ -50618,8 +51005,8 @@
 	    __extends(VoidSigner, _super);
 	    function VoidSigner(address, provider) {
 	        var _this = _super.call(this) || this;
-	        (0, lib$10.defineReadOnly)(_this, "address", address);
-	        (0, lib$10.defineReadOnly)(_this, "provider", provider || null);
+	        (0, lib$11.defineReadOnly)(_this, "address", address);
+	        (0, lib$11.defineReadOnly)(_this, "provider", provider || null);
 	        return _this;
 	    }
 	    VoidSigner.prototype.getAddress = function () {
@@ -50627,7 +51014,7 @@
 	    };
 	    VoidSigner.prototype._fail = function (message, operation) {
 	        return Promise.resolve().then(function () {
-	            logger.throwError(message, lib$11.Logger.errors.UNSUPPORTED_OPERATION, { operation: operation });
+	            logger.throwError(message, lib$12.Logger.errors.UNSUPPORTED_OPERATION, { operation: operation });
 	        });
 	    };
 	    VoidSigner.prototype.signMessage = function (message) {
@@ -50648,9 +51035,9 @@
 
 	});
 
-	var index$10 = /*@__PURE__*/getDefaultExportFromCjs(lib$12);
+	var index$11 = /*@__PURE__*/getDefaultExportFromCjs(lib$13);
 
-	var _version$1O = createCommonjsModule(function (module, exports) {
+	var _version$1Q = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.version = void 0;
@@ -50658,15 +51045,15 @@
 
 	});
 
-	var _version$1P = /*@__PURE__*/getDefaultExportFromCjs(_version$1O);
+	var _version$1R = /*@__PURE__*/getDefaultExportFromCjs(_version$1Q);
 
-	var lib$13 = createCommonjsModule(function (module, exports) {
+	var lib$14 = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.joinSignature = exports.splitSignature = exports.hexZeroPad = exports.hexStripZeros = exports.hexValue = exports.hexConcat = exports.hexDataSlice = exports.hexDataLength = exports.hexlify = exports.isHexString = exports.zeroPad = exports.stripZeros = exports.concat = exports.arrayify = exports.isBytes = exports.isBytesLike = void 0;
 
 
-	var logger = new lib$4.Logger(_version$1O.version);
+	var logger = new lib$6.Logger(_version$1Q.version);
 	///////////////////////////////
 	function isHexable(value) {
 	    return !!(value.toHexString);
@@ -51090,9 +51477,9 @@
 
 	});
 
-	var index$11 = /*@__PURE__*/getDefaultExportFromCjs(lib$13);
+	var index$12 = /*@__PURE__*/getDefaultExportFromCjs(lib$14);
 
-	var _version$1Q = createCommonjsModule(function (module, exports) {
+	var _version$1S = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.version = void 0;
@@ -51100,9 +51487,9 @@
 
 	});
 
-	var _version$1R = /*@__PURE__*/getDefaultExportFromCjs(_version$1Q);
+	var _version$1T = /*@__PURE__*/getDefaultExportFromCjs(_version$1S);
 
-	var lib$14 = createCommonjsModule(function (module, exports) {
+	var lib$15 = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.Logger = exports.ErrorCode = exports.LogLevel = void 0;
@@ -51436,7 +51823,7 @@
 	    };
 	    Logger.globalLogger = function () {
 	        if (!_globalLogger) {
-	            _globalLogger = new Logger(_version$1Q.version);
+	            _globalLogger = new Logger(_version$1S.version);
 	        }
 	        return _globalLogger;
 	    };
@@ -51476,9 +51863,9 @@
 
 	});
 
-	var index$12 = /*@__PURE__*/getDefaultExportFromCjs(lib$14);
+	var index$13 = /*@__PURE__*/getDefaultExportFromCjs(lib$15);
 
-	var _version$1S = createCommonjsModule(function (module, exports) {
+	var _version$1U = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.version = void 0;
@@ -51486,9 +51873,9 @@
 
 	});
 
-	var _version$1T = /*@__PURE__*/getDefaultExportFromCjs(_version$1S);
+	var _version$1V = /*@__PURE__*/getDefaultExportFromCjs(_version$1U);
 
-	var lib$15 = createCommonjsModule(function (module, exports) {
+	var lib$16 = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.decode = exports.encode = void 0;
@@ -51496,7 +51883,7 @@
 
 
 
-	var logger = new lib$14.Logger(_version$1S.version);
+	var logger = new lib$15.Logger(_version$1U.version);
 	function arrayifyInteger(value) {
 	    var result = [];
 	    while (value) {
@@ -51526,10 +51913,10 @@
 	        length_1.unshift(0xf7 + length_1.length);
 	        return length_1.concat(payload_1);
 	    }
-	    if (!(0, lib$13.isBytesLike)(object)) {
+	    if (!(0, lib$14.isBytesLike)(object)) {
 	        logger.throwArgumentError("RLP object must be BytesLike", "object", object);
 	    }
-	    var data = Array.prototype.slice.call((0, lib$13.arrayify)(object));
+	    var data = Array.prototype.slice.call((0, lib$14.arrayify)(object));
 	    if (data.length === 1 && data[0] <= 0x7f) {
 	        return data;
 	    }
@@ -51542,7 +51929,7 @@
 	    return length.concat(data);
 	}
 	function encode(object) {
-	    return (0, lib$13.hexlify)(_encode(object));
+	    return (0, lib$14.hexlify)(_encode(object));
 	}
 	exports.encode = encode;
 	function _decodeChildren(data, offset, childOffset, length) {
@@ -51552,7 +51939,7 @@
 	        result.push(decoded.result);
 	        childOffset += decoded.consumed;
 	        if (childOffset > offset + 1 + length) {
-	            logger.throwError("child data too short", lib$14.Logger.errors.BUFFER_OVERRUN, {});
+	            logger.throwError("child data too short", lib$15.Logger.errors.BUFFER_OVERRUN, {});
 	        }
 	    }
 	    return { consumed: (1 + length), result: result };
@@ -51560,51 +51947,51 @@
 	// returns { consumed: number, result: Object }
 	function _decode(data, offset) {
 	    if (data.length === 0) {
-	        logger.throwError("data too short", lib$14.Logger.errors.BUFFER_OVERRUN, {});
+	        logger.throwError("data too short", lib$15.Logger.errors.BUFFER_OVERRUN, {});
 	    }
 	    // Array with extra length prefix
 	    if (data[offset] >= 0xf8) {
 	        var lengthLength = data[offset] - 0xf7;
 	        if (offset + 1 + lengthLength > data.length) {
-	            logger.throwError("data short segment too short", lib$14.Logger.errors.BUFFER_OVERRUN, {});
+	            logger.throwError("data short segment too short", lib$15.Logger.errors.BUFFER_OVERRUN, {});
 	        }
 	        var length_2 = unarrayifyInteger(data, offset + 1, lengthLength);
 	        if (offset + 1 + lengthLength + length_2 > data.length) {
-	            logger.throwError("data long segment too short", lib$14.Logger.errors.BUFFER_OVERRUN, {});
+	            logger.throwError("data long segment too short", lib$15.Logger.errors.BUFFER_OVERRUN, {});
 	        }
 	        return _decodeChildren(data, offset, offset + 1 + lengthLength, lengthLength + length_2);
 	    }
 	    else if (data[offset] >= 0xc0) {
 	        var length_3 = data[offset] - 0xc0;
 	        if (offset + 1 + length_3 > data.length) {
-	            logger.throwError("data array too short", lib$14.Logger.errors.BUFFER_OVERRUN, {});
+	            logger.throwError("data array too short", lib$15.Logger.errors.BUFFER_OVERRUN, {});
 	        }
 	        return _decodeChildren(data, offset, offset + 1, length_3);
 	    }
 	    else if (data[offset] >= 0xb8) {
 	        var lengthLength = data[offset] - 0xb7;
 	        if (offset + 1 + lengthLength > data.length) {
-	            logger.throwError("data array too short", lib$14.Logger.errors.BUFFER_OVERRUN, {});
+	            logger.throwError("data array too short", lib$15.Logger.errors.BUFFER_OVERRUN, {});
 	        }
 	        var length_4 = unarrayifyInteger(data, offset + 1, lengthLength);
 	        if (offset + 1 + lengthLength + length_4 > data.length) {
-	            logger.throwError("data array too short", lib$14.Logger.errors.BUFFER_OVERRUN, {});
+	            logger.throwError("data array too short", lib$15.Logger.errors.BUFFER_OVERRUN, {});
 	        }
-	        var result = (0, lib$13.hexlify)(data.slice(offset + 1 + lengthLength, offset + 1 + lengthLength + length_4));
+	        var result = (0, lib$14.hexlify)(data.slice(offset + 1 + lengthLength, offset + 1 + lengthLength + length_4));
 	        return { consumed: (1 + lengthLength + length_4), result: result };
 	    }
 	    else if (data[offset] >= 0x80) {
 	        var length_5 = data[offset] - 0x80;
 	        if (offset + 1 + length_5 > data.length) {
-	            logger.throwError("data too short", lib$14.Logger.errors.BUFFER_OVERRUN, {});
+	            logger.throwError("data too short", lib$15.Logger.errors.BUFFER_OVERRUN, {});
 	        }
-	        var result = (0, lib$13.hexlify)(data.slice(offset + 1, offset + 1 + length_5));
+	        var result = (0, lib$14.hexlify)(data.slice(offset + 1, offset + 1 + length_5));
 	        return { consumed: (1 + length_5), result: result };
 	    }
-	    return { consumed: 1, result: (0, lib$13.hexlify)(data[offset]) };
+	    return { consumed: 1, result: (0, lib$14.hexlify)(data[offset]) };
 	}
 	function decode(data) {
-	    var bytes = (0, lib$13.arrayify)(data);
+	    var bytes = (0, lib$14.arrayify)(data);
 	    var decoded = _decode(bytes, 0);
 	    if (decoded.consumed !== bytes.length) {
 	        logger.throwArgumentError("invalid rlp data", "data", data);
@@ -51615,9 +52002,9 @@
 
 	});
 
-	var index$13 = /*@__PURE__*/getDefaultExportFromCjs(lib$15);
+	var index$14 = /*@__PURE__*/getDefaultExportFromCjs(lib$16);
 
-	var _version$1U = createCommonjsModule(function (module, exports) {
+	var _version$1W = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.version = void 0;
@@ -51625,9 +52012,9 @@
 
 	});
 
-	var _version$1V = /*@__PURE__*/getDefaultExportFromCjs(_version$1U);
+	var _version$1X = /*@__PURE__*/getDefaultExportFromCjs(_version$1W);
 
-	var lib$16 = createCommonjsModule(function (module, exports) {
+	var lib$17 = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.getCreate2Address = exports.getContractAddress = exports.getIcapAddress = exports.isAddress = exports.getAddress = void 0;
@@ -51637,9 +52024,9 @@
 
 
 
-	var logger = new lib$4.Logger(_version$1U.version);
+	var logger = new lib$6.Logger(_version$1W.version);
 	function getChecksumAddress(address) {
-	    if (!(0, lib$7.isHexString)(address, 20)) {
+	    if (!(0, lib$8.isHexString)(address, 20)) {
 	        logger.throwArgumentError("invalid address", "address", address);
 	    }
 	    address = address.toLowerCase();
@@ -51648,7 +52035,7 @@
 	    for (var i = 0; i < 40; i++) {
 	        expanded[i] = chars[i].charCodeAt(0);
 	    }
-	    var hashed = (0, lib$7.arrayify)((0, lib$W.keccak256)(expanded));
+	    var hashed = (0, lib$8.arrayify)((0, lib$X.keccak256)(expanded));
 	    for (var i = 0; i < 40; i += 2) {
 	        if ((hashed[i >> 1] >> 4) >= 8) {
 	            chars[i] = chars[i].toUpperCase();
@@ -51754,24 +52141,24 @@
 	    catch (error) {
 	        logger.throwArgumentError("missing from address", "transaction", transaction);
 	    }
-	    var nonce = (0, lib$7.stripZeros)((0, lib$7.arrayify)(lib$3.BigNumber.from(transaction.nonce).toHexString()));
-	    return getAddress((0, lib$7.hexDataSlice)((0, lib$W.keccak256)((0, lib$15.encode)([from, nonce])), 12));
+	    var nonce = (0, lib$8.stripZeros)((0, lib$8.arrayify)(lib$3.BigNumber.from(transaction.nonce).toHexString()));
+	    return getAddress((0, lib$8.hexDataSlice)((0, lib$X.keccak256)((0, lib$16.encode)([from, nonce])), 12));
 	}
 	exports.getContractAddress = getContractAddress;
 	function getCreate2Address(from, salt, initCodeHash) {
-	    if ((0, lib$7.hexDataLength)(salt) !== 32) {
+	    if ((0, lib$8.hexDataLength)(salt) !== 32) {
 	        logger.throwArgumentError("salt must be 32 bytes", "salt", salt);
 	    }
-	    if ((0, lib$7.hexDataLength)(initCodeHash) !== 32) {
+	    if ((0, lib$8.hexDataLength)(initCodeHash) !== 32) {
 	        logger.throwArgumentError("initCodeHash must be 32 bytes", "initCodeHash", initCodeHash);
 	    }
-	    return getAddress((0, lib$7.hexDataSlice)((0, lib$W.keccak256)((0, lib$7.concat)(["0xff", getAddress(from), salt, initCodeHash])), 12));
+	    return getAddress((0, lib$8.hexDataSlice)((0, lib$X.keccak256)((0, lib$8.concat)(["0xff", getAddress(from), salt, initCodeHash])), 12));
 	}
 	exports.getCreate2Address = getCreate2Address;
 
 	});
 
-	var index$14 = /*@__PURE__*/getDefaultExportFromCjs(lib$16);
+	var index$15 = /*@__PURE__*/getDefaultExportFromCjs(lib$17);
 
 	var bn$6 = createCommonjsModule(function (module) {
 	(function (module, exports) {
@@ -55323,7 +55710,7 @@
 	})('object' === 'undefined' || module, commonjsGlobal);
 	});
 
-	var _version$1W = createCommonjsModule(function (module, exports) {
+	var _version$1Y = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.version = void 0;
@@ -55331,7 +55718,7 @@
 
 	});
 
-	var _version$1X = /*@__PURE__*/getDefaultExportFromCjs(_version$1W);
+	var _version$1Z = /*@__PURE__*/getDefaultExportFromCjs(_version$1Y);
 
 	var bignumber$c = createCommonjsModule(function (module, exports) {
 	"use strict";
@@ -55352,16 +55739,16 @@
 
 
 
-	var logger = new lib$4.Logger(_version$1W.version);
+	var logger = new lib$6.Logger(_version$1Y.version);
 	var _constructorGuard = {};
 	var MAX_SAFE = 0x1fffffffffffff;
 	function isBigNumberish(value) {
 	    return (value != null) && (BigNumber.isBigNumber(value) ||
 	        (typeof (value) === "number" && (value % 1) === 0) ||
 	        (typeof (value) === "string" && !!value.match(/^-?[0-9]+$/)) ||
-	        (0, lib$7.isHexString)(value) ||
+	        (0, lib$8.isHexString)(value) ||
 	        (typeof (value) === "bigint") ||
-	        (0, lib$7.isBytes)(value));
+	        (0, lib$8.isBytes)(value));
 	}
 	exports.isBigNumberish = isBigNumberish;
 	// Only warn about passing 10 into radix once
@@ -55369,7 +55756,7 @@
 	var BigNumber = /** @class */ (function () {
 	    function BigNumber(constructorGuard, hex) {
 	        if (constructorGuard !== _constructorGuard) {
-	            logger.throwError("cannot call constructor directly; use BigNumber.from", lib$4.Logger.errors.UNSUPPORTED_OPERATION, {
+	            logger.throwError("cannot call constructor directly; use BigNumber.from", lib$6.Logger.errors.UNSUPPORTED_OPERATION, {
 	                operation: "new (BigNumber)"
 	            });
 	        }
@@ -55493,7 +55880,7 @@
 	            return BigInt(this.toString());
 	        }
 	        catch (e) { }
-	        return logger.throwError("this platform does not support BigInt", lib$4.Logger.errors.UNSUPPORTED_OPERATION, {
+	        return logger.throwError("this platform does not support BigInt", lib$6.Logger.errors.UNSUPPORTED_OPERATION, {
 	            value: this.toString()
 	        });
 	    };
@@ -55507,10 +55894,10 @@
 	                }
 	            }
 	            else if (arguments[0] === 16) {
-	                logger.throwError("BigNumber.toString does not accept any parameters; use bigNumber.toHexString()", lib$4.Logger.errors.UNEXPECTED_ARGUMENT, {});
+	                logger.throwError("BigNumber.toString does not accept any parameters; use bigNumber.toHexString()", lib$6.Logger.errors.UNEXPECTED_ARGUMENT, {});
 	            }
 	            else {
-	                logger.throwError("BigNumber.toString does not accept parameters", lib$4.Logger.errors.UNEXPECTED_ARGUMENT, {});
+	                logger.throwError("BigNumber.toString does not accept parameters", lib$6.Logger.errors.UNEXPECTED_ARGUMENT, {});
 	            }
 	        }
 	        return toBN(this).toString(10);
@@ -55547,8 +55934,8 @@
 	        if (typeof (anyValue) === "bigint") {
 	            return BigNumber.from(anyValue.toString());
 	        }
-	        if ((0, lib$7.isBytes)(anyValue)) {
-	            return BigNumber.from((0, lib$7.hexlify)(anyValue));
+	        if ((0, lib$8.isBytes)(anyValue)) {
+	            return BigNumber.from((0, lib$8.hexlify)(anyValue));
 	        }
 	        if (anyValue) {
 	            // Hexable interface (takes priority)
@@ -55566,7 +55953,7 @@
 	                    hex = anyValue.hex;
 	                }
 	                if (typeof (hex) === "string") {
-	                    if ((0, lib$7.isHexString)(hex) || (hex[0] === "-" && (0, lib$7.isHexString)(hex.substring(1)))) {
+	                    if ((0, lib$8.isHexString)(hex) || (hex[0] === "-" && (0, lib$8.isHexString)(hex.substring(1)))) {
 	                        return BigNumber.from(hex);
 	                    }
 	                }
@@ -55636,7 +56023,7 @@
 	    if (value != null) {
 	        params.value = value;
 	    }
-	    return logger.throwError(fault, lib$4.Logger.errors.NUMERIC_FAULT, params);
+	    return logger.throwError(fault, lib$6.Logger.errors.NUMERIC_FAULT, params);
 	}
 	// value should have no prefix
 	function _base36To16(value) {
@@ -55660,7 +56047,7 @@
 
 
 
-	var logger = new lib$4.Logger(_version$1W.version);
+	var logger = new lib$6.Logger(_version$1Y.version);
 
 	var _constructorGuard = {};
 	var Zero = bignumber$c.BigNumber.from(0);
@@ -55670,7 +56057,7 @@
 	    if (value !== undefined) {
 	        params.value = value;
 	    }
-	    return logger.throwError(message, lib$4.Logger.errors.NUMERIC_FAULT, params);
+	    return logger.throwError(message, lib$6.Logger.errors.NUMERIC_FAULT, params);
 	}
 	// Constant to pull zeros from for multipliers
 	var zeros = "0";
@@ -55776,7 +56163,7 @@
 	var FixedFormat = /** @class */ (function () {
 	    function FixedFormat(constructorGuard, signed, width, decimals) {
 	        if (constructorGuard !== _constructorGuard) {
-	            logger.throwError("cannot use FixedFormat constructor; use FixedFormat.from", lib$4.Logger.errors.UNSUPPORTED_OPERATION, {
+	            logger.throwError("cannot use FixedFormat constructor; use FixedFormat.from", lib$6.Logger.errors.UNSUPPORTED_OPERATION, {
 	                operation: "new FixedFormat"
 	            });
 	        }
@@ -55842,7 +56229,7 @@
 	var FixedNumber = /** @class */ (function () {
 	    function FixedNumber(constructorGuard, hex, value, format) {
 	        if (constructorGuard !== _constructorGuard) {
-	            logger.throwError("cannot use FixedNumber constructor; use FixedNumber.from", lib$4.Logger.errors.UNSUPPORTED_OPERATION, {
+	            logger.throwError("cannot use FixedNumber constructor; use FixedNumber.from", lib$6.Logger.errors.UNSUPPORTED_OPERATION, {
 	                operation: "new FixedFormat"
 	            });
 	        }
@@ -55940,7 +56327,7 @@
 	            logger.throwArgumentError("invalid byte width", "width", width);
 	        }
 	        var hex = bignumber$c.BigNumber.from(this._hex).fromTwos(this.format.width).toTwos(width).toHexString();
-	        return (0, lib$7.hexZeroPad)(hex, width / 8);
+	        return (0, lib$8.hexZeroPad)(hex, width / 8);
 	    };
 	    FixedNumber.prototype.toUnsafeFloat = function () { return parseFloat(this.toString()); };
 	    FixedNumber.prototype.toFormat = function (format) {
@@ -55975,7 +56362,7 @@
 	        }
 	        else {
 	            hex = numeric.toHexString();
-	            hex = (0, lib$7.hexZeroPad)(hex, fixedFormat.width / 8);
+	            hex = (0, lib$8.hexZeroPad)(hex, fixedFormat.width / 8);
 	        }
 	        var decimal = formatFixed(numeric, fixedFormat.decimals);
 	        return new FixedNumber(_constructorGuard, hex, decimal, fixedFormat);
@@ -55985,7 +56372,7 @@
 	            format = "fixed";
 	        }
 	        var fixedFormat = FixedFormat.from(format);
-	        if ((0, lib$7.arrayify)(value).length > fixedFormat.width / 8) {
+	        if ((0, lib$8.arrayify)(value).length > fixedFormat.width / 8) {
 	            throw new Error("overflow");
 	        }
 	        var numeric = bignumber$c.BigNumber.from(value);
@@ -56000,7 +56387,7 @@
 	        if (typeof (value) === "string") {
 	            return FixedNumber.fromString(value, format);
 	        }
-	        if ((0, lib$7.isBytes)(value)) {
+	        if ((0, lib$8.isBytes)(value)) {
 	            return FixedNumber.fromBytes(value, format);
 	        }
 	        try {
@@ -56008,7 +56395,7 @@
 	        }
 	        catch (error) {
 	            // Allow NUMERIC_FAULT to bubble up
-	            if (error.code !== lib$4.Logger.errors.INVALID_ARGUMENT) {
+	            if (error.code !== lib$6.Logger.errors.INVALID_ARGUMENT) {
 	                throw error;
 	            }
 	        }
@@ -56027,7 +56414,7 @@
 
 	var fixednumber$d = /*@__PURE__*/getDefaultExportFromCjs(fixednumber$c);
 
-	var lib$17 = createCommonjsModule(function (module, exports) {
+	var lib$18 = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports._base36To16 = exports._base16To36 = exports.parseFixed = exports.FixedNumber = exports.FixedFormat = exports.formatFixed = exports.BigNumber = void 0;
@@ -56045,9 +56432,9 @@
 
 	});
 
-	var index$15 = /*@__PURE__*/getDefaultExportFromCjs(lib$17);
+	var index$16 = /*@__PURE__*/getDefaultExportFromCjs(lib$18);
 
-	var _version$1Y = createCommonjsModule(function (module, exports) {
+	var _version$1_ = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.version = void 0;
@@ -56055,15 +56442,15 @@
 
 	});
 
-	var _version$1Z = /*@__PURE__*/getDefaultExportFromCjs(_version$1Y);
+	var _version$1$ = /*@__PURE__*/getDefaultExportFromCjs(_version$1_);
 
-	var lib$18 = createCommonjsModule(function (module, exports) {
+	var lib$19 = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.joinSignature = exports.splitSignature = exports.hexZeroPad = exports.hexStripZeros = exports.hexValue = exports.hexConcat = exports.hexDataSlice = exports.hexDataLength = exports.hexlify = exports.isHexString = exports.zeroPad = exports.stripZeros = exports.concat = exports.arrayify = exports.isBytes = exports.isBytesLike = void 0;
 
 
-	var logger = new lib$4.Logger(_version$1Y.version);
+	var logger = new lib$6.Logger(_version$1_.version);
 	///////////////////////////////
 	function isHexable(value) {
 	    return !!(value.toHexString);
@@ -56487,7 +56874,7 @@
 
 	});
 
-	var index$16 = /*@__PURE__*/getDefaultExportFromCjs(lib$18);
+	var index$17 = /*@__PURE__*/getDefaultExportFromCjs(lib$19);
 
 	var addresses$6 = createCommonjsModule(function (module, exports) {
 	"use strict";
@@ -56546,7 +56933,7 @@
 
 	var strings$7 = /*@__PURE__*/getDefaultExportFromCjs(strings$6);
 
-	var lib$19 = createCommonjsModule(function (module, exports) {
+	var lib$1a = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.EtherSymbol = exports.HashZero = exports.MaxInt256 = exports.MinInt256 = exports.MaxUint256 = exports.WeiPerEther = exports.Two = exports.One = exports.Zero = exports.NegativeOne = exports.AddressZero = void 0;
@@ -56568,7 +56955,7 @@
 
 	});
 
-	var index$17 = /*@__PURE__*/getDefaultExportFromCjs(lib$19);
+	var index$18 = /*@__PURE__*/getDefaultExportFromCjs(lib$1a);
 
 	var sha3$4 = createCommonjsModule(function (module) {
 	/**
@@ -57229,7 +57616,7 @@
 	})();
 	});
 
-	var lib$1a = createCommonjsModule(function (module, exports) {
+	var lib$1b = createCommonjsModule(function (module, exports) {
 	"use strict";
 	var __importDefault = (commonjsGlobal && commonjsGlobal.__importDefault) || function (mod) {
 	    return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -57239,15 +57626,15 @@
 	var js_sha3_1 = __importDefault(sha3$4);
 
 	function keccak256(data) {
-	    return '0x' + js_sha3_1.default.keccak_256((0, lib$7.arrayify)(data));
+	    return '0x' + js_sha3_1.default.keccak_256((0, lib$8.arrayify)(data));
 	}
 	exports.keccak256 = keccak256;
 
 	});
 
-	var index$18 = /*@__PURE__*/getDefaultExportFromCjs(lib$1a);
+	var index$19 = /*@__PURE__*/getDefaultExportFromCjs(lib$1b);
 
-	var _version$1_ = createCommonjsModule(function (module, exports) {
+	var _version$20 = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.version = void 0;
@@ -57255,9 +57642,9 @@
 
 	});
 
-	var _version$1$ = /*@__PURE__*/getDefaultExportFromCjs(_version$1_);
+	var _version$21 = /*@__PURE__*/getDefaultExportFromCjs(_version$20);
 
-	var lib$1b = createCommonjsModule(function (module, exports) {
+	var lib$1c = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.decode = exports.encode = void 0;
@@ -57265,7 +57652,7 @@
 
 
 
-	var logger = new lib$4.Logger(_version$1_.version);
+	var logger = new lib$6.Logger(_version$20.version);
 	function arrayifyInteger(value) {
 	    var result = [];
 	    while (value) {
@@ -57295,10 +57682,10 @@
 	        length_1.unshift(0xf7 + length_1.length);
 	        return length_1.concat(payload_1);
 	    }
-	    if (!(0, lib$7.isBytesLike)(object)) {
+	    if (!(0, lib$8.isBytesLike)(object)) {
 	        logger.throwArgumentError("RLP object must be BytesLike", "object", object);
 	    }
-	    var data = Array.prototype.slice.call((0, lib$7.arrayify)(object));
+	    var data = Array.prototype.slice.call((0, lib$8.arrayify)(object));
 	    if (data.length === 1 && data[0] <= 0x7f) {
 	        return data;
 	    }
@@ -57311,7 +57698,7 @@
 	    return length.concat(data);
 	}
 	function encode(object) {
-	    return (0, lib$7.hexlify)(_encode(object));
+	    return (0, lib$8.hexlify)(_encode(object));
 	}
 	exports.encode = encode;
 	function _decodeChildren(data, offset, childOffset, length) {
@@ -57321,7 +57708,7 @@
 	        result.push(decoded.result);
 	        childOffset += decoded.consumed;
 	        if (childOffset > offset + 1 + length) {
-	            logger.throwError("child data too short", lib$4.Logger.errors.BUFFER_OVERRUN, {});
+	            logger.throwError("child data too short", lib$6.Logger.errors.BUFFER_OVERRUN, {});
 	        }
 	    }
 	    return { consumed: (1 + length), result: result };
@@ -57329,51 +57716,51 @@
 	// returns { consumed: number, result: Object }
 	function _decode(data, offset) {
 	    if (data.length === 0) {
-	        logger.throwError("data too short", lib$4.Logger.errors.BUFFER_OVERRUN, {});
+	        logger.throwError("data too short", lib$6.Logger.errors.BUFFER_OVERRUN, {});
 	    }
 	    // Array with extra length prefix
 	    if (data[offset] >= 0xf8) {
 	        var lengthLength = data[offset] - 0xf7;
 	        if (offset + 1 + lengthLength > data.length) {
-	            logger.throwError("data short segment too short", lib$4.Logger.errors.BUFFER_OVERRUN, {});
+	            logger.throwError("data short segment too short", lib$6.Logger.errors.BUFFER_OVERRUN, {});
 	        }
 	        var length_2 = unarrayifyInteger(data, offset + 1, lengthLength);
 	        if (offset + 1 + lengthLength + length_2 > data.length) {
-	            logger.throwError("data long segment too short", lib$4.Logger.errors.BUFFER_OVERRUN, {});
+	            logger.throwError("data long segment too short", lib$6.Logger.errors.BUFFER_OVERRUN, {});
 	        }
 	        return _decodeChildren(data, offset, offset + 1 + lengthLength, lengthLength + length_2);
 	    }
 	    else if (data[offset] >= 0xc0) {
 	        var length_3 = data[offset] - 0xc0;
 	        if (offset + 1 + length_3 > data.length) {
-	            logger.throwError("data array too short", lib$4.Logger.errors.BUFFER_OVERRUN, {});
+	            logger.throwError("data array too short", lib$6.Logger.errors.BUFFER_OVERRUN, {});
 	        }
 	        return _decodeChildren(data, offset, offset + 1, length_3);
 	    }
 	    else if (data[offset] >= 0xb8) {
 	        var lengthLength = data[offset] - 0xb7;
 	        if (offset + 1 + lengthLength > data.length) {
-	            logger.throwError("data array too short", lib$4.Logger.errors.BUFFER_OVERRUN, {});
+	            logger.throwError("data array too short", lib$6.Logger.errors.BUFFER_OVERRUN, {});
 	        }
 	        var length_4 = unarrayifyInteger(data, offset + 1, lengthLength);
 	        if (offset + 1 + lengthLength + length_4 > data.length) {
-	            logger.throwError("data array too short", lib$4.Logger.errors.BUFFER_OVERRUN, {});
+	            logger.throwError("data array too short", lib$6.Logger.errors.BUFFER_OVERRUN, {});
 	        }
-	        var result = (0, lib$7.hexlify)(data.slice(offset + 1 + lengthLength, offset + 1 + lengthLength + length_4));
+	        var result = (0, lib$8.hexlify)(data.slice(offset + 1 + lengthLength, offset + 1 + lengthLength + length_4));
 	        return { consumed: (1 + lengthLength + length_4), result: result };
 	    }
 	    else if (data[offset] >= 0x80) {
 	        var length_5 = data[offset] - 0x80;
 	        if (offset + 1 + length_5 > data.length) {
-	            logger.throwError("data too short", lib$4.Logger.errors.BUFFER_OVERRUN, {});
+	            logger.throwError("data too short", lib$6.Logger.errors.BUFFER_OVERRUN, {});
 	        }
-	        var result = (0, lib$7.hexlify)(data.slice(offset + 1, offset + 1 + length_5));
+	        var result = (0, lib$8.hexlify)(data.slice(offset + 1, offset + 1 + length_5));
 	        return { consumed: (1 + length_5), result: result };
 	    }
-	    return { consumed: 1, result: (0, lib$7.hexlify)(data[offset]) };
+	    return { consumed: 1, result: (0, lib$8.hexlify)(data[offset]) };
 	}
 	function decode(data) {
-	    var bytes = (0, lib$7.arrayify)(data);
+	    var bytes = (0, lib$8.arrayify)(data);
 	    var decoded = _decode(bytes, 0);
 	    if (decoded.consumed !== bytes.length) {
 	        logger.throwArgumentError("invalid rlp data", "data", data);
@@ -57384,7 +57771,7 @@
 
 	});
 
-	var index$19 = /*@__PURE__*/getDefaultExportFromCjs(lib$1b);
+	var index$1a = /*@__PURE__*/getDefaultExportFromCjs(lib$1c);
 
 	var minimalisticAssert = assert;
 
@@ -61148,7 +61535,7 @@
 
 	var elliptic$1 = /*@__PURE__*/getDefaultExportFromCjs(elliptic);
 
-	var _version$20 = createCommonjsModule(function (module, exports) {
+	var _version$22 = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.version = void 0;
@@ -61156,9 +61543,9 @@
 
 	});
 
-	var _version$21 = /*@__PURE__*/getDefaultExportFromCjs(_version$20);
+	var _version$23 = /*@__PURE__*/getDefaultExportFromCjs(_version$22);
 
-	var lib$1c = createCommonjsModule(function (module, exports) {
+	var lib$1d = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.computePublicKey = exports.recoverPublicKey = exports.SigningKey = void 0;
@@ -61167,7 +61554,7 @@
 
 
 
-	var logger = new lib$4.Logger(_version$20.version);
+	var logger = new lib$6.Logger(_version$22.version);
 	var _curve = null;
 	function getCurve() {
 	    if (!_curve) {
@@ -61178,37 +61565,37 @@
 	var SigningKey = /** @class */ (function () {
 	    function SigningKey(privateKey) {
 	        (0, lib$5.defineReadOnly)(this, "curve", "secp256k1");
-	        (0, lib$5.defineReadOnly)(this, "privateKey", (0, lib$7.hexlify)(privateKey));
-	        if ((0, lib$7.hexDataLength)(this.privateKey) !== 32) {
+	        (0, lib$5.defineReadOnly)(this, "privateKey", (0, lib$8.hexlify)(privateKey));
+	        if ((0, lib$8.hexDataLength)(this.privateKey) !== 32) {
 	            logger.throwArgumentError("invalid private key", "privateKey", "[[ REDACTED ]]");
 	        }
-	        var keyPair = getCurve().keyFromPrivate((0, lib$7.arrayify)(this.privateKey));
+	        var keyPair = getCurve().keyFromPrivate((0, lib$8.arrayify)(this.privateKey));
 	        (0, lib$5.defineReadOnly)(this, "publicKey", "0x" + keyPair.getPublic(false, "hex"));
 	        (0, lib$5.defineReadOnly)(this, "compressedPublicKey", "0x" + keyPair.getPublic(true, "hex"));
 	        (0, lib$5.defineReadOnly)(this, "_isSigningKey", true);
 	    }
 	    SigningKey.prototype._addPoint = function (other) {
-	        var p0 = getCurve().keyFromPublic((0, lib$7.arrayify)(this.publicKey));
-	        var p1 = getCurve().keyFromPublic((0, lib$7.arrayify)(other));
+	        var p0 = getCurve().keyFromPublic((0, lib$8.arrayify)(this.publicKey));
+	        var p1 = getCurve().keyFromPublic((0, lib$8.arrayify)(other));
 	        return "0x" + p0.pub.add(p1.pub).encodeCompressed("hex");
 	    };
 	    SigningKey.prototype.signDigest = function (digest) {
-	        var keyPair = getCurve().keyFromPrivate((0, lib$7.arrayify)(this.privateKey));
-	        var digestBytes = (0, lib$7.arrayify)(digest);
+	        var keyPair = getCurve().keyFromPrivate((0, lib$8.arrayify)(this.privateKey));
+	        var digestBytes = (0, lib$8.arrayify)(digest);
 	        if (digestBytes.length !== 32) {
 	            logger.throwArgumentError("bad digest length", "digest", digest);
 	        }
 	        var signature = keyPair.sign(digestBytes, { canonical: true });
-	        return (0, lib$7.splitSignature)({
+	        return (0, lib$8.splitSignature)({
 	            recoveryParam: signature.recoveryParam,
-	            r: (0, lib$7.hexZeroPad)("0x" + signature.r.toString(16), 32),
-	            s: (0, lib$7.hexZeroPad)("0x" + signature.s.toString(16), 32),
+	            r: (0, lib$8.hexZeroPad)("0x" + signature.r.toString(16), 32),
+	            s: (0, lib$8.hexZeroPad)("0x" + signature.s.toString(16), 32),
 	        });
 	    };
 	    SigningKey.prototype.computeSharedSecret = function (otherKey) {
-	        var keyPair = getCurve().keyFromPrivate((0, lib$7.arrayify)(this.privateKey));
-	        var otherKeyPair = getCurve().keyFromPublic((0, lib$7.arrayify)(computePublicKey(otherKey)));
-	        return (0, lib$7.hexZeroPad)("0x" + keyPair.derive(otherKeyPair.getPublic()).toString(16), 32);
+	        var keyPair = getCurve().keyFromPrivate((0, lib$8.arrayify)(this.privateKey));
+	        var otherKeyPair = getCurve().keyFromPublic((0, lib$8.arrayify)(computePublicKey(otherKey)));
+	        return (0, lib$8.hexZeroPad)("0x" + keyPair.derive(otherKeyPair.getPublic()).toString(16), 32);
 	    };
 	    SigningKey.isSigningKey = function (value) {
 	        return !!(value && value._isSigningKey);
@@ -61217,13 +61604,13 @@
 	}());
 	exports.SigningKey = SigningKey;
 	function recoverPublicKey(digest, signature) {
-	    var sig = (0, lib$7.splitSignature)(signature);
-	    var rs = { r: (0, lib$7.arrayify)(sig.r), s: (0, lib$7.arrayify)(sig.s) };
-	    return "0x" + getCurve().recoverPubKey((0, lib$7.arrayify)(digest), rs, sig.recoveryParam).encode("hex", false);
+	    var sig = (0, lib$8.splitSignature)(signature);
+	    var rs = { r: (0, lib$8.arrayify)(sig.r), s: (0, lib$8.arrayify)(sig.s) };
+	    return "0x" + getCurve().recoverPubKey((0, lib$8.arrayify)(digest), rs, sig.recoveryParam).encode("hex", false);
 	}
 	exports.recoverPublicKey = recoverPublicKey;
 	function computePublicKey(key, compressed) {
-	    var bytes = (0, lib$7.arrayify)(key);
+	    var bytes = (0, lib$8.arrayify)(key);
 	    if (bytes.length === 32) {
 	        var signingKey = new SigningKey(bytes);
 	        if (compressed) {
@@ -61233,13 +61620,13 @@
 	    }
 	    else if (bytes.length === 33) {
 	        if (compressed) {
-	            return (0, lib$7.hexlify)(bytes);
+	            return (0, lib$8.hexlify)(bytes);
 	        }
 	        return "0x" + getCurve().keyFromPublic(bytes).getPublic(false, "hex");
 	    }
 	    else if (bytes.length === 65) {
 	        if (!compressed) {
-	            return (0, lib$7.hexlify)(bytes);
+	            return (0, lib$8.hexlify)(bytes);
 	        }
 	        return "0x" + getCurve().keyFromPublic(bytes).getPublic(true, "hex");
 	    }
@@ -61249,9 +61636,9 @@
 
 	});
 
-	var index$1a = /*@__PURE__*/getDefaultExportFromCjs(lib$1c);
+	var index$1b = /*@__PURE__*/getDefaultExportFromCjs(lib$1d);
 
-	var _version$22 = createCommonjsModule(function (module, exports) {
+	var _version$24 = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.version = void 0;
@@ -61259,9 +61646,9 @@
 
 	});
 
-	var _version$23 = /*@__PURE__*/getDefaultExportFromCjs(_version$22);
+	var _version$25 = /*@__PURE__*/getDefaultExportFromCjs(_version$24);
 
-	var lib$1d = createCommonjsModule(function (module, exports) {
+	var lib$1e = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.Logger = exports.ErrorCode = exports.LogLevel = void 0;
@@ -61595,7 +61982,7 @@
 	    };
 	    Logger.globalLogger = function () {
 	        if (!_globalLogger) {
-	            _globalLogger = new Logger(_version$22.version);
+	            _globalLogger = new Logger(_version$24.version);
 	        }
 	        return _globalLogger;
 	    };
@@ -61635,9 +62022,9 @@
 
 	});
 
-	var index$1b = /*@__PURE__*/getDefaultExportFromCjs(lib$1d);
+	var index$1c = /*@__PURE__*/getDefaultExportFromCjs(lib$1e);
 
-	var _version$24 = createCommonjsModule(function (module, exports) {
+	var _version$26 = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.version = void 0;
@@ -61645,9 +62032,9 @@
 
 	});
 
-	var _version$25 = /*@__PURE__*/getDefaultExportFromCjs(_version$24);
+	var _version$27 = /*@__PURE__*/getDefaultExportFromCjs(_version$26);
 
-	var lib$1e = createCommonjsModule(function (module, exports) {
+	var lib$1f = createCommonjsModule(function (module, exports) {
 	"use strict";
 	var __createBinding = (commonjsGlobal && commonjsGlobal.__createBinding) || (Object.create ? (function(o, m, k, k2) {
 	    if (k2 === undefined) k2 = k;
@@ -61675,11 +62062,11 @@
 
 
 
-	var RLP = __importStar(lib$1b);
+	var RLP = __importStar(lib$1c);
 
 
 
-	var logger = new lib$1d.Logger(_version$24.version);
+	var logger = new lib$1e.Logger(_version$26.version);
 	var TransactionTypes;
 	(function (TransactionTypes) {
 	    TransactionTypes[TransactionTypes["standard"] = 0] = "standard";
@@ -61692,25 +62079,25 @@
 	    if (value === "0x") {
 	        return null;
 	    }
-	    return (0, lib$16.getAddress)(value);
+	    return (0, lib$17.getAddress)(value);
 	}
 	function handleNumber(value) {
 	    if (value === "0x") {
-	        return lib$19.Zero;
+	        return lib$1a.Zero;
 	    }
-	    return lib$17.BigNumber.from(value);
+	    return lib$18.BigNumber.from(value);
 	}
 	function computeAddress(key) {
-	    var publicKey = (0, lib$1c.computePublicKey)(key);
-	    return (0, lib$16.getAddress)((0, lib$18.hexDataSlice)((0, lib$1a.keccak256)((0, lib$18.hexDataSlice)(publicKey, 1)), 12));
+	    var publicKey = (0, lib$1d.computePublicKey)(key);
+	    return (0, lib$17.getAddress)((0, lib$19.hexDataSlice)((0, lib$1b.keccak256)((0, lib$19.hexDataSlice)(publicKey, 1)), 12));
 	}
 	exports.computeAddress = computeAddress;
 	function recoverAddress(digest, signature) {
-	    return computeAddress((0, lib$1c.recoverPublicKey)((0, lib$18.arrayify)(digest), signature));
+	    return computeAddress((0, lib$1d.recoverPublicKey)((0, lib$19.arrayify)(digest), signature));
 	}
 	exports.recoverAddress = recoverAddress;
 	function formatNumber(value, name) {
-	    var result = (0, lib$18.stripZeros)(lib$17.BigNumber.from(value).toHexString());
+	    var result = (0, lib$19.stripZeros)(lib$18.BigNumber.from(value).toHexString());
 	    if (result.length > 32) {
 	        logger.throwArgumentError("invalid length for " + name, ("transaction:" + name), value);
 	    }
@@ -61718,9 +62105,9 @@
 	}
 	function accessSetify(addr, storageKeys) {
 	    return {
-	        address: (0, lib$16.getAddress)(addr),
+	        address: (0, lib$17.getAddress)(addr),
 	        storageKeys: (storageKeys || []).map(function (storageKey, index) {
-	            if ((0, lib$18.hexDataLength)(storageKey) !== 32) {
+	            if ((0, lib$19.hexDataLength)(storageKey) !== 32) {
 	                logger.throwArgumentError("invalid access list storageKey", "accessList[" + addr + ":" + index + "]", storageKey);
 	            }
 	            return storageKey.toLowerCase();
@@ -61758,8 +62145,8 @@
 	    // EIP-1559 fees; otherwise they may not understand what they
 	    // think they are setting in terms of fee.
 	    if (transaction.gasPrice != null) {
-	        var gasPrice = lib$17.BigNumber.from(transaction.gasPrice);
-	        var maxFeePerGas = lib$17.BigNumber.from(transaction.maxFeePerGas || 0);
+	        var gasPrice = lib$18.BigNumber.from(transaction.gasPrice);
+	        var maxFeePerGas = lib$18.BigNumber.from(transaction.maxFeePerGas || 0);
 	        if (!gasPrice.eq(maxFeePerGas)) {
 	            logger.throwArgumentError("mismatch EIP-1559 gasPrice != maxFeePerGas", "tx", {
 	                gasPrice: gasPrice,
@@ -61773,18 +62160,18 @@
 	        formatNumber(transaction.maxPriorityFeePerGas || 0, "maxPriorityFeePerGas"),
 	        formatNumber(transaction.maxFeePerGas || 0, "maxFeePerGas"),
 	        formatNumber(transaction.gasLimit || 0, "gasLimit"),
-	        ((transaction.to != null) ? (0, lib$16.getAddress)(transaction.to) : "0x"),
+	        ((transaction.to != null) ? (0, lib$17.getAddress)(transaction.to) : "0x"),
 	        formatNumber(transaction.value || 0, "value"),
 	        (transaction.data || "0x"),
 	        (formatAccessList(transaction.accessList || []))
 	    ];
 	    if (signature) {
-	        var sig = (0, lib$18.splitSignature)(signature);
+	        var sig = (0, lib$19.splitSignature)(signature);
 	        fields.push(formatNumber(sig.recoveryParam, "recoveryParam"));
-	        fields.push((0, lib$18.stripZeros)(sig.r));
-	        fields.push((0, lib$18.stripZeros)(sig.s));
+	        fields.push((0, lib$19.stripZeros)(sig.r));
+	        fields.push((0, lib$19.stripZeros)(sig.s));
 	    }
-	    return (0, lib$18.hexConcat)(["0x00", RLP.encode(fields)]);
+	    return (0, lib$19.hexConcat)(["0x00", RLP.encode(fields)]);
 	}
 	function _serializeStandardETx(transaction, signature) {
 	    var fields = [
@@ -61793,7 +62180,7 @@
 	        formatNumber(transaction.maxPriorityFeePerGas || 0, "maxPriorityFeePerGas"),
 	        formatNumber(transaction.maxFeePerGas || 0, "maxFeePerGas"),
 	        formatNumber(transaction.gasLimit || 0, "gasLimit"),
-	        ((transaction.to != null) ? (0, lib$16.getAddress)(transaction.to) : "0x"),
+	        ((transaction.to != null) ? (0, lib$17.getAddress)(transaction.to) : "0x"),
 	        formatNumber(transaction.value || 0, "value"),
 	        (transaction.data || "0x"),
 	        (formatAccessList(transaction.accessList || [])),
@@ -61804,12 +62191,12 @@
 	        (formatAccessList(transaction.externalAccessList || [])),
 	    ];
 	    if (signature) {
-	        var sig = (0, lib$18.splitSignature)(signature);
+	        var sig = (0, lib$19.splitSignature)(signature);
 	        fields.push(formatNumber(sig.recoveryParam, "recoveryParam"));
-	        fields.push((0, lib$18.stripZeros)(sig.r));
-	        fields.push((0, lib$18.stripZeros)(sig.s));
+	        fields.push((0, lib$19.stripZeros)(sig.r));
+	        fields.push((0, lib$19.stripZeros)(sig.s));
 	    }
-	    return (0, lib$18.hexConcat)(["0x02", RLP.encode(fields)]);
+	    return (0, lib$19.hexConcat)(["0x02", RLP.encode(fields)]);
 	}
 	function serialize(transaction, signature) {
 	    // Typed Transactions (standard and ETx)
@@ -61821,7 +62208,7 @@
 	        default:
 	            break;
 	    }
-	    return logger.throwError("unsupported transaction type: " + transaction.type, lib$1d.Logger.errors.UNSUPPORTED_OPERATION, {
+	    return logger.throwError("unsupported transaction type: " + transaction.type, lib$1e.Logger.errors.UNSUPPORTED_OPERATION, {
 	        operation: "serializeTransaction",
 	        transactionType: transaction.type
 	    });
@@ -61838,10 +62225,10 @@
 	    catch (error) {
 	        logger.throwArgumentError("invalid v for transaction type: 1", "v", fields[0]);
 	    }
-	    tx.r = (0, lib$18.hexZeroPad)(fields[1], 32);
-	    tx.s = (0, lib$18.hexZeroPad)(fields[2], 32);
+	    tx.r = (0, lib$19.hexZeroPad)(fields[1], 32);
+	    tx.s = (0, lib$19.hexZeroPad)(fields[2], 32);
 	    try {
-	        var digest = (0, lib$1a.keccak256)(serialize(tx));
+	        var digest = (0, lib$1b.keccak256)(serialize(tx));
 	        tx.from = recoverAddress(digest, { r: tx.r, s: tx.s, recoveryParam: tx.v });
 	    }
 	    catch (error) { }
@@ -61849,7 +62236,7 @@
 	function _parse(payload) {
 	    var transaction = RLP.decode(payload.slice(1));
 	    if (transaction.length !== 9 && transaction.length !== 12) {
-	        logger.throwArgumentError("invalid component count for transaction type: 0", "payload", (0, lib$18.hexlify)(payload));
+	        logger.throwArgumentError("invalid component count for transaction type: 0", "payload", (0, lib$19.hexlify)(payload));
 	    }
 	    var maxPriorityFeePerGas = handleNumber(transaction[2]);
 	    var maxFeePerGas = handleNumber(transaction[3]);
@@ -61870,14 +62257,14 @@
 	    if (transaction.length === 9) {
 	        return tx;
 	    }
-	    tx.hash = (0, lib$1a.keccak256)(payload);
+	    tx.hash = (0, lib$1b.keccak256)(payload);
 	    _parseEipSignature(tx, transaction.slice(9), _serialize);
 	    return tx;
 	}
 	function _parseStandardETx(payload) {
 	    var transaction = RLP.decode(payload.slice(1));
 	    if (transaction.length !== 8 && transaction.length !== 17) {
-	        logger.throwArgumentError("invalid component count for transaction type: 1", "payload", (0, lib$18.hexlify)(payload));
+	        logger.throwArgumentError("invalid component count for transaction type: 1", "payload", (0, lib$19.hexlify)(payload));
 	    }
 	    var maxPriorityFeePerGas = handleNumber(transaction[2]);
 	    var maxFeePerGas = handleNumber(transaction[3]);
@@ -61903,12 +62290,12 @@
 	    if (transaction.length === 8) {
 	        return tx;
 	    }
-	    tx.hash = (0, lib$1a.keccak256)(payload);
+	    tx.hash = (0, lib$1b.keccak256)(payload);
 	    _parseEipSignature(tx, transaction.slice(14), _serializeStandardETx);
 	    return tx;
 	}
 	function parse(rawTransaction) {
-	    var payload = (0, lib$18.arrayify)(rawTransaction);
+	    var payload = (0, lib$19.arrayify)(rawTransaction);
 	    // Typed Transaction (EIP-2718)
 	    switch (payload[0]) {
 	        case 0:
@@ -61918,7 +62305,7 @@
 	        default:
 	            break;
 	    }
-	    return logger.throwError("unsupported transaction type: " + payload[0], lib$1d.Logger.errors.UNSUPPORTED_OPERATION, {
+	    return logger.throwError("unsupported transaction type: " + payload[0], lib$1e.Logger.errors.UNSUPPORTED_OPERATION, {
 	        operation: "parseTransaction",
 	        transactionType: payload[0]
 	    });
@@ -61927,9 +62314,9 @@
 
 	});
 
-	var index$1c = /*@__PURE__*/getDefaultExportFromCjs(lib$1e);
+	var index$1d = /*@__PURE__*/getDefaultExportFromCjs(lib$1f);
 
-	var _version$26 = createCommonjsModule(function (module, exports) {
+	var _version$28 = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.version = void 0;
@@ -61937,9 +62324,9 @@
 
 	});
 
-	var _version$27 = /*@__PURE__*/getDefaultExportFromCjs(_version$26);
+	var _version$29 = /*@__PURE__*/getDefaultExportFromCjs(_version$28);
 
-	var lib$1f = createCommonjsModule(function (module, exports) {
+	var lib$1g = createCommonjsModule(function (module, exports) {
 	"use strict";
 	var __extends = (commonjsGlobal && commonjsGlobal.__extends) || (function () {
 	    var extendStatics = function (d, b) {
@@ -62013,7 +62400,7 @@
 
 
 
-	var logger = new lib$4.Logger(_version$26.version);
+	var logger = new lib$6.Logger(_version$28.version);
 	;
 	;
 	///////////////////////////////
@@ -62037,11 +62424,11 @@
 	                    }
 	                    // If it is already an address, just use it (after adding checksum)
 	                    try {
-	                        return [2 /*return*/, (0, lib$k.getAddress)(name)];
+	                        return [2 /*return*/, (0, lib$l.getAddress)(name)];
 	                    }
 	                    catch (error) { }
 	                    if (!resolver) {
-	                        logger.throwError("a provider or signer is needed to resolve ENS names", lib$4.Logger.errors.UNSUPPORTED_OPERATION, {
+	                        logger.throwError("a provider or signer is needed to resolve ENS names", lib$6.Logger.errors.UNSUPPORTED_OPERATION, {
 	                            operation: "resolveName"
 	                        });
 	                    }
@@ -62078,7 +62465,7 @@
 	                case 6:
 	                    if (!(paramType.baseType === "array")) return [3 /*break*/, 8];
 	                    if (!Array.isArray(value)) {
-	                        return [2 /*return*/, Promise.reject(logger.makeError("invalid value for array", lib$4.Logger.errors.INVALID_ARGUMENT, {
+	                        return [2 /*return*/, Promise.reject(logger.makeError("invalid value for array", lib$6.Logger.errors.INVALID_ARGUMENT, {
 	                                argument: "value",
 	                                value: value
 	                            }))];
@@ -62113,8 +62500,8 @@
 	                                signer: contract.signer.getAddress()
 	                            }).then(function (check) { return __awaiter(_this, void 0, void 0, function () {
 	                                return __generator(this, function (_a) {
-	                                    if ((0, lib$k.getAddress)(check.signer) !== check.override) {
-	                                        logger.throwError("Contract with a Signer cannot override from", lib$4.Logger.errors.UNSUPPORTED_OPERATION, {
+	                                    if ((0, lib$l.getAddress)(check.signer) !== check.override) {
+	                                        logger.throwError("Contract with a Signer cannot override from", lib$6.Logger.errors.UNSUPPORTED_OPERATION, {
 	                                            operation: "overrides.from"
 	                                        });
 	                                    }
@@ -62169,12 +62556,12 @@
 	                        tx.type = ro.type;
 	                    }
 	                    if (ro.accessList != null) {
-	                        tx.accessList = (0, lib$1e.accessListify)(ro.accessList);
+	                        tx.accessList = (0, lib$1f.accessListify)(ro.accessList);
 	                    }
 	                    // If there was no "gasLimit" override, but the ABI specifies a default, use it
 	                    if (tx.gasLimit == null && fragment.gas != null) {
 	                        intrinsic = 21000;
-	                        bytes = (0, lib$7.arrayify)(data);
+	                        bytes = (0, lib$8.arrayify)(data);
 	                        for (i = 0; i < bytes.length; i++) {
 	                            intrinsic += 4;
 	                            if (bytes[i]) {
@@ -62187,7 +62574,7 @@
 	                    if (ro.value) {
 	                        roValue = lib$3.BigNumber.from(ro.value);
 	                        if (!roValue.isZero() && !fragment.payable) {
-	                            logger.throwError("non-payable method cannot override value", lib$4.Logger.errors.UNSUPPORTED_OPERATION, {
+	                            logger.throwError("non-payable method cannot override value", lib$6.Logger.errors.UNSUPPORTED_OPERATION, {
 	                                operation: "overrides.value",
 	                                value: overrides.value
 	                            });
@@ -62214,7 +62601,7 @@
 	                    delete overrides.ccipReadEnabled;
 	                    leftovers = Object.keys(overrides).filter(function (key) { return (overrides[key] != null); });
 	                    if (leftovers.length) {
-	                        logger.throwError("cannot override " + leftovers.map(function (l) { return JSON.stringify(l); }).join(","), lib$4.Logger.errors.UNSUPPORTED_OPERATION, {
+	                        logger.throwError("cannot override " + leftovers.map(function (l) { return JSON.stringify(l); }).join(","), lib$6.Logger.errors.UNSUPPORTED_OPERATION, {
 	                            operation: "overrides",
 	                            overrides: leftovers
 	                        });
@@ -62246,7 +62633,7 @@
 	                switch (_a.label) {
 	                    case 0:
 	                        if (!signerOrProvider) {
-	                            logger.throwError("estimate require a provider or signer", lib$4.Logger.errors.UNSUPPORTED_OPERATION, {
+	                            logger.throwError("estimate require a provider or signer", lib$6.Logger.errors.UNSUPPORTED_OPERATION, {
 	                                operation: "estimateGas"
 	                            });
 	                        }
@@ -62341,7 +62728,7 @@
 	                            return [2 /*return*/, value];
 	                        }
 	                        catch (error) {
-	                            if (error.code === lib$4.Logger.errors.CALL_EXCEPTION) {
+	                            if (error.code === lib$6.Logger.errors.CALL_EXCEPTION) {
 	                                error.address = contract.address;
 	                                error.args = args;
 	                                error.transaction = tx;
@@ -62366,7 +62753,7 @@
 	                switch (_a.label) {
 	                    case 0:
 	                        if (!contract.signer) {
-	                            logger.throwError("sending a transaction requires a signer", lib$4.Logger.errors.UNSUPPORTED_OPERATION, {
+	                            logger.throwError("sending a transaction requires a signer", lib$6.Logger.errors.UNSUPPORTED_OPERATION, {
 	                                operation: "sendTransaction"
 	                            });
 	                        }
@@ -62508,7 +62895,7 @@
 	        }
 	    };
 	    FragmentRunningEvent.prototype.getEmit = function (event) {
-	        var errors = (0, lib$X.checkResultErrors)(event.args);
+	        var errors = (0, lib$Y.checkResultErrors)(event.args);
 	        if (errors.length) {
 	            throw errors[0].error;
 	        }
@@ -62560,11 +62947,11 @@
 	            (0, lib$5.defineReadOnly)(this, "provider", null);
 	            (0, lib$5.defineReadOnly)(this, "signer", null);
 	        }
-	        else if (lib$12.Signer.isSigner(signerOrProvider)) {
+	        else if (lib$13.Signer.isSigner(signerOrProvider)) {
 	            (0, lib$5.defineReadOnly)(this, "provider", signerOrProvider.provider || null);
 	            (0, lib$5.defineReadOnly)(this, "signer", signerOrProvider);
 	        }
-	        else if (lib$$.Provider.isProvider(signerOrProvider)) {
+	        else if (lib$10.Provider.isProvider(signerOrProvider)) {
 	            (0, lib$5.defineReadOnly)(this, "provider", signerOrProvider);
 	            (0, lib$5.defineReadOnly)(this, "signer", null);
 	        }
@@ -62616,11 +63003,11 @@
 	        }
 	        else {
 	            try {
-	                (0, lib$5.defineReadOnly)(this, "resolvedAddress", Promise.resolve((0, lib$k.getAddress)(addressOrName)));
+	                (0, lib$5.defineReadOnly)(this, "resolvedAddress", Promise.resolve((0, lib$l.getAddress)(addressOrName)));
 	            }
 	            catch (error) {
 	                // Without a provider, we cannot use ENS names
-	                logger.throwError("provider is required to use ENS name as contract address", lib$4.Logger.errors.UNSUPPORTED_OPERATION, {
+	                logger.throwError("provider is required to use ENS name as contract address", lib$6.Logger.errors.UNSUPPORTED_OPERATION, {
 	                    operation: "new Contract"
 	                });
 	            }
@@ -62697,13 +63084,13 @@
 	        });
 	    }
 	    BaseContract.getContractAddress = function (transaction) {
-	        return (0, lib$k.getContractAddress)(transaction);
+	        return (0, lib$l.getContractAddress)(transaction);
 	    };
 	    BaseContract.getInterface = function (contractInterface) {
-	        if (lib$X.Interface.isInterface(contractInterface)) {
+	        if (lib$Y.Interface.isInterface(contractInterface)) {
 	            return contractInterface;
 	        }
-	        return new lib$X.Interface(contractInterface);
+	        return new lib$Y.Interface(contractInterface);
 	    };
 	    // @TODO: Allow timeout?
 	    BaseContract.prototype.deployed = function () {
@@ -62724,7 +63111,7 @@
 	                // Otherwise, poll for our code to be deployed
 	                this._deployedPromise = this.provider.getCode(this.address, blockTag).then(function (code) {
 	                    if (code === "0x") {
-	                        logger.throwError("contract not deployed", lib$4.Logger.errors.UNSUPPORTED_OPERATION, {
+	                        logger.throwError("contract not deployed", lib$6.Logger.errors.UNSUPPORTED_OPERATION, {
 	                            contractAddress: _this.address,
 	                            operation: "getDeployed"
 	                        });
@@ -62742,14 +63129,14 @@
 	    BaseContract.prototype.fallback = function (overrides) {
 	        var _this = this;
 	        if (!this.signer) {
-	            logger.throwError("sending a transactions require a signer", lib$4.Logger.errors.UNSUPPORTED_OPERATION, { operation: "sendTransaction(fallback)" });
+	            logger.throwError("sending a transactions require a signer", lib$6.Logger.errors.UNSUPPORTED_OPERATION, { operation: "sendTransaction(fallback)" });
 	        }
 	        var tx = (0, lib$5.shallowCopy)(overrides || {});
 	        ["from", "to"].forEach(function (key) {
 	            if (tx[key] == null) {
 	                return;
 	            }
-	            logger.throwError("cannot override " + key, lib$4.Logger.errors.UNSUPPORTED_OPERATION, { operation: key });
+	            logger.throwError("cannot override " + key, lib$6.Logger.errors.UNSUPPORTED_OPERATION, { operation: key });
 	        });
 	        tx.to = this.resolvedAddress;
 	        return this.deployed().then(function () {
@@ -62759,7 +63146,7 @@
 	    // Reconnect to a different signer or provider
 	    BaseContract.prototype.connect = function (signerOrProvider) {
 	        if (typeof (signerOrProvider) === "string") {
-	            signerOrProvider = new lib$12.VoidSigner(signerOrProvider, this.provider);
+	            signerOrProvider = new lib$13.VoidSigner(signerOrProvider, this.provider);
 	        }
 	        var contract = new (this.constructor)(this.address, this.interface, signerOrProvider);
 	        if (this.deployTransaction) {
@@ -62772,7 +63159,7 @@
 	        return new (this.constructor)(addressOrName, this.interface, this.signer || this.provider);
 	    };
 	    BaseContract.isIndexed = function (value) {
-	        return lib$X.Indexed.isIndexed(value);
+	        return lib$Y.Indexed.isIndexed(value);
 	    };
 	    BaseContract.prototype._normalizeRunningEvent = function (runningEvent) {
 	        // Already have an instance of this event running; we can re-use it
@@ -62854,7 +63241,7 @@
 	    BaseContract.prototype._addEventListener = function (runningEvent, listener, once) {
 	        var _this = this;
 	        if (!this.provider) {
-	            logger.throwError("events require a provider or a signer with a provider", lib$4.Logger.errors.UNSUPPORTED_OPERATION, { operation: "once" });
+	            logger.throwError("events require a provider or a signer with a provider", lib$6.Logger.errors.UNSUPPORTED_OPERATION, { operation: "once" });
 	        }
 	        runningEvent.addListener(listener, once);
 	        // Track this running event and its listeners (may already be there; but no hard in updating)
@@ -62893,7 +63280,7 @@
 	        var _this = this;
 	        var runningEvent = this._getRunningEvent(event);
 	        var filter = (0, lib$5.shallowCopy)(runningEvent.filter);
-	        if (typeof (fromBlockOrBlockhash) === "string" && (0, lib$7.isHexString)(fromBlockOrBlockhash, 32)) {
+	        if (typeof (fromBlockOrBlockhash) === "string" && (0, lib$8.isHexString)(fromBlockOrBlockhash, 32)) {
 	            if (toBlock != null) {
 	                logger.throwArgumentError("cannot specify toBlock with blockhash", "toBlock", toBlock);
 	            }
@@ -63004,8 +63391,8 @@
 	        if (typeof (bytecode) === "string") {
 	            bytecodeHex = bytecode;
 	        }
-	        else if ((0, lib$7.isBytes)(bytecode)) {
-	            bytecodeHex = (0, lib$7.hexlify)(bytecode);
+	        else if ((0, lib$8.isBytes)(bytecode)) {
+	            bytecodeHex = (0, lib$8.hexlify)(bytecode);
 	        }
 	        else if (bytecode && typeof (bytecode.object) === "string") {
 	            // Allow the bytecode object from the Solidity compiler
@@ -63020,11 +63407,11 @@
 	            bytecodeHex = "0x" + bytecodeHex;
 	        }
 	        // Make sure the final result is valid bytecode
-	        if (!(0, lib$7.isHexString)(bytecodeHex) || (bytecodeHex.length % 2)) {
+	        if (!(0, lib$8.isHexString)(bytecodeHex) || (bytecodeHex.length % 2)) {
 	            logger.throwArgumentError("invalid bytecode", "bytecode", bytecode);
 	        }
 	        // If we have a signer, make sure it is valid
-	        if (signer && !lib$12.Signer.isSigner(signer)) {
+	        if (signer && !lib$13.Signer.isSigner(signer)) {
 	            logger.throwArgumentError("invalid signer", "signer", signer);
 	        }
 	        (0, lib$5.defineReadOnly)(this, "bytecode", bytecodeHex);
@@ -63052,12 +63439,12 @@
 	            if (tx[key] == null) {
 	                return;
 	            }
-	            logger.throwError("cannot override " + key, lib$4.Logger.errors.UNSUPPORTED_OPERATION, { operation: key });
+	            logger.throwError("cannot override " + key, lib$6.Logger.errors.UNSUPPORTED_OPERATION, { operation: key });
 	        });
 	        if (tx.value) {
 	            var value = lib$3.BigNumber.from(tx.value);
 	            if (!value.isZero() && !this.interface.deploy.payable) {
-	                logger.throwError("non-payable constructor cannot override value", lib$4.Logger.errors.UNSUPPORTED_OPERATION, {
+	                logger.throwError("non-payable constructor cannot override value", lib$6.Logger.errors.UNSUPPORTED_OPERATION, {
 	                    operation: "overrides.value",
 	                    value: tx.value
 	                });
@@ -63066,7 +63453,7 @@
 	        // Make sure the call matches the constructor signature
 	        logger.checkArgumentCount(args.length, this.interface.deploy.inputs.length, " in Contract constructor");
 	        // Set the data to the bytecode + the encoded constructor arguments
-	        tx.data = (0, lib$7.hexlify)((0, lib$7.concat)([
+	        tx.data = (0, lib$8.hexlify)((0, lib$8.concat)([
 	            this.bytecode,
 	            this.interface.encodeDeploy(args)
 	        ]));
@@ -63115,7 +63502,7 @@
 	    };
 	    ContractFactory.fromSolidity = function (compilerOutput, signer) {
 	        if (compilerOutput == null) {
-	            logger.throwError("missing compiler output", lib$4.Logger.errors.MISSING_ARGUMENT, { argument: "compilerOutput" });
+	            logger.throwError("missing compiler output", lib$6.Logger.errors.MISSING_ARGUMENT, { argument: "compilerOutput" });
 	        }
 	        if (typeof (compilerOutput) === "string") {
 	            compilerOutput = JSON.parse(compilerOutput);
@@ -63134,7 +63521,7 @@
 	        return Contract.getInterface(contractInterface);
 	    };
 	    ContractFactory.getContractAddress = function (tx) {
-	        return (0, lib$k.getContractAddress)(tx);
+	        return (0, lib$l.getContractAddress)(tx);
 	    };
 	    ContractFactory.getContract = function (address, contractInterface, signer) {
 	        return new Contract(address, contractInterface, signer);
@@ -63145,9 +63532,9 @@
 
 	});
 
-	var index$1d = /*@__PURE__*/getDefaultExportFromCjs(lib$1f);
+	var index$1e = /*@__PURE__*/getDefaultExportFromCjs(lib$1g);
 
-	var _version$28 = createCommonjsModule(function (module, exports) {
+	var _version$2a = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.version = void 0;
@@ -63155,15 +63542,15 @@
 
 	});
 
-	var _version$29 = /*@__PURE__*/getDefaultExportFromCjs(_version$28);
+	var _version$2b = /*@__PURE__*/getDefaultExportFromCjs(_version$2a);
 
-	var lib$1g = createCommonjsModule(function (module, exports) {
+	var lib$1h = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.joinSignature = exports.splitSignature = exports.hexZeroPad = exports.hexStripZeros = exports.hexValue = exports.hexConcat = exports.hexDataSlice = exports.hexDataLength = exports.hexlify = exports.isHexString = exports.zeroPad = exports.stripZeros = exports.concat = exports.arrayify = exports.isBytes = exports.isBytesLike = void 0;
 
 
-	var logger = new lib$4.Logger(_version$28.version);
+	var logger = new lib$6.Logger(_version$2a.version);
 	///////////////////////////////
 	function isHexable(value) {
 	    return !!(value.toHexString);
@@ -63587,9 +63974,9 @@
 
 	});
 
-	var index$1e = /*@__PURE__*/getDefaultExportFromCjs(lib$1g);
+	var index$1f = /*@__PURE__*/getDefaultExportFromCjs(lib$1h);
 
-	var _version$2a = createCommonjsModule(function (module, exports) {
+	var _version$2c = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.version = void 0;
@@ -63597,9 +63984,9 @@
 
 	});
 
-	var _version$2b = /*@__PURE__*/getDefaultExportFromCjs(_version$2a);
+	var _version$2d = /*@__PURE__*/getDefaultExportFromCjs(_version$2c);
 
-	var lib$1h = createCommonjsModule(function (module, exports) {
+	var lib$1i = createCommonjsModule(function (module, exports) {
 	"use strict";
 	var __awaiter = (commonjsGlobal && commonjsGlobal.__awaiter) || function (thisArg, _arguments, P, generator) {
 	    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
@@ -63641,7 +64028,7 @@
 	exports.Description = exports.deepCopy = exports.shallowCopy = exports.checkProperties = exports.resolveProperties = exports.getStatic = exports.defineReadOnly = void 0;
 
 
-	var logger = new lib$4.Logger(_version$2a.version);
+	var logger = new lib$6.Logger(_version$2c.version);
 	function defineReadOnly(object, name, value) {
 	    Object.defineProperty(object, name, {
 	        enumerable: true,
@@ -63773,9 +64160,9 @@
 
 	});
 
-	var index$1f = /*@__PURE__*/getDefaultExportFromCjs(lib$1h);
+	var index$1g = /*@__PURE__*/getDefaultExportFromCjs(lib$1i);
 
-	var lib$1i = createCommonjsModule(function (module, exports) {
+	var lib$1j = createCommonjsModule(function (module, exports) {
 	"use strict";
 	/**
 	 * var basex = require("base-x");
@@ -63822,17 +64209,17 @@
 
 	var BaseX = /** @class */ (function () {
 	    function BaseX(alphabet) {
-	        (0, lib$1h.defineReadOnly)(this, "alphabet", alphabet);
-	        (0, lib$1h.defineReadOnly)(this, "base", alphabet.length);
-	        (0, lib$1h.defineReadOnly)(this, "_alphabetMap", {});
-	        (0, lib$1h.defineReadOnly)(this, "_leader", alphabet.charAt(0));
+	        (0, lib$1i.defineReadOnly)(this, "alphabet", alphabet);
+	        (0, lib$1i.defineReadOnly)(this, "base", alphabet.length);
+	        (0, lib$1i.defineReadOnly)(this, "_alphabetMap", {});
+	        (0, lib$1i.defineReadOnly)(this, "_leader", alphabet.charAt(0));
 	        // pre-compute lookup table
 	        for (var i = 0; i < alphabet.length; i++) {
 	            this._alphabetMap[alphabet.charAt(i)] = i;
 	        }
 	    }
 	    BaseX.prototype.encode = function (value) {
-	        var source = (0, lib$1g.arrayify)(value);
+	        var source = (0, lib$1h.arrayify)(value);
 	        if (source.length === 0) {
 	            return "";
 	        }
@@ -63889,7 +64276,7 @@
 	        for (var k = 0; value[k] === this._leader && k < value.length - 1; ++k) {
 	            bytes.push(0);
 	        }
-	        return (0, lib$1g.arrayify)(new Uint8Array(bytes.reverse()));
+	        return (0, lib$1h.arrayify)(new Uint8Array(bytes.reverse()));
 	    };
 	    return BaseX;
 	}());
@@ -63903,9 +64290,9 @@
 
 	});
 
-	var index$1g = /*@__PURE__*/getDefaultExportFromCjs(lib$1i);
+	var index$1h = /*@__PURE__*/getDefaultExportFromCjs(lib$1j);
 
-	var _version$2c = createCommonjsModule(function (module, exports) {
+	var _version$2e = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.version = void 0;
@@ -63913,15 +64300,15 @@
 
 	});
 
-	var _version$2d = /*@__PURE__*/getDefaultExportFromCjs(_version$2c);
+	var _version$2f = /*@__PURE__*/getDefaultExportFromCjs(_version$2e);
 
-	var lib$1j = createCommonjsModule(function (module, exports) {
+	var lib$1k = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.joinSignature = exports.splitSignature = exports.hexZeroPad = exports.hexStripZeros = exports.hexValue = exports.hexConcat = exports.hexDataSlice = exports.hexDataLength = exports.hexlify = exports.isHexString = exports.zeroPad = exports.stripZeros = exports.concat = exports.arrayify = exports.isBytes = exports.isBytesLike = void 0;
 
 
-	var logger = new lib$4.Logger(_version$2c.version);
+	var logger = new lib$6.Logger(_version$2e.version);
 	///////////////////////////////
 	function isHexable(value) {
 	    return !!(value.toHexString);
@@ -64345,7 +64732,7 @@
 
 	});
 
-	var index$1h = /*@__PURE__*/getDefaultExportFromCjs(lib$1j);
+	var index$1i = /*@__PURE__*/getDefaultExportFromCjs(lib$1k);
 
 	var types = createCommonjsModule(function (module, exports) {
 	"use strict";
@@ -64362,7 +64749,7 @@
 
 	var types$1 = /*@__PURE__*/getDefaultExportFromCjs(types);
 
-	var _version$2e = createCommonjsModule(function (module, exports) {
+	var _version$2g = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.version = void 0;
@@ -64370,7 +64757,7 @@
 
 	});
 
-	var _version$2f = /*@__PURE__*/getDefaultExportFromCjs(_version$2e);
+	var _version$2h = /*@__PURE__*/getDefaultExportFromCjs(_version$2g);
 
 	var browserSha2 = createCommonjsModule(function (module, exports) {
 	"use strict";
@@ -64385,27 +64772,27 @@
 
 
 
-	var logger = new lib$4.Logger(_version$2e.version);
+	var logger = new lib$6.Logger(_version$2g.version);
 	function ripemd160(data) {
-	    return "0x" + (hash_js_1.default.ripemd160().update((0, lib$7.arrayify)(data)).digest("hex"));
+	    return "0x" + (hash_js_1.default.ripemd160().update((0, lib$8.arrayify)(data)).digest("hex"));
 	}
 	exports.ripemd160 = ripemd160;
 	function sha256(data) {
-	    return "0x" + (hash_js_1.default.sha256().update((0, lib$7.arrayify)(data)).digest("hex"));
+	    return "0x" + (hash_js_1.default.sha256().update((0, lib$8.arrayify)(data)).digest("hex"));
 	}
 	exports.sha256 = sha256;
 	function sha512(data) {
-	    return "0x" + (hash_js_1.default.sha512().update((0, lib$7.arrayify)(data)).digest("hex"));
+	    return "0x" + (hash_js_1.default.sha512().update((0, lib$8.arrayify)(data)).digest("hex"));
 	}
 	exports.sha512 = sha512;
 	function computeHmac(algorithm, key, data) {
 	    if (!types.SupportedAlgorithm[algorithm]) {
-	        logger.throwError("unsupported algorithm " + algorithm, lib$4.Logger.errors.UNSUPPORTED_OPERATION, {
+	        logger.throwError("unsupported algorithm " + algorithm, lib$6.Logger.errors.UNSUPPORTED_OPERATION, {
 	            operation: "hmac",
 	            algorithm: algorithm
 	        });
 	    }
-	    return "0x" + hash_js_1.default.hmac(hash_js_1.default[algorithm], (0, lib$7.arrayify)(key)).update((0, lib$7.arrayify)(data)).digest("hex");
+	    return "0x" + hash_js_1.default.hmac(hash_js_1.default[algorithm], (0, lib$8.arrayify)(key)).update((0, lib$8.arrayify)(data)).digest("hex");
 	}
 	exports.computeHmac = computeHmac;
 
@@ -64413,7 +64800,7 @@
 
 	var browserSha2$1 = /*@__PURE__*/getDefaultExportFromCjs(browserSha2);
 
-	var lib$1k = createCommonjsModule(function (module, exports) {
+	var lib$1l = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.SupportedAlgorithm = exports.sha512 = exports.sha256 = exports.ripemd160 = exports.computeHmac = void 0;
@@ -64427,7 +64814,7 @@
 
 	});
 
-	var index$1i = /*@__PURE__*/getDefaultExportFromCjs(lib$1k);
+	var index$1j = /*@__PURE__*/getDefaultExportFromCjs(lib$1l);
 
 	var browserPbkdf2 = createCommonjsModule(function (module, exports) {
 	"use strict";
@@ -64436,8 +64823,8 @@
 
 
 	function pbkdf2(password, salt, iterations, keylen, hashAlgorithm) {
-	    password = (0, lib$1j.arrayify)(password);
-	    salt = (0, lib$1j.arrayify)(salt);
+	    password = (0, lib$1k.arrayify)(password);
+	    salt = (0, lib$1k.arrayify)(salt);
 	    var hLen;
 	    var l = 1;
 	    var DK = new Uint8Array(keylen);
@@ -64453,7 +64840,7 @@
 	        block1[salt.length + 2] = (i >> 8) & 0xff;
 	        block1[salt.length + 3] = i & 0xff;
 	        //let U = createHmac(password).update(block1).digest();
-	        var U = (0, lib$1j.arrayify)((0, lib$1k.computeHmac)(hashAlgorithm, password, block1));
+	        var U = (0, lib$1k.arrayify)((0, lib$1l.computeHmac)(hashAlgorithm, password, block1));
 	        if (!hLen) {
 	            hLen = U.length;
 	            T = new Uint8Array(hLen);
@@ -64464,16 +64851,16 @@
 	        T.set(U);
 	        for (var j = 1; j < iterations; j++) {
 	            //U = createHmac(password).update(U).digest();
-	            U = (0, lib$1j.arrayify)((0, lib$1k.computeHmac)(hashAlgorithm, password, U));
+	            U = (0, lib$1k.arrayify)((0, lib$1l.computeHmac)(hashAlgorithm, password, U));
 	            for (var k = 0; k < hLen; k++)
 	                T[k] ^= U[k];
 	        }
 	        var destPos = (i - 1) * hLen;
 	        var len = (i === l ? r : hLen);
 	        //T.copy(DK, destPos, 0, len)
-	        DK.set((0, lib$1j.arrayify)(T).slice(0, len), destPos);
+	        DK.set((0, lib$1k.arrayify)(T).slice(0, len), destPos);
 	    }
-	    return (0, lib$1j.hexlify)(DK);
+	    return (0, lib$1k.hexlify)(DK);
 	}
 	exports.pbkdf2 = pbkdf2;
 
@@ -64481,7 +64868,7 @@
 
 	var browserPbkdf2$1 = /*@__PURE__*/getDefaultExportFromCjs(browserPbkdf2);
 
-	var lib$1l = createCommonjsModule(function (module, exports) {
+	var lib$1m = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.pbkdf2 = void 0;
@@ -64490,7 +64877,7 @@
 
 	});
 
-	var index$1j = /*@__PURE__*/getDefaultExportFromCjs(lib$1l);
+	var index$1k = /*@__PURE__*/getDefaultExportFromCjs(lib$1m);
 
 	var utils_1$2 = createCommonjsModule(function (module, exports) {
 	'use strict';
@@ -66718,7 +67105,7 @@
 
 	var elliptic$3 = /*@__PURE__*/getDefaultExportFromCjs(elliptic$2);
 
-	var _version$2g = createCommonjsModule(function (module, exports) {
+	var _version$2i = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.version = void 0;
@@ -66726,15 +67113,15 @@
 
 	});
 
-	var _version$2h = /*@__PURE__*/getDefaultExportFromCjs(_version$2g);
+	var _version$2j = /*@__PURE__*/getDefaultExportFromCjs(_version$2i);
 
-	var lib$1m = createCommonjsModule(function (module, exports) {
+	var lib$1n = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.joinSignature = exports.splitSignature = exports.hexZeroPad = exports.hexStripZeros = exports.hexValue = exports.hexConcat = exports.hexDataSlice = exports.hexDataLength = exports.hexlify = exports.isHexString = exports.zeroPad = exports.stripZeros = exports.concat = exports.arrayify = exports.isBytes = exports.isBytesLike = void 0;
 
 
-	var logger = new lib$4.Logger(_version$2g.version);
+	var logger = new lib$6.Logger(_version$2i.version);
 	///////////////////////////////
 	function isHexable(value) {
 	    return !!(value.toHexString);
@@ -67158,9 +67545,9 @@
 
 	});
 
-	var index$1k = /*@__PURE__*/getDefaultExportFromCjs(lib$1m);
+	var index$1l = /*@__PURE__*/getDefaultExportFromCjs(lib$1n);
 
-	var _version$2i = createCommonjsModule(function (module, exports) {
+	var _version$2k = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.version = void 0;
@@ -67168,9 +67555,9 @@
 
 	});
 
-	var _version$2j = /*@__PURE__*/getDefaultExportFromCjs(_version$2i);
+	var _version$2l = /*@__PURE__*/getDefaultExportFromCjs(_version$2k);
 
-	var lib$1n = createCommonjsModule(function (module, exports) {
+	var lib$1o = createCommonjsModule(function (module, exports) {
 	"use strict";
 	var __awaiter = (commonjsGlobal && commonjsGlobal.__awaiter) || function (thisArg, _arguments, P, generator) {
 	    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
@@ -67212,7 +67599,7 @@
 	exports.Description = exports.deepCopy = exports.shallowCopy = exports.checkProperties = exports.resolveProperties = exports.getStatic = exports.defineReadOnly = void 0;
 
 
-	var logger = new lib$4.Logger(_version$2i.version);
+	var logger = new lib$6.Logger(_version$2k.version);
 	function defineReadOnly(object, name, value) {
 	    Object.defineProperty(object, name, {
 	        enumerable: true,
@@ -67344,9 +67731,9 @@
 
 	});
 
-	var index$1l = /*@__PURE__*/getDefaultExportFromCjs(lib$1n);
+	var index$1m = /*@__PURE__*/getDefaultExportFromCjs(lib$1o);
 
-	var _version$2k = createCommonjsModule(function (module, exports) {
+	var _version$2m = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.version = void 0;
@@ -67354,9 +67741,9 @@
 
 	});
 
-	var _version$2l = /*@__PURE__*/getDefaultExportFromCjs(_version$2k);
+	var _version$2n = /*@__PURE__*/getDefaultExportFromCjs(_version$2m);
 
-	var lib$1o = createCommonjsModule(function (module, exports) {
+	var lib$1p = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.Logger = exports.ErrorCode = exports.LogLevel = void 0;
@@ -67690,7 +68077,7 @@
 	    };
 	    Logger.globalLogger = function () {
 	        if (!_globalLogger) {
-	            _globalLogger = new Logger(_version$2k.version);
+	            _globalLogger = new Logger(_version$2m.version);
 	        }
 	        return _globalLogger;
 	    };
@@ -67730,9 +68117,9 @@
 
 	});
 
-	var index$1m = /*@__PURE__*/getDefaultExportFromCjs(lib$1o);
+	var index$1n = /*@__PURE__*/getDefaultExportFromCjs(lib$1p);
 
-	var _version$2m = createCommonjsModule(function (module, exports) {
+	var _version$2o = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.version = void 0;
@@ -67740,9 +68127,9 @@
 
 	});
 
-	var _version$2n = /*@__PURE__*/getDefaultExportFromCjs(_version$2m);
+	var _version$2p = /*@__PURE__*/getDefaultExportFromCjs(_version$2o);
 
-	var lib$1p = createCommonjsModule(function (module, exports) {
+	var lib$1q = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.computePublicKey = exports.recoverPublicKey = exports.SigningKey = void 0;
@@ -67751,7 +68138,7 @@
 
 
 
-	var logger = new lib$1o.Logger(_version$2m.version);
+	var logger = new lib$1p.Logger(_version$2o.version);
 	var _curve = null;
 	function getCurve() {
 	    if (!_curve) {
@@ -67761,38 +68148,38 @@
 	}
 	var SigningKey = /** @class */ (function () {
 	    function SigningKey(privateKey) {
-	        (0, lib$1n.defineReadOnly)(this, "curve", "secp256k1");
-	        (0, lib$1n.defineReadOnly)(this, "privateKey", (0, lib$1m.hexlify)(privateKey));
-	        if ((0, lib$1m.hexDataLength)(this.privateKey) !== 32) {
+	        (0, lib$1o.defineReadOnly)(this, "curve", "secp256k1");
+	        (0, lib$1o.defineReadOnly)(this, "privateKey", (0, lib$1n.hexlify)(privateKey));
+	        if ((0, lib$1n.hexDataLength)(this.privateKey) !== 32) {
 	            logger.throwArgumentError("invalid private key", "privateKey", "[[ REDACTED ]]");
 	        }
-	        var keyPair = getCurve().keyFromPrivate((0, lib$1m.arrayify)(this.privateKey));
-	        (0, lib$1n.defineReadOnly)(this, "publicKey", "0x" + keyPair.getPublic(false, "hex"));
-	        (0, lib$1n.defineReadOnly)(this, "compressedPublicKey", "0x" + keyPair.getPublic(true, "hex"));
-	        (0, lib$1n.defineReadOnly)(this, "_isSigningKey", true);
+	        var keyPair = getCurve().keyFromPrivate((0, lib$1n.arrayify)(this.privateKey));
+	        (0, lib$1o.defineReadOnly)(this, "publicKey", "0x" + keyPair.getPublic(false, "hex"));
+	        (0, lib$1o.defineReadOnly)(this, "compressedPublicKey", "0x" + keyPair.getPublic(true, "hex"));
+	        (0, lib$1o.defineReadOnly)(this, "_isSigningKey", true);
 	    }
 	    SigningKey.prototype._addPoint = function (other) {
-	        var p0 = getCurve().keyFromPublic((0, lib$1m.arrayify)(this.publicKey));
-	        var p1 = getCurve().keyFromPublic((0, lib$1m.arrayify)(other));
+	        var p0 = getCurve().keyFromPublic((0, lib$1n.arrayify)(this.publicKey));
+	        var p1 = getCurve().keyFromPublic((0, lib$1n.arrayify)(other));
 	        return "0x" + p0.pub.add(p1.pub).encodeCompressed("hex");
 	    };
 	    SigningKey.prototype.signDigest = function (digest) {
-	        var keyPair = getCurve().keyFromPrivate((0, lib$1m.arrayify)(this.privateKey));
-	        var digestBytes = (0, lib$1m.arrayify)(digest);
+	        var keyPair = getCurve().keyFromPrivate((0, lib$1n.arrayify)(this.privateKey));
+	        var digestBytes = (0, lib$1n.arrayify)(digest);
 	        if (digestBytes.length !== 32) {
 	            logger.throwArgumentError("bad digest length", "digest", digest);
 	        }
 	        var signature = keyPair.sign(digestBytes, { canonical: true });
-	        return (0, lib$1m.splitSignature)({
+	        return (0, lib$1n.splitSignature)({
 	            recoveryParam: signature.recoveryParam,
-	            r: (0, lib$1m.hexZeroPad)("0x" + signature.r.toString(16), 32),
-	            s: (0, lib$1m.hexZeroPad)("0x" + signature.s.toString(16), 32),
+	            r: (0, lib$1n.hexZeroPad)("0x" + signature.r.toString(16), 32),
+	            s: (0, lib$1n.hexZeroPad)("0x" + signature.s.toString(16), 32),
 	        });
 	    };
 	    SigningKey.prototype.computeSharedSecret = function (otherKey) {
-	        var keyPair = getCurve().keyFromPrivate((0, lib$1m.arrayify)(this.privateKey));
-	        var otherKeyPair = getCurve().keyFromPublic((0, lib$1m.arrayify)(computePublicKey(otherKey)));
-	        return (0, lib$1m.hexZeroPad)("0x" + keyPair.derive(otherKeyPair.getPublic()).toString(16), 32);
+	        var keyPair = getCurve().keyFromPrivate((0, lib$1n.arrayify)(this.privateKey));
+	        var otherKeyPair = getCurve().keyFromPublic((0, lib$1n.arrayify)(computePublicKey(otherKey)));
+	        return (0, lib$1n.hexZeroPad)("0x" + keyPair.derive(otherKeyPair.getPublic()).toString(16), 32);
 	    };
 	    SigningKey.isSigningKey = function (value) {
 	        return !!(value && value._isSigningKey);
@@ -67801,13 +68188,13 @@
 	}());
 	exports.SigningKey = SigningKey;
 	function recoverPublicKey(digest, signature) {
-	    var sig = (0, lib$1m.splitSignature)(signature);
-	    var rs = { r: (0, lib$1m.arrayify)(sig.r), s: (0, lib$1m.arrayify)(sig.s) };
-	    return "0x" + getCurve().recoverPubKey((0, lib$1m.arrayify)(digest), rs, sig.recoveryParam).encode("hex", false);
+	    var sig = (0, lib$1n.splitSignature)(signature);
+	    var rs = { r: (0, lib$1n.arrayify)(sig.r), s: (0, lib$1n.arrayify)(sig.s) };
+	    return "0x" + getCurve().recoverPubKey((0, lib$1n.arrayify)(digest), rs, sig.recoveryParam).encode("hex", false);
 	}
 	exports.recoverPublicKey = recoverPublicKey;
 	function computePublicKey(key, compressed) {
-	    var bytes = (0, lib$1m.arrayify)(key);
+	    var bytes = (0, lib$1n.arrayify)(key);
 	    if (bytes.length === 32) {
 	        var signingKey = new SigningKey(bytes);
 	        if (compressed) {
@@ -67817,13 +68204,13 @@
 	    }
 	    else if (bytes.length === 33) {
 	        if (compressed) {
-	            return (0, lib$1m.hexlify)(bytes);
+	            return (0, lib$1n.hexlify)(bytes);
 	        }
 	        return "0x" + getCurve().keyFromPublic(bytes).getPublic(false, "hex");
 	    }
 	    else if (bytes.length === 65) {
 	        if (!compressed) {
-	            return (0, lib$1m.hexlify)(bytes);
+	            return (0, lib$1n.hexlify)(bytes);
 	        }
 	        return "0x" + getCurve().keyFromPublic(bytes).getPublic(true, "hex");
 	    }
@@ -67833,9 +68220,9 @@
 
 	});
 
-	var index$1n = /*@__PURE__*/getDefaultExportFromCjs(lib$1p);
+	var index$1o = /*@__PURE__*/getDefaultExportFromCjs(lib$1q);
 
-	var _version$2o = createCommonjsModule(function (module, exports) {
+	var _version$2q = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.version = void 0;
@@ -67843,15 +68230,15 @@
 
 	});
 
-	var _version$2p = /*@__PURE__*/getDefaultExportFromCjs(_version$2o);
+	var _version$2r = /*@__PURE__*/getDefaultExportFromCjs(_version$2q);
 
-	var lib$1q = createCommonjsModule(function (module, exports) {
+	var lib$1r = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.joinSignature = exports.splitSignature = exports.hexZeroPad = exports.hexStripZeros = exports.hexValue = exports.hexConcat = exports.hexDataSlice = exports.hexDataLength = exports.hexlify = exports.isHexString = exports.zeroPad = exports.stripZeros = exports.concat = exports.arrayify = exports.isBytes = exports.isBytesLike = void 0;
 
 
-	var logger = new lib$4.Logger(_version$2o.version);
+	var logger = new lib$6.Logger(_version$2q.version);
 	///////////////////////////////
 	function isHexable(value) {
 	    return !!(value.toHexString);
@@ -68275,7 +68662,7 @@
 
 	});
 
-	var index$1o = /*@__PURE__*/getDefaultExportFromCjs(lib$1q);
+	var index$1p = /*@__PURE__*/getDefaultExportFromCjs(lib$1r);
 
 	var types$2 = createCommonjsModule(function (module, exports) {
 	"use strict";
@@ -68292,7 +68679,7 @@
 
 	var types$3 = /*@__PURE__*/getDefaultExportFromCjs(types$2);
 
-	var _version$2q = createCommonjsModule(function (module, exports) {
+	var _version$2s = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.version = void 0;
@@ -68300,9 +68687,9 @@
 
 	});
 
-	var _version$2r = /*@__PURE__*/getDefaultExportFromCjs(_version$2q);
+	var _version$2t = /*@__PURE__*/getDefaultExportFromCjs(_version$2s);
 
-	var lib$1r = createCommonjsModule(function (module, exports) {
+	var lib$1s = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.Logger = exports.ErrorCode = exports.LogLevel = void 0;
@@ -68636,7 +69023,7 @@
 	    };
 	    Logger.globalLogger = function () {
 	        if (!_globalLogger) {
-	            _globalLogger = new Logger(_version$2q.version);
+	            _globalLogger = new Logger(_version$2s.version);
 	        }
 	        return _globalLogger;
 	    };
@@ -68676,9 +69063,9 @@
 
 	});
 
-	var index$1p = /*@__PURE__*/getDefaultExportFromCjs(lib$1r);
+	var index$1q = /*@__PURE__*/getDefaultExportFromCjs(lib$1s);
 
-	var _version$2s = createCommonjsModule(function (module, exports) {
+	var _version$2u = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.version = void 0;
@@ -68686,7 +69073,7 @@
 
 	});
 
-	var _version$2t = /*@__PURE__*/getDefaultExportFromCjs(_version$2s);
+	var _version$2v = /*@__PURE__*/getDefaultExportFromCjs(_version$2u);
 
 	var browserSha2$2 = createCommonjsModule(function (module, exports) {
 	"use strict";
@@ -68701,27 +69088,27 @@
 
 
 
-	var logger = new lib$1r.Logger(_version$2s.version);
+	var logger = new lib$1s.Logger(_version$2u.version);
 	function ripemd160(data) {
-	    return "0x" + (hash_js_1.default.ripemd160().update((0, lib$1q.arrayify)(data)).digest("hex"));
+	    return "0x" + (hash_js_1.default.ripemd160().update((0, lib$1r.arrayify)(data)).digest("hex"));
 	}
 	exports.ripemd160 = ripemd160;
 	function sha256(data) {
-	    return "0x" + (hash_js_1.default.sha256().update((0, lib$1q.arrayify)(data)).digest("hex"));
+	    return "0x" + (hash_js_1.default.sha256().update((0, lib$1r.arrayify)(data)).digest("hex"));
 	}
 	exports.sha256 = sha256;
 	function sha512(data) {
-	    return "0x" + (hash_js_1.default.sha512().update((0, lib$1q.arrayify)(data)).digest("hex"));
+	    return "0x" + (hash_js_1.default.sha512().update((0, lib$1r.arrayify)(data)).digest("hex"));
 	}
 	exports.sha512 = sha512;
 	function computeHmac(algorithm, key, data) {
 	    if (!types$2.SupportedAlgorithm[algorithm]) {
-	        logger.throwError("unsupported algorithm " + algorithm, lib$1r.Logger.errors.UNSUPPORTED_OPERATION, {
+	        logger.throwError("unsupported algorithm " + algorithm, lib$1s.Logger.errors.UNSUPPORTED_OPERATION, {
 	            operation: "hmac",
 	            algorithm: algorithm
 	        });
 	    }
-	    return "0x" + hash_js_1.default.hmac(hash_js_1.default[algorithm], (0, lib$1q.arrayify)(key)).update((0, lib$1q.arrayify)(data)).digest("hex");
+	    return "0x" + hash_js_1.default.hmac(hash_js_1.default[algorithm], (0, lib$1r.arrayify)(key)).update((0, lib$1r.arrayify)(data)).digest("hex");
 	}
 	exports.computeHmac = computeHmac;
 
@@ -68729,7 +69116,7 @@
 
 	var browserSha2$3 = /*@__PURE__*/getDefaultExportFromCjs(browserSha2$2);
 
-	var lib$1s = createCommonjsModule(function (module, exports) {
+	var lib$1t = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.SupportedAlgorithm = exports.sha512 = exports.sha256 = exports.ripemd160 = exports.computeHmac = void 0;
@@ -68743,7 +69130,7 @@
 
 	});
 
-	var index$1q = /*@__PURE__*/getDefaultExportFromCjs(lib$1s);
+	var index$1r = /*@__PURE__*/getDefaultExportFromCjs(lib$1t);
 
 	var id_1$1 = createCommonjsModule(function (module, exports) {
 	"use strict";
@@ -68752,7 +69139,7 @@
 
 
 	function id(text) {
-	    return (0, lib$W.keccak256)((0, lib$s.toUtf8Bytes)(text));
+	    return (0, lib$X.keccak256)((0, lib$t.toUtf8Bytes)(text));
 	}
 	exports.id = id;
 
@@ -68760,7 +69147,7 @@
 
 	var id$1 = /*@__PURE__*/getDefaultExportFromCjs(id_1$1);
 
-	var _version$2u = createCommonjsModule(function (module, exports) {
+	var _version$2w = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.version = void 0;
@@ -68768,9 +69155,9 @@
 
 	});
 
-	var _version$2v = /*@__PURE__*/getDefaultExportFromCjs(_version$2u);
+	var _version$2x = /*@__PURE__*/getDefaultExportFromCjs(_version$2w);
 
-	var _version$2w = createCommonjsModule(function (module, exports) {
+	var _version$2y = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.version = void 0;
@@ -68778,15 +69165,15 @@
 
 	});
 
-	var _version$2x = /*@__PURE__*/getDefaultExportFromCjs(_version$2w);
+	var _version$2z = /*@__PURE__*/getDefaultExportFromCjs(_version$2y);
 
-	var lib$1t = createCommonjsModule(function (module, exports) {
+	var lib$1u = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.joinSignature = exports.splitSignature = exports.hexZeroPad = exports.hexStripZeros = exports.hexValue = exports.hexConcat = exports.hexDataSlice = exports.hexDataLength = exports.hexlify = exports.isHexString = exports.zeroPad = exports.stripZeros = exports.concat = exports.arrayify = exports.isBytes = exports.isBytesLike = void 0;
 
 
-	var logger = new lib$4.Logger(_version$2w.version);
+	var logger = new lib$6.Logger(_version$2y.version);
 	///////////////////////////////
 	function isHexable(value) {
 	    return !!(value.toHexString);
@@ -69210,7 +69597,7 @@
 
 	});
 
-	var index$1r = /*@__PURE__*/getDefaultExportFromCjs(lib$1t);
+	var index$1s = /*@__PURE__*/getDefaultExportFromCjs(lib$1u);
 
 	var browserBase64$2 = createCommonjsModule(function (module, exports) {
 	"use strict";
@@ -69223,11 +69610,11 @@
 	    for (var i = 0; i < textData.length; i++) {
 	        data.push(textData.charCodeAt(i));
 	    }
-	    return (0, lib$1t.arrayify)(data);
+	    return (0, lib$1u.arrayify)(data);
 	}
 	exports.decode = decode;
 	function encode(data) {
-	    data = (0, lib$1t.arrayify)(data);
+	    data = (0, lib$1u.arrayify)(data);
 	    var textData = "";
 	    for (var i = 0; i < data.length; i++) {
 	        textData += String.fromCharCode(data[i]);
@@ -69240,7 +69627,7 @@
 
 	var browserBase64$3 = /*@__PURE__*/getDefaultExportFromCjs(browserBase64$2);
 
-	var lib$1u = createCommonjsModule(function (module, exports) {
+	var lib$1v = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.encode = exports.decode = void 0;
@@ -69250,7 +69637,7 @@
 
 	});
 
-	var index$1s = /*@__PURE__*/getDefaultExportFromCjs(lib$1u);
+	var index$1t = /*@__PURE__*/getDefaultExportFromCjs(lib$1v);
 
 	var decoder$2 = createCommonjsModule(function (module, exports) {
 	"use strict";
@@ -69558,7 +69945,7 @@
 
 
 	function getData() {
-	    return (0, decoder$2.read_compressed_payload)((0, lib$1u.decode)('AEQF2AO2DEsA2wIrAGsBRABxAN8AZwCcAEwAqgA0AGwAUgByADcATAAVAFYAIQAyACEAKAAYAFgAGwAjABQAMAAmADIAFAAfABQAKwATACoADgAbAA8AHQAYABoAGQAxADgALAAoADwAEwA9ABMAGgARAA4ADwAWABMAFgAIAA8AHgQXBYMA5BHJAS8JtAYoAe4AExozi0UAH21tAaMnBT8CrnIyhrMDhRgDygIBUAEHcoFHUPe8AXBjAewCjgDQR8IICIcEcQLwATXCDgzvHwBmBoHNAqsBdBcUAykgDhAMShskMgo8AY8jqAQfAUAfHw8BDw87MioGlCIPBwZCa4ELatMAAMspJVgsDl8AIhckSg8XAHdvTwBcIQEiDT4OPhUqbyECAEoAS34Aej8Ybx83JgT/Xw8gHxZ/7w8RICxPHA9vBw+Pfw8PHwAPFv+fAsAvCc8vEr8ivwD/EQ8Bol8OEBa/A78hrwAPCU8vESNvvwWfHwNfAVoDHr+ZAAED34YaAdJPAK7PLwSEgDLHAGo1Pz8Pvx9fUwMrpb8O/58VTzAPIBoXIyQJNF8hpwIVAT8YGAUADDNBaX3RAMomJCg9EhUeA29MABsZBTMNJipjOhc19gcIDR8bBwQHEggCWi6DIgLuAQYA+BAFCha3A5XiAEsqM7UFFgFLhAMjFTMYE1Klnw74nRVBG/ASCm0BYRN/BrsU3VoWy+S0vV8LQx+vN8gF2AC2AK5EAWwApgYDKmAAroQ0NDQ0AT+OCg7wAAIHRAbpNgVcBV0APTA5BfbPFgMLzcYL/QqqA82eBALKCjQCjqYCht0/k2+OAsXQAoP3ASTKDgDw6ACKAUYCMpIKJpRaAE4A5womABzZvs0REEKiACIQAd5QdAECAj4Ywg/wGqY2AVgAYADYvAoCGAEubA0gvAY2ALAAbpbvqpyEAGAEpgQAJgAG7gAgAEACmghUFwCqAMpAINQIwC4DthRAAPcycKgApoIdABwBfCisABoATwBqASIAvhnSBP8aH/ECeAKXAq40NjgDBTwFYQU6AXs3oABgAD4XNgmcCY1eCl5tIFZeUqGgyoNHABgAEQAaABNwWQAmABMATPMa3T34ADldyprmM1M2XociUQgLzvwAXT3xABgAEQAaABNwIGFAnADD8AAgAD4BBJWzaCcIAIEBFMAWwKoAAdq9BWAF5wLQpALEtQAKUSGkahR4GnJM+gsAwCgeFAiUAECQ0BQuL8AAIAAAADKeIheclvFqQAAETr4iAMxIARMgAMIoHhQIAn0E0pDQFC4HhznoAAAAIAI2C0/4lvFqQAAETgBJJwYCAy4ABgYAFAA8MBKYEH4eRhTkAjYeFcgACAYAeABsOqyQ5gRwDayqugEgaIIAtgoACgDmEABmBAWGme5OBJJA2m4cDeoAmITWAXwrMgOgAGwBCh6CBXYF1Tzg1wKAAFdiuABRAFwAXQBsAG8AdgBrAHYAbwCEAHEwfxQBVE5TEQADVFhTBwBDANILAqcCzgLTApQCrQL6vAAMAL8APLhNBKkE6glGKTAU4Dr4N2EYEwBCkABKk8rHAbYBmwIoAiU4Ajf/Aq4CowCAANIChzgaNBsCsTgeODcFXrgClQKdAqQBiQGYAqsCsjTsNHsfNPA0ixsAWTWiOAMFPDQSNCk2BDZHNow2TTZUNhk28Jk9VzI3QkEoAoICoQKwAqcAQAAxBV4FXbS9BW47YkIXP1ciUqs05DS/FwABUwJW11e6nHuYZmSh/RAYA8oMKvZ8KASoUAJYWAJ6ILAsAZSoqjpgA0ocBIhmDgDWAAawRDQoAAcuAj5iAHABZiR2AIgiHgCaAU68ACxuHAG0ygM8MiZIAlgBdF4GagJqAPZOHAMuBgoATkYAsABiAHgAMLoGDPj0HpKEBAAOJgAuALggTAHWAeAMEDbd20Uege0ADwAWADkAQgA9OHd+2MUQZBBhBgNNDkxxPxUQArEPqwvqERoM1irQ090ANK4H8ANYB/ADWANYB/AH8ANYB/ADWANYA1gDWBwP8B/YxRBkD00EcgWTBZAE2wiIJk4RhgctCNdUEnQjHEwDSgEBIypJITuYMxAlR0wRTQgIATZHbKx9PQNMMbBU+pCnA9AyVDlxBgMedhKlAC8PeCE1uk6DekxxpQpQT7NX9wBFBgASqwAS5gBJDSgAUCwGPQBI4zTYABNGAE2bAE3KAExdGABKaAbgAFBXAFCOAFBJABI2SWdObALDOq0//QomCZhvwHdTBkIQHCemEPgMNAG2ATwN7kvZBPIGPATKH34ZGg/OlZ0Ipi3eDO4m5C6igFsj9iqEBe5L9TzeC05RaQ9aC2YJ5DpkgU8DIgEOIowK3g06CG4Q9ArKbA3mEUYHOgPWSZsApgcCCxIdNhW2JhFirQsKOXgG/Br3C5AmsBMqev0F1BoiBk4BKhsAANAu6IWxWjJcHU9gBgQLJiPIFKlQIQ0mQLh4SRocBxYlqgKSQ3FKiFE3HpQh9zw+DWcuFFF9B/Y8BhlQC4I8n0asRQ8R0z6OPUkiSkwtBDaALDAnjAnQD4YMunxzAVoJIgmyDHITMhEYN8YIOgcaLpclJxYIIkaWYJsE+KAD9BPSAwwFQAlCBxQDthwuEy8VKgUOgSXYAvQ21i60ApBWgQEYBcwPJh/gEFFH4Q7qCJwCZgOEJewALhUiABginAhEZABgj9lTBi7MCMhqbSN1A2gU6GIRdAeSDlgHqBw0FcAc4nDJXgyGCSiksAlcAXYJmgFgBOQICjVcjKEgQmdUi1kYnCBiQUBd/QIyDGYVoES+h3kCjA9sEhwBNgF0BzoNAgJ4Ee4RbBCWCOyGBTW2M/k6JgRQIYQgEgooA1BszwsoJvoM+WoBpBJjAw00PnfvZ6xgtyUX/gcaMsZBYSHyC5NPzgydGsIYQ1QvGeUHwAP0GvQn60FYBgADpAQUOk4z7wS+C2oIjAlAAEoOpBgH2BhrCnKM0QEyjAG4mgNYkoQCcJAGOAcMAGgMiAV65gAeAqgIpAAGANADWAA6Aq4HngAaAIZCAT4DKDABIuYCkAOUCDLMAZYwAfQqBBzEDBYA+DhuSwLDsgKAa2ajBd5ZAo8CSjYBTiYEBk9IUgOwcuIA3ABMBhTgSAEWrEvMG+REAeBwLADIAPwABjYHBkIBzgH0bgC4AWALMgmjtLYBTuoqAIQAFmwB2AKKAN4ANgCA8gFUAE4FWvoF1AJQSgESMhksWGIBvAMgATQBDgB6BsyOpsoIIARuB9QCEBwV4gLvLwe2AgMi4BPOQsYCvd9WADIXUu5eZwqoCqdeaAC0YTQHMnM9UQAPH6k+yAdy/BZIiQImSwBQ5gBQQzSaNTFWSTYBpwGqKQK38AFtqwBI/wK37gK3rQK3sAK6280C0gK33AK3zxAAUEIAUD9SklKDArekArw5AEQAzAHCO147WTteO1k7XjtZO147WTteO1kDmChYI03AVU0oJqkKbV9GYewMpw3VRMk6ShPcYFJgMxPJLbgUwhXPJVcZPhq9JwYl5VUKDwUt1GYxCC00dhe9AEApaYNCY4ceMQpMHOhTklT5LRwAskujM7ANrRsWREEFSHXuYisWDwojAmSCAmJDXE6wXDchAqH4AmiZAmYKAp+FOBwMAmY8AmYnBG8EgAN/FAN+kzkHOXgYOYM6JCQCbB4CMjc4CwJtyAJtr/CLADRoRiwBaADfAOIASwYHmQyOAP8MwwAOtgJ3MAJ2o0ACeUxEAni7Hl3cRa9G9AJ8QAJ6yQJ9CgJ88UgBSH5kJQAsFklZSlwWGErNAtECAtDNSygDiFADh+dExpEzAvKiXQQDA69Lz0wuJgTQTU1NsAKLQAKK2cIcCB5EaAa4Ao44Ao5dQZiCAo7aAo5deVG1UzYLUtVUhgKT/AKTDQDqAB1VH1WwVdEHLBwplocy4nhnRTw6ApegAu+zWCKpAFomApaQApZ9nQCqWa1aCoJOADwClrYClk9cRVzSApnMApllXMtdCBoCnJw5wzqeApwXAp+cAp65iwAeEDIrEAKd8gKekwC2PmE1YfACntQCoG8BqgKeoCACnk+mY8lkKCYsAiewAiZ/AqD8AqBN2AKmMAKlzwKoAAB+AqfzaH1osgAESmodatICrOQCrK8CrWgCrQMCVx4CVd0CseLYAx9PbJgCsr4OArLpGGzhbWRtSWADJc4Ctl08QG6RAylGArhfArlIFgK5K3hwN3DiAr0aAy2zAzISAr6JcgMDM3ICvhtzI3NQAsPMAsMFc4N0TDZGdOEDPKgDPJsDPcACxX0CxkgCxhGKAshqUgLIRQLJUALJLwJkngLd03h6YniveSZL0QMYpGcDAmH1GfSVJXsMXpNevBICz2wCz20wTFTT9BSgAMeuAs90ASrrA04TfkwGAtwoAtuLAtJQA1JdA1NgAQIDVY2AikABzBfuYUZ2AILPg44C2sgC2d+EEYRKpz0DhqYAMANkD4ZyWvoAVgLfZgLeuXR4AuIw7RUB8zEoAfScAfLTiALr9ALpcXoAAur6AurlAPpIAboC7ooC652Wq5cEAu5AA4XhmHpw4XGiAvMEAGoDjheZlAL3FAORbwOSiAL3mQL52gL4Z5odmqy8OJsfA52EAv77ARwAOp8dn7QDBY4DpmsDptoA0sYDBmuhiaIGCgMMSgFgASACtgNGAJwEgLpoBgC8BGzAEowcggCEDC6kdjoAJAM0C5IKRoABZCgiAIzw3AYBLACkfng9ogigkgNmWAN6AEQCvrkEVqTGAwCsBRbAA+4iQkMCHR072jI2PTbUNsk2RjY5NvA23TZKNiU3EDcZN5I+RTxDRTBCJkK5VBYKFhZfwQCWygU3AJBRHpu+OytgNxa61A40GMsYjsn7BVwFXQVcBV0FaAVdBVwFXQVcBV0FXAVdBVwFXUsaCNyKAK4AAQUHBwKU7oICoW1e7jAEzgPxA+YDwgCkBFDAwADABKzAAOxFLhitA1UFTDeyPkM+bj51QkRCuwTQWWQ8X+0AWBYzsACNA8xwzAGm7EZ/QisoCTAbLDs6fnLfb8H2GccsbgFw13M1HAVkBW/Jxsm9CNRO8E8FDD0FBQw9FkcClOYCoMFegpDfADgcMiA2AJQACB8AsigKAIzIEAJKeBIApY5yPZQIAKQiHb4fvj5BKSRPQrZCOz0oXyxgOywfKAnGbgMClQaCAkILXgdeCD9IIGUgQj5fPoY+dT52Ao5CM0dAX9BTVG9SDzFwWTQAbxBzJF/lOEIQQglCCkKJIAls5AcClQICoKPMODEFxhi6KSAbiyfIRrMjtCgdWCAkPlFBIitCsEJRzAbMAV/OEyQzDg0OAQQEJ36i328/Mk9AybDJsQlq3tDRApUKAkFzXf1d/j9uALYP6hCoFgCTGD8kPsFKQiobrm0+zj0KSD8kPnVCRBwMDyJRTHFgMTJa5rwXQiQ2YfI/JD7BMEJEHGINTw4TOFlIRzwJO0icMQpyPyQ+wzJCRBv6DVgnKB01NgUKj2bwYzMqCoBkznBgEF+zYDIocwRIX+NgHj4HICNfh2C4CwdwFWpTG/lgUhYGAwRfv2Ts8mAaXzVgml/XYIJfuWC4HI1gUF9pYJZgMR6ilQHMAOwLAlDRefC0in4AXAEJA6PjCwc0IamOANMMCAECRQDFNRTZBgd+CwQlRA+r6+gLBDEFBnwUBXgKATIArwAGRAAHA3cDdAN2A3kDdwN9A3oDdQN7A30DfAN4A3oDfQAYEAAlAtYASwMAUAFsAHcKAHcAmgB3AHUAdQB2AHVu8UgAygDAAHcAdQB1AHYAdQALCgB3AAsAmgB3AAsCOwB3AAtu8UgAygDAAHgKAJoAdwB3AHUAdQB2AHUAeAB1AHUAdgB1bvFIAMoAwAALCgCaAHcACwB3AAsCOwB3AAtu8UgAygDAAH4ACwGgALcBpwC6AahdAu0COwLtbvFIAMoAwAALCgCaAu0ACwLtAAsCOwLtAAtu8UgAygDAA24ACwNvAAu0VsQAAzsAABCkjUIpAAsAUIusOggWcgMeBxVsGwL67U/2HlzmWOEeOgALASvuAAseAfpKUpnpGgYJDCIZM6YyARUE9ThqAD5iXQgnAJYJPnOzw0ZAEZxEKsIAkA4DhAHnTAIDxxUDK0lxCQlPYgIvIQVYJQBVqE1GakUAKGYiDToSBA1EtAYAXQJYAIF8GgMHRyAAIAjOe9YncekRAA0KACUrjwE7Ayc6AAYWAqaiKG4McEcqANoN3+Mg9TwCBhIkuCny+JwUQ29L008JluRxu3K+oAdqiHOqFH0AG5SUIfUJ5SxCGfxdipRzqTmT4V5Zb+r1Uo4Vm+NqSSEl2mNvR2JhIa8SpYO6ntdwFXHCWTCK8f2+Hxo7uiG3drDycAuKIMP5bhi06ACnqArH1rz4Rqg//lm6SgJGEVbF9xJHISaR6HxqxSnkw6shDnelHKNEfGUXSJRJ1GcsmtJw25xrZMDK9gXSm1/YMkdX4/6NKYOdtk/NQ3/NnDASjTc3fPjIjW/5sVfVObX2oTDWkr1dF9f3kxBsD3/3aQO8hPfRz+e0uEiJqt1161griu7gz8hDDwtpy+F+BWtefnKHZPAxcZoWbnznhJpy0e842j36bcNzGnIEusgGX0a8ZxsnjcSsPDZ09yZ36fCQbriHeQ72JRMILNl6ePPf2HWoVwgWAm1fb3V2sAY0+B6rAXqSwPBgseVmoqsBTSrm91+XasMYYySI8eeRxH3ZvHkMz3BQ5aJ3iUVbYPNM3/7emRtjlsMgv/9VyTsyt/mK+8fgWeT6SoFaclXqn42dAIsvAarF5vNNWHzKSkKQ/8Hfk5ZWK7r9yliOsooyBjRhfkHP4Q2DkWXQi6FG/9r/IwbmkV5T7JSopHKn1pJwm9tb5Ot0oyN1Z2mPpKXHTxx2nlK08fKk1hEYA8WgVVWL5lgx0iTv+KdojJeU23ZDjmiubXOxVXJKKi2Wjuh2HLZOFLiSC7Tls5SMh4f+Pj6xUSrNjFqLGehRNB8lC0QSLNmkJJx/wSG3MnjE9T1CkPwJI0wH2lfzwETIiVqUxg0dfu5q39Gt+hwdcxkhhNvQ4TyrBceof3Mhs/IxFci1HmHr4FMZgXEEczPiGCx0HRwzAqDq2j9AVm1kwN0mRVLWLylgtoPNapF5cY4Y1wJh/e0BBwZj44YgZrDNqvD/9Hv7GFYdUQeDJuQ3EWI4HaKqavU1XjC/n41kT4L79kqGq0kLhdTZvgP3TA3fS0ozVz+5piZsoOtIvBUFoMKbNcmBL6YxxaUAusHB38XrS8dQMnQwJfUUkpRoGr5AUeWicvBTzyK9g77+yCkf5PAysL7r/JjcZgrbvRpMW9iyaxZvKO6ceZN2EwIxKwVFPuvFuiEPGCoagbMo+SpydLrXqBzNCDGFCrO/rkcwa2xhokQZ5CdZ0AsU3JfSqJ6n5I14YA+P/uAgfhPU84Tlw7cEFfp7AEE8ey4sP12PTt4Cods1GRgDOB5xvyiR5m+Bx8O5nBCNctU8BevfV5A08x6RHd5jcwPTMDSZJOedIZ1cGQ704lxbAzqZOP05ZxaOghzSdvFBHYqomATARyAADK4elP8Ly3IrUZKfWh23Xy20uBUmLS4Pfagu9+oyVa2iPgqRP3F2CTUsvJ7+RYnN8fFZbU/HVvxvcFFDKkiTqV5UBZ3Gz54JAKByi9hkKMZJvuGgcSYXFmw08UyoQyVdfTD1/dMkCHXcTGAKeROgArsvmRrQTLUOXioOHGK2QkjHuoYFgXciZoTJd6Fs5q1QX1G+p/e26hYsEf7QZD1nnIyl/SFkNtYYmmBhpBrxl9WbY0YpHWRuw2Ll/tj9mD8P4snVzJl4F9J+1arVeTb9E5r2ILH04qStjxQNwn3m4YNqxmaNbLAqW2TN6LidwuJRqS+NXbtqxoeDXpxeGWmxzSkWxjkyCkX4NQRme6q5SAcC+M7+9ETfA/EwrzQajKakCwYyeunP6ZFlxU2oMEn1Pz31zeStW74G406ZJFCl1wAXIoUKkWotYEpOuXB1uVNxJ63dpJEqfxBeptwIHNrPz8BllZoIcBoXwgfJ+8VAUnVPvRvexnw0Ma/WiGYuJO5y8QTvEYBigFmhUxY5RqzE8OcywN/8m4UYrlaniJO75XQ6KSo9+tWHlu+hMi0UVdiKQp7NelnoZUzNaIyBPVeOwK6GNp+FfHuPOoyhaWuNvTYFkvxscMQWDh+zeFCFkgwbXftiV23ywJ4+uwRqmg9k3KzwIQpzppt8DBBOMbrqwQM5Gb05sEwdKzMiAqOloaA/lr0KA+1pr0/+HiWoiIjHA/wir2nIuS3PeU/ji3O6ZwoxcR1SZ9FhtLC5S0FIzFhbBWcGVP/KpxOPSiUoAdWUpqKH++6Scz507iCcxYI6rdMBICPJZea7OcmeFw5mObJSiqpjg2UoWNIs+cFhyDSt6geV5qgi3FunmwwDoGSMgerFOZGX1m0dMCYo5XOruxO063dwENK9DbnVM9wYFREzh4vyU1WYYJ/LRRp6oxgjqP/X5a8/4Af6p6NWkQferzBmXme0zY/4nwMJm/wd1tIqSwGz+E3xPEAOoZlJit3XddD7/BT1pllzOx+8bmQtANQ/S6fZexc6qi3W+Q2xcmXTUhuS5mpHQRvcxZUN0S5+PL9lXWUAaRZhEH8hTdAcuNMMCuVNKTEGtSUKNi3O6KhSaTzck8csZ2vWRZ+d7mW8c4IKwXIYd25S/zIftPkwPzufjEvOHWVD1m+FjpDVUTV0DGDuHj6QnaEwLu/dEgdLQOg9E1Sro9XHJ8ykLAwtPu+pxqKDuFexqON1sKQm7rwbE1E68UCfA/erovrTCG+DBSNg0l4goDQvZN6uNlbyLpcZAwj2UclycvLpIZMgv4yRlpb3YuMftozorbcGVHt/VeDV3+Fdf1TP0iuaCsPi2G4XeGhsyF1ubVDxkoJhmniQ0/jSg/eYML9KLfnCFgISWkp91eauR3IQvED0nAPXK+6hPCYs+n3+hCZbiskmVMG2da+0EsZPonUeIY8EbfusQXjsK/eFDaosbPjEfQS0RKG7yj5GG69M7MeO1HmiUYocgygJHL6M1qzUDDwUSmr99V7Sdr2F3JjQAJY+F0yH33Iv3+C9M38eML7gTgmNu/r2bUMiPvpYbZ6v1/IaESirBHNa7mPKn4dEmYg7v/+HQgPN1G79jBQ1+soydfDC2r+h2Bl/KIc5KjMK7OH6nb1jLsNf0EHVe2KBiE51ox636uyG6Lho0t3J34L5QY/ilE3mikaF4HKXG1mG1rCevT1Vv6GavltxoQe/bMrpZvRggnBxSEPEeEzkEdOxTnPXHVjUYdw8JYvjB/o7Eegc3Ma+NUxLLnsK0kJlinPmUHzHGtrk5+CAbVzFOBqpyy3QVUnzTDfC/0XD94/okH+OB+i7g9lolhWIjSnfIb+Eq43ZXOWmwvjyV/qqD+t0e+7mTEM74qP/Ozt8nmC7mRpyu63OB4KnUzFc074SqoyPUAgM+/TJGFo6T44EHnQU4X4z6qannVqgw/U7zCpwcmXV1AubIrvOmkKHazJAR55ePjp5tLBsN8vAqs3NAHdcEHOR2xQ0lsNAFzSUuxFQCFYvXLZJdOj9p4fNq6p0HBGUik2YzaI4xySy91KzhQ0+q1hjxvImRwPRf76tChlRkhRCi74NXZ9qUNeIwP+s5p+3m5nwPdNOHgSLD79n7O9m1n1uDHiMntq4nkYwV5OZ1ENbXxFd4PgrlvavZsyUO4MqYlqqn1O8W/I1dEZq5dXhrbETLaZIbC2Kj/Aa/QM+fqUOHdf0tXAQ1huZ3cmWECWSXy/43j35+Mvq9xws7JKseriZ1pEWKc8qlzNrGPUGcVgOa9cPJYIJsGnJTAUsEcDOEVULO5x0rXBijc1lgXEzQQKhROf8zIV82w8eswc78YX11KYLWQRcgHNJElBxfXr72lS2RBSl07qTKorO2uUDZr3sFhYsvnhLZn0A94KRzJ/7DEGIAhW5ZWFpL8gEwu1aLA9MuWZzNwl8Oze9Y+bX+v9gywRVnoB5I/8kXTXU3141yRLYrIOOz6SOnyHNy4SieqzkBXharjfjqq1q6tklaEbA8Qfm2DaIPs7OTq/nvJBjKfO2H9bH2cCMh1+5gspfycu8f/cuuRmtDjyqZ7uCIMyjdV3a+p3fqmXsRx4C8lujezIFHnQiVTXLXuI1XrwN3+siYYj2HHTvESUx8DlOTXpak9qFRK+L3mgJ1WsD7F4cu1aJoFoYQnu+wGDMOjJM3kiBQWHCcvhJ/HRdxodOQp45YZaOTA22Nb4XKCVxqkbwMYFhzYQYIAnCW8FW14uf98jhUG2zrKhQQ0q0CEq0t5nXyvUyvR8DvD69LU+g3i+HFWQMQ8PqZuHD+sNKAV0+M6EJC0szq7rEr7B5bQ8BcNHzvDMc9eqB5ZCQdTf80Obn4uzjwpYU7SISdtV0QGa9D3Wrh2BDQtpBKxaNFV+/Cy2P/Sv+8s7Ud0Fd74X4+o/TNztWgETUapy+majNQ68Lq3ee0ZO48VEbTZYiH1Co4OlfWef82RWeyUXo7woM03PyapGfikTnQinoNq5z5veLpeMV3HCAMTaZmA1oGLAn7XS3XYsz+XK7VMQsc4XKrmDXOLU/pSXVNUq8dIqTba///3x6LiLS6xs1xuCAYSfcQ3+rQgmu7uvf3THKt5Ooo97TqcbRqxx7EASizaQCBQllG/rYxVapMLgtLbZS64w1MDBMXX+PQpBKNwqUKOf2DDRDUXQf9EhOS0Qj4nTmlA8dzSLz/G1d+Ud8MTy/6ghhdiLpeerGY/UlDOfiuqFsMUU5/UYlP+BAmgRLuNpvrUaLlVkrqDievNVEAwF+4CoM1MZTmjxjJMsKJq+u8Zd7tNCUFy6LiyYXRJQ4VyvEQFFaCGKsxIwQkk7EzZ6LTJq2hUuPhvAW+gQnSG6J+MszC+7QCRHcnqDdyNRJ6T9xyS87A6MDutbzKGvGktpbXqtzWtXb9HsfK2cBMomjN9a4y+TaJLnXxAeX/HWzmf4cR4vALt/P4w4qgKY04ml4ZdLOinFYS6cup3G/1ie4+t1eOnpBNlqGqs75ilzkT4+DsZQxNvaSKJ//6zIbbk/M7LOhFmRc/1R+kBtz7JFGdZm/COotIdvQoXpTqP/1uqEUmCb/QWoGLMwO5ANcHzxdY48IGP5+J+zKOTBFZ4Pid+GTM+Wq12MV/H86xEJptBa6T+p3kgpwLedManBHC2GgNrFpoN2xnrMz9WFWX/8/ygSBkavq2Uv7FdCsLEYLu9LLIvAU0bNRDtzYl+/vXmjpIvuJFYjmI0im6QEYqnIeMsNjXG4vIutIGHijeAG/9EDBozKV5cldkHbLxHh25vT+ZEzbhXlqvpzKJwcEgfNwLAKFeo0/pvEE10XDB+EXRTXtSzJozQKFFAJhMxYkVaCW+E9AL7tMeU8acxidHqzb6lX4691UsDpy/LLRmT+epgW56+5Cw8tB4kMUv6s9lh3eRKbyGs+H/4mQMaYzPTf2OOdokEn+zzgvoD3FqNKk8QqGAXVsqcGdXrT62fSPkR2vROFi68A6se86UxRUk4cajfPyCC4G5wDhD+zNq4jodQ4u4n/m37Lr36n4LIAAsVr02dFi9AiwA81MYs2rm4eDlDNmdMRvEKRHfBwW5DdMNp0jPFZMeARqF/wL4XBfd+EMLBfMzpH5GH6NaW+1vrvMdg+VxDzatk3MXgO3ro3P/DpcC6+Mo4MySJhKJhSR01SGGGp5hPWmrrUgrv3lDnP+HhcI3nt3YqBoVAVTBAQT5iuhTg8nvPtd8ZeYj6w1x6RqGUBrSku7+N1+BaasZvjTk64RoIDlL8brpEcJx3OmY7jLoZsswdtmhfC/G21llXhITOwmvRDDeTTPbyASOa16cF5/A1fZAidJpqju3wYAy9avPR1ya6eNp9K8XYrrtuxlqi+bDKwlfrYdR0RRiKRVTLOH85+ZY7XSmzRpfZBJjaTa81VDcJHpZnZnSQLASGYW9l51ZV/h7eVzTi3Hv6hUsgc/51AqJRTkpbFVLXXszoBL8nBX0u/0jBLT8nH+fJePbrwURT58OY+UieRjd1vs04w0VG5VN2U6MoGZkQzKN/ptz0Q366dxoTGmj7i1NQGHi9GgnquXFYdrCfZBmeb7s0T6yrdlZH5cZuwHFyIJ/kAtGsTg0xH5taAAq44BAk1CPk9KVVbqQzrCUiFdF/6gtlPQ8bHHc1G1W92MXGZ5HEHftyLYs8mbD/9xYRUWkHmlM0zC2ilJlnNgV4bfALpQghxOUoZL7VTqtCHIaQSXm+YUMnpkXybnV+A6xlm2CVy8fn0Xlm2XRa0+zzOa21JWWmixfiPMSCZ7qA4rS93VN3pkpF1s5TonQjisHf7iU9ZGvUPOAKZcR1pbeVf/Ul7OhepGCaId9wOtqo7pJ7yLcBZ0pFkOF28y4zEI/kcUNmutBHaQpBdNM8vjCS6HZRokkeo88TBAjGyG7SR+6vUgTcyK9Imalj0kuxz0wmK+byQU11AiJFk/ya5dNduRClcnU64yGu/ieWSeOos1t3ep+RPIWQ2pyTYVbZltTbsb7NiwSi3AV+8KLWk7LxCnfZUetEM8ThnsSoGH38/nyAwFguJp8FjvlHtcWZuU4hPva0rHfr0UhOOJ/F6vS62FW7KzkmRll2HEc7oUq4fyi5T70Vl7YVIfsPHUCdHesf9Lk7WNVWO75JDkYbMI8TOW8JKVtLY9d6UJRITO8oKo0xS+o99Yy04iniGHAaGj88kEWgwv0OrHdY/nr76DOGNS59hXCGXzTKUvDl9iKpLSWYN1lxIeyywdNpTkhay74w2jFT6NS8qkjo5CxA1yfSYwp6AJIZNKIeEK5PJAW7ORgWgwp0VgzYpqovMrWxbu+DGZ6Lhie1RAqpzm8VUzKJOH3mCzWuTOLsN3VT/dv2eeYe9UjbR8YTBsLz7q60VN1sU51k+um1f8JxD5pPhbhSC8rRaB454tmh6YUWrJI3+GWY0qeWioj/tbkYITOkJaeuGt4JrJvHA+l0Gu7kY7XOaa05alMnRWVCXqFgLIwSY4uF59Ue5SU4QKuc/HamDxbr0x6csCetXGoP7Qn1Bk/J9DsynO/UD6iZ1Hyrz+jit0hDCwi/E9OjgKTbB3ZQKQ/0ZOvevfNHG0NK4Aj3Cp7NpRk07RT1i/S0EL93Ag8GRgKI9CfpajKyK6+Jj/PI1KO5/85VAwz2AwzP8FTBb075IxCXv6T9RVvWT2tUaqxDS92zrGUbWzUYk9mSs82pECH+fkqsDt93VW++4YsR/dHCYcQSYTO/KaBMDj9LSD/J/+z20Kq8XvZUAIHtm9hRPP3ItbuAu2Hm5lkPs92pd7kCxgRs0xOVBnZ13ccdA0aunrwv9SdqElJRC3g+oCu+nXyCgmXUs9yMjTMAIHfxZV+aPKcZeUBWt057Xo85Ks1Ir5gzEHCWqZEhrLZMuF11ziGtFQUds/EESajhagzcKsxamcSZxGth4UII+adPhQkUnx2WyN+4YWR+r3f8MnkyGFuR4zjzxJS8WsQYR5PTyRaD9ixa6Mh741nBHbzfjXHskGDq179xaRNrCIB1z1xRfWfjqw2pHc1zk9xlPpL8sQWAIuETZZhbnmL54rceXVNRvUiKrrqIkeogsl0XXb17ylNb0f4GA9Wd44vffEG8FSZGHEL2fbaTGRcSiCeA8PmA/f6Hz8HCS76fXUHwgwkzSwlI71ekZ7Fapmlk/KC+Hs8hUcw3N2LN5LhkVYyizYFl/uPeVP5lsoJHhhfWvvSWruCUW1ZcJOeuTbrDgywJ/qG07gZJplnTvLcYdNaH0KMYOYMGX+rB4NGPFmQsNaIwlWrfCezxre8zXBrsMT+edVLbLqN1BqB76JH4BvZTqUIMfGwPGEn+EnmTV86fPBaYbFL3DFEhjB45CewkXEAtJxk4/Ms2pPXnaRqdky0HOYdcUcE2zcXq4vaIvW2/v0nHFJH2XXe22ueDmq/18XGtELSq85j9X8q0tcNSSKJIX8FTuJF/Pf8j5PhqG2u+osvsLxYrvvfeVJL+4tkcXcr9JV7v0ERmj/X6fM3NC4j6dS1+9Umr2oPavqiAydTZPLMNRGY23LO9zAVDly7jD+70G5TPPLdhRIl4WxcYjLnM+SNcJ26FOrkrISUtPObIz5Zb3AG612krnpy15RMW+1cQjlnWFI6538qky9axd2oJmHIHP08KyP0ubGO+TQNOYuv2uh17yCIvR8VcStw7o1g0NM60sk+8Tq7YfIBJrtp53GkvzXH7OA0p8/n/u1satf/VJhtR1l8Wa6Gmaug7haSpaCaYQax6ta0mkutlb+eAOSG1aobM81D9A4iS1RRlzBBoVX6tU1S6WE2N9ORY6DfeLRC4l9Rvr5h95XDWB2mR1d4WFudpsgVYwiTwT31ljskD8ZyDOlm5DkGh9N/UB/0AI5Xvb8ZBmai2hQ4BWMqFwYnzxwB26YHSOv9WgY3JXnvoN+2R4rqGVh/LLDMtpFP+SpMGJNWvbIl5SOodbCczW2RKleksPoUeGEzrjtKHVdtZA+kfqO+rVx/iclCqwoopepvJpSTDjT+b9GWylGRF8EDbGlw6eUzmJM95Ovoz+kwLX3c2fTjFeYEsE7vUZm3mqdGJuKh2w9/QGSaqRHs99aScGOdDqkFcACoqdbBoQqqjamhH6Q9ng39JCg3lrGJwd50Qk9ovnqBTr8MME7Ps2wiVfygUmPoUBJJfJWX5Nda0nuncbFkA=='));
+	    return (0, decoder$2.read_compressed_payload)((0, lib$1v.decode)('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'));
 	}
 	exports.getData = getData;
 
@@ -69566,7 +69953,7 @@
 
 	var include$3 = /*@__PURE__*/getDefaultExportFromCjs(include$2);
 
-	var lib$1v = createCommonjsModule(function (module, exports) {
+	var lib$1w = createCommonjsModule(function (module, exports) {
 	"use strict";
 	/**
 	 * MIT License
@@ -69612,7 +69999,7 @@
 	var HYPHEN = 0x2D;
 	var UNDERSCORE = 0x5F;
 	function explode_cp(name) {
-	    return (0, lib$s.toUtf8CodePoints)(name);
+	    return (0, lib$t.toUtf8CodePoints)(name);
 	}
 	function filter_fe0f(cps) {
 	    return cps.filter(function (cp) { return cp != 0xFE0F; });
@@ -69717,7 +70104,7 @@
 
 	});
 
-	var lib$1w = /*@__PURE__*/getDefaultExportFromCjs(lib$1v);
+	var lib$1x = /*@__PURE__*/getDefaultExportFromCjs(lib$1w);
 
 	var namehash_1$1 = createCommonjsModule(function (module, exports) {
 	"use strict";
@@ -69728,7 +70115,7 @@
 
 
 
-	var logger = new lib$4.Logger(_version$2u.version);
+	var logger = new lib$6.Logger(_version$2w.version);
 
 	var Zeros = new Uint8Array(32);
 	Zeros.fill(0);
@@ -69739,7 +70126,7 @@
 	    return comp;
 	}
 	function ensNameSplit(name) {
-	    var bytes = (0, lib$s.toUtf8Bytes)((0, lib$1v.ens_normalize)(name));
+	    var bytes = (0, lib$t.toUtf8Bytes)((0, lib$1w.ens_normalize)(name));
 	    var comps = [];
 	    if (name.length === 0) {
 	        return comps;
@@ -69761,7 +70148,7 @@
 	    return comps;
 	}
 	function ensNormalize(name) {
-	    return ensNameSplit(name).map(function (comp) { return (0, lib$s.toUtf8String)(comp); }).join(".");
+	    return ensNameSplit(name).map(function (comp) { return (0, lib$t.toUtf8String)(comp); }).join(".");
 	}
 	exports.ensNormalize = ensNormalize;
 	function isValidName(name) {
@@ -69780,13 +70167,13 @@
 	    var result = Zeros;
 	    var comps = ensNameSplit(name);
 	    while (comps.length) {
-	        result = (0, lib$W.keccak256)((0, lib$7.concat)([result, (0, lib$W.keccak256)(comps.pop())]));
+	        result = (0, lib$X.keccak256)((0, lib$8.concat)([result, (0, lib$X.keccak256)(comps.pop())]));
 	    }
-	    return (0, lib$7.hexlify)(result);
+	    return (0, lib$8.hexlify)(result);
 	}
 	exports.namehash = namehash;
 	function dnsEncode(name) {
-	    return (0, lib$7.hexlify)((0, lib$7.concat)(ensNameSplit(name).map(function (comp) {
+	    return (0, lib$8.hexlify)((0, lib$8.concat)(ensNameSplit(name).map(function (comp) {
 	        // DNS does not allow components over 63 bytes in length
 	        if (comp.length > 63) {
 	            throw new Error("invalid DNS encoded entry; length exceeds 63 bytes");
@@ -69813,11 +70200,11 @@
 	exports.messagePrefix = "\x19Ethereum Signed Message:\n";
 	function hashMessage(message) {
 	    if (typeof (message) === "string") {
-	        message = (0, lib$s.toUtf8Bytes)(message);
+	        message = (0, lib$t.toUtf8Bytes)(message);
 	    }
-	    return (0, lib$W.keccak256)((0, lib$7.concat)([
-	        (0, lib$s.toUtf8Bytes)(exports.messagePrefix),
-	        (0, lib$s.toUtf8Bytes)(String(message.length)),
+	    return (0, lib$X.keccak256)((0, lib$8.concat)([
+	        (0, lib$t.toUtf8Bytes)(exports.messagePrefix),
+	        (0, lib$t.toUtf8Bytes)(String(message.length)),
 	        message
 	    ]));
 	}
@@ -69874,7 +70261,7 @@
 
 
 
-	var logger = new lib$4.Logger(_version$2u.version);
+	var logger = new lib$6.Logger(_version$2w.version);
 
 	var padding = new Uint8Array(32);
 	padding.fill(0);
@@ -69883,15 +70270,15 @@
 	var One = lib$3.BigNumber.from(1);
 	var MaxUint256 = lib$3.BigNumber.from("0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
 	function hexPadRight(value) {
-	    var bytes = (0, lib$7.arrayify)(value);
+	    var bytes = (0, lib$8.arrayify)(value);
 	    var padOffset = bytes.length % 32;
 	    if (padOffset) {
-	        return (0, lib$7.hexConcat)([bytes, padding.slice(padOffset)]);
+	        return (0, lib$8.hexConcat)([bytes, padding.slice(padOffset)]);
 	    }
-	    return (0, lib$7.hexlify)(bytes);
+	    return (0, lib$8.hexlify)(bytes);
 	}
-	var hexTrue = (0, lib$7.hexZeroPad)(One.toHexString(), 32);
-	var hexFalse = (0, lib$7.hexZeroPad)(Zero.toHexString(), 32);
+	var hexTrue = (0, lib$8.hexZeroPad)(One.toHexString(), 32);
+	var hexFalse = (0, lib$8.hexZeroPad)(Zero.toHexString(), 32);
 	var domainFieldTypes = {
 	    name: "string",
 	    version: "string",
@@ -69922,18 +70309,18 @@
 	    },
 	    verifyingContract: function (value) {
 	        try {
-	            return (0, lib$k.getAddress)(value).toLowerCase();
+	            return (0, lib$l.getAddress)(value).toLowerCase();
 	        }
 	        catch (error) { }
 	        return logger.throwArgumentError("invalid domain value \"verifyingContract\"", "domain.verifyingContract", value);
 	    },
 	    salt: function (value) {
 	        try {
-	            var bytes = (0, lib$7.arrayify)(value);
+	            var bytes = (0, lib$8.arrayify)(value);
 	            if (bytes.length !== 32) {
 	                throw new Error("bad length");
 	            }
-	            return (0, lib$7.hexlify)(bytes);
+	            return (0, lib$8.hexlify)(bytes);
 	        }
 	        catch (error) { }
 	        return logger.throwArgumentError("invalid domain value \"salt\"", "domain.salt", value);
@@ -69956,7 +70343,7 @@
 	                if (v.lt(boundsLower_1) || v.gt(boundsUpper_1)) {
 	                    logger.throwArgumentError("value out-of-bounds for " + type, "value", value);
 	                }
-	                return (0, lib$7.hexZeroPad)(v.toTwos(256).toHexString(), 32);
+	                return (0, lib$8.hexZeroPad)(v.toTwos(256).toHexString(), 32);
 	            };
 	        }
 	    }
@@ -69969,7 +70356,7 @@
 	                logger.throwArgumentError("invalid bytes width", "type", type);
 	            }
 	            return function (value) {
-	                var bytes = (0, lib$7.arrayify)(value);
+	                var bytes = (0, lib$8.arrayify)(value);
 	                if (bytes.length !== width_1) {
 	                    logger.throwArgumentError("invalid length for " + type, "value", value);
 	                }
@@ -69979,13 +70366,13 @@
 	    }
 	    switch (type) {
 	        case "address": return function (value) {
-	            return (0, lib$7.hexZeroPad)((0, lib$k.getAddress)(value), 32);
+	            return (0, lib$8.hexZeroPad)((0, lib$l.getAddress)(value), 32);
 	        };
 	        case "bool": return function (value) {
 	            return ((!value) ? hexFalse : hexTrue);
 	        };
 	        case "bytes": return function (value) {
-	            return (0, lib$W.keccak256)(value);
+	            return (0, lib$X.keccak256)(value);
 	        };
 	        case "string": return function (value) {
 	            return (0, id_1$1.id)(value);
@@ -70108,9 +70495,9 @@
 	                }
 	                var result = value.map(subEncoder_1);
 	                if (_this._types[subtype_1]) {
-	                    result = result.map(lib$W.keccak256);
+	                    result = result.map(lib$X.keccak256);
 	                }
-	                return (0, lib$W.keccak256)((0, lib$7.hexConcat)(result));
+	                return (0, lib$X.keccak256)((0, lib$8.hexConcat)(result));
 	            };
 	        }
 	        // Struct
@@ -70122,12 +70509,12 @@
 	                    var name = _a.name, type = _a.type;
 	                    var result = _this.getEncoder(type)(value[name]);
 	                    if (_this._types[type]) {
-	                        return (0, lib$W.keccak256)(result);
+	                        return (0, lib$X.keccak256)(result);
 	                    }
 	                    return result;
 	                });
 	                values.unshift(encodedType_1);
-	                return (0, lib$7.hexConcat)(values);
+	                return (0, lib$8.hexConcat)(values);
 	            };
 	        }
 	        return logger.throwArgumentError("unknown type: " + type, "type", type);
@@ -70143,7 +70530,7 @@
 	        return this.getEncoder(type)(value);
 	    };
 	    TypedDataEncoder.prototype.hashStruct = function (name, value) {
-	        return (0, lib$W.keccak256)(this.encodeData(name, value));
+	        return (0, lib$X.keccak256)(this.encodeData(name, value));
 	    };
 	    TypedDataEncoder.prototype.encode = function (value) {
 	        return this.encodeData(this.primaryType, value);
@@ -70208,14 +70595,14 @@
 	        return TypedDataEncoder.hashStruct("EIP712Domain", { EIP712Domain: domainFields }, domain);
 	    };
 	    TypedDataEncoder.encode = function (domain, types, value) {
-	        return (0, lib$7.hexConcat)([
+	        return (0, lib$8.hexConcat)([
 	            "0x1901",
 	            TypedDataEncoder.hashDomain(domain),
 	            TypedDataEncoder.from(types).hash(value)
 	        ]);
 	    };
 	    TypedDataEncoder.hash = function (domain, types, value) {
-	        return (0, lib$W.keccak256)(TypedDataEncoder.encode(domain, types, value));
+	        return (0, lib$X.keccak256)(TypedDataEncoder.encode(domain, types, value));
 	    };
 	    // Replaces all address types with ENS names with their looked up address
 	    TypedDataEncoder.resolveNames = function (domain, types, value, resolveName) {
@@ -70228,13 +70615,13 @@
 	                        domain = (0, lib$5.shallowCopy)(domain);
 	                        ensCache = {};
 	                        // Do we need to look up the domain's verifyingContract?
-	                        if (domain.verifyingContract && !(0, lib$7.isHexString)(domain.verifyingContract, 20)) {
+	                        if (domain.verifyingContract && !(0, lib$8.isHexString)(domain.verifyingContract, 20)) {
 	                            ensCache[domain.verifyingContract] = "0x";
 	                        }
 	                        encoder = TypedDataEncoder.from(types);
 	                        // Get a list of all the addresses
 	                        encoder.visit(value, function (type, value) {
-	                            if (type === "address" && !(0, lib$7.isHexString)(value, 20)) {
+	                            if (type === "address" && !(0, lib$8.isHexString)(value, 20)) {
 	                                ensCache[value] = "0x";
 	                            }
 	                            return value;
@@ -70304,7 +70691,7 @@
 	            message: encoder.visit(value, function (type, value) {
 	                // bytes
 	                if (type.match(/^bytes(\d*)/)) {
-	                    return (0, lib$7.hexlify)((0, lib$7.arrayify)(value));
+	                    return (0, lib$8.hexlify)((0, lib$8.arrayify)(value));
 	                }
 	                // uint or int
 	                if (type.match(/^u?int/)) {
@@ -70333,7 +70720,7 @@
 
 	var typedData$3 = /*@__PURE__*/getDefaultExportFromCjs(typedData$2);
 
-	var lib$1x = createCommonjsModule(function (module, exports) {
+	var lib$1y = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports._TypedDataEncoder = exports.hashMessage = exports.messagePrefix = exports.ensNormalize = exports.isValidName = exports.namehash = exports.dnsEncode = exports.id = void 0;
@@ -70353,9 +70740,9 @@
 
 	});
 
-	var index$1t = /*@__PURE__*/getDefaultExportFromCjs(lib$1x);
+	var index$1u = /*@__PURE__*/getDefaultExportFromCjs(lib$1y);
 
-	var _version$2y = createCommonjsModule(function (module, exports) {
+	var _version$2A = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.version = void 0;
@@ -70363,9 +70750,9 @@
 
 	});
 
-	var _version$2z = /*@__PURE__*/getDefaultExportFromCjs(_version$2y);
+	var _version$2B = /*@__PURE__*/getDefaultExportFromCjs(_version$2A);
 
-	var lib$1y = createCommonjsModule(function (module, exports) {
+	var lib$1z = createCommonjsModule(function (module, exports) {
 	"use strict";
 	var __awaiter = (commonjsGlobal && commonjsGlobal.__awaiter) || function (thisArg, _arguments, P, generator) {
 	    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
@@ -70407,7 +70794,7 @@
 	exports.Description = exports.deepCopy = exports.shallowCopy = exports.checkProperties = exports.resolveProperties = exports.getStatic = exports.defineReadOnly = void 0;
 
 
-	var logger = new lib$4.Logger(_version$2y.version);
+	var logger = new lib$6.Logger(_version$2A.version);
 	function defineReadOnly(object, name, value) {
 	    Object.defineProperty(object, name, {
 	        enumerable: true,
@@ -70539,9 +70926,9 @@
 
 	});
 
-	var index$1u = /*@__PURE__*/getDefaultExportFromCjs(lib$1y);
+	var index$1v = /*@__PURE__*/getDefaultExportFromCjs(lib$1z);
 
-	var _version$2A = createCommonjsModule(function (module, exports) {
+	var _version$2C = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.version = void 0;
@@ -70549,9 +70936,9 @@
 
 	});
 
-	var _version$2B = /*@__PURE__*/getDefaultExportFromCjs(_version$2A);
+	var _version$2D = /*@__PURE__*/getDefaultExportFromCjs(_version$2C);
 
-	var lib$1z = createCommonjsModule(function (module, exports) {
+	var lib$1A = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.Logger = exports.ErrorCode = exports.LogLevel = void 0;
@@ -70885,7 +71272,7 @@
 	    };
 	    Logger.globalLogger = function () {
 	        if (!_globalLogger) {
-	            _globalLogger = new Logger(_version$2A.version);
+	            _globalLogger = new Logger(_version$2C.version);
 	        }
 	        return _globalLogger;
 	    };
@@ -70925,9 +71312,9 @@
 
 	});
 
-	var index$1v = /*@__PURE__*/getDefaultExportFromCjs(lib$1z);
+	var index$1w = /*@__PURE__*/getDefaultExportFromCjs(lib$1A);
 
-	var _version$2C = createCommonjsModule(function (module, exports) {
+	var _version$2E = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.version = void 0;
@@ -70935,7 +71322,7 @@
 
 	});
 
-	var _version$2D = /*@__PURE__*/getDefaultExportFromCjs(_version$2C);
+	var _version$2F = /*@__PURE__*/getDefaultExportFromCjs(_version$2E);
 
 	var wordlist = createCommonjsModule(function (module, exports) {
 	"use strict";
@@ -70947,12 +71334,12 @@
 
 
 
-	exports.logger = new lib$1z.Logger(_version$2C.version);
+	exports.logger = new lib$1A.Logger(_version$2E.version);
 	var Wordlist = /** @class */ (function () {
 	    function Wordlist(locale) {
 	        var _newTarget = this.constructor;
 	        exports.logger.checkAbstract(_newTarget, Wordlist);
-	        (0, lib$1y.defineReadOnly)(this, "locale", locale);
+	        (0, lib$1z.defineReadOnly)(this, "locale", locale);
 	    }
 	    // Subclasses may override this
 	    Wordlist.prototype.split = function (mnemonic) {
@@ -70972,7 +71359,7 @@
 	            }
 	            words.push(word);
 	        }
-	        return (0, lib$1x.id)(words.join("\n") + "\n");
+	        return (0, lib$1y.id)(words.join("\n") + "\n");
 	    };
 	    Wordlist.register = function (lang, name) {
 	        if (!name) {
@@ -70984,7 +71371,7 @@
 	                var anyGlobal = window;
 	                if (anyGlobal._quais && anyGlobal._quais.wordlists) {
 	                    if (!anyGlobal._quais.wordlists[name]) {
-	                        (0, lib$1y.defineReadOnly)(anyGlobal._quais.wordlists, name, lang);
+	                        (0, lib$1z.defineReadOnly)(anyGlobal._quais.wordlists, name, lang);
 	                    }
 	                }
 	            }
@@ -71069,7 +71456,7 @@
 
 	var browserWordlists$1 = /*@__PURE__*/getDefaultExportFromCjs(browserWordlists);
 
-	var lib$1A = createCommonjsModule(function (module, exports) {
+	var lib$1B = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.wordlists = exports.Wordlist = exports.logger = void 0;
@@ -71083,9 +71470,9 @@
 
 	});
 
-	var index$1w = /*@__PURE__*/getDefaultExportFromCjs(lib$1A);
+	var index$1x = /*@__PURE__*/getDefaultExportFromCjs(lib$1B);
 
-	var _version$2E = createCommonjsModule(function (module, exports) {
+	var _version$2G = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.version = void 0;
@@ -71093,9 +71480,9 @@
 
 	});
 
-	var _version$2F = /*@__PURE__*/getDefaultExportFromCjs(_version$2E);
+	var _version$2H = /*@__PURE__*/getDefaultExportFromCjs(_version$2G);
 
-	var lib$1B = createCommonjsModule(function (module, exports) {
+	var lib$1C = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.getAccountPath = exports.isValidMnemonic = exports.entropyToMnemonic = exports.mnemonicToEntropy = exports.mnemonicToSeed = exports.HDNode = exports.defaultPath = void 0;
@@ -71111,10 +71498,10 @@
 
 
 
-	var logger = new lib$4.Logger(_version$2E.version);
+	var logger = new lib$6.Logger(_version$2G.version);
 	var N = lib$3.BigNumber.from("0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141");
 	// "Bitcoin seed"
-	var MasterSecret = (0, lib$s.toUtf8Bytes)("Bitcoin seed");
+	var MasterSecret = (0, lib$t.toUtf8Bytes)("Bitcoin seed");
 	var HardenedBit = 0x80000000;
 	// Returns a byte with the MSB bits set
 	function getUpperMask(bits) {
@@ -71125,17 +71512,17 @@
 	    return (1 << bits) - 1;
 	}
 	function bytes32(value) {
-	    return (0, lib$7.hexZeroPad)((0, lib$7.hexlify)(value), 32);
+	    return (0, lib$8.hexZeroPad)((0, lib$8.hexlify)(value), 32);
 	}
 	function base58check(data) {
-	    return lib$1i.Base58.encode((0, lib$7.concat)([data, (0, lib$7.hexDataSlice)((0, lib$1s.sha256)((0, lib$1s.sha256)(data)), 0, 4)]));
+	    return lib$1j.Base58.encode((0, lib$8.concat)([data, (0, lib$8.hexDataSlice)((0, lib$1t.sha256)((0, lib$1t.sha256)(data)), 0, 4)]));
 	}
 	function getWordlist(wordlist) {
 	    if (wordlist == null) {
-	        return lib$1A.wordlists["en"];
+	        return lib$1B.wordlists["en"];
 	    }
 	    if (typeof (wordlist) === "string") {
-	        var words = lib$1A.wordlists[wordlist];
+	        var words = lib$1B.wordlists[wordlist];
 	        if (words == null) {
 	            logger.throwArgumentError("unknown locale", "wordlist", wordlist);
 	        }
@@ -71160,17 +71547,17 @@
 	            throw new Error("HDNode constructor cannot be called directly");
 	        }
 	        if (privateKey) {
-	            var signingKey = new lib$1p.SigningKey(privateKey);
+	            var signingKey = new lib$1q.SigningKey(privateKey);
 	            (0, lib$5.defineReadOnly)(this, "privateKey", signingKey.privateKey);
 	            (0, lib$5.defineReadOnly)(this, "publicKey", signingKey.compressedPublicKey);
 	        }
 	        else {
 	            (0, lib$5.defineReadOnly)(this, "privateKey", null);
-	            (0, lib$5.defineReadOnly)(this, "publicKey", (0, lib$7.hexlify)(publicKey));
+	            (0, lib$5.defineReadOnly)(this, "publicKey", (0, lib$8.hexlify)(publicKey));
 	        }
 	        (0, lib$5.defineReadOnly)(this, "parentFingerprint", parentFingerprint);
-	        (0, lib$5.defineReadOnly)(this, "fingerprint", (0, lib$7.hexDataSlice)((0, lib$1s.ripemd160)((0, lib$1s.sha256)(this.publicKey)), 0, 4));
-	        (0, lib$5.defineReadOnly)(this, "address", (0, lib$1e.computeAddress)(this.publicKey));
+	        (0, lib$5.defineReadOnly)(this, "fingerprint", (0, lib$8.hexDataSlice)((0, lib$1t.ripemd160)((0, lib$1t.sha256)(this.publicKey)), 0, 4));
+	        (0, lib$5.defineReadOnly)(this, "address", (0, lib$1f.computeAddress)(this.publicKey));
 	        (0, lib$5.defineReadOnly)(this, "chainCode", chainCode);
 	        (0, lib$5.defineReadOnly)(this, "index", index);
 	        (0, lib$5.defineReadOnly)(this, "depth", depth);
@@ -71200,13 +71587,13 @@
 	            if (this.depth >= 256) {
 	                throw new Error("Depth too large!");
 	            }
-	            return base58check((0, lib$7.concat)([
+	            return base58check((0, lib$8.concat)([
 	                ((this.privateKey != null) ? "0x0488ADE4" : "0x0488B21E"),
-	                (0, lib$7.hexlify)(this.depth),
+	                (0, lib$8.hexlify)(this.depth),
 	                this.parentFingerprint,
-	                (0, lib$7.hexZeroPad)((0, lib$7.hexlify)(this.index), 4),
+	                (0, lib$8.hexZeroPad)((0, lib$8.hexlify)(this.index), 4),
 	                this.chainCode,
-	                ((this.privateKey != null) ? (0, lib$7.concat)(["0x00", this.privateKey]) : this.publicKey),
+	                ((this.privateKey != null) ? (0, lib$8.concat)(["0x00", this.privateKey]) : this.publicKey),
 	            ]));
 	        },
 	        enumerable: false,
@@ -71230,7 +71617,7 @@
 	                throw new Error("cannot derive child of neutered node");
 	            }
 	            // Data = 0x00 || ser_256(k_par)
-	            data.set((0, lib$7.arrayify)(this.privateKey), 1);
+	            data.set((0, lib$8.arrayify)(this.privateKey), 1);
 	            // Hardened path
 	            if (path) {
 	                path += "'";
@@ -71238,13 +71625,13 @@
 	        }
 	        else {
 	            // Data = ser_p(point(k_par))
-	            data.set((0, lib$7.arrayify)(this.publicKey));
+	            data.set((0, lib$8.arrayify)(this.publicKey));
 	        }
 	        // Data += ser_32(i)
 	        for (var i = 24; i >= 0; i -= 8) {
 	            data[33 + (i >> 3)] = ((index >> (24 - i)) & 0xff);
 	        }
-	        var I = (0, lib$7.arrayify)((0, lib$1s.computeHmac)(lib$1s.SupportedAlgorithm.sha512, this.chainCode, data));
+	        var I = (0, lib$8.arrayify)((0, lib$1t.computeHmac)(lib$1t.SupportedAlgorithm.sha512, this.chainCode, data));
 	        var IL = I.slice(0, 32);
 	        var IR = I.slice(32);
 	        // The private key
@@ -71255,7 +71642,7 @@
 	            ki = bytes32(lib$3.BigNumber.from(IL).add(this.privateKey).mod(N));
 	        }
 	        else {
-	            var ek = new lib$1p.SigningKey((0, lib$7.hexlify)(IL));
+	            var ek = new lib$1q.SigningKey((0, lib$8.hexlify)(IL));
 	            Ki = ek._addPoint(this.publicKey);
 	        }
 	        var mnemonicOrPath = path;
@@ -71301,11 +71688,11 @@
 	        return result;
 	    };
 	    HDNode._fromSeed = function (seed, mnemonic) {
-	        var seedArray = (0, lib$7.arrayify)(seed);
+	        var seedArray = (0, lib$8.arrayify)(seed);
 	        if (seedArray.length < 16 || seedArray.length > 64) {
 	            throw new Error("invalid seed");
 	        }
-	        var I = (0, lib$7.arrayify)((0, lib$1s.computeHmac)(lib$1s.SupportedAlgorithm.sha512, MasterSecret, seedArray));
+	        var I = (0, lib$8.arrayify)((0, lib$1t.computeHmac)(lib$1t.SupportedAlgorithm.sha512, MasterSecret, seedArray));
 	        return new HDNode(_constructorGuard, bytes32(I.slice(0, 32)), null, "0x00000000", bytes32(I.slice(32)), 0, 0, mnemonic);
 	    };
 	    HDNode.fromMnemonic = function (mnemonic, password, wordlist) {
@@ -71323,27 +71710,27 @@
 	        return HDNode._fromSeed(seed, null);
 	    };
 	    HDNode.fromExtendedKey = function (extendedKey) {
-	        var bytes = lib$1i.Base58.decode(extendedKey);
+	        var bytes = lib$1j.Base58.decode(extendedKey);
 	        if (bytes.length !== 82 || base58check(bytes.slice(0, 78)) !== extendedKey) {
 	            logger.throwArgumentError("invalid extended key", "extendedKey", "[REDACTED]");
 	        }
 	        var depth = bytes[4];
-	        var parentFingerprint = (0, lib$7.hexlify)(bytes.slice(5, 9));
-	        var index = parseInt((0, lib$7.hexlify)(bytes.slice(9, 13)).substring(2), 16);
-	        var chainCode = (0, lib$7.hexlify)(bytes.slice(13, 45));
+	        var parentFingerprint = (0, lib$8.hexlify)(bytes.slice(5, 9));
+	        var index = parseInt((0, lib$8.hexlify)(bytes.slice(9, 13)).substring(2), 16);
+	        var chainCode = (0, lib$8.hexlify)(bytes.slice(13, 45));
 	        var key = bytes.slice(45, 78);
-	        switch ((0, lib$7.hexlify)(bytes.slice(0, 4))) {
+	        switch ((0, lib$8.hexlify)(bytes.slice(0, 4))) {
 	            // Public Key
 	            case "0x0488b21e":
 	            case "0x043587cf":
-	                return new HDNode(_constructorGuard, null, (0, lib$7.hexlify)(key), parentFingerprint, chainCode, index, depth, null);
+	                return new HDNode(_constructorGuard, null, (0, lib$8.hexlify)(key), parentFingerprint, chainCode, index, depth, null);
 	            // Private Key
 	            case "0x0488ade4":
 	            case "0x04358394 ":
 	                if (key[0] !== 0) {
 	                    break;
 	                }
-	                return new HDNode(_constructorGuard, (0, lib$7.hexlify)(key.slice(1)), null, parentFingerprint, chainCode, index, depth, null);
+	                return new HDNode(_constructorGuard, (0, lib$8.hexlify)(key.slice(1)), null, parentFingerprint, chainCode, index, depth, null);
 	        }
 	        return logger.throwArgumentError("invalid extended key", "extendedKey", "[REDACTED]");
 	    };
@@ -71354,8 +71741,8 @@
 	    if (!password) {
 	        password = "";
 	    }
-	    var salt = (0, lib$s.toUtf8Bytes)("mnemonic" + password, lib$s.UnicodeNormalizationForm.NFKD);
-	    return (0, lib$1l.pbkdf2)((0, lib$s.toUtf8Bytes)(mnemonic, lib$s.UnicodeNormalizationForm.NFKD), salt, 2048, 64, "sha512");
+	    var salt = (0, lib$t.toUtf8Bytes)("mnemonic" + password, lib$t.UnicodeNormalizationForm.NFKD);
+	    return (0, lib$1m.pbkdf2)((0, lib$t.toUtf8Bytes)(mnemonic, lib$t.UnicodeNormalizationForm.NFKD), salt, 2048, 64, "sha512");
 	}
 	exports.mnemonicToSeed = mnemonicToSeed;
 	function mnemonicToEntropy(mnemonic, wordlist) {
@@ -71365,7 +71752,7 @@
 	    if ((words.length % 3) !== 0) {
 	        throw new Error("invalid mnemonic");
 	    }
-	    var entropy = (0, lib$7.arrayify)(new Uint8Array(Math.ceil(11 * words.length / 8)));
+	    var entropy = (0, lib$8.arrayify)(new Uint8Array(Math.ceil(11 * words.length / 8)));
 	    var offset = 0;
 	    for (var i = 0; i < words.length; i++) {
 	        var index = wordlist.getWordIndex(words[i].normalize("NFKD"));
@@ -71382,16 +71769,16 @@
 	    var entropyBits = 32 * words.length / 3;
 	    var checksumBits = words.length / 3;
 	    var checksumMask = getUpperMask(checksumBits);
-	    var checksum = (0, lib$7.arrayify)((0, lib$1s.sha256)(entropy.slice(0, entropyBits / 8)))[0] & checksumMask;
+	    var checksum = (0, lib$8.arrayify)((0, lib$1t.sha256)(entropy.slice(0, entropyBits / 8)))[0] & checksumMask;
 	    if (checksum !== (entropy[entropy.length - 1] & checksumMask)) {
 	        throw new Error("invalid checksum");
 	    }
-	    return (0, lib$7.hexlify)(entropy.slice(0, entropyBits / 8));
+	    return (0, lib$8.hexlify)(entropy.slice(0, entropyBits / 8));
 	}
 	exports.mnemonicToEntropy = mnemonicToEntropy;
 	function entropyToMnemonic(entropy, wordlist) {
 	    wordlist = getWordlist(wordlist);
-	    entropy = (0, lib$7.arrayify)(entropy);
+	    entropy = (0, lib$8.arrayify)(entropy);
 	    if ((entropy.length % 4) !== 0 || entropy.length < 16 || entropy.length > 32) {
 	        throw new Error("invalid entropy");
 	    }
@@ -71415,7 +71802,7 @@
 	    }
 	    // Compute the checksum bits
 	    var checksumBits = entropy.length / 4;
-	    var checksum = (0, lib$7.arrayify)((0, lib$1s.sha256)(entropy))[0] & getUpperMask(checksumBits);
+	    var checksum = (0, lib$8.arrayify)((0, lib$1t.sha256)(entropy))[0] & getUpperMask(checksumBits);
 	    // Shift the checksum into the word indices
 	    indices[indices.length - 1] <<= checksumBits;
 	    indices[indices.length - 1] |= (checksum >> (8 - checksumBits));
@@ -71441,9 +71828,9 @@
 
 	});
 
-	var index$1x = /*@__PURE__*/getDefaultExportFromCjs(lib$1B);
+	var index$1y = /*@__PURE__*/getDefaultExportFromCjs(lib$1C);
 
-	var _version$2G = createCommonjsModule(function (module, exports) {
+	var _version$2I = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.version = void 0;
@@ -71451,7 +71838,7 @@
 
 	});
 
-	var _version$2H = /*@__PURE__*/getDefaultExportFromCjs(_version$2G);
+	var _version$2J = /*@__PURE__*/getDefaultExportFromCjs(_version$2I);
 
 	var browserRandom = createCommonjsModule(function (module, exports) {
 	"use strict";
@@ -71460,7 +71847,7 @@
 
 
 
-	var logger = new lib$4.Logger(_version$2G.version);
+	var logger = new lib$6.Logger(_version$2I.version);
 	// Debugging line for testing browser lib in node
 	//const window = { crypto: { getRandomValues: () => { } } };
 	// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/globalThis
@@ -71483,7 +71870,7 @@
 	    logger.warn("WARNING: Missing strong random number source");
 	    crypto = {
 	        getRandomValues: function (buffer) {
-	            return logger.throwError("no secure random source avaialble", lib$4.Logger.errors.UNSUPPORTED_OPERATION, {
+	            return logger.throwError("no secure random source avaialble", lib$6.Logger.errors.UNSUPPORTED_OPERATION, {
 	                operation: "crypto.getRandomValues"
 	            });
 	        }
@@ -71495,7 +71882,7 @@
 	    }
 	    var result = new Uint8Array(length);
 	    crypto.getRandomValues(result);
-	    return (0, lib$7.arrayify)(result);
+	    return (0, lib$8.arrayify)(result);
 	}
 	exports.randomBytes = randomBytes;
 	;
@@ -71524,7 +71911,7 @@
 
 	var shuffle$1 = /*@__PURE__*/getDefaultExportFromCjs(shuffle);
 
-	var lib$1C = createCommonjsModule(function (module, exports) {
+	var lib$1D = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.shuffled = exports.randomBytes = void 0;
@@ -71535,7 +71922,7 @@
 
 	});
 
-	var index$1y = /*@__PURE__*/getDefaultExportFromCjs(lib$1C);
+	var index$1z = /*@__PURE__*/getDefaultExportFromCjs(lib$1D);
 
 	var aesJs = createCommonjsModule(function (module, exports) {
 	"use strict";
@@ -72338,7 +72725,7 @@
 	})(commonjsGlobal);
 	});
 
-	var _version$2I = createCommonjsModule(function (module, exports) {
+	var _version$2K = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.version = void 0;
@@ -72346,7 +72733,7 @@
 
 	});
 
-	var _version$2J = /*@__PURE__*/getDefaultExportFromCjs(_version$2I);
+	var _version$2L = /*@__PURE__*/getDefaultExportFromCjs(_version$2K);
 
 	var utils$1 = createCommonjsModule(function (module, exports) {
 	"use strict";
@@ -72358,7 +72745,7 @@
 	    if (typeof (hexString) === 'string' && hexString.substring(0, 2) !== '0x') {
 	        hexString = '0x' + hexString;
 	    }
-	    return (0, lib$7.arrayify)(hexString);
+	    return (0, lib$8.arrayify)(hexString);
 	}
 	exports.looseArrayify = looseArrayify;
 	function zpad(value, length) {
@@ -72371,9 +72758,9 @@
 	exports.zpad = zpad;
 	function getPassword(password) {
 	    if (typeof (password) === 'string') {
-	        return (0, lib$s.toUtf8Bytes)(password, lib$s.UnicodeNormalizationForm.NFKC);
+	        return (0, lib$t.toUtf8Bytes)(password, lib$t.UnicodeNormalizationForm.NFKC);
 	    }
-	    return (0, lib$7.arrayify)(password);
+	    return (0, lib$8.arrayify)(password);
 	}
 	exports.getPassword = getPassword;
 	function searchPath(object, path) {
@@ -72400,7 +72787,7 @@
 	exports.searchPath = searchPath;
 	// See: https://www.ietf.org/rfc/rfc4122.txt (Section 4.4)
 	function uuidV4(randomBytes) {
-	    var bytes = (0, lib$7.arrayify)(randomBytes);
+	    var bytes = (0, lib$8.arrayify)(randomBytes);
 	    // Section: 4.1.3:
 	    // - time_hi_and_version[12:16] = 0b0100
 	    bytes[6] = (bytes[6] & 0x0f) | 0x40;
@@ -72408,7 +72795,7 @@
 	    // - clock_seq_hi_and_reserved[6] = 0b0
 	    // - clock_seq_hi_and_reserved[7] = 0b1
 	    bytes[8] = (bytes[8] & 0x3f) | 0x80;
-	    var value = (0, lib$7.hexlify)(bytes);
+	    var value = (0, lib$8.hexlify)(bytes);
 	    return [
 	        value.substring(2, 10),
 	        value.substring(10, 14),
@@ -72454,7 +72841,7 @@
 
 
 
-	var logger = new lib$4.Logger(_version$2I.version);
+	var logger = new lib$6.Logger(_version$2K.version);
 
 	var CrowdsaleAccount = /** @class */ (function (_super) {
 	    __extends(CrowdsaleAccount, _super);
@@ -72472,25 +72859,25 @@
 	    var data = JSON.parse(json);
 	    password = (0, utils$1.getPassword)(password);
 	    // Ethereum Address
-	    var ethaddr = (0, lib$k.getAddress)((0, utils$1.searchPath)(data, "ethaddr"));
+	    var ethaddr = (0, lib$l.getAddress)((0, utils$1.searchPath)(data, "ethaddr"));
 	    // Encrypted Seed
 	    var encseed = (0, utils$1.looseArrayify)((0, utils$1.searchPath)(data, "encseed"));
 	    if (!encseed || (encseed.length % 16) !== 0) {
 	        logger.throwArgumentError("invalid encseed", "json", json);
 	    }
-	    var key = (0, lib$7.arrayify)((0, lib$1l.pbkdf2)(password, password, 2000, 32, "sha256")).slice(0, 16);
+	    var key = (0, lib$8.arrayify)((0, lib$1m.pbkdf2)(password, password, 2000, 32, "sha256")).slice(0, 16);
 	    var iv = encseed.slice(0, 16);
 	    var encryptedSeed = encseed.slice(16);
 	    // Decrypt the seed
 	    var aesCbc = new aes_js_1.default.ModeOfOperation.cbc(key, iv);
-	    var seed = aes_js_1.default.padding.pkcs7.strip((0, lib$7.arrayify)(aesCbc.decrypt(encryptedSeed)));
+	    var seed = aes_js_1.default.padding.pkcs7.strip((0, lib$8.arrayify)(aesCbc.decrypt(encryptedSeed)));
 	    // This wallet format is weird... Convert the binary encoded hex to a string.
 	    var seedHex = "";
 	    for (var i = 0; i < seed.length; i++) {
 	        seedHex += String.fromCharCode(seed[i]);
 	    }
-	    var seedHexBytes = (0, lib$s.toUtf8Bytes)(seedHex);
-	    var privateKey = (0, lib$W.keccak256)(seedHexBytes);
+	    var seedHexBytes = (0, lib$t.toUtf8Bytes)(seedHex);
+	    var privateKey = (0, lib$X.keccak256)(seedHexBytes);
 	    return new CrowdsaleAccount({
 	        _isCrowdsaleAccount: true,
 	        address: ethaddr,
@@ -72540,7 +72927,7 @@
 	function getJsonWalletAddress(json) {
 	    if (isCrowdsaleWallet(json)) {
 	        try {
-	            return (0, lib$k.getAddress)(JSON.parse(json).ethaddr);
+	            return (0, lib$l.getAddress)(JSON.parse(json).ethaddr);
 	        }
 	        catch (error) {
 	            return null;
@@ -72548,7 +72935,7 @@
 	    }
 	    if (isKeystoreWallet(json)) {
 	        try {
-	            return (0, lib$k.getAddress)(JSON.parse(json).address);
+	            return (0, lib$l.getAddress)(JSON.parse(json).address);
 	        }
 	        catch (error) {
 	            return null;
@@ -73124,7 +73511,7 @@
 
 
 
-	var logger = new lib$4.Logger(_version$2I.version);
+	var logger = new lib$6.Logger(_version$2K.version);
 	// Exported Types
 	function hasMnemonic(value) {
 	    return (value != null && value.mnemonic && value.mnemonic.phrase);
@@ -73146,37 +73533,37 @@
 	        var iv = (0, utils$1.looseArrayify)((0, utils$1.searchPath)(data, "crypto/cipherparams/iv"));
 	        var counter = new aes_js_1.default.Counter(iv);
 	        var aesCtr = new aes_js_1.default.ModeOfOperation.ctr(key, counter);
-	        return (0, lib$7.arrayify)(aesCtr.decrypt(ciphertext));
+	        return (0, lib$8.arrayify)(aesCtr.decrypt(ciphertext));
 	    }
 	    return null;
 	}
 	function _getAccount(data, key) {
 	    var ciphertext = (0, utils$1.looseArrayify)((0, utils$1.searchPath)(data, "crypto/ciphertext"));
-	    var computedMAC = (0, lib$7.hexlify)((0, lib$W.keccak256)((0, lib$7.concat)([key.slice(16, 32), ciphertext]))).substring(2);
+	    var computedMAC = (0, lib$8.hexlify)((0, lib$X.keccak256)((0, lib$8.concat)([key.slice(16, 32), ciphertext]))).substring(2);
 	    if (computedMAC !== (0, utils$1.searchPath)(data, "crypto/mac").toLowerCase()) {
 	        throw new Error("invalid password");
 	    }
 	    var privateKey = _decrypt(data, key.slice(0, 16), ciphertext);
 	    if (!privateKey) {
-	        logger.throwError("unsupported cipher", lib$4.Logger.errors.UNSUPPORTED_OPERATION, {
+	        logger.throwError("unsupported cipher", lib$6.Logger.errors.UNSUPPORTED_OPERATION, {
 	            operation: "decrypt"
 	        });
 	    }
 	    var mnemonicKey = key.slice(32, 64);
-	    var address = (0, lib$1e.computeAddress)(privateKey);
+	    var address = (0, lib$1f.computeAddress)(privateKey);
 	    if (data.address) {
 	        var check = data.address.toLowerCase();
 	        if (check.substring(0, 2) !== "0x") {
 	            check = "0x" + check;
 	        }
-	        if ((0, lib$k.getAddress)(check) !== address) {
+	        if ((0, lib$l.getAddress)(check) !== address) {
 	            throw new Error("address mismatch");
 	        }
 	    }
 	    var account = {
 	        _isKeystoreAccount: true,
 	        address: address,
-	        privateKey: (0, lib$7.hexlify)(privateKey)
+	        privateKey: (0, lib$8.hexlify)(privateKey)
 	    };
 	    // Version 0.1 x-quais metadata must contain an encrypted mnemonic phrase
 	    if ((0, utils$1.searchPath)(data, "x-quais/version") === "0.1") {
@@ -73184,12 +73571,12 @@
 	        var mnemonicIv = (0, utils$1.looseArrayify)((0, utils$1.searchPath)(data, "x-quais/mnemonicCounter"));
 	        var mnemonicCounter = new aes_js_1.default.Counter(mnemonicIv);
 	        var mnemonicAesCtr = new aes_js_1.default.ModeOfOperation.ctr(mnemonicKey, mnemonicCounter);
-	        var path = (0, utils$1.searchPath)(data, "x-quais/path") || lib$1B.defaultPath;
+	        var path = (0, utils$1.searchPath)(data, "x-quais/path") || lib$1C.defaultPath;
 	        var locale = (0, utils$1.searchPath)(data, "x-quais/locale") || "en";
-	        var entropy = (0, lib$7.arrayify)(mnemonicAesCtr.decrypt(mnemonicCiphertext));
+	        var entropy = (0, lib$8.arrayify)(mnemonicAesCtr.decrypt(mnemonicCiphertext));
 	        try {
-	            var mnemonic = (0, lib$1B.entropyToMnemonic)(entropy, locale);
-	            var node = lib$1B.HDNode.fromMnemonic(mnemonic, null, locale).derivePath(path);
+	            var mnemonic = (0, lib$1C.entropyToMnemonic)(entropy, locale);
+	            var node = lib$1C.HDNode.fromMnemonic(mnemonic, null, locale).derivePath(path);
 	            if (node.privateKey != account.privateKey) {
 	                throw new Error("mnemonic mismatch");
 	            }
@@ -73199,7 +73586,7 @@
 	            // If we don't have the locale wordlist installed to
 	            // read this mnemonic, just bail and don't set the
 	            // mnemonic
-	            if (error.code !== lib$4.Logger.errors.INVALID_ARGUMENT || error.argument !== "wordlist") {
+	            if (error.code !== lib$6.Logger.errors.INVALID_ARGUMENT || error.argument !== "wordlist") {
 	                throw error;
 	            }
 	        }
@@ -73207,7 +73594,7 @@
 	    return new KeystoreAccount(account);
 	}
 	function pbkdf2Sync(passwordBytes, salt, count, dkLen, prfFunc) {
-	    return (0, lib$7.arrayify)((0, lib$1l.pbkdf2)(passwordBytes, salt, count, dkLen, prfFunc));
+	    return (0, lib$8.arrayify)((0, lib$1m.pbkdf2)(passwordBytes, salt, count, dkLen, prfFunc));
 	}
 	function pbkdf2(passwordBytes, salt, count, dkLen, prfFunc) {
 	    return Promise.resolve(pbkdf2Sync(passwordBytes, salt, count, dkLen, prfFunc));
@@ -73286,13 +73673,13 @@
 	function encrypt(account, password, options, progressCallback) {
 	    try {
 	        // Check the address matches the private key
-	        if ((0, lib$k.getAddress)(account.address) !== (0, lib$1e.computeAddress)(account.privateKey)) {
+	        if ((0, lib$l.getAddress)(account.address) !== (0, lib$1f.computeAddress)(account.privateKey)) {
 	            throw new Error("address/privateKey mismatch");
 	        }
 	        // Check the mnemonic (if any) matches the private key
 	        if (hasMnemonic(account)) {
 	            var mnemonic = account.mnemonic;
-	            var node = lib$1B.HDNode.fromMnemonic(mnemonic.phrase, null, mnemonic.locale).derivePath(mnemonic.path || lib$1B.defaultPath);
+	            var node = lib$1C.HDNode.fromMnemonic(mnemonic.phrase, null, mnemonic.locale).derivePath(mnemonic.path || lib$1C.defaultPath);
 	            if (node.privateKey != account.privateKey) {
 	                throw new Error("mnemonic mismatch");
 	            }
@@ -73309,15 +73696,15 @@
 	    if (!options) {
 	        options = {};
 	    }
-	    var privateKey = (0, lib$7.arrayify)(account.privateKey);
+	    var privateKey = (0, lib$8.arrayify)(account.privateKey);
 	    var passwordBytes = (0, utils$1.getPassword)(password);
 	    var entropy = null;
 	    var path = null;
 	    var locale = null;
 	    if (hasMnemonic(account)) {
 	        var srcMnemonic = account.mnemonic;
-	        entropy = (0, lib$7.arrayify)((0, lib$1B.mnemonicToEntropy)(srcMnemonic.phrase, srcMnemonic.locale || "en"));
-	        path = srcMnemonic.path || lib$1B.defaultPath;
+	        entropy = (0, lib$8.arrayify)((0, lib$1C.mnemonicToEntropy)(srcMnemonic.phrase, srcMnemonic.locale || "en"));
+	        path = srcMnemonic.path || lib$1C.defaultPath;
 	        locale = srcMnemonic.locale || "en";
 	    }
 	    var client = options.client;
@@ -73327,33 +73714,33 @@
 	    // Check/generate the salt
 	    var salt = null;
 	    if (options.salt) {
-	        salt = (0, lib$7.arrayify)(options.salt);
+	        salt = (0, lib$8.arrayify)(options.salt);
 	    }
 	    else {
-	        salt = (0, lib$1C.randomBytes)(32);
+	        salt = (0, lib$1D.randomBytes)(32);
 	        ;
 	    }
 	    // Override initialization vector
 	    var iv = null;
 	    if (options.iv) {
-	        iv = (0, lib$7.arrayify)(options.iv);
+	        iv = (0, lib$8.arrayify)(options.iv);
 	        if (iv.length !== 16) {
 	            throw new Error("invalid iv");
 	        }
 	    }
 	    else {
-	        iv = (0, lib$1C.randomBytes)(16);
+	        iv = (0, lib$1D.randomBytes)(16);
 	    }
 	    // Override the uuid
 	    var uuidRandom = null;
 	    if (options.uuid) {
-	        uuidRandom = (0, lib$7.arrayify)(options.uuid);
+	        uuidRandom = (0, lib$8.arrayify)(options.uuid);
 	        if (uuidRandom.length !== 16) {
 	            throw new Error("invalid uuid");
 	        }
 	    }
 	    else {
-	        uuidRandom = (0, lib$1C.randomBytes)(16);
+	        uuidRandom = (0, lib$1D.randomBytes)(16);
 	    }
 	    // Override the scrypt password-based key derivation function parameters
 	    var N = (1 << 17), r = 8, p = 1;
@@ -73372,7 +73759,7 @@
 	    //   - 32 bytes   As normal for the Web3 secret storage (derivedKey, macPrefix)
 	    //   - 32 bytes   AES key to encrypt mnemonic with (required here to be Ethers Wallet)
 	    return scrypt_js_1.default.scrypt(passwordBytes, salt, N, r, p, 64, progressCallback).then(function (key) {
-	        key = (0, lib$7.arrayify)(key);
+	        key = (0, lib$8.arrayify)(key);
 	        // This will be used to encrypt the wallet (as per Web3 secret storage)
 	        var derivedKey = key.slice(0, 16);
 	        var macPrefix = key.slice(16, 32);
@@ -73381,9 +73768,9 @@
 	        // Encrypt the private key
 	        var counter = new aes_js_1.default.Counter(iv);
 	        var aesCtr = new aes_js_1.default.ModeOfOperation.ctr(derivedKey, counter);
-	        var ciphertext = (0, lib$7.arrayify)(aesCtr.encrypt(privateKey));
+	        var ciphertext = (0, lib$8.arrayify)(aesCtr.encrypt(privateKey));
 	        // Compute the message authentication code, used to check the password
-	        var mac = (0, lib$W.keccak256)((0, lib$7.concat)([macPrefix, ciphertext]));
+	        var mac = (0, lib$X.keccak256)((0, lib$8.concat)([macPrefix, ciphertext]));
 	        // See: https://github.com/ethereum/wiki/wiki/Web3-Secret-Storage-Definition
 	        var data = {
 	            address: account.address.substring(2).toLowerCase(),
@@ -73392,12 +73779,12 @@
 	            crypto: {
 	                cipher: "aes-128-ctr",
 	                cipherparams: {
-	                    iv: (0, lib$7.hexlify)(iv).substring(2),
+	                    iv: (0, lib$8.hexlify)(iv).substring(2),
 	                },
-	                ciphertext: (0, lib$7.hexlify)(ciphertext).substring(2),
+	                ciphertext: (0, lib$8.hexlify)(ciphertext).substring(2),
 	                kdf: "scrypt",
 	                kdfparams: {
-	                    salt: (0, lib$7.hexlify)(salt).substring(2),
+	                    salt: (0, lib$8.hexlify)(salt).substring(2),
 	                    n: N,
 	                    dklen: 32,
 	                    p: p,
@@ -73408,10 +73795,10 @@
 	        };
 	        // If we have a mnemonic, encrypt it into the JSON wallet
 	        if (entropy) {
-	            var mnemonicIv = (0, lib$1C.randomBytes)(16);
+	            var mnemonicIv = (0, lib$1D.randomBytes)(16);
 	            var mnemonicCounter = new aes_js_1.default.Counter(mnemonicIv);
 	            var mnemonicAesCtr = new aes_js_1.default.ModeOfOperation.ctr(mnemonicKey, mnemonicCounter);
-	            var mnemonicCiphertext = (0, lib$7.arrayify)(mnemonicAesCtr.encrypt(entropy));
+	            var mnemonicCiphertext = (0, lib$8.arrayify)(mnemonicAesCtr.encrypt(entropy));
 	            var now = new Date();
 	            var timestamp = (now.getUTCFullYear() + "-" +
 	                (0, utils$1.zpad)(now.getUTCMonth() + 1, 2) + "-" +
@@ -73422,8 +73809,8 @@
 	            data["x-quais"] = {
 	                client: client,
 	                gethFilename: ("UTC--" + timestamp + "--" + data.address),
-	                mnemonicCounter: (0, lib$7.hexlify)(mnemonicIv).substring(2),
-	                mnemonicCiphertext: (0, lib$7.hexlify)(mnemonicCiphertext).substring(2),
+	                mnemonicCounter: (0, lib$8.hexlify)(mnemonicIv).substring(2),
+	                mnemonicCiphertext: (0, lib$8.hexlify)(mnemonicCiphertext).substring(2),
 	                path: path,
 	                locale: locale,
 	                version: "0.1"
@@ -73438,7 +73825,7 @@
 
 	var keystore$1 = /*@__PURE__*/getDefaultExportFromCjs(keystore);
 
-	var lib$1D = createCommonjsModule(function (module, exports) {
+	var lib$1E = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.decryptJsonWalletSync = exports.decryptJsonWallet = exports.getJsonWalletAddress = exports.isKeystoreWallet = exports.isCrowdsaleWallet = exports.encryptKeystore = exports.decryptKeystoreSync = exports.decryptKeystore = exports.decryptCrowdsale = void 0;
@@ -73482,9 +73869,9 @@
 
 	});
 
-	var index$1z = /*@__PURE__*/getDefaultExportFromCjs(lib$1D);
+	var index$1A = /*@__PURE__*/getDefaultExportFromCjs(lib$1E);
 
-	var _version$2K = createCommonjsModule(function (module, exports) {
+	var _version$2M = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.version = void 0;
@@ -73492,9 +73879,9 @@
 
 	});
 
-	var _version$2L = /*@__PURE__*/getDefaultExportFromCjs(_version$2K);
+	var _version$2N = /*@__PURE__*/getDefaultExportFromCjs(_version$2M);
 
-	var lib$1E = createCommonjsModule(function (module, exports) {
+	var lib$1F = createCommonjsModule(function (module, exports) {
 	"use strict";
 	var __extends = (commonjsGlobal && commonjsGlobal.__extends) || (function () {
 	    var extendStatics = function (d, b) {
@@ -73563,9 +73950,9 @@
 
 
 
-	var logger = new lib$4.Logger(_version$2K.version);
+	var logger = new lib$6.Logger(_version$2M.version);
 	function isAccount(value) {
-	    return (value != null && (0, lib$7.isHexString)(value.privateKey, 32) && value.address != null);
+	    return (value != null && (0, lib$8.isHexString)(value.privateKey, 32) && value.address != null);
 	}
 	function hasMnemonic(value) {
 	    var mnemonic = value.mnemonic;
@@ -73576,22 +73963,22 @@
 	    function Wallet(privateKey, provider) {
 	        var _this = _super.call(this) || this;
 	        if (isAccount(privateKey)) {
-	            var signingKey_1 = new lib$1p.SigningKey(privateKey.privateKey);
+	            var signingKey_1 = new lib$1q.SigningKey(privateKey.privateKey);
 	            (0, lib$5.defineReadOnly)(_this, "_signingKey", function () { return signingKey_1; });
-	            (0, lib$5.defineReadOnly)(_this, "address", (0, lib$1e.computeAddress)(_this.publicKey));
-	            if (_this.address !== (0, lib$k.getAddress)(privateKey.address)) {
+	            (0, lib$5.defineReadOnly)(_this, "address", (0, lib$1f.computeAddress)(_this.publicKey));
+	            if (_this.address !== (0, lib$l.getAddress)(privateKey.address)) {
 	                logger.throwArgumentError("privateKey/address mismatch", "privateKey", "[REDACTED]");
 	            }
 	            if (hasMnemonic(privateKey)) {
 	                var srcMnemonic_1 = privateKey.mnemonic;
 	                (0, lib$5.defineReadOnly)(_this, "_mnemonic", function () { return ({
 	                    phrase: srcMnemonic_1.phrase,
-	                    path: srcMnemonic_1.path || lib$1B.defaultPath,
+	                    path: srcMnemonic_1.path || lib$1C.defaultPath,
 	                    locale: srcMnemonic_1.locale || "en"
 	                }); });
 	                var mnemonic = _this.mnemonic;
-	                var node = lib$1B.HDNode.fromMnemonic(mnemonic.phrase, null, mnemonic.locale).derivePath(mnemonic.path);
-	                if ((0, lib$1e.computeAddress)(node.privateKey) !== _this.address) {
+	                var node = lib$1C.HDNode.fromMnemonic(mnemonic.phrase, null, mnemonic.locale).derivePath(mnemonic.path);
+	                if ((0, lib$1f.computeAddress)(node.privateKey) !== _this.address) {
 	                    logger.throwArgumentError("mnemonic/address mismatch", "privateKey", "[REDACTED]");
 	                }
 	            }
@@ -73600,7 +73987,7 @@
 	            }
 	        }
 	        else {
-	            if (lib$1p.SigningKey.isSigningKey(privateKey)) {
+	            if (lib$1q.SigningKey.isSigningKey(privateKey)) {
 	                /* istanbul ignore if */
 	                if (privateKey.curve !== "secp256k1") {
 	                    logger.throwArgumentError("unsupported curve; must be secp256k1", "privateKey", "[REDACTED]");
@@ -73614,14 +74001,14 @@
 	                        privateKey = "0x" + privateKey;
 	                    }
 	                }
-	                var signingKey_2 = new lib$1p.SigningKey(privateKey);
+	                var signingKey_2 = new lib$1q.SigningKey(privateKey);
 	                (0, lib$5.defineReadOnly)(_this, "_signingKey", function () { return signingKey_2; });
 	            }
 	            (0, lib$5.defineReadOnly)(_this, "_mnemonic", function () { return null; });
-	            (0, lib$5.defineReadOnly)(_this, "address", (0, lib$1e.computeAddress)(_this.publicKey));
+	            (0, lib$5.defineReadOnly)(_this, "address", (0, lib$1f.computeAddress)(_this.publicKey));
 	        }
 	        /* istanbul ignore if */
-	        if (provider && !lib$$.Provider.isProvider(provider)) {
+	        if (provider && !lib$10.Provider.isProvider(provider)) {
 	            logger.throwArgumentError("invalid provider", "provider", provider);
 	        }
 	        (0, lib$5.defineReadOnly)(_this, "provider", provider || null);
@@ -73652,19 +74039,19 @@
 	        var _this = this;
 	        return (0, lib$5.resolveProperties)(transaction).then(function (tx) {
 	            if (tx.from != null) {
-	                if ((0, lib$k.getAddress)(tx.from) !== _this.address) {
+	                if ((0, lib$l.getAddress)(tx.from) !== _this.address) {
 	                    logger.throwArgumentError("transaction from address mismatch", "transaction.from", transaction.from);
 	                }
 	                delete tx.from;
 	            }
-	            var signature = _this._signingKey().signDigest((0, lib$W.keccak256)((0, lib$1e.serialize)(tx)));
-	            return (0, lib$1e.serialize)(tx, signature);
+	            var signature = _this._signingKey().signDigest((0, lib$X.keccak256)((0, lib$1f.serialize)(tx)));
+	            return (0, lib$1f.serialize)(tx, signature);
 	        });
 	    };
 	    Wallet.prototype.signMessage = function (message) {
 	        return __awaiter(this, void 0, void 0, function () {
 	            return __generator(this, function (_a) {
-	                return [2 /*return*/, (0, lib$7.joinSignature)(this._signingKey().signDigest((0, lib$U.hashMessage)(message)))];
+	                return [2 /*return*/, (0, lib$8.joinSignature)(this._signingKey().signDigest((0, lib$V.hashMessage)(message)))];
 	            });
 	        });
 	    };
@@ -73674,9 +74061,9 @@
 	            var _this = this;
 	            return __generator(this, function (_a) {
 	                switch (_a.label) {
-	                    case 0: return [4 /*yield*/, lib$U._TypedDataEncoder.resolveNames(domain, types, value, function (name) {
+	                    case 0: return [4 /*yield*/, lib$V._TypedDataEncoder.resolveNames(domain, types, value, function (name) {
 	                            if (_this.provider == null) {
-	                                logger.throwError("cannot resolve ENS names without a provider", lib$4.Logger.errors.UNSUPPORTED_OPERATION, {
+	                                logger.throwError("cannot resolve ENS names without a provider", lib$6.Logger.errors.UNSUPPORTED_OPERATION, {
 	                                    operation: "resolveName",
 	                                    value: name
 	                                });
@@ -73685,7 +74072,7 @@
 	                        })];
 	                    case 1:
 	                        populated = _a.sent();
-	                        return [2 /*return*/, (0, lib$7.joinSignature)(this._signingKey().signDigest(lib$U._TypedDataEncoder.hash(populated.domain, types, populated.value)))];
+	                        return [2 /*return*/, (0, lib$8.joinSignature)(this._signingKey().signDigest(lib$V._TypedDataEncoder.hash(populated.domain, types, populated.value)))];
 	                }
 	            });
 	        });
@@ -73701,53 +74088,53 @@
 	        if (!options) {
 	            options = {};
 	        }
-	        return (0, lib$1D.encryptKeystore)(this, password, options, progressCallback);
+	        return (0, lib$1E.encryptKeystore)(this, password, options, progressCallback);
 	    };
 	    /**
 	     *  Static methods to create Wallet instances.
 	     */
 	    Wallet.createRandom = function (options) {
-	        var entropy = (0, lib$1C.randomBytes)(16);
+	        var entropy = (0, lib$1D.randomBytes)(16);
 	        if (!options) {
 	            options = {};
 	        }
 	        if (options.extraEntropy) {
-	            entropy = (0, lib$7.arrayify)((0, lib$7.hexDataSlice)((0, lib$W.keccak256)((0, lib$7.concat)([entropy, options.extraEntropy])), 0, 16));
+	            entropy = (0, lib$8.arrayify)((0, lib$8.hexDataSlice)((0, lib$X.keccak256)((0, lib$8.concat)([entropy, options.extraEntropy])), 0, 16));
 	        }
-	        var mnemonic = (0, lib$1B.entropyToMnemonic)(entropy, options.locale);
+	        var mnemonic = (0, lib$1C.entropyToMnemonic)(entropy, options.locale);
 	        return Wallet.fromMnemonic(mnemonic, options.path, options.locale);
 	    };
 	    Wallet.fromEncryptedJson = function (json, password, progressCallback) {
-	        return (0, lib$1D.decryptJsonWallet)(json, password, progressCallback).then(function (account) {
+	        return (0, lib$1E.decryptJsonWallet)(json, password, progressCallback).then(function (account) {
 	            return new Wallet(account);
 	        });
 	    };
 	    Wallet.fromEncryptedJsonSync = function (json, password) {
-	        return new Wallet((0, lib$1D.decryptJsonWalletSync)(json, password));
+	        return new Wallet((0, lib$1E.decryptJsonWalletSync)(json, password));
 	    };
 	    Wallet.fromMnemonic = function (mnemonic, path, wordlist) {
 	        if (!path) {
-	            path = lib$1B.defaultPath;
+	            path = lib$1C.defaultPath;
 	        }
-	        return new Wallet(lib$1B.HDNode.fromMnemonic(mnemonic, null, wordlist).derivePath(path));
+	        return new Wallet(lib$1C.HDNode.fromMnemonic(mnemonic, null, wordlist).derivePath(path));
 	    };
 	    return Wallet;
-	}(lib$12.Signer));
+	}(lib$13.Signer));
 	exports.Wallet = Wallet;
 	function verifyMessage(message, signature) {
-	    return (0, lib$1e.recoverAddress)((0, lib$U.hashMessage)(message), signature);
+	    return (0, lib$1f.recoverAddress)((0, lib$V.hashMessage)(message), signature);
 	}
 	exports.verifyMessage = verifyMessage;
 	function verifyTypedData(domain, types, value, signature) {
-	    return (0, lib$1e.recoverAddress)(lib$U._TypedDataEncoder.hash(domain, types, value), signature);
+	    return (0, lib$1f.recoverAddress)(lib$V._TypedDataEncoder.hash(domain, types, value), signature);
 	}
 	exports.verifyTypedData = verifyTypedData;
 
 	});
 
-	var index$1A = /*@__PURE__*/getDefaultExportFromCjs(lib$1E);
+	var index$1B = /*@__PURE__*/getDefaultExportFromCjs(lib$1F);
 
-	var _version$2M = createCommonjsModule(function (module, exports) {
+	var _version$2O = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.version = void 0;
@@ -73755,9 +74142,9 @@
 
 	});
 
-	var _version$2N = /*@__PURE__*/getDefaultExportFromCjs(_version$2M);
+	var _version$2P = /*@__PURE__*/getDefaultExportFromCjs(_version$2O);
 
-	var lib$1F = createCommonjsModule(function (module, exports) {
+	var lib$1G = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.Logger = exports.ErrorCode = exports.LogLevel = void 0;
@@ -74091,7 +74478,7 @@
 	    };
 	    Logger.globalLogger = function () {
 	        if (!_globalLogger) {
-	            _globalLogger = new Logger(_version$2M.version);
+	            _globalLogger = new Logger(_version$2O.version);
 	        }
 	        return _globalLogger;
 	    };
@@ -74131,9 +74518,9 @@
 
 	});
 
-	var index$1B = /*@__PURE__*/getDefaultExportFromCjs(lib$1F);
+	var index$1C = /*@__PURE__*/getDefaultExportFromCjs(lib$1G);
 
-	var _version$2O = createCommonjsModule(function (module, exports) {
+	var _version$2Q = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.version = void 0;
@@ -74141,15 +74528,15 @@
 
 	});
 
-	var _version$2P = /*@__PURE__*/getDefaultExportFromCjs(_version$2O);
+	var _version$2R = /*@__PURE__*/getDefaultExportFromCjs(_version$2Q);
 
-	var lib$1G = createCommonjsModule(function (module, exports) {
+	var lib$1H = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.getNetwork = void 0;
 
 
-	var logger = new lib$1F.Logger(_version$2O.version);
+	var logger = new lib$1G.Logger(_version$2Q.version);
 	;
 	function isRenetworkable(value) {
 	    return (value && typeof (value.renetwork) === "function");
@@ -74397,7 +74784,7 @@
 
 	});
 
-	var index$1C = /*@__PURE__*/getDefaultExportFromCjs(lib$1G);
+	var index$1D = /*@__PURE__*/getDefaultExportFromCjs(lib$1H);
 
 	var browserBase64$4 = createCommonjsModule(function (module, exports) {
 	"use strict";
@@ -74410,11 +74797,11 @@
 	    for (var i = 0; i < textData.length; i++) {
 	        data.push(textData.charCodeAt(i));
 	    }
-	    return (0, lib$7.arrayify)(data);
+	    return (0, lib$8.arrayify)(data);
 	}
 	exports.decode = decode;
 	function encode(data) {
-	    data = (0, lib$7.arrayify)(data);
+	    data = (0, lib$8.arrayify)(data);
 	    var textData = "";
 	    for (var i = 0; i < data.length; i++) {
 	        textData += String.fromCharCode(data[i]);
@@ -74427,7 +74814,7 @@
 
 	var browserBase64$5 = /*@__PURE__*/getDefaultExportFromCjs(browserBase64$4);
 
-	var lib$1H = createCommonjsModule(function (module, exports) {
+	var lib$1I = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.encode = exports.decode = void 0;
@@ -74437,9 +74824,9 @@
 
 	});
 
-	var index$1D = /*@__PURE__*/getDefaultExportFromCjs(lib$1H);
+	var index$1E = /*@__PURE__*/getDefaultExportFromCjs(lib$1I);
 
-	var _version$2Q = createCommonjsModule(function (module, exports) {
+	var _version$2S = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.version = void 0;
@@ -74447,15 +74834,15 @@
 
 	});
 
-	var _version$2R = /*@__PURE__*/getDefaultExportFromCjs(_version$2Q);
+	var _version$2T = /*@__PURE__*/getDefaultExportFromCjs(_version$2S);
 
-	var lib$1I = createCommonjsModule(function (module, exports) {
+	var lib$1J = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.joinSignature = exports.splitSignature = exports.hexZeroPad = exports.hexStripZeros = exports.hexValue = exports.hexConcat = exports.hexDataSlice = exports.hexDataLength = exports.hexlify = exports.isHexString = exports.zeroPad = exports.stripZeros = exports.concat = exports.arrayify = exports.isBytes = exports.isBytesLike = void 0;
 
 
-	var logger = new lib$4.Logger(_version$2Q.version);
+	var logger = new lib$6.Logger(_version$2S.version);
 	///////////////////////////////
 	function isHexable(value) {
 	    return !!(value.toHexString);
@@ -74879,9 +75266,9 @@
 
 	});
 
-	var index$1E = /*@__PURE__*/getDefaultExportFromCjs(lib$1I);
+	var index$1F = /*@__PURE__*/getDefaultExportFromCjs(lib$1J);
 
-	var _version$2S = createCommonjsModule(function (module, exports) {
+	var _version$2U = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.version = void 0;
@@ -74889,9 +75276,9 @@
 
 	});
 
-	var _version$2T = /*@__PURE__*/getDefaultExportFromCjs(_version$2S);
+	var _version$2V = /*@__PURE__*/getDefaultExportFromCjs(_version$2U);
 
-	var lib$1J = createCommonjsModule(function (module, exports) {
+	var lib$1K = createCommonjsModule(function (module, exports) {
 	"use strict";
 	var __awaiter = (commonjsGlobal && commonjsGlobal.__awaiter) || function (thisArg, _arguments, P, generator) {
 	    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
@@ -74933,7 +75320,7 @@
 	exports.Description = exports.deepCopy = exports.shallowCopy = exports.checkProperties = exports.resolveProperties = exports.getStatic = exports.defineReadOnly = void 0;
 
 
-	var logger = new lib$4.Logger(_version$2S.version);
+	var logger = new lib$6.Logger(_version$2U.version);
 	function defineReadOnly(object, name, value) {
 	    Object.defineProperty(object, name, {
 	        enumerable: true,
@@ -75065,9 +75452,9 @@
 
 	});
 
-	var index$1F = /*@__PURE__*/getDefaultExportFromCjs(lib$1J);
+	var index$1G = /*@__PURE__*/getDefaultExportFromCjs(lib$1K);
 
-	var _version$2U = createCommonjsModule(function (module, exports) {
+	var _version$2W = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.version = void 0;
@@ -75075,7 +75462,7 @@
 
 	});
 
-	var _version$2V = /*@__PURE__*/getDefaultExportFromCjs(_version$2U);
+	var _version$2X = /*@__PURE__*/getDefaultExportFromCjs(_version$2W);
 
 	var utf8$4 = createCommonjsModule(function (module, exports) {
 	"use strict";
@@ -75084,7 +75471,7 @@
 
 
 
-	var logger = new lib$4.Logger(_version$2U.version);
+	var logger = new lib$6.Logger(_version$2W.version);
 	///////////////////////////////
 	var UnicodeNormalizationForm;
 	(function (UnicodeNormalizationForm) {
@@ -75168,7 +75555,7 @@
 	    if (onError == null) {
 	        onError = exports.Utf8ErrorFuncs.error;
 	    }
-	    bytes = (0, lib$7.arrayify)(bytes);
+	    bytes = (0, lib$8.arrayify)(bytes);
 	    var result = [];
 	    var i = 0;
 	    // Invalid bytes are ignored
@@ -75284,7 +75671,7 @@
 	            result.push((c & 0x3f) | 0x80);
 	        }
 	    }
-	    return (0, lib$7.arrayify)(result);
+	    return (0, lib$8.arrayify)(result);
 	}
 	exports.toUtf8Bytes = toUtf8Bytes;
 	;
@@ -75354,11 +75741,11 @@
 	        throw new Error("bytes32 string must be less than 32 bytes");
 	    }
 	    // Zero-pad (implicitly null-terminates)
-	    return (0, lib$7.hexlify)((0, lib$7.concat)([bytes, lib$o.HashZero]).slice(0, 32));
+	    return (0, lib$8.hexlify)((0, lib$8.concat)([bytes, lib$p.HashZero]).slice(0, 32));
 	}
 	exports.formatBytes32String = formatBytes32String;
 	function parseBytes32String(bytes) {
-	    var data = (0, lib$7.arrayify)(bytes);
+	    var data = (0, lib$8.arrayify)(bytes);
 	    // Must be 32 bytes with a null-termination
 	    if (data.length !== 32) {
 	        throw new Error("invalid bytes32 - not 32 bytes long");
@@ -75575,7 +75962,7 @@
 
 	var idna$5 = /*@__PURE__*/getDefaultExportFromCjs(idna$4);
 
-	var lib$1K = createCommonjsModule(function (module, exports) {
+	var lib$1L = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.nameprep = exports.parseBytes32String = exports.formatBytes32String = exports.UnicodeNormalizationForm = exports.Utf8ErrorReason = exports.Utf8ErrorFuncs = exports.toUtf8String = exports.toUtf8CodePoints = exports.toUtf8Bytes = exports._toEscapedUtf8String = void 0;
@@ -75595,9 +75982,9 @@
 
 	});
 
-	var index$1G = /*@__PURE__*/getDefaultExportFromCjs(lib$1K);
+	var index$1H = /*@__PURE__*/getDefaultExportFromCjs(lib$1L);
 
-	var _version$2W = createCommonjsModule(function (module, exports) {
+	var _version$2Y = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.version = void 0;
@@ -75605,9 +75992,9 @@
 
 	});
 
-	var _version$2X = /*@__PURE__*/getDefaultExportFromCjs(_version$2W);
+	var _version$2Z = /*@__PURE__*/getDefaultExportFromCjs(_version$2Y);
 
-	var lib$1L = createCommonjsModule(function (module, exports) {
+	var lib$1M = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.Logger = exports.ErrorCode = exports.LogLevel = void 0;
@@ -75941,7 +76328,7 @@
 	    };
 	    Logger.globalLogger = function () {
 	        if (!_globalLogger) {
-	            _globalLogger = new Logger(_version$2W.version);
+	            _globalLogger = new Logger(_version$2Y.version);
 	        }
 	        return _globalLogger;
 	    };
@@ -75981,9 +76368,9 @@
 
 	});
 
-	var index$1H = /*@__PURE__*/getDefaultExportFromCjs(lib$1L);
+	var index$1I = /*@__PURE__*/getDefaultExportFromCjs(lib$1M);
 
-	var _version$2Y = createCommonjsModule(function (module, exports) {
+	var _version$2_ = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.version = void 0;
@@ -75991,7 +76378,7 @@
 
 	});
 
-	var _version$2Z = /*@__PURE__*/getDefaultExportFromCjs(_version$2Y);
+	var _version$2$ = /*@__PURE__*/getDefaultExportFromCjs(_version$2_);
 
 	var browserGeturl = createCommonjsModule(function (module, exports) {
 	"use strict";
@@ -76095,7 +76482,7 @@
 	                            headers: headers,
 	                            statusCode: response.status,
 	                            statusMessage: response.statusText,
-	                            body: (0, lib$1I.arrayify)(new Uint8Array(body)),
+	                            body: (0, lib$1J.arrayify)(new Uint8Array(body)),
 	                        }];
 	            }
 	        });
@@ -76107,7 +76494,7 @@
 
 	var browserGeturl$1 = /*@__PURE__*/getDefaultExportFromCjs(browserGeturl);
 
-	var lib$1M = createCommonjsModule(function (module, exports) {
+	var lib$1N = createCommonjsModule(function (module, exports) {
 	"use strict";
 	var __awaiter = (commonjsGlobal && commonjsGlobal.__awaiter) || function (thisArg, _arguments, P, generator) {
 	    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
@@ -76153,7 +76540,7 @@
 
 
 
-	var logger = new lib$1L.Logger(_version$2Y.version);
+	var logger = new lib$1M.Logger(_version$2_.version);
 
 	function staller(duration) {
 	    return new Promise(function (resolve) {
@@ -76167,20 +76554,20 @@
 	    if (typeof (value) === "string") {
 	        return value;
 	    }
-	    if ((0, lib$1I.isBytesLike)(value)) {
+	    if ((0, lib$1J.isBytesLike)(value)) {
 	        if (type && (type.split("/")[0] === "text" || type.split(";")[0].trim() === "application/json")) {
 	            try {
-	                return (0, lib$1K.toUtf8String)(value);
+	                return (0, lib$1L.toUtf8String)(value);
 	            }
 	            catch (error) { }
 	            ;
 	        }
-	        return (0, lib$1I.hexlify)(value);
+	        return (0, lib$1J.hexlify)(value);
 	    }
 	    return value;
 	}
 	function unpercent(value) {
-	    return (0, lib$1K.toUtf8Bytes)(value.replace(/%([0-9a-f][0-9a-f])/gi, function (all, code) {
+	    return (0, lib$1L.toUtf8Bytes)(value.replace(/%([0-9a-f][0-9a-f])/gi, function (all, code) {
 	        return String.fromCharCode(parseInt(code, 16));
 	    }));
 	}
@@ -76228,19 +76615,19 @@
 	        options.allowGzip = !!connection.allowGzip;
 	        if (connection.user != null && connection.password != null) {
 	            if (url.substring(0, 6) !== "https:" && connection.allowInsecureAuthentication !== true) {
-	                logger.throwError("basic authentication requires a secure https url", lib$1L.Logger.errors.INVALID_ARGUMENT, { argument: "url", url: url, user: connection.user, password: "[REDACTED]" });
+	                logger.throwError("basic authentication requires a secure https url", lib$1M.Logger.errors.INVALID_ARGUMENT, { argument: "url", url: url, user: connection.user, password: "[REDACTED]" });
 	            }
 	            var authorization = connection.user + ":" + connection.password;
 	            headers["authorization"] = {
 	                key: "Authorization",
-	                value: "Basic " + (0, lib$1H.encode)((0, lib$1K.toUtf8Bytes)(authorization))
+	                value: "Basic " + (0, lib$1I.encode)((0, lib$1L.toUtf8Bytes)(authorization))
 	            };
 	        }
 	        if (connection.skipFetchSetup != null) {
 	            options.skipFetchSetup = !!connection.skipFetchSetup;
 	        }
 	        if (connection.fetchOptions != null) {
-	            options.fetchOptions = (0, lib$1J.shallowCopy)(connection.fetchOptions);
+	            options.fetchOptions = (0, lib$1K.shallowCopy)(connection.fetchOptions);
 	        }
 	    }
 	    var reData = new RegExp("^data:([^;:]*)?(;base64)?,(.*)$", "i");
@@ -76251,7 +76638,7 @@
 	                statusCode: 200,
 	                statusMessage: "OK",
 	                headers: { "content-type": (dataMatch[1] || "text/plain") },
-	                body: (dataMatch[2] ? (0, lib$1H.decode)(dataMatch[3]) : unpercent(dataMatch[3]))
+	                body: (dataMatch[2] ? (0, lib$1I.decode)(dataMatch[3]) : unpercent(dataMatch[3]))
 	            };
 	            var result = response.body;
 	            if (processFunc) {
@@ -76260,7 +76647,7 @@
 	            return Promise.resolve(result);
 	        }
 	        catch (error) {
-	            logger.throwError("processing response error", lib$1L.Logger.errors.SERVER_ERROR, {
+	            logger.throwError("processing response error", lib$1M.Logger.errors.SERVER_ERROR, {
 	                body: bodyify(dataMatch[1], dataMatch[2]),
 	                error: error,
 	                requestBody: null,
@@ -76294,7 +76681,7 @@
 	                        return;
 	                    }
 	                    timer = null;
-	                    reject(logger.makeError("timeout", lib$1L.Logger.errors.TIMEOUT, {
+	                    reject(logger.makeError("timeout", lib$1M.Logger.errors.TIMEOUT, {
 	                        requestBody: bodyify(options.body, flatHeaders["content-type"]),
 	                        requestMethod: options.method,
 	                        timeout: timeout,
@@ -76367,7 +76754,7 @@
 	                        response = error_1.response;
 	                        if (response == null) {
 	                            runningTimeout.cancel();
-	                            logger.throwError("missing response", lib$1L.Logger.errors.SERVER_ERROR, {
+	                            logger.throwError("missing response", lib$1M.Logger.errors.SERVER_ERROR, {
 	                                requestBody: bodyify(options.body, flatHeaders["content-type"]),
 	                                requestMethod: options.method,
 	                                serverError: error_1,
@@ -76382,7 +76769,7 @@
 	                        }
 	                        else if (!errorPassThrough && (response.statusCode < 200 || response.statusCode >= 300)) {
 	                            runningTimeout.cancel();
-	                            logger.throwError("bad response", lib$1L.Logger.errors.SERVER_ERROR, {
+	                            logger.throwError("bad response", lib$1M.Logger.errors.SERVER_ERROR, {
 	                                status: response.statusCode,
 	                                headers: response.headers,
 	                                body: bodyify(body_1, ((response.headers) ? response.headers["content-type"] : null)),
@@ -76420,7 +76807,7 @@
 	                        return [3 /*break*/, 19];
 	                    case 17:
 	                        runningTimeout.cancel();
-	                        logger.throwError("processing response error", lib$1L.Logger.errors.SERVER_ERROR, {
+	                        logger.throwError("processing response error", lib$1M.Logger.errors.SERVER_ERROR, {
 	                            body: bodyify(body_1, ((response.headers) ? response.headers["content-type"] : null)),
 	                            error: error_2,
 	                            requestBody: bodyify(options.body, flatHeaders["content-type"]),
@@ -76436,7 +76823,7 @@
 	                    case 19:
 	                        attempt++;
 	                        return [3 /*break*/, 1];
-	                    case 20: return [2 /*return*/, logger.throwError("failed response", lib$1L.Logger.errors.SERVER_ERROR, {
+	                    case 20: return [2 /*return*/, logger.throwError("failed response", lib$1M.Logger.errors.SERVER_ERROR, {
 	                            requestBody: bodyify(options.body, flatHeaders["content-type"]),
 	                            requestMethod: options.method,
 	                            url: url
@@ -76453,10 +76840,10 @@
 	        var result = null;
 	        if (value != null) {
 	            try {
-	                result = JSON.parse((0, lib$1K.toUtf8String)(value));
+	                result = JSON.parse((0, lib$1L.toUtf8String)(value));
 	            }
 	            catch (error) {
-	                logger.throwError("invalid JSON", lib$1L.Logger.errors.SERVER_ERROR, {
+	                logger.throwError("invalid JSON", lib$1M.Logger.errors.SERVER_ERROR, {
 	                    body: value,
 	                    error: error
 	                });
@@ -76472,13 +76859,13 @@
 	    // - convert the json to bytes
 	    var body = null;
 	    if (json != null) {
-	        body = (0, lib$1K.toUtf8Bytes)(json);
+	        body = (0, lib$1L.toUtf8Bytes)(json);
 	        // Create a connection with the content-type set for JSON
-	        var updated = (typeof (connection) === "string") ? ({ url: connection }) : (0, lib$1J.shallowCopy)(connection);
+	        var updated = (typeof (connection) === "string") ? ({ url: connection }) : (0, lib$1K.shallowCopy)(connection);
 	        if (updated.headers) {
 	            var hasContentType = (Object.keys(updated.headers).filter(function (k) { return (k.toLowerCase() === "content-type"); }).length) !== 0;
 	            if (!hasContentType) {
-	                updated.headers = (0, lib$1J.shallowCopy)(updated.headers);
+	                updated.headers = (0, lib$1K.shallowCopy)(updated.headers);
 	                updated.headers["content-type"] = "application/json";
 	            }
 	        }
@@ -76494,7 +76881,7 @@
 	    if (!options) {
 	        options = {};
 	    }
-	    options = (0, lib$1J.shallowCopy)(options);
+	    options = (0, lib$1K.shallowCopy)(options);
 	    if (options.floor == null) {
 	        options.floor = 0;
 	    }
@@ -76573,9 +76960,9 @@
 
 	});
 
-	var index$1I = /*@__PURE__*/getDefaultExportFromCjs(lib$1M);
+	var index$1J = /*@__PURE__*/getDefaultExportFromCjs(lib$1N);
 
-	var _version$2_ = createCommonjsModule(function (module, exports) {
+	var _version$30 = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.version = void 0;
@@ -76583,7 +76970,7 @@
 
 	});
 
-	var _version$2$ = /*@__PURE__*/getDefaultExportFromCjs(_version$2_);
+	var _version$31 = /*@__PURE__*/getDefaultExportFromCjs(_version$30);
 
 	var formatter = createCommonjsModule(function (module, exports) {
 	"use strict";
@@ -76597,7 +76984,7 @@
 
 
 
-	var logger = new lib$4.Logger(_version$2_.version);
+	var logger = new lib$6.Logger(_version$30.version);
 	var HIERARCHY_DEPTH = 3;
 	var Formatter = /** @class */ (function () {
 	    function Formatter() {
@@ -76729,7 +77116,7 @@
 	        return formats;
 	    };
 	    Formatter.prototype.accessList = function (accessList) {
-	        return (0, lib$1e.accessListify)(accessList || []);
+	        return (0, lib$1f.accessListify)(accessList || []);
 	    };
 	    // Requires a BigNumberish that is within the IEEE754 safe integer range; returns a number
 	    // Strict! Used on input.
@@ -76774,7 +77161,7 @@
 	            if (!strict && value.substring(0, 2) !== "0x") {
 	                value = "0x" + value;
 	            }
-	            if ((0, lib$7.isHexString)(value)) {
+	            if ((0, lib$8.isHexString)(value)) {
 	                return value.toLowerCase();
 	            }
 	        }
@@ -76790,7 +77177,7 @@
 	    // Requires an address
 	    // Strict! Used on input.
 	    Formatter.prototype.address = function (value) {
-	        return (0, lib$k.getAddress)(value);
+	        return (0, lib$l.getAddress)(value);
 	    };
 	    Formatter.prototype.addressArray = function (value) {
 	        if (value.length != HIERARCHY_DEPTH) {
@@ -76799,19 +77186,19 @@
 	        var results = [];
 	        for (var _i = 0, value_1 = value; _i < value_1.length; _i++) {
 	            var addr = value_1[_i];
-	            results.push((0, lib$k.getAddress)(addr));
+	            results.push((0, lib$l.getAddress)(addr));
 	        }
 	        return results;
 	    };
 	    Formatter.prototype.callAddress = function (value) {
-	        if (!(0, lib$7.isHexString)(value, 32)) {
+	        if (!(0, lib$8.isHexString)(value, 32)) {
 	            return null;
 	        }
-	        var address = (0, lib$k.getAddress)((0, lib$7.hexDataSlice)(value, 12));
-	        return (address === lib$o.AddressZero) ? null : address;
+	        var address = (0, lib$l.getAddress)((0, lib$8.hexDataSlice)(value, 12));
+	        return (address === lib$p.AddressZero) ? null : address;
 	    };
 	    Formatter.prototype.contractAddress = function (value) {
-	        return (0, lib$k.getContractAddress)(value);
+	        return (0, lib$l.getContractAddress)(value);
 	    };
 	    // Strict! Used on input.
 	    Formatter.prototype.blockTag = function (blockTag) {
@@ -76829,15 +77216,15 @@
 	            case "finalized":
 	                return blockTag;
 	        }
-	        if (typeof (blockTag) === "number" || (0, lib$7.isHexString)(blockTag)) {
-	            return (0, lib$7.hexValue)(blockTag);
+	        if (typeof (blockTag) === "number" || (0, lib$8.isHexString)(blockTag)) {
+	            return (0, lib$8.hexValue)(blockTag);
 	        }
 	        throw new Error("invalid blockTag");
 	    };
 	    // Requires a hash, optionally requires 0x prefix; returns prefixed lowercase hash.
 	    Formatter.prototype.hash = function (value, strict) {
 	        var result = this.hex(value, strict);
-	        if ((0, lib$7.hexDataLength)(result) !== 32) {
+	        if ((0, lib$8.hexDataLength)(result) !== 32) {
 	            return logger.throwArgumentError("invalid hash", "value", value);
 	        }
 	        return result;
@@ -76851,7 +77238,7 @@
 	        for (var _i = 0, value_2 = value; _i < value_2.length; _i++) {
 	            var hash = value_2[_i];
 	            var result = this.hex(hash, strict);
-	            if ((0, lib$7.hexDataLength)(result) !== 32) {
+	            if ((0, lib$8.hexDataLength)(result) !== 32) {
 	                return logger.throwArgumentError("invalid hash", "value", value);
 	            }
 	            results.push(result);
@@ -76871,10 +77258,10 @@
 	        return null;
 	    };
 	    Formatter.prototype.uint256 = function (value) {
-	        if (!(0, lib$7.isHexString)(value)) {
+	        if (!(0, lib$8.isHexString)(value)) {
 	            throw new Error("invalid uint256");
 	        }
-	        return (0, lib$7.hexZeroPad)(value, 32);
+	        return (0, lib$8.hexZeroPad)(value, 32);
 	    };
 	    Formatter.prototype._block = function (value, format, context) {
 	        if (value.author != null && value.miner == null) {
@@ -76943,7 +77330,7 @@
 	        var result = Formatter.check(this.formats.transaction, transaction);
 	        if (transaction.chainId != null) {
 	            var chainId = transaction.chainId;
-	            if ((0, lib$7.isHexString)(chainId)) {
+	            if ((0, lib$8.isHexString)(chainId)) {
 	                chainId = lib$3.BigNumber.from(chainId).toNumber();
 	            }
 	            result.chainId = chainId;
@@ -76954,7 +77341,7 @@
 	            if (chainId == null && result.v == null) {
 	                chainId = transaction.chainId;
 	            }
-	            if ((0, lib$7.isHexString)(chainId)) {
+	            if ((0, lib$8.isHexString)(chainId)) {
 	                chainId = lib$3.BigNumber.from(chainId).toNumber();
 	            }
 	            if (typeof (chainId) !== "number" && result.v != null) {
@@ -76976,7 +77363,7 @@
 	        return result;
 	    };
 	    Formatter.prototype.transaction = function (value) {
-	        return (0, lib$1e.parse)(value);
+	        return (0, lib$1f.parse)(value);
 	    };
 	    Formatter.prototype.receiptLog = function (value) {
 	        return Formatter.check(this.formats.receiptLog, value);
@@ -77180,7 +77567,7 @@
 
 
 
-	var logger = new lib$4.Logger(_version$2_.version);
+	var logger = new lib$6.Logger(_version$30.version);
 
 	var MAX_CCIP_REDIRECTS = 10;
 	//////////////////////////////
@@ -77189,7 +77576,7 @@
 	    if (topic == null) {
 	        return "null";
 	    }
-	    if ((0, lib$7.hexDataLength)(topic) !== 32) {
+	    if ((0, lib$8.hexDataLength)(topic) !== 32) {
 	        logger.throwArgumentError("invalid topic", "topic", topic);
 	    }
 	    return topic.toLowerCase();
@@ -77234,7 +77621,7 @@
 	function getEventTag(eventName) {
 	    if (typeof (eventName) === "string") {
 	        eventName = eventName.toLowerCase();
-	        if ((0, lib$7.hexDataLength)(eventName) === 32) {
+	        if ((0, lib$8.hexDataLength)(eventName) === 32) {
 	            return "tx:" + eventName;
 	        }
 	        if (eventName.indexOf(":") === -1) {
@@ -77244,7 +77631,7 @@
 	    else if (Array.isArray(eventName)) {
 	        return "filter:*:" + serializeTopics(eventName);
 	    }
-	    else if (lib$$.ForkEvent.isForkEvent(eventName)) {
+	    else if (lib$10.ForkEvent.isForkEvent(eventName)) {
 	        logger.warn("not implemented");
 	        throw new Error("not implemented");
 	    }
@@ -77354,11 +77741,11 @@
 	    "700": { symbol: "xdai", ilk: "eth" },
 	};
 	function bytes32ify(value) {
-	    return (0, lib$7.hexZeroPad)(lib$3.BigNumber.from(value).toHexString(), 32);
+	    return (0, lib$8.hexZeroPad)(lib$3.BigNumber.from(value).toHexString(), 32);
 	}
 	// Compute the Base58Check encoded data (checksum is first 4 bytes of sha256d)
 	function base58Encode(data) {
-	    return lib$1i.Base58.encode((0, lib$7.concat)([data, (0, lib$7.hexDataSlice)((0, lib$1s.sha256)((0, lib$1s.sha256)(data)), 0, 4)]));
+	    return lib$1j.Base58.encode((0, lib$8.concat)([data, (0, lib$8.hexDataSlice)((0, lib$1t.sha256)((0, lib$1t.sha256)(data)), 0, 4)]));
 	}
 	var matcherIpfs = new RegExp("^(ipfs):/\/(.*)$", "i");
 	var matchers = [
@@ -77369,7 +77756,7 @@
 	];
 	function _parseString(result, start) {
 	    try {
-	        return (0, lib$s.toUtf8String)(_parseBytes(result, start));
+	        return (0, lib$t.toUtf8String)(_parseBytes(result, start));
 	    }
 	    catch (error) { }
 	    return null;
@@ -77378,9 +77765,9 @@
 	    if (result === "0x") {
 	        return null;
 	    }
-	    var offset = lib$3.BigNumber.from((0, lib$7.hexDataSlice)(result, start, start + 32)).toNumber();
-	    var length = lib$3.BigNumber.from((0, lib$7.hexDataSlice)(result, offset, offset + 32)).toNumber();
-	    return (0, lib$7.hexDataSlice)(result, offset + 32, offset + 32 + length);
+	    var offset = lib$3.BigNumber.from((0, lib$8.hexDataSlice)(result, start, start + 32)).toNumber();
+	    var length = lib$3.BigNumber.from((0, lib$8.hexDataSlice)(result, offset, offset + 32)).toNumber();
+	    return (0, lib$8.hexDataSlice)(result, offset + 32, offset + 32 + length);
 	}
 	// Trim off the ipfs:// prefix and return the default gateway URL
 	function getIpfsLink(link) {
@@ -77396,7 +77783,7 @@
 	    return "https://gateway.ipfs.io/ipfs/" + link;
 	}
 	function numPad(value) {
-	    var result = (0, lib$7.arrayify)(value);
+	    var result = (0, lib$8.arrayify)(value);
 	    if (result.length > 32) {
 	        throw new Error("internal; should not happen");
 	    }
@@ -77422,7 +77809,7 @@
 	        byteCount += 32;
 	    }
 	    for (var i = 0; i < datas.length; i++) {
-	        var data = (0, lib$7.arrayify)(datas[i]);
+	        var data = (0, lib$8.arrayify)(datas[i]);
 	        // Update the bytes offset
 	        result[i] = numPad(byteCount);
 	        // The length and padded value of data
@@ -77430,7 +77817,7 @@
 	        result.push(bytesPad(data));
 	        byteCount += 32 + Math.ceil(data.length / 32) * 32;
 	    }
-	    return (0, lib$7.hexConcat)(result);
+	    return (0, lib$8.hexConcat)(result);
 	}
 	var Resolver = /** @class */ (function () {
 	    // The resolvedAddress is only for creating a ReverseLookup resolver
@@ -77450,7 +77837,7 @@
 	            }).then(function (result) {
 	                return lib$3.BigNumber.from(result).eq(1);
 	            }).catch(function (error) {
-	                if (error.code === lib$4.Logger.errors.CALL_EXCEPTION) {
+	                if (error.code === lib$6.Logger.errors.CALL_EXCEPTION) {
 	                    return false;
 	                }
 	                // Rethrow the error: link is down, etc. Let future attempts retry.
@@ -77469,7 +77856,7 @@
 	                        tx = {
 	                            to: this.address,
 	                            ccipReadEnabled: true,
-	                            data: (0, lib$7.hexConcat)([selector, (0, lib$U.namehash)(this.name), (parameters || "0x")])
+	                            data: (0, lib$8.hexConcat)([selector, (0, lib$V.namehash)(this.name), (parameters || "0x")])
 	                        };
 	                        parseBytes = false;
 	                        return [4 /*yield*/, this.supportsWildcard()];
@@ -77477,7 +77864,7 @@
 	                        if (_a.sent()) {
 	                            parseBytes = true;
 	                            // selector("resolve(bytes,bytes)")
-	                            tx.data = (0, lib$7.hexConcat)(["0x9061b923", encodeBytes([(0, lib$U.dnsEncode)(this.name), tx.data])]);
+	                            tx.data = (0, lib$8.hexConcat)(["0x9061b923", encodeBytes([(0, lib$V.dnsEncode)(this.name), tx.data])]);
 	                        }
 	                        _a.label = 2;
 	                    case 2:
@@ -77485,8 +77872,8 @@
 	                        return [4 /*yield*/, this.provider.call(tx)];
 	                    case 3:
 	                        result = _a.sent();
-	                        if (((0, lib$7.arrayify)(result).length % 32) === 4) {
-	                            logger.throwError("resolver threw error", lib$4.Logger.errors.CALL_EXCEPTION, {
+	                        if (((0, lib$8.arrayify)(result).length % 32) === 4) {
+	                            logger.throwError("resolver threw error", lib$6.Logger.errors.CALL_EXCEPTION, {
 	                                transaction: tx, data: result
 	                            });
 	                        }
@@ -77496,7 +77883,7 @@
 	                        return [2 /*return*/, result];
 	                    case 4:
 	                        error_1 = _a.sent();
-	                        if (error_1.code === lib$4.Logger.errors.CALL_EXCEPTION) {
+	                        if (error_1.code === lib$6.Logger.errors.CALL_EXCEPTION) {
 	                            return [2 /*return*/, null];
 	                        }
 	                        throw error_1;
@@ -77524,21 +77911,21 @@
 	    Resolver.prototype._getAddress = function (coinType, hexBytes) {
 	        var coinInfo = coinInfos[String(coinType)];
 	        if (coinInfo == null) {
-	            logger.throwError("unsupported coin type: " + coinType, lib$4.Logger.errors.UNSUPPORTED_OPERATION, {
+	            logger.throwError("unsupported coin type: " + coinType, lib$6.Logger.errors.UNSUPPORTED_OPERATION, {
 	                operation: "getAddress(" + coinType + ")"
 	            });
 	        }
 	        if (coinInfo.ilk === "eth") {
 	            return this.provider.formatter.address(hexBytes);
 	        }
-	        var bytes = (0, lib$7.arrayify)(hexBytes);
+	        var bytes = (0, lib$8.arrayify)(hexBytes);
 	        // P2PKH: OP_DUP OP_HASH160 <pubKeyHash> OP_EQUALVERIFY OP_CHECKSIG
 	        if (coinInfo.p2pkh != null) {
 	            var p2pkh = hexBytes.match(/^0x76a9([0-9a-f][0-9a-f])([0-9a-f]*)88ac$/);
 	            if (p2pkh) {
 	                var length_1 = parseInt(p2pkh[1], 16);
 	                if (p2pkh[2].length === length_1 * 2 && length_1 >= 1 && length_1 <= 75) {
-	                    return base58Encode((0, lib$7.concat)([[coinInfo.p2pkh], ("0x" + p2pkh[2])]));
+	                    return base58Encode((0, lib$8.concat)([[coinInfo.p2pkh], ("0x" + p2pkh[2])]));
 	                }
 	            }
 	        }
@@ -77548,7 +77935,7 @@
 	            if (p2sh) {
 	                var length_2 = parseInt(p2sh[1], 16);
 	                if (p2sh[2].length === length_2 * 2 && length_2 >= 1 && length_2 <= 75) {
-	                    return base58Encode((0, lib$7.concat)([[coinInfo.p2sh], ("0x" + p2sh[2])]));
+	                    return base58Encode((0, lib$8.concat)([[coinInfo.p2sh], ("0x" + p2sh[2])]));
 	                }
 	            }
 	        }
@@ -77585,13 +77972,13 @@
 	                    case 2:
 	                        result = _a.sent();
 	                        // No address
-	                        if (result === "0x" || result === lib$o.HashZero) {
+	                        if (result === "0x" || result === lib$p.HashZero) {
 	                            return [2 /*return*/, null];
 	                        }
 	                        return [2 /*return*/, this.provider.formatter.callAddress(result)];
 	                    case 3:
 	                        error_2 = _a.sent();
-	                        if (error_2.code === lib$4.Logger.errors.CALL_EXCEPTION) {
+	                        if (error_2.code === lib$6.Logger.errors.CALL_EXCEPTION) {
 	                            return [2 /*return*/, null];
 	                        }
 	                        throw error_2;
@@ -77604,7 +77991,7 @@
 	                        }
 	                        address = this._getAddress(coinType, hexBytes);
 	                        if (address == null) {
-	                            logger.throwError("invalid or unsupported coin data", lib$4.Logger.errors.UNSUPPORTED_OPERATION, {
+	                            logger.throwError("invalid or unsupported coin data", lib$6.Logger.errors.UNSUPPORTED_OPERATION, {
 	                                operation: "getAddress(" + coinType + ")",
 	                                coinType: coinType,
 	                                data: hexBytes
@@ -77676,11 +78063,11 @@
 	                        return [4 /*yield*/, this.provider.formatter.address(comps[0])];
 	                    case 10:
 	                        addr = _h.sent();
-	                        tokenId = (0, lib$7.hexZeroPad)(lib$3.BigNumber.from(comps[1]).toHexString(), 32);
+	                        tokenId = (0, lib$8.hexZeroPad)(lib$3.BigNumber.from(comps[1]).toHexString(), 32);
 	                        if (!(scheme === "erc721")) return [3 /*break*/, 12];
 	                        _d = (_c = this.provider.formatter).callAddress;
 	                        return [4 /*yield*/, this.provider.call({
-	                                to: addr, data: (0, lib$7.hexConcat)(["0x6352211e", tokenId])
+	                                to: addr, data: (0, lib$8.hexConcat)(["0x6352211e", tokenId])
 	                            })];
 	                    case 11:
 	                        tokenOwner = _d.apply(_c, [_h.sent()]);
@@ -77693,7 +78080,7 @@
 	                        if (!(scheme === "erc1155")) return [3 /*break*/, 14];
 	                        _f = (_e = lib$3.BigNumber).from;
 	                        return [4 /*yield*/, this.provider.call({
-	                                to: addr, data: (0, lib$7.hexConcat)(["0x00fdd58e", (0, lib$7.hexZeroPad)(owner, 32), tokenId])
+	                                to: addr, data: (0, lib$8.hexConcat)(["0x00fdd58e", (0, lib$8.hexZeroPad)(owner, 32), tokenId])
 	                            })];
 	                    case 13:
 	                        balance = _f.apply(_e, [_h.sent()]);
@@ -77705,7 +78092,7 @@
 	                    case 14:
 	                        tx = {
 	                            to: this.provider.formatter.address(comps[0]),
-	                            data: (0, lib$7.hexConcat)([selector, tokenId])
+	                            data: (0, lib$8.hexConcat)([selector, tokenId])
 	                        };
 	                        _g = _parseString;
 	                        return [4 /*yield*/, this.provider.call(tx)];
@@ -77725,7 +78112,7 @@
 	                            metadataUrl = getIpfsLink(metadataUrl);
 	                        }
 	                        linkage.push({ type: "metadata-url", content: metadataUrl });
-	                        return [4 /*yield*/, (0, lib$1M.fetchJson)(metadataUrl)];
+	                        return [4 /*yield*/, (0, lib$1N.fetchJson)(metadataUrl)];
 	                    case 16:
 	                        metadata = _h.sent();
 	                        if (!metadata) {
@@ -77777,14 +78164,14 @@
 	                        if (ipfs) {
 	                            length_4 = parseInt(ipfs[3], 16);
 	                            if (ipfs[4].length === length_4 * 2) {
-	                                return [2 /*return*/, "ipfs:/\/" + lib$1i.Base58.encode("0x" + ipfs[1])];
+	                                return [2 /*return*/, "ipfs:/\/" + lib$1j.Base58.encode("0x" + ipfs[1])];
 	                            }
 	                        }
 	                        ipns = hexBytes.match(/^0xe5010172(([0-9a-f][0-9a-f])([0-9a-f][0-9a-f])([0-9a-f]*))$/);
 	                        if (ipns) {
 	                            length_5 = parseInt(ipns[3], 16);
 	                            if (ipns[4].length === length_5 * 2) {
-	                                return [2 /*return*/, "ipns:/\/" + lib$1i.Base58.encode("0x" + ipns[1])];
+	                                return [2 /*return*/, "ipns:/\/" + lib$1j.Base58.encode("0x" + ipns[1])];
 	                            }
 	                        }
 	                        swarm = hexBytes.match(/^0xe40101fa011b20([0-9a-f]*)$/);
@@ -77797,11 +78184,11 @@
 	                        if (skynet) {
 	                            if (skynet[1].length === (34 * 2)) {
 	                                urlSafe_1 = { "=": "", "+": "-", "/": "_" };
-	                                hash = (0, lib$1u.encode)("0x" + skynet[1]).replace(/[=+\/]/g, function (a) { return (urlSafe_1[a]); });
+	                                hash = (0, lib$1v.encode)("0x" + skynet[1]).replace(/[=+\/]/g, function (a) { return (urlSafe_1[a]); });
 	                                return [2 /*return*/, "sia:/\/" + hash];
 	                            }
 	                        }
-	                        return [2 /*return*/, logger.throwError("invalid or unsupported content hash data", lib$4.Logger.errors.UNSUPPORTED_OPERATION, {
+	                        return [2 /*return*/, logger.throwError("invalid or unsupported content hash data", lib$6.Logger.errors.UNSUPPORTED_OPERATION, {
 	                                operation: "getContentHash()",
 	                                data: hexBytes
 	                            })];
@@ -77815,21 +78202,21 @@
 	            return __generator(this, function (_a) {
 	                switch (_a.label) {
 	                    case 0:
-	                        keyBytes = (0, lib$s.toUtf8Bytes)(key);
+	                        keyBytes = (0, lib$t.toUtf8Bytes)(key);
 	                        // The nodehash consumes the first slot, so the string pointer targets
 	                        // offset 64, with the length at offset 64 and data starting at offset 96
-	                        keyBytes = (0, lib$7.concat)([bytes32ify(64), bytes32ify(keyBytes.length), keyBytes]);
+	                        keyBytes = (0, lib$8.concat)([bytes32ify(64), bytes32ify(keyBytes.length), keyBytes]);
 	                        // Pad to word-size (32 bytes)
 	                        if ((keyBytes.length % 32) !== 0) {
-	                            keyBytes = (0, lib$7.concat)([keyBytes, (0, lib$7.hexZeroPad)("0x", 32 - (key.length % 32))]);
+	                            keyBytes = (0, lib$8.concat)([keyBytes, (0, lib$8.hexZeroPad)("0x", 32 - (key.length % 32))]);
 	                        }
-	                        return [4 /*yield*/, this._fetchBytes("0x59d1d43c", (0, lib$7.hexlify)(keyBytes))];
+	                        return [4 /*yield*/, this._fetchBytes("0x59d1d43c", (0, lib$8.hexlify)(keyBytes))];
 	                    case 1:
 	                        hexBytes = _a.sent();
 	                        if (hexBytes == null || hexBytes === "0x") {
 	                            return [2 /*return*/, null];
 	                        }
-	                        return [2 /*return*/, (0, lib$s.toUtf8String)(hexBytes)];
+	                        return [2 /*return*/, (0, lib$t.toUtf8String)(hexBytes)];
 	                }
 	            });
 	        });
@@ -77918,7 +78305,7 @@
 	                        // This should never happen; every Provider sub-class should have
 	                        // suggested a network by here (or have thrown).
 	                        if (!network) {
-	                            logger.throwError("no network detected", lib$4.Logger.errors.UNKNOWN_ERROR, {});
+	                            logger.throwError("no network detected", lib$6.Logger.errors.UNKNOWN_ERROR, {});
 	                        }
 	                        // Possible this call stacked so do not call defineReadOnly again
 	                        if (this._network == null) {
@@ -77942,12 +78329,12 @@
 	        // any change is reflected); otherwise this cannot change
 	        get: function () {
 	            var _this = this;
-	            return (0, lib$1M.poll)(function () {
+	            return (0, lib$1N.poll)(function () {
 	                return _this._ready().then(function (network) {
 	                    return network;
 	                }, function (error) {
 	                    // If the network isn't running yet, we will wait
-	                    if (error.code === lib$4.Logger.errors.NETWORK_ERROR && error.event === "noNetwork") {
+	                    if (error.code === lib$6.Logger.errors.NETWORK_ERROR && error.event === "noNetwork") {
 	                        return undefined;
 	                    }
 	                    throw error;
@@ -77966,7 +78353,7 @@
 	    };
 	    // @TODO: Remove this and just use getNetwork
 	    BaseProvider.getNetwork = function (network) {
-	        return (0, lib$1G.getNetwork)((network == null) ? "homestead" : network);
+	        return (0, lib$1H.getNetwork)((network == null) ? "homestead" : network);
 	    };
 	    BaseProvider.prototype.ccipReadFetch = function (tx, calldata, urls) {
 	        return __awaiter(this, void 0, void 0, function () {
@@ -77987,7 +78374,7 @@
 	                        url = urls[i];
 	                        href = url.replace("{sender}", sender).replace("{data}", data);
 	                        json = (url.indexOf("{data}") >= 0) ? null : JSON.stringify({ data: data, sender: sender });
-	                        return [4 /*yield*/, (0, lib$1M.fetchJson)({ url: href, errorPassThrough: true }, json, function (value, response) {
+	                        return [4 /*yield*/, (0, lib$1N.fetchJson)({ url: href, errorPassThrough: true }, json, function (value, response) {
 	                                value.status = response.statusCode;
 	                                return value;
 	                            })];
@@ -77999,7 +78386,7 @@
 	                        errorMessage = (result.message || "unknown error");
 	                        // 4xx indicates the result is not present; stop
 	                        if (result.status >= 400 && result.status < 500) {
-	                            return [2 /*return*/, logger.throwError("response not found during CCIP fetch: " + errorMessage, lib$4.Logger.errors.SERVER_ERROR, { url: url, errorMessage: errorMessage })];
+	                            return [2 /*return*/, logger.throwError("response not found during CCIP fetch: " + errorMessage, lib$6.Logger.errors.SERVER_ERROR, { url: url, errorMessage: errorMessage })];
 	                        }
 	                        // 5xx indicates server issue; try the next url
 	                        errorMessages.push(errorMessage);
@@ -78007,7 +78394,7 @@
 	                    case 3:
 	                        i++;
 	                        return [3 /*break*/, 1];
-	                    case 4: return [2 /*return*/, logger.throwError("error encountered during CCIP fetch: " + errorMessages.map(function (m) { return JSON.stringify(m); }).join(", "), lib$4.Logger.errors.SERVER_ERROR, {
+	                    case 4: return [2 /*return*/, logger.throwError("error encountered during CCIP fetch: " + errorMessages.map(function (m) { return JSON.stringify(m); }).join(", "), lib$6.Logger.errors.SERVER_ERROR, {
 	                            urls: urls,
 	                            errorMessages: errorMessages
 	                        })];
@@ -78126,7 +78513,7 @@
 	                        }
 	                        if (Math.abs((this._emitted.block) - blockNumber) > 1000) {
 	                            logger.warn("network block skew detected; skipping block events (emitted=" + this._emitted.block + " blockNumber" + blockNumber + ")");
-	                            this.emit("error", logger.makeError("network block skew detected", lib$4.Logger.errors.NETWORK_ERROR, {
+	                            this.emit("error", logger.makeError("network block skew detected", lib$6.Logger.errors.NETWORK_ERROR, {
 	                                blockNumber: blockNumber,
 	                                event: "blockSkew",
 	                                previousBlockNumber: this._emitted.block
@@ -78264,7 +78651,7 @@
 	    BaseProvider.prototype.detectNetwork = function () {
 	        return __awaiter(this, void 0, void 0, function () {
 	            return __generator(this, function (_a) {
-	                return [2 /*return*/, logger.throwError("provider does not support network detection", lib$4.Logger.errors.UNSUPPORTED_OPERATION, {
+	                return [2 /*return*/, logger.throwError("provider does not support network detection", lib$6.Logger.errors.UNSUPPORTED_OPERATION, {
 	                        operation: "provider.detectNetwork"
 	                    })];
 	            });
@@ -78301,7 +78688,7 @@
 	                        _a.sent();
 	                        return [2 /*return*/, this._network];
 	                    case 4:
-	                        error = logger.makeError("underlying network changed", lib$4.Logger.errors.NETWORK_ERROR, {
+	                        error = logger.makeError("underlying network changed", lib$6.Logger.errors.NETWORK_ERROR, {
 	                            event: "changed",
 	                            network: network,
 	                            detectedNetwork: currentNetwork
@@ -78530,7 +78917,7 @@
 	                                                                        reason = "cancelled";
 	                                                                    }
 	                                                                    // Explain why we were replaced
-	                                                                    reject(logger.makeError("transaction was replaced", lib$4.Logger.errors.TRANSACTION_REPLACED, {
+	                                                                    reject(logger.makeError("transaction was replaced", lib$6.Logger.errors.TRANSACTION_REPLACED, {
 	                                                                        cancelled: (reason === "replaced" || reason === "cancelled"),
 	                                                                        reason: reason,
 	                                                                        replacement: this._wrapTransaction(tx),
@@ -78575,7 +78962,7 @@
 	                                        if (alreadyDone()) {
 	                                            return;
 	                                        }
-	                                        reject(logger.makeError("timeout exceeded", lib$4.Logger.errors.TIMEOUT, { timeout: timeout }));
+	                                        reject(logger.makeError("timeout exceeded", lib$6.Logger.errors.TIMEOUT, { timeout: timeout }));
 	                                    }, timeout);
 	                                    if (timer_1.unref) {
 	                                        timer_1.unref();
@@ -78609,7 +78996,7 @@
 	                            return [2 /*return*/, lib$3.BigNumber.from(result)];
 	                        }
 	                        catch (error) {
-	                            return [2 /*return*/, logger.throwError("bad result from backend", lib$4.Logger.errors.SERVER_ERROR, {
+	                            return [2 /*return*/, logger.throwError("bad result from backend", lib$6.Logger.errors.SERVER_ERROR, {
 	                                    method: "getGasPrice",
 	                                    result: result,
 	                                    error: error
@@ -78635,7 +79022,7 @@
 	                            return [2 /*return*/, lib$3.BigNumber.from(result)];
 	                        }
 	                        catch (error) {
-	                            return [2 /*return*/, logger.throwError("bad result from backend", lib$4.Logger.errors.SERVER_ERROR, {
+	                            return [2 /*return*/, logger.throwError("bad result from backend", lib$6.Logger.errors.SERVER_ERROR, {
 	                                    method: "getMaxPriorityFeePerGas",
 	                                    result: result,
 	                                    error: error
@@ -78667,7 +79054,7 @@
 	                            return [2 /*return*/, lib$3.BigNumber.from(result)];
 	                        }
 	                        catch (error) {
-	                            return [2 /*return*/, logger.throwError("bad result from backend", lib$4.Logger.errors.SERVER_ERROR, {
+	                            return [2 /*return*/, logger.throwError("bad result from backend", lib$6.Logger.errors.SERVER_ERROR, {
 	                                    method: "getBalance",
 	                                    params: params,
 	                                    result: result,
@@ -78700,7 +79087,7 @@
 	                            return [2 /*return*/, lib$3.BigNumber.from(result).toNumber()];
 	                        }
 	                        catch (error) {
-	                            return [2 /*return*/, logger.throwError("bad result from backend", lib$4.Logger.errors.SERVER_ERROR, {
+	                            return [2 /*return*/, logger.throwError("bad result from backend", lib$6.Logger.errors.SERVER_ERROR, {
 	                                    method: "getTransactionCount",
 	                                    params: params,
 	                                    result: result,
@@ -78730,10 +79117,10 @@
 	                    case 3:
 	                        result = _a.sent();
 	                        try {
-	                            return [2 /*return*/, (0, lib$7.hexlify)(result)];
+	                            return [2 /*return*/, (0, lib$8.hexlify)(result)];
 	                        }
 	                        catch (error) {
-	                            return [2 /*return*/, logger.throwError("bad result from backend", lib$4.Logger.errors.SERVER_ERROR, {
+	                            return [2 /*return*/, logger.throwError("bad result from backend", lib$6.Logger.errors.SERVER_ERROR, {
 	                                    method: "getCode",
 	                                    params: params,
 	                                    result: result,
@@ -78756,7 +79143,7 @@
 	                        return [4 /*yield*/, (0, lib$5.resolveProperties)({
 	                                address: this._getAddress(addressOrName),
 	                                blockTag: this._getBlockTag(blockTag),
-	                                position: Promise.resolve(position).then(function (p) { return (0, lib$7.hexValue)(p); })
+	                                position: Promise.resolve(position).then(function (p) { return (0, lib$8.hexValue)(p); })
 	                            })];
 	                    case 2:
 	                        params = _a.sent();
@@ -78764,10 +79151,10 @@
 	                    case 3:
 	                        result = _a.sent();
 	                        try {
-	                            return [2 /*return*/, (0, lib$7.hexlify)(result)];
+	                            return [2 /*return*/, (0, lib$8.hexlify)(result)];
 	                        }
 	                        catch (error) {
-	                            return [2 /*return*/, logger.throwError("bad result from backend", lib$4.Logger.errors.SERVER_ERROR, {
+	                            return [2 /*return*/, logger.throwError("bad result from backend", lib$6.Logger.errors.SERVER_ERROR, {
 	                                    method: "getStorageAt",
 	                                    params: params,
 	                                    result: result,
@@ -78782,13 +79169,13 @@
 	    // This should be called by any subclass wrapping a TransactionResponse
 	    BaseProvider.prototype._wrapTransaction = function (tx, hash, startBlock) {
 	        var _this = this;
-	        if (hash != null && (0, lib$7.hexDataLength)(hash) !== 32) {
+	        if (hash != null && (0, lib$8.hexDataLength)(hash) !== 32) {
 	            throw new Error("invalid response - sendTransaction");
 	        }
 	        var result = tx;
 	        // Check the hash we expect is the same as the hash the server reported
 	        if (hash != null && tx.hash !== hash) {
-	            logger.throwError("Transaction hash mismatch from Provider.sendTransaction.", lib$4.Logger.errors.UNKNOWN_ERROR, { expectedHash: tx.hash, returnedHash: hash });
+	            logger.throwError("Transaction hash mismatch from Provider.sendTransaction.", lib$6.Logger.errors.UNKNOWN_ERROR, { expectedHash: tx.hash, returnedHash: hash });
 	        }
 	        result.wait = function (confirms, timeout) { return __awaiter(_this, void 0, void 0, function () {
 	            var replacement, receipt;
@@ -78821,7 +79208,7 @@
 	                        // No longer pending, allow the polling loop to garbage collect this
 	                        this._emitted["t:" + tx.hash] = receipt.blockNumber;
 	                        if (receipt.status === 0) {
-	                            logger.throwError("transaction failed", lib$4.Logger.errors.CALL_EXCEPTION, {
+	                            logger.throwError("transaction failed", lib$6.Logger.errors.CALL_EXCEPTION, {
 	                                transactionHash: tx.hash,
 	                                transaction: tx,
 	                                receipt: receipt
@@ -78841,7 +79228,7 @@
 	                    case 0: return [4 /*yield*/, this.getNetwork()];
 	                    case 1:
 	                        _a.sent();
-	                        return [4 /*yield*/, Promise.resolve(signedTransaction).then(function (t) { return (0, lib$7.hexlify)(t); })];
+	                        return [4 /*yield*/, Promise.resolve(signedTransaction).then(function (t) { return (0, lib$8.hexlify)(t); })];
 	                    case 2:
 	                        hexTx = _a.sent();
 	                        tx = this.formatter.transaction(signedTransaction);
@@ -78903,7 +79290,7 @@
 	                            if (values[key] == null) {
 	                                return;
 	                            }
-	                            tx[key] = Promise.resolve(values[key]).then(function (v) { return (v ? (0, lib$7.hexlify)(v) : null); });
+	                            tx[key] = Promise.resolve(values[key]).then(function (v) { return (v ? (0, lib$8.hexlify)(v) : null); });
 	                        });
 	                        _b = (_a = this.formatter).transactionRequest;
 	                        return [4 /*yield*/, (0, lib$5.resolveProperties)(tx)];
@@ -78951,7 +79338,7 @@
 	                switch (_a.label) {
 	                    case 0:
 	                        if (attempt >= MAX_CCIP_REDIRECTS) {
-	                            logger.throwError("CCIP read exceeded maximum redirections", lib$4.Logger.errors.SERVER_ERROR, {
+	                            logger.throwError("CCIP read exceeded maximum redirections", lib$6.Logger.errors.SERVER_ERROR, {
 	                                redirects: attempt,
 	                                transaction: transaction
 	                            });
@@ -78960,14 +79347,14 @@
 	                        return [4 /*yield*/, this.perform("call", { transaction: transaction, blockTag: blockTag })];
 	                    case 1:
 	                        result = _a.sent();
-	                        if (!(attempt >= 0 && blockTag === "latest" && txSender != null && result.substring(0, 10) === "0x556f1830" && ((0, lib$7.hexDataLength)(result) % 32 === 4))) return [3 /*break*/, 5];
+	                        if (!(attempt >= 0 && blockTag === "latest" && txSender != null && result.substring(0, 10) === "0x556f1830" && ((0, lib$8.hexDataLength)(result) % 32 === 4))) return [3 /*break*/, 5];
 	                        _a.label = 2;
 	                    case 2:
 	                        _a.trys.push([2, 4, , 5]);
-	                        data = (0, lib$7.hexDataSlice)(result, 4);
-	                        sender = (0, lib$7.hexDataSlice)(data, 0, 32);
+	                        data = (0, lib$8.hexDataSlice)(result, 4);
+	                        sender = (0, lib$8.hexDataSlice)(data, 0, 32);
 	                        if (!lib$3.BigNumber.from(sender).eq(txSender)) {
-	                            logger.throwError("CCIP Read sender did not match", lib$4.Logger.errors.CALL_EXCEPTION, {
+	                            logger.throwError("CCIP Read sender did not match", lib$6.Logger.errors.CALL_EXCEPTION, {
 	                                name: "OffchainLookup",
 	                                signature: "OffchainLookup(address,string[],bytes,bytes4,bytes)",
 	                                transaction: transaction,
@@ -78975,13 +79362,13 @@
 	                            });
 	                        }
 	                        urls = [];
-	                        urlsOffset = lib$3.BigNumber.from((0, lib$7.hexDataSlice)(data, 32, 64)).toNumber();
-	                        urlsLength = lib$3.BigNumber.from((0, lib$7.hexDataSlice)(data, urlsOffset, urlsOffset + 32)).toNumber();
-	                        urlsData = (0, lib$7.hexDataSlice)(data, urlsOffset + 32);
+	                        urlsOffset = lib$3.BigNumber.from((0, lib$8.hexDataSlice)(data, 32, 64)).toNumber();
+	                        urlsLength = lib$3.BigNumber.from((0, lib$8.hexDataSlice)(data, urlsOffset, urlsOffset + 32)).toNumber();
+	                        urlsData = (0, lib$8.hexDataSlice)(data, urlsOffset + 32);
 	                        for (u = 0; u < urlsLength; u++) {
 	                            url = _parseString(urlsData, u * 32);
 	                            if (url == null) {
-	                                logger.throwError("CCIP Read contained corrupt URL string", lib$4.Logger.errors.CALL_EXCEPTION, {
+	                                logger.throwError("CCIP Read contained corrupt URL string", lib$6.Logger.errors.CALL_EXCEPTION, {
 	                                    name: "OffchainLookup",
 	                                    signature: "OffchainLookup(address,string[],bytes,bytes4,bytes)",
 	                                    transaction: transaction,
@@ -78992,21 +79379,21 @@
 	                        }
 	                        calldata = _parseBytes(data, 64);
 	                        // Get the callbackSelector (bytes4)
-	                        if (!lib$3.BigNumber.from((0, lib$7.hexDataSlice)(data, 100, 128)).isZero()) {
-	                            logger.throwError("CCIP Read callback selector included junk", lib$4.Logger.errors.CALL_EXCEPTION, {
+	                        if (!lib$3.BigNumber.from((0, lib$8.hexDataSlice)(data, 100, 128)).isZero()) {
+	                            logger.throwError("CCIP Read callback selector included junk", lib$6.Logger.errors.CALL_EXCEPTION, {
 	                                name: "OffchainLookup",
 	                                signature: "OffchainLookup(address,string[],bytes,bytes4,bytes)",
 	                                transaction: transaction,
 	                                data: result
 	                            });
 	                        }
-	                        callbackSelector = (0, lib$7.hexDataSlice)(data, 96, 100);
+	                        callbackSelector = (0, lib$8.hexDataSlice)(data, 96, 100);
 	                        extraData = _parseBytes(data, 128);
 	                        return [4 /*yield*/, this.ccipReadFetch(transaction, calldata, urls)];
 	                    case 3:
 	                        ccipResult = _a.sent();
 	                        if (ccipResult == null) {
-	                            logger.throwError("CCIP Read disabled or provided no URLs", lib$4.Logger.errors.CALL_EXCEPTION, {
+	                            logger.throwError("CCIP Read disabled or provided no URLs", lib$6.Logger.errors.CALL_EXCEPTION, {
 	                                name: "OffchainLookup",
 	                                signature: "OffchainLookup(address,string[],bytes,bytes4,bytes)",
 	                                transaction: transaction,
@@ -79015,21 +79402,21 @@
 	                        }
 	                        tx = {
 	                            to: txSender,
-	                            data: (0, lib$7.hexConcat)([callbackSelector, encodeBytes([ccipResult, extraData])])
+	                            data: (0, lib$8.hexConcat)([callbackSelector, encodeBytes([ccipResult, extraData])])
 	                        };
 	                        return [2 /*return*/, this._call(tx, blockTag, attempt + 1)];
 	                    case 4:
 	                        error_8 = _a.sent();
-	                        if (error_8.code === lib$4.Logger.errors.SERVER_ERROR) {
+	                        if (error_8.code === lib$6.Logger.errors.SERVER_ERROR) {
 	                            throw error_8;
 	                        }
 	                        return [3 /*break*/, 5];
 	                    case 5:
 	                        try {
-	                            return [2 /*return*/, (0, lib$7.hexlify)(result)];
+	                            return [2 /*return*/, (0, lib$8.hexlify)(result)];
 	                        }
 	                        catch (error) {
-	                            return [2 /*return*/, logger.throwError("bad result from backend", lib$4.Logger.errors.SERVER_ERROR, {
+	                            return [2 /*return*/, logger.throwError("bad result from backend", lib$6.Logger.errors.SERVER_ERROR, {
 	                                    method: "call",
 	                                    params: { transaction: transaction, blockTag: blockTag },
 	                                    result: result,
@@ -79081,7 +79468,7 @@
 	                            return [2 /*return*/, lib$3.BigNumber.from(result)];
 	                        }
 	                        catch (error) {
-	                            return [2 /*return*/, logger.throwError("bad result from backend", lib$4.Logger.errors.SERVER_ERROR, {
+	                            return [2 /*return*/, logger.throwError("bad result from backend", lib$6.Logger.errors.SERVER_ERROR, {
 	                                    method: "estimateGas",
 	                                    params: params,
 	                                    result: result,
@@ -79108,7 +79495,7 @@
 	                    case 2:
 	                        address = _a.sent();
 	                        if (address == null) {
-	                            logger.throwError("ENS name not configured", lib$4.Logger.errors.UNSUPPORTED_OPERATION, {
+	                            logger.throwError("ENS name not configured", lib$6.Logger.errors.UNSUPPORTED_OPERATION, {
 	                                operation: "resolveName(" + JSON.stringify(addressOrName) + ")"
 	                            });
 	                        }
@@ -79133,7 +79520,7 @@
 	                        params = {
 	                            includeTransactions: !!includeTransactions
 	                        };
-	                        if (!(0, lib$7.isHexString)(blockHashOrBlockTag, 32)) return [3 /*break*/, 3];
+	                        if (!(0, lib$8.isHexString)(blockHashOrBlockTag, 32)) return [3 /*break*/, 3];
 	                        params.blockHash = blockHashOrBlockTag;
 	                        return [3 /*break*/, 6];
 	                    case 3:
@@ -79142,7 +79529,7 @@
 	                        return [4 /*yield*/, this._getBlockTag(blockHashOrBlockTag)];
 	                    case 4:
 	                        _a.blockTag = _b.sent();
-	                        if ((0, lib$7.isHexString)(params.blockTag)) {
+	                        if ((0, lib$8.isHexString)(params.blockTag)) {
 	                            blockNumber = parseInt(params.blockTag.substring(2), 16);
 	                        }
 	                        return [3 /*break*/, 6];
@@ -79150,7 +79537,7 @@
 	                        error_9 = _b.sent();
 	                        logger.throwArgumentError("invalid block hash or block tag", "blockHashOrBlockTag", blockHashOrBlockTag);
 	                        return [3 /*break*/, 6];
-	                    case 6: return [2 /*return*/, (0, lib$1M.poll)(function () { return __awaiter(_this, void 0, void 0, function () {
+	                    case 6: return [2 /*return*/, (0, lib$1N.poll)(function () { return __awaiter(_this, void 0, void 0, function () {
 	                            var block, blockNumber_1, i, tx, confirmations, blockWithTxs;
 	                            var _this = this;
 	                            return __generator(this, function (_a) {
@@ -79235,7 +79622,7 @@
 	                    case 2:
 	                        transactionHash = _a.sent();
 	                        params = { transactionHash: this.formatter.hash(transactionHash, true) };
-	                        return [2 /*return*/, (0, lib$1M.poll)(function () { return __awaiter(_this, void 0, void 0, function () {
+	                        return [2 /*return*/, (0, lib$1N.poll)(function () { return __awaiter(_this, void 0, void 0, function () {
 	                                var result, tx, blockNumber, confirmations;
 	                                return __generator(this, function (_a) {
 	                                    switch (_a.label) {
@@ -79284,7 +79671,7 @@
 	                    case 2:
 	                        transactionHash = _a.sent();
 	                        params = { transactionHash: this.formatter.hash(transactionHash, true) };
-	                        return [2 /*return*/, (0, lib$1M.poll)(function () { return __awaiter(_this, void 0, void 0, function () {
+	                        return [2 /*return*/, (0, lib$1N.poll)(function () { return __awaiter(_this, void 0, void 0, function () {
 	                                var result, receipt, blockNumber, confirmations;
 	                                return __generator(this, function (_a) {
 	                                    switch (_a.label) {
@@ -79443,14 +79830,14 @@
 	                        network = _a.sent();
 	                        // No ENS...
 	                        if (!network.ensAddress) {
-	                            logger.throwError("network does not support ENS", lib$4.Logger.errors.UNSUPPORTED_OPERATION, { operation: operation, network: network.name });
+	                            logger.throwError("network does not support ENS", lib$6.Logger.errors.UNSUPPORTED_OPERATION, { operation: operation, network: network.name });
 	                        }
 	                        _a.label = 2;
 	                    case 2:
 	                        _a.trys.push([2, 4, , 5]);
 	                        return [4 /*yield*/, this.call({
 	                                to: network.ensAddress,
-	                                data: ("0x0178b8bf" + (0, lib$U.namehash)(name).substring(2))
+	                                data: ("0x0178b8bf" + (0, lib$V.namehash)(name).substring(2))
 	                            })];
 	                    case 3:
 	                        addrData = _a.sent();
@@ -79477,7 +79864,7 @@
 	                        }
 	                        catch (error) {
 	                            // If is is a hexstring, the address is bad (See #694)
-	                            if ((0, lib$7.isHexString)(name)) {
+	                            if ((0, lib$8.isHexString)(name)) {
 	                                throw error;
 	                            }
 	                        }
@@ -79515,7 +79902,7 @@
 	                        _a = _parseString;
 	                        return [4 /*yield*/, this.call({
 	                                to: resolverAddr,
-	                                data: ("0x691f3431" + (0, lib$U.namehash)(node).substring(2))
+	                                data: ("0x691f3431" + (0, lib$V.namehash)(node).substring(2))
 	                            })];
 	                    case 3:
 	                        name = _a.apply(void 0, [_b.sent(), 0]);
@@ -79537,7 +79924,7 @@
 	                switch (_b.label) {
 	                    case 0:
 	                        resolver = null;
-	                        if (!(0, lib$7.isHexString)(nameOrAddress)) return [3 /*break*/, 10];
+	                        if (!(0, lib$8.isHexString)(nameOrAddress)) return [3 /*break*/, 10];
 	                        address = this.formatter.address(nameOrAddress);
 	                        node = address.substring(2).toLowerCase() + ".addr.reverse";
 	                        return [4 /*yield*/, this._getResolver(node, "getAvatar")];
@@ -79560,7 +79947,7 @@
 	                        return [3 /*break*/, 5];
 	                    case 4:
 	                        error_11 = _b.sent();
-	                        if (error_11.code !== lib$4.Logger.errors.CALL_EXCEPTION) {
+	                        if (error_11.code !== lib$6.Logger.errors.CALL_EXCEPTION) {
 	                            throw error_11;
 	                        }
 	                        return [3 /*break*/, 5];
@@ -79569,7 +79956,7 @@
 	                        _a = _parseString;
 	                        return [4 /*yield*/, this.call({
 	                                to: resolverAddress,
-	                                data: ("0x691f3431" + (0, lib$U.namehash)(node).substring(2))
+	                                data: ("0x691f3431" + (0, lib$V.namehash)(node).substring(2))
 	                            })];
 	                    case 6:
 	                        name_1 = _a.apply(void 0, [_b.sent(), 0]);
@@ -79579,7 +79966,7 @@
 	                        return [3 /*break*/, 9];
 	                    case 8:
 	                        error_12 = _b.sent();
-	                        if (error_12.code !== lib$4.Logger.errors.CALL_EXCEPTION) {
+	                        if (error_12.code !== lib$6.Logger.errors.CALL_EXCEPTION) {
 	                            throw error_12;
 	                        }
 	                        return [2 /*return*/, null];
@@ -79604,7 +79991,7 @@
 	        });
 	    };
 	    BaseProvider.prototype.perform = function (method, params) {
-	        return logger.throwError(method + " not implemented", lib$4.Logger.errors.NOT_IMPLEMENTED, { operation: method });
+	        return logger.throwError(method + " not implemented", lib$6.Logger.errors.NOT_IMPLEMENTED, { operation: method });
 	    };
 	    BaseProvider.prototype._startEvent = function (event) {
 	        this.polling = (this._events.filter(function (e) { return e.pollable(); }).length > 0);
@@ -79711,7 +80098,7 @@
 	        return this;
 	    };
 	    return BaseProvider;
-	}(lib$$.Provider));
+	}(lib$10.Provider));
 	exports.BaseProvider = BaseProvider;
 
 	});
@@ -79783,7 +80170,7 @@
 
 
 
-	var logger = new lib$4.Logger(_version$2_.version);
+	var logger = new lib$6.Logger(_version$30.version);
 
 	var errorGas = ["call", "estimateGas"];
 	function spelunk(value, requireData) {
@@ -79792,7 +80179,7 @@
 	    }
 	    // These *are* the droids we're looking for.
 	    if (typeof (value.message) === "string" && value.message.match("reverted")) {
-	        var data = (0, lib$7.isHexString)(value.data) ? value.data : null;
+	        var data = (0, lib$8.isHexString)(value.data) ? value.data : null;
 	        if (!requireData || data) {
 	            return { message: value.message, data: data };
 	        }
@@ -79826,7 +80213,7 @@
 	            return result.data;
 	        }
 	        // Nothing descriptive..
-	        logger.throwError("missing revert data in call exception; Transaction reverted without a reason string", lib$4.Logger.errors.CALL_EXCEPTION, {
+	        logger.throwError("missing revert data in call exception; Transaction reverted without a reason string", lib$6.Logger.errors.CALL_EXCEPTION, {
 	            data: "0x",
 	            transaction: transaction,
 	            error: error
@@ -79840,7 +80227,7 @@
 	        }
 	        // Found "reverted", this is a CALL_EXCEPTION
 	        if (result) {
-	            logger.throwError("json-rpc-provider: cannot estimate gas; transaction may fail or may require manual gas limit", lib$4.Logger.errors.UNPREDICTABLE_GAS_LIMIT, {
+	            logger.throwError("json-rpc-provider: cannot estimate gas; transaction may fail or may require manual gas limit", lib$6.Logger.errors.UNPREDICTABLE_GAS_LIMIT, {
 	                reason: result.message,
 	                method: method,
 	                transaction: transaction,
@@ -79850,7 +80237,7 @@
 	    }
 	    // @TODO: Should we spelunk for message too?
 	    var message = error.message;
-	    if (error.code === lib$4.Logger.errors.SERVER_ERROR && error.error && typeof (error.error.message) === "string") {
+	    if (error.code === lib$6.Logger.errors.SERVER_ERROR && error.error && typeof (error.error.message) === "string") {
 	        message = error.error.message;
 	    }
 	    else if (typeof (error.body) === "string") {
@@ -79862,7 +80249,7 @@
 	    message = (message || "").toLowerCase();
 	    // "insufficient funds for gas * price + value + cost(data)"
 	    if (message.match(/insufficient funds|base fee exceeds gas limit|InsufficientFunds/i)) {
-	        logger.throwError("insufficient funds for intrinsic transaction cost", lib$4.Logger.errors.INSUFFICIENT_FUNDS, {
+	        logger.throwError("insufficient funds for intrinsic transaction cost", lib$6.Logger.errors.INSUFFICIENT_FUNDS, {
 	            error: error,
 	            method: method,
 	            transaction: transaction
@@ -79870,7 +80257,7 @@
 	    }
 	    // "nonce too low"
 	    if (message.match(/nonce (is )?too low/i)) {
-	        logger.throwError("nonce has already been used", lib$4.Logger.errors.NONCE_EXPIRED, {
+	        logger.throwError("nonce has already been used", lib$6.Logger.errors.NONCE_EXPIRED, {
 	            error: error,
 	            method: method,
 	            transaction: transaction
@@ -79878,7 +80265,7 @@
 	    }
 	    // "replacement transaction underpriced"
 	    if (message.match(/replacement transaction underpriced|transaction gas price.*too low/i)) {
-	        logger.throwError("replacement fee too low", lib$4.Logger.errors.REPLACEMENT_UNDERPRICED, {
+	        logger.throwError("replacement fee too low", lib$6.Logger.errors.REPLACEMENT_UNDERPRICED, {
 	            error: error,
 	            method: method,
 	            transaction: transaction
@@ -79886,14 +80273,14 @@
 	    }
 	    // "replacement transaction underpriced"
 	    if (message.match(/only replay-protected/i)) {
-	        logger.throwError("legacy pre-eip-155 transactions not supported", lib$4.Logger.errors.UNSUPPORTED_OPERATION, {
+	        logger.throwError("legacy pre-eip-155 transactions not supported", lib$6.Logger.errors.UNSUPPORTED_OPERATION, {
 	            error: error,
 	            method: method,
 	            transaction: transaction
 	        });
 	    }
 	    if (errorGas.indexOf(method) >= 0 && message.match(/gas required exceeds allowance|always failing transaction|execution reverted|revert/)) {
-	        logger.throwError("cannot estimate gas; transaction may fail or may require manual gas limit", lib$4.Logger.errors.UNPREDICTABLE_GAS_LIMIT, {
+	        logger.throwError("cannot estimate gas; transaction may fail or may require manual gas limit", lib$6.Logger.errors.UNPREDICTABLE_GAS_LIMIT, {
 	            error: error,
 	            method: method,
 	            transaction: transaction
@@ -79948,7 +80335,7 @@
 	        return _this;
 	    }
 	    JsonRpcSigner.prototype.connect = function (provider) {
-	        return logger.throwError("cannot alter JSON-RPC Signer connection", lib$4.Logger.errors.UNSUPPORTED_OPERATION, {
+	        return logger.throwError("cannot alter JSON-RPC Signer connection", lib$6.Logger.errors.UNSUPPORTED_OPERATION, {
 	            operation: "connect"
 	        });
 	    };
@@ -79962,7 +80349,7 @@
 	        }
 	        return this.provider.send("quai_accounts", []).then(function (accounts) {
 	            if (accounts.length <= _this._index) {
-	                logger.throwError("unknown account #" + _this._index, lib$4.Logger.errors.UNSUPPORTED_OPERATION, {
+	                logger.throwError("unknown account #" + _this._index, lib$6.Logger.errors.UNSUPPORTED_OPERATION, {
 	                    operation: "getAddress"
 	                });
 	            }
@@ -80024,7 +80411,7 @@
 	                return hash;
 	            }, function (error) {
 	                if (typeof (error.message) === "string" && error.message.match(/user denied/i)) {
-	                    logger.throwError("user rejected transaction", lib$4.Logger.errors.ACTION_REJECTED, {
+	                    logger.throwError("user rejected transaction", lib$6.Logger.errors.ACTION_REJECTED, {
 	                        action: "sendTransaction",
 	                        transaction: tx
 	                    });
@@ -80034,7 +80421,7 @@
 	        });
 	    };
 	    JsonRpcSigner.prototype.signTransaction = function (transaction) {
-	        return logger.throwError("signing transactions is unsupported", lib$4.Logger.errors.UNSUPPORTED_OPERATION, {
+	        return logger.throwError("signing transactions is unsupported", lib$6.Logger.errors.UNSUPPORTED_OPERATION, {
 	            operation: "signTransaction"
 	        });
 	    };
@@ -80053,7 +80440,7 @@
 	                        _a.label = 3;
 	                    case 3:
 	                        _a.trys.push([3, 5, , 6]);
-	                        return [4 /*yield*/, (0, lib$1M.poll)(function () { return __awaiter(_this, void 0, void 0, function () {
+	                        return [4 /*yield*/, (0, lib$1N.poll)(function () { return __awaiter(_this, void 0, void 0, function () {
 	                                var tx;
 	                                return __generator(this, function (_a) {
 	                                    switch (_a.label) {
@@ -80087,19 +80474,19 @@
 	            return __generator(this, function (_a) {
 	                switch (_a.label) {
 	                    case 0:
-	                        data = ((typeof (message) === "string") ? (0, lib$s.toUtf8Bytes)(message) : message);
+	                        data = ((typeof (message) === "string") ? (0, lib$t.toUtf8Bytes)(message) : message);
 	                        return [4 /*yield*/, this.getAddress()];
 	                    case 1:
 	                        address = _a.sent();
 	                        _a.label = 2;
 	                    case 2:
 	                        _a.trys.push([2, 4, , 5]);
-	                        return [4 /*yield*/, this.provider.send("personal_sign", [(0, lib$7.hexlify)(data), address.toLowerCase()])];
+	                        return [4 /*yield*/, this.provider.send("personal_sign", [(0, lib$8.hexlify)(data), address.toLowerCase()])];
 	                    case 3: return [2 /*return*/, _a.sent()];
 	                    case 4:
 	                        error_2 = _a.sent();
 	                        if (typeof (error_2.message) === "string" && error_2.message.match(/user denied/i)) {
-	                            logger.throwError("user rejected signing", lib$4.Logger.errors.ACTION_REJECTED, {
+	                            logger.throwError("user rejected signing", lib$6.Logger.errors.ACTION_REJECTED, {
 	                                action: "signMessage",
 	                                from: address,
 	                                messageData: message
@@ -80117,21 +80504,21 @@
 	            return __generator(this, function (_a) {
 	                switch (_a.label) {
 	                    case 0:
-	                        data = ((typeof (message) === "string") ? (0, lib$s.toUtf8Bytes)(message) : message);
+	                        data = ((typeof (message) === "string") ? (0, lib$t.toUtf8Bytes)(message) : message);
 	                        return [4 /*yield*/, this.getAddress()];
 	                    case 1:
 	                        address = _a.sent();
 	                        _a.label = 2;
 	                    case 2:
 	                        _a.trys.push([2, 4, , 5]);
-	                        return [4 /*yield*/, this.provider.send("quai_sign", [address.toLowerCase(), (0, lib$7.hexlify)(data)])];
+	                        return [4 /*yield*/, this.provider.send("quai_sign", [address.toLowerCase(), (0, lib$8.hexlify)(data)])];
 	                    case 3: 
 	                    // https://github.com/ethereum/wiki/wiki/JSON-RPC#quai_sign
 	                    return [2 /*return*/, _a.sent()];
 	                    case 4:
 	                        error_3 = _a.sent();
 	                        if (typeof (error_3.message) === "string" && error_3.message.match(/user denied/i)) {
-	                            logger.throwError("user rejected signing", lib$4.Logger.errors.ACTION_REJECTED, {
+	                            logger.throwError("user rejected signing", lib$6.Logger.errors.ACTION_REJECTED, {
 	                                action: "_legacySignMessage",
 	                                from: address,
 	                                messageData: message
@@ -80149,7 +80536,7 @@
 	            var _this = this;
 	            return __generator(this, function (_a) {
 	                switch (_a.label) {
-	                    case 0: return [4 /*yield*/, lib$U._TypedDataEncoder.resolveNames(domain, types, value, function (name) {
+	                    case 0: return [4 /*yield*/, lib$V._TypedDataEncoder.resolveNames(domain, types, value, function (name) {
 	                            return _this.provider.resolveName(name);
 	                        })];
 	                    case 1:
@@ -80162,13 +80549,13 @@
 	                        _a.trys.push([3, 5, , 6]);
 	                        return [4 /*yield*/, this.provider.send("quai_signTypedData_v4", [
 	                                address.toLowerCase(),
-	                                JSON.stringify(lib$U._TypedDataEncoder.getPayload(populated.domain, types, populated.value))
+	                                JSON.stringify(lib$V._TypedDataEncoder.getPayload(populated.domain, types, populated.value))
 	                            ])];
 	                    case 4: return [2 /*return*/, _a.sent()];
 	                    case 5:
 	                        error_4 = _a.sent();
 	                        if (typeof (error_4.message) === "string" && error_4.message.match(/user denied/i)) {
-	                            logger.throwError("user rejected signing", lib$4.Logger.errors.ACTION_REJECTED, {
+	                            logger.throwError("user rejected signing", lib$6.Logger.errors.ACTION_REJECTED, {
 	                                action: "_signTypedData",
 	                                from: address,
 	                                messageData: { domain: populated.domain, types: types, value: populated.value }
@@ -80196,7 +80583,7 @@
 	        });
 	    };
 	    return JsonRpcSigner;
-	}(lib$12.Signer));
+	}(lib$13.Signer));
 	exports.JsonRpcSigner = JsonRpcSigner;
 	var UncheckedJsonRpcSigner = /** @class */ (function (_super) {
 	    __extends(UncheckedJsonRpcSigner, _super);
@@ -80330,14 +80717,14 @@
 	                                return [2 /*return*/, getNetwork(lib$3.BigNumber.from(chainId).toNumber())];
 	                            }
 	                            catch (error) {
-	                                return [2 /*return*/, logger.throwError("could not detect network", lib$4.Logger.errors.NETWORK_ERROR, {
+	                                return [2 /*return*/, logger.throwError("could not detect network", lib$6.Logger.errors.NETWORK_ERROR, {
 	                                        chainId: chainId,
 	                                        event: "invalidNetwork",
 	                                        serverError: error
 	                                    })];
 	                            }
 	                        }
-	                        return [2 /*return*/, logger.throwError("could not detect network", lib$4.Logger.errors.NETWORK_ERROR, {
+	                        return [2 /*return*/, logger.throwError("could not detect network", lib$6.Logger.errors.NETWORK_ERROR, {
 	                                event: "noNetwork"
 	                            })];
 	                }
@@ -80368,7 +80755,7 @@
 	                            this._context = location.length;
 	                            return [2 /*return*/, this._context];
 	                        }
-	                        return [2 /*return*/, logger.throwError("could not detect context", lib$4.Logger.errors.NETWORK_ERROR, {
+	                        return [2 /*return*/, logger.throwError("could not detect context", lib$6.Logger.errors.NETWORK_ERROR, {
 	                                event: "noNetwork"
 	                            })];
 	                }
@@ -80406,7 +80793,7 @@
 	        if (cache && this._cache[method]) {
 	            return this._cache[method];
 	        }
-	        var result = (0, lib$1M.fetchJson)(this.connection, JSON.stringify(request), getResult).then(function (result) {
+	        var result = (0, lib$1N.fetchJson)(this.connection, JSON.stringify(request), getResult).then(function (result) {
 	            _this.emit("debug", {
 	                action: "response",
 	                request: request,
@@ -80447,7 +80834,7 @@
 	            case "getCode":
 	                return ["quai_getCode", [getLowerCase(params.address), params.blockTag]];
 	            case "getStorageAt":
-	                return ["quai_getStorageAt", [getLowerCase(params.address), (0, lib$7.hexZeroPad)(params.position, 32), params.blockTag]];
+	                return ["quai_getStorageAt", [getLowerCase(params.address), (0, lib$8.hexZeroPad)(params.position, 32), params.blockTag]];
 	            case "sendTransaction":
 	                return ["quai_sendRawTransaction", [params.signedTransaction]];
 	            case "getBlock":
@@ -80503,7 +80890,7 @@
 	                    case 2:
 	                        args = this.prepareRequest(method, params);
 	                        if (args == null) {
-	                            logger.throwError(method + " not implemented", lib$4.Logger.errors.NOT_IMPLEMENTED, { operation: method });
+	                            logger.throwError(method + " not implemented", lib$6.Logger.errors.NOT_IMPLEMENTED, { operation: method });
 	                        }
 	                        _a.label = 3;
 	                    case 3:
@@ -80596,7 +80983,7 @@
 	            if (transaction[key] == null) {
 	                return;
 	            }
-	            var value = (0, lib$7.hexValue)(lib$3.BigNumber.from(transaction[key]));
+	            var value = (0, lib$8.hexValue)(lib$3.BigNumber.from(transaction[key]));
 	            if (key === "gasLimit") {
 	                key = "gas";
 	            }
@@ -80606,10 +80993,10 @@
 	            if (transaction[key] == null) {
 	                return;
 	            }
-	            result[key] = (0, lib$7.hexlify)(transaction[key]);
+	            result[key] = (0, lib$8.hexlify)(transaction[key]);
 	        });
 	        if (transaction.accessList) {
-	            result["accessList"] = (0, lib$1e.accessListify)(transaction.accessList);
+	            result["accessList"] = (0, lib$1f.accessListify)(transaction.accessList);
 	        }
 	        return result;
 	    };
@@ -80636,9 +81023,9 @@
 	    }
 	}
 	catch (error) {
-	    var logger_2 = new lib$4.Logger(_version$2_.version);
+	    var logger_2 = new lib$6.Logger(_version$30.version);
 	    exports.WebSocket = WS = function () {
-	        logger_2.throwError("WebSockets not supported in this environment", lib$4.Logger.errors.UNSUPPORTED_OPERATION, {
+	        logger_2.throwError("WebSockets not supported in this environment", lib$6.Logger.errors.UNSUPPORTED_OPERATION, {
 	            operation: "new WebSocket()"
 	        });
 	    };
@@ -80709,7 +81096,7 @@
 
 
 
-	var logger = new lib$4.Logger(_version$2_.version);
+	var logger = new lib$6.Logger(_version$30.version);
 	/**
 	 *  Notes:
 	 *
@@ -80733,7 +81120,7 @@
 	        var _this = this;
 	        // This will be added in the future; please open an issue to expedite
 	        if (network === "any") {
-	            logger.throwError("WebSocketProvider does not support 'any' network yet", lib$4.Logger.errors.UNSUPPORTED_OPERATION, {
+	            logger.throwError("WebSocketProvider does not support 'any' network yet", lib$6.Logger.errors.UNSUPPORTED_OPERATION, {
 	                operation: "network:any"
 	            });
 	        }
@@ -80835,7 +81222,7 @@
 	            return 0;
 	        },
 	        set: function (value) {
-	            logger.throwError("cannot set polling interval on WebSocketProvider", lib$4.Logger.errors.UNSUPPORTED_OPERATION, {
+	            logger.throwError("cannot set polling interval on WebSocketProvider", lib$6.Logger.errors.UNSUPPORTED_OPERATION, {
 	                operation: "setPollingInterval"
 	            });
 	        },
@@ -80843,7 +81230,7 @@
 	        configurable: true
 	    });
 	    WebSocketProvider.prototype.resetEventsBlock = function (blockNumber) {
-	        logger.throwError("cannot reset events block on WebSocketProvider", lib$4.Logger.errors.UNSUPPORTED_OPERATION, {
+	        logger.throwError("cannot reset events block on WebSocketProvider", lib$6.Logger.errors.UNSUPPORTED_OPERATION, {
 	            operation: "resetEventBlock"
 	        });
 	    };
@@ -80859,7 +81246,7 @@
 	            if (!value) {
 	                return;
 	            }
-	            logger.throwError("cannot set polling on WebSocketProvider", lib$4.Logger.errors.UNSUPPORTED_OPERATION, {
+	            logger.throwError("cannot set polling on WebSocketProvider", lib$6.Logger.errors.UNSUPPORTED_OPERATION, {
 	                operation: "setPolling"
 	            });
 	        },
@@ -81095,7 +81482,7 @@
 
 
 
-	var logger = new lib$4.Logger(_version$2_.version);
+	var logger = new lib$6.Logger(_version$30.version);
 
 	// A StaticJsonRpcProvider is useful when you *know* for certain that
 	// the backend will never change, as it never calls eth_chainId to
@@ -81125,7 +81512,7 @@
 	                    case 1:
 	                        network = _a.sent();
 	                        if (!network) {
-	                            logger.throwError("no network detected", lib$4.Logger.errors.UNKNOWN_ERROR, {});
+	                            logger.throwError("no network detected", lib$6.Logger.errors.UNKNOWN_ERROR, {});
 	                        }
 	                        // If still not set, set it
 	                        if (this._network == null) {
@@ -81170,7 +81557,7 @@
 	        return false;
 	    };
 	    UrlJsonRpcProvider.prototype.getSigner = function (address) {
-	        return logger.throwError("API provider does not support signing", lib$4.Logger.errors.UNSUPPORTED_OPERATION, { operation: "getSigner" });
+	        return logger.throwError("API provider does not support signing", lib$6.Logger.errors.UNSUPPORTED_OPERATION, { operation: "getSigner" });
 	    };
 	    UrlJsonRpcProvider.prototype.listAccounts = function () {
 	        return Promise.resolve([]);
@@ -81183,7 +81570,7 @@
 	    // API key will have been sanitized by the getApiKey first, so any validation
 	    // or transformations can be done there.
 	    UrlJsonRpcProvider.getUrl = function (network, apiKey) {
-	        return logger.throwError("not implemented; sub-classes must override getUrl", lib$4.Logger.errors.NOT_IMPLEMENTED, {
+	        return logger.throwError("not implemented; sub-classes must override getUrl", lib$6.Logger.errors.NOT_IMPLEMENTED, {
 	            operation: "getUrl"
 	        });
 	    };
@@ -81219,7 +81606,7 @@
 
 
 
-	var logger = new lib$4.Logger(_version$2_.version);
+	var logger = new lib$6.Logger(_version$30.version);
 
 	// This key was provided to quais.js by Alchemy to be used by the
 	// default provider, but it is recommended that for your own
@@ -81335,7 +81722,7 @@
 
 
 
-	var logger = new lib$4.Logger(_version$2_.version);
+	var logger = new lib$6.Logger(_version$30.version);
 	var defaultApiKey = "9f7d929b018cdffb338517efa06f58359e86ff1ffd350bc889738523659e7972";
 	function getHost(name) {
 	    switch (name) {
@@ -81454,7 +81841,7 @@
 
 
 
-	var logger = new lib$4.Logger(_version$2_.version);
+	var logger = new lib$6.Logger(_version$30.version);
 	var CloudflareProvider = /** @class */ (function (_super) {
 	    __extends(CloudflareProvider, _super);
 	    function CloudflareProvider() {
@@ -81563,7 +81950,7 @@
 
 
 
-	var logger = new lib$4.Logger(_version$2_.version);
+	var logger = new lib$6.Logger(_version$30.version);
 
 	// The transaction has already been sanitized by the calls in Provider
 	function getTransactionPostData(transaction) {
@@ -81578,15 +81965,15 @@
 	        }
 	        // Quantity-types require no leading zero, unless 0
 	        if ({ type: true, gasLimit: true, gasPrice: true, maxFeePerGs: true, maxPriorityFeePerGas: true, nonce: true, value: true }[key]) {
-	            value = (0, lib$7.hexValue)((0, lib$7.hexlify)(value));
+	            value = (0, lib$8.hexValue)((0, lib$8.hexlify)(value));
 	        }
 	        else if (key === "accessList") {
-	            value = "[" + (0, lib$1e.accessListify)(value).map(function (set) {
+	            value = "[" + (0, lib$1f.accessListify)(value).map(function (set) {
 	                return "{address:\"" + set.address + "\",storageKeys:[\"" + set.storageKeys.join('","') + "\"]}";
 	            }).join(",") + "]";
 	        }
 	        else {
-	            value = (0, lib$7.hexlify)(value);
+	            value = (0, lib$8.hexlify)(value);
 	        }
 	        result[key] = value;
 	    }
@@ -81647,7 +82034,7 @@
 	function checkError(method, error, transaction) {
 	    // Undo the "convenience" some nodes are attempting to prevent backwards
 	    // incompatibility; maybe for v6 consider forwarding reverts as errors
-	    if (method === "call" && error.code === lib$4.Logger.errors.SERVER_ERROR) {
+	    if (method === "call" && error.code === lib$6.Logger.errors.SERVER_ERROR) {
 	        var e = error.error;
 	        // Etherscan keeps changing their string
 	        if (e && (e.message.match(/reverted/i) || e.message.match(/VM execution error/i))) {
@@ -81656,10 +82043,10 @@
 	            if (data) {
 	                data = "0x" + data.replace(/^.*0x/i, "");
 	            }
-	            if ((0, lib$7.isHexString)(data)) {
+	            if ((0, lib$8.isHexString)(data)) {
 	                return data;
 	            }
-	            logger.throwError("missing revert data in call exception", lib$4.Logger.errors.CALL_EXCEPTION, {
+	            logger.throwError("missing revert data in call exception", lib$6.Logger.errors.CALL_EXCEPTION, {
 	                error: error,
 	                data: "0x"
 	            });
@@ -81667,7 +82054,7 @@
 	    }
 	    // Get the message from any nested error structure
 	    var message = error.message;
-	    if (error.code === lib$4.Logger.errors.SERVER_ERROR) {
+	    if (error.code === lib$6.Logger.errors.SERVER_ERROR) {
 	        if (error.error && typeof (error.error.message) === "string") {
 	            message = error.error.message;
 	        }
@@ -81681,7 +82068,7 @@
 	    message = (message || "").toLowerCase();
 	    // "Insufficient funds. The account you tried to send transaction from does not have enough funds. Required 21464000000000 and got: 0"
 	    if (message.match(/insufficient funds/)) {
-	        logger.throwError("insufficient funds for intrinsic transaction cost", lib$4.Logger.errors.INSUFFICIENT_FUNDS, {
+	        logger.throwError("insufficient funds for intrinsic transaction cost", lib$6.Logger.errors.INSUFFICIENT_FUNDS, {
 	            error: error,
 	            method: method,
 	            transaction: transaction
@@ -81689,7 +82076,7 @@
 	    }
 	    // "Transaction with the same hash was already imported."
 	    if (message.match(/same hash was already imported|transaction nonce is too low|nonce too low/)) {
-	        logger.throwError("nonce has already been used", lib$4.Logger.errors.NONCE_EXPIRED, {
+	        logger.throwError("nonce has already been used", lib$6.Logger.errors.NONCE_EXPIRED, {
 	            error: error,
 	            method: method,
 	            transaction: transaction
@@ -81697,14 +82084,14 @@
 	    }
 	    // "Transaction gas price is too low. There is another transaction with same nonce in the queue. Try increasing the gas price or incrementing the nonce."
 	    if (message.match(/another transaction with same nonce/)) {
-	        logger.throwError("replacement fee too low", lib$4.Logger.errors.REPLACEMENT_UNDERPRICED, {
+	        logger.throwError("replacement fee too low", lib$6.Logger.errors.REPLACEMENT_UNDERPRICED, {
 	            error: error,
 	            method: method,
 	            transaction: transaction
 	        });
 	    }
 	    if (message.match(/execution failed due to an exception|execution reverted/)) {
-	        logger.throwError("cannot estimate gas; transaction may fail or may require manual gas limit", lib$4.Logger.errors.UNPREDICTABLE_GAS_LIMIT, {
+	        logger.throwError("cannot estimate gas; transaction may fail or may require manual gas limit", lib$6.Logger.errors.UNPREDICTABLE_GAS_LIMIT, {
 	            error: error,
 	            method: method,
 	            transaction: transaction
@@ -81795,7 +82182,7 @@
 	                                return key + "=" + payload[key];
 	                            }).join("&");
 	                        }
-	                        return [4 /*yield*/, (0, lib$1M.fetchJson)(connection, payloadStr, procFunc || getJsonResult)];
+	                        return [4 /*yield*/, (0, lib$1N.fetchJson)(connection, payloadStr, procFunc || getJsonResult)];
 	                    case 1:
 	                        result = _a.sent();
 	                        this.emit("debug", {
@@ -81929,12 +82316,12 @@
 	                        // @TODO: We can handle slightly more complicated logs using the logs API
 	                        if (params.filter.topics && params.filter.topics.length > 0) {
 	                            if (params.filter.topics.length > 1) {
-	                                logger.throwError("unsupported topic count", lib$4.Logger.errors.UNSUPPORTED_OPERATION, { topics: params.filter.topics });
+	                                logger.throwError("unsupported topic count", lib$6.Logger.errors.UNSUPPORTED_OPERATION, { topics: params.filter.topics });
 	                            }
 	                            if (params.filter.topics.length === 1) {
 	                                topic0 = params.filter.topics[0];
 	                                if (typeof (topic0) !== "string" || topic0.length !== 66) {
-	                                    logger.throwError("unsupported topic format", lib$4.Logger.errors.UNSUPPORTED_OPERATION, { topic0: topic0 });
+	                                    logger.throwError("unsupported topic format", lib$6.Logger.errors.UNSUPPORTED_OPERATION, { topic0: topic0 });
 	                                }
 	                                args.topic0 = topic0;
 	                            }
@@ -82099,7 +82486,7 @@
 
 
 
-	var logger = new lib$4.Logger(_version$2_.version);
+	var logger = new lib$6.Logger(_version$30.version);
 	function now() { return (new Date()).getTime(); }
 	// Returns to network as long as all agree, or null if any is null.
 	// Throws an error if any two networks do not match.
@@ -82196,11 +82583,11 @@
 	    return { cancel: cancel, getPromise: getPromise, wait: wait };
 	}
 	var ForwardErrors = [
-	    lib$4.Logger.errors.CALL_EXCEPTION,
-	    lib$4.Logger.errors.INSUFFICIENT_FUNDS,
-	    lib$4.Logger.errors.NONCE_EXPIRED,
-	    lib$4.Logger.errors.REPLACEMENT_UNDERPRICED,
-	    lib$4.Logger.errors.UNPREDICTABLE_GAS_LIMIT
+	    lib$6.Logger.errors.CALL_EXCEPTION,
+	    lib$6.Logger.errors.INSUFFICIENT_FUNDS,
+	    lib$6.Logger.errors.NONCE_EXPIRED,
+	    lib$6.Logger.errors.REPLACEMENT_UNDERPRICED,
+	    lib$6.Logger.errors.UNPREDICTABLE_GAS_LIMIT
 	];
 	var ForwardProperties = [
 	    "address",
@@ -82360,7 +82747,7 @@
 	            if ((provider.blockNumber != null && provider.blockNumber >= blockNumber) || blockNumber === -1) {
 	                return [2 /*return*/, provider];
 	            }
-	            return [2 /*return*/, (0, lib$1M.poll)(function () {
+	            return [2 /*return*/, (0, lib$1N.poll)(function () {
 	                    return new Promise(function (resolve, reject) {
 	                        setTimeout(function () {
 	                            // We are synced
@@ -82410,28 +82797,28 @@
 	                    }
 	                    return [3 /*break*/, 19];
 	                case 3:
-	                    if (!(params.blockTag && (0, lib$7.isHexString)(params.blockTag))) return [3 /*break*/, 5];
+	                    if (!(params.blockTag && (0, lib$8.isHexString)(params.blockTag))) return [3 /*break*/, 5];
 	                    return [4 /*yield*/, waitForSync(config, currentBlockNumber)];
 	                case 4:
 	                    provider = _b.sent();
 	                    _b.label = 5;
 	                case 5: return [2 /*return*/, provider[method](params.address, params.blockTag || "latest")];
 	                case 6:
-	                    if (!(params.blockTag && (0, lib$7.isHexString)(params.blockTag))) return [3 /*break*/, 8];
+	                    if (!(params.blockTag && (0, lib$8.isHexString)(params.blockTag))) return [3 /*break*/, 8];
 	                    return [4 /*yield*/, waitForSync(config, currentBlockNumber)];
 	                case 7:
 	                    provider = _b.sent();
 	                    _b.label = 8;
 	                case 8: return [2 /*return*/, provider.getStorageAt(params.address, params.position, params.blockTag || "latest")];
 	                case 9:
-	                    if (!(params.blockTag && (0, lib$7.isHexString)(params.blockTag))) return [3 /*break*/, 11];
+	                    if (!(params.blockTag && (0, lib$8.isHexString)(params.blockTag))) return [3 /*break*/, 11];
 	                    return [4 /*yield*/, waitForSync(config, currentBlockNumber)];
 	                case 10:
 	                    provider = _b.sent();
 	                    _b.label = 11;
 	                case 11: return [2 /*return*/, provider[(params.includeTransactions ? "getBlockWithTransactions" : "getBlock")](params.blockTag || params.blockHash)];
 	                case 12:
-	                    if (!(params.blockTag && (0, lib$7.isHexString)(params.blockTag))) return [3 /*break*/, 14];
+	                    if (!(params.blockTag && (0, lib$8.isHexString)(params.blockTag))) return [3 /*break*/, 14];
 	                    return [4 /*yield*/, waitForSync(config, currentBlockNumber)];
 	                case 13:
 	                    provider = _b.sent();
@@ -82444,13 +82831,13 @@
 	                case 15: return [2 /*return*/, provider[method](params.transactionHash)];
 	                case 16:
 	                    filter = params.filter;
-	                    if (!((filter.fromBlock && (0, lib$7.isHexString)(filter.fromBlock)) || (filter.toBlock && (0, lib$7.isHexString)(filter.toBlock)))) return [3 /*break*/, 18];
+	                    if (!((filter.fromBlock && (0, lib$8.isHexString)(filter.fromBlock)) || (filter.toBlock && (0, lib$8.isHexString)(filter.toBlock)))) return [3 /*break*/, 18];
 	                    return [4 /*yield*/, waitForSync(config, currentBlockNumber)];
 	                case 17:
 	                    provider = _b.sent();
 	                    _b.label = 18;
 	                case 18: return [2 /*return*/, provider.getLogs(filter)];
-	                case 19: return [2 /*return*/, logger.throwError("unknown method error", lib$4.Logger.errors.UNKNOWN_ERROR, {
+	                case 19: return [2 /*return*/, logger.throwError("unknown method error", lib$6.Logger.errors.UNKNOWN_ERROR, {
 	                        method: method,
 	                        params: params
 	                    })];
@@ -82466,7 +82853,7 @@
 	            logger.throwArgumentError("missing providers", "providers", providers);
 	        }
 	        var providerConfigs = providers.map(function (configOrProvider, index) {
-	            if (lib$$.Provider.isProvider(configOrProvider)) {
+	            if (lib$10.Provider.isProvider(configOrProvider)) {
 	                var stallTimeout = (0, formatter.isCommunityResource)(configOrProvider) ? 2000 : 750;
 	                var priority = 1;
 	                return Object.freeze({ provider: configOrProvider, weight: 1, stallTimeout: stallTimeout, priority: priority });
@@ -82558,7 +82945,7 @@
 	                        _a.label = 4;
 	                    case 4:
 	                        processFunc = getProcessFunc(this, method, params);
-	                        configs = (0, lib$1C.shuffled)(this.providerConfigs.map(lib$5.shallowCopy));
+	                        configs = (0, lib$1D.shuffled)(this.providerConfigs.map(lib$5.shallowCopy));
 	                        configs.sort(function (a, b) { return (a.priority - b.priority); });
 	                        currentBlockNumber = this._highestBlockNumber;
 	                        i = 0;
@@ -82718,7 +83105,7 @@
 	                            }
 	                            c.cancelled = true;
 	                        });
-	                        return [2 /*return*/, logger.throwError("failed to meet quorum", lib$4.Logger.errors.SERVER_ERROR, {
+	                        return [2 /*return*/, logger.throwError("failed to meet quorum", lib$6.Logger.errors.SERVER_ERROR, {
 	                                method: method,
 	                                params: params,
 	                                //results: configs.map((c) => c.result),
@@ -82773,7 +83160,7 @@
 
 
 
-	var logger = new lib$4.Logger(_version$2_.version);
+	var logger = new lib$6.Logger(_version$30.version);
 
 	var defaultProjectId = "84842078b09946638c03157f83405213";
 	var InfuraWebSocketProvider = /** @class */ (function (_super) {
@@ -82783,7 +83170,7 @@
 	        var provider = new InfuraProvider(network, apiKey);
 	        var connection = provider.connection;
 	        if (connection.password) {
-	            logger.throwError("INFURA WebSocket project secrets unsupported", lib$4.Logger.errors.UNSUPPORTED_OPERATION, {
+	            logger.throwError("INFURA WebSocket project secrets unsupported", lib$6.Logger.errors.UNSUPPORTED_OPERATION, {
 	                operation: "InfuraProvider.getWebSocketProvider()"
 	            });
 	        }
@@ -82863,7 +83250,7 @@
 	                host = "arbitrum-goerli.infura.io";
 	                break;
 	            default:
-	                logger.throwError("unsupported network", lib$4.Logger.errors.INVALID_ARGUMENT, {
+	                logger.throwError("unsupported network", lib$6.Logger.errors.INVALID_ARGUMENT, {
 	                    argument: "network",
 	                    value: network
 	                });
@@ -82955,7 +83342,7 @@
 	                    request: (0, lib$5.deepCopy)(request),
 	                    provider: _this
 	                });
-	                return (0, lib$1M.fetchJson)(_this.connection, JSON.stringify(request)).then(function (result) {
+	                return (0, lib$1N.fetchJson)(_this.connection, JSON.stringify(request)).then(function (result) {
 	                    _this.emit("debug", {
 	                        action: "response",
 	                        request: request,
@@ -83022,7 +83409,7 @@
 
 
 
-	var logger = new lib$4.Logger(_version$2_.version);
+	var logger = new lib$6.Logger(_version$30.version);
 	// Special API key provided by Nodesmith for quais.js
 	var defaultApiKey = "ETHERS_JS_SHARED";
 	var NodesmithProvider = /** @class */ (function (_super) {
@@ -83089,7 +83476,7 @@
 	exports.PocketProvider = void 0;
 
 
-	var logger = new lib$4.Logger(_version$2_.version);
+	var logger = new lib$6.Logger(_version$30.version);
 
 	var defaultApplicationId = "62e1ad51b37b8e00394bda3b";
 	var PocketProvider = /** @class */ (function (_super) {
@@ -83147,7 +83534,7 @@
 	                host = "eth-ropsten.gateway.pokt.network";
 	                break;
 	            default:
-	                logger.throwError("unsupported network", lib$4.Logger.errors.INVALID_ARGUMENT, {
+	                logger.throwError("unsupported network", lib$6.Logger.errors.INVALID_ARGUMENT, {
 	                    argument: "network",
 	                    value: network
 	                });
@@ -83193,7 +83580,7 @@
 
 
 
-	var logger = new lib$4.Logger(_version$2_.version);
+	var logger = new lib$6.Logger(_version$30.version);
 
 	var _nextId = 1;
 	function buildWeb3LegacyFetcher(provider, sendFunc) {
@@ -83331,14 +83718,14 @@
 
 	var web3Provider$1 = /*@__PURE__*/getDefaultExportFromCjs(web3Provider);
 
-	var lib$1N = createCommonjsModule(function (module, exports) {
+	var lib$1O = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.Formatter = exports.showThrottleMessage = exports.isCommunityResourcable = exports.isCommunityResource = exports.getNetwork = exports.getDefaultProvider = exports.JsonRpcSigner = exports.IpcProvider = exports.WebSocketProvider = exports.Web3Provider = exports.StaticJsonRpcProvider = exports.PocketProvider = exports.NodesmithProvider = exports.JsonRpcBatchProvider = exports.JsonRpcProvider = exports.InfuraWebSocketProvider = exports.InfuraProvider = exports.EtherscanProvider = exports.CloudflareProvider = exports.AnkrProvider = exports.AlchemyWebSocketProvider = exports.AlchemyProvider = exports.FallbackProvider = exports.UrlJsonRpcProvider = exports.Resolver = exports.BaseProvider = exports.Provider = void 0;
 
-	Object.defineProperty(exports, "Provider", { enumerable: true, get: function () { return lib$$.Provider; } });
+	Object.defineProperty(exports, "Provider", { enumerable: true, get: function () { return lib$10.Provider; } });
 
-	Object.defineProperty(exports, "getNetwork", { enumerable: true, get: function () { return lib$1G.getNetwork; } });
+	Object.defineProperty(exports, "getNetwork", { enumerable: true, get: function () { return lib$1H.getNetwork; } });
 
 	Object.defineProperty(exports, "BaseProvider", { enumerable: true, get: function () { return baseProvider.BaseProvider; } });
 	Object.defineProperty(exports, "Resolver", { enumerable: true, get: function () { return baseProvider.Resolver; } });
@@ -83381,7 +83768,7 @@
 	Object.defineProperty(exports, "showThrottleMessage", { enumerable: true, get: function () { return formatter.showThrottleMessage; } });
 
 
-	var logger = new lib$4.Logger(_version$2_.version);
+	var logger = new lib$6.Logger(_version$30.version);
 	////////////////////////
 	// Helper Functions
 	function getDefaultProvider(network, options) {
@@ -83406,9 +83793,9 @@
 	            }
 	        }
 	    }
-	    var n = (0, lib$1G.getNetwork)(network);
+	    var n = (0, lib$1H.getNetwork)(network);
 	    if (!n || !n._defaultProvider) {
-	        logger.throwError("unsupported getDefaultProvider network", lib$4.Logger.errors.NETWORK_ERROR, {
+	        logger.throwError("unsupported getDefaultProvider network", lib$6.Logger.errors.NETWORK_ERROR, {
 	            operation: "getDefaultProvider",
 	            network: network
 	        });
@@ -83431,9 +83818,9 @@
 
 	});
 
-	var index$1J = /*@__PURE__*/getDefaultExportFromCjs(lib$1N);
+	var index$1K = /*@__PURE__*/getDefaultExportFromCjs(lib$1O);
 
-	var _version$30 = createCommonjsModule(function (module, exports) {
+	var _version$32 = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.version = void 0;
@@ -83441,9 +83828,9 @@
 
 	});
 
-	var _version$31 = /*@__PURE__*/getDefaultExportFromCjs(_version$30);
+	var _version$33 = /*@__PURE__*/getDefaultExportFromCjs(_version$32);
 
-	var lib$1O = createCommonjsModule(function (module, exports) {
+	var lib$1P = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.sha256 = exports.keccak256 = exports.pack = void 0;
@@ -83458,24 +83845,24 @@
 	var Zeros = "0000000000000000000000000000000000000000000000000000000000000000";
 
 
-	var logger = new lib$4.Logger(_version$30.version);
+	var logger = new lib$6.Logger(_version$32.version);
 	function _pack(type, value, isArray) {
 	    switch (type) {
 	        case "address":
 	            if (isArray) {
-	                return (0, lib$7.zeroPad)(value, 32);
+	                return (0, lib$8.zeroPad)(value, 32);
 	            }
-	            return (0, lib$7.arrayify)(value);
+	            return (0, lib$8.arrayify)(value);
 	        case "string":
-	            return (0, lib$s.toUtf8Bytes)(value);
+	            return (0, lib$t.toUtf8Bytes)(value);
 	        case "bytes":
-	            return (0, lib$7.arrayify)(value);
+	            return (0, lib$8.arrayify)(value);
 	        case "bool":
 	            value = (value ? "0x01" : "0x00");
 	            if (isArray) {
-	                return (0, lib$7.zeroPad)(value, 32);
+	                return (0, lib$8.zeroPad)(value, 32);
 	            }
-	            return (0, lib$7.arrayify)(value);
+	            return (0, lib$8.arrayify)(value);
 	    }
 	    var match = type.match(regexNumber);
 	    if (match) {
@@ -83488,7 +83875,7 @@
 	            size = 256;
 	        }
 	        value = lib$3.BigNumber.from(value).toTwos(size);
-	        return (0, lib$7.zeroPad)(value, size / 8);
+	        return (0, lib$8.zeroPad)(value, size / 8);
 	    }
 	    match = type.match(regexBytes);
 	    if (match) {
@@ -83496,11 +83883,11 @@
 	        if (String(size) !== match[1] || size === 0 || size > 32) {
 	            logger.throwArgumentError("invalid bytes type", "type", type);
 	        }
-	        if ((0, lib$7.arrayify)(value).byteLength !== size) {
+	        if ((0, lib$8.arrayify)(value).byteLength !== size) {
 	            logger.throwArgumentError("invalid value for " + type, "value", value);
 	        }
 	        if (isArray) {
-	            return (0, lib$7.arrayify)((value + Zeros).substring(0, 66));
+	            return (0, lib$8.arrayify)((value + Zeros).substring(0, 66));
 	        }
 	        return value;
 	    }
@@ -83515,7 +83902,7 @@
 	        value.forEach(function (value) {
 	            result_1.push(_pack(baseType_1, value, true));
 	        });
-	        return (0, lib$7.concat)(result_1);
+	        return (0, lib$8.concat)(result_1);
 	    }
 	    return logger.throwArgumentError("invalid type", "type", type);
 	}
@@ -83528,23 +83915,23 @@
 	    types.forEach(function (type, index) {
 	        tight.push(_pack(type, values[index]));
 	    });
-	    return (0, lib$7.hexlify)((0, lib$7.concat)(tight));
+	    return (0, lib$8.hexlify)((0, lib$8.concat)(tight));
 	}
 	exports.pack = pack;
 	function keccak256(types, values) {
-	    return (0, lib$W.keccak256)(pack(types, values));
+	    return (0, lib$X.keccak256)(pack(types, values));
 	}
 	exports.keccak256 = keccak256;
 	function sha256(types, values) {
-	    return (0, lib$1s.sha256)(pack(types, values));
+	    return (0, lib$1t.sha256)(pack(types, values));
 	}
 	exports.sha256 = sha256;
 
 	});
 
-	var index$1K = /*@__PURE__*/getDefaultExportFromCjs(lib$1O);
+	var index$1L = /*@__PURE__*/getDefaultExportFromCjs(lib$1P);
 
-	var _version$32 = createCommonjsModule(function (module, exports) {
+	var _version$34 = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.version = void 0;
@@ -83552,16 +83939,16 @@
 
 	});
 
-	var _version$33 = /*@__PURE__*/getDefaultExportFromCjs(_version$32);
+	var _version$35 = /*@__PURE__*/getDefaultExportFromCjs(_version$34);
 
-	var lib$1P = createCommonjsModule(function (module, exports) {
+	var lib$1Q = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.parseEther = exports.formatEther = exports.parseUnits = exports.formatUnits = exports.commify = void 0;
 
 
 
-	var logger = new lib$4.Logger(_version$32.version);
+	var logger = new lib$6.Logger(_version$34.version);
 	var names = [
 	    "wei",
 	    "kwei",
@@ -83648,7 +84035,7 @@
 
 	});
 
-	var index$1L = /*@__PURE__*/getDefaultExportFromCjs(lib$1P);
+	var index$1M = /*@__PURE__*/getDefaultExportFromCjs(lib$1Q);
 
 	var utils$3 = createCommonjsModule(function (module, exports) {
 	"use strict";
@@ -83675,80 +84062,80 @@
 	exports.formatBytes32String = exports.Utf8ErrorFuncs = exports.toUtf8String = exports.toUtf8CodePoints = exports.toUtf8Bytes = exports._toEscapedUtf8String = exports.nameprep = exports.hexDataSlice = exports.hexDataLength = exports.hexZeroPad = exports.hexValue = exports.hexStripZeros = exports.hexConcat = exports.isHexString = exports.hexlify = exports.base64 = exports.base58 = exports.TransactionDescription = exports.LogDescription = exports.Interface = exports.SigningKey = exports.HDNode = exports.defaultPath = exports.isBytesLike = exports.isBytes = exports.zeroPad = exports.stripZeros = exports.concat = exports.arrayify = exports.shallowCopy = exports.resolveProperties = exports.getStatic = exports.defineReadOnly = exports.deepCopy = exports.checkProperties = exports.poll = exports.fetchJson = exports._fetchData = exports.RLP = exports.Logger = exports.checkResultErrors = exports.FormatTypes = exports.ParamType = exports.FunctionFragment = exports.EventFragment = exports.ErrorFragment = exports.ConstructorFragment = exports.Fragment = exports.defaultAbiCoder = exports.AbiCoder = void 0;
 	exports.Indexed = exports.Utf8ErrorReason = exports.UnicodeNormalizationForm = exports.SupportedAlgorithm = exports.mnemonicToSeed = exports.isValidMnemonic = exports.entropyToMnemonic = exports.mnemonicToEntropy = exports.getAccountPath = exports.verifyTypedData = exports.verifyMessage = exports.recoverPublicKey = exports.computePublicKey = exports.recoverAddress = exports.computeAddress = exports.getJsonWalletAddress = exports.TransactionTypes = exports.serializeTransaction = exports.parseTransaction = exports.accessListify = exports.joinSignature = exports.splitSignature = exports.soliditySha256 = exports.solidityKeccak256 = exports.solidityPack = exports.shuffled = exports.randomBytes = exports.sha512 = exports.sha256 = exports.ripemd160 = exports.keccak256 = exports.computeHmac = exports.commify = exports.parseUnits = exports.formatUnits = exports.parseEther = exports.formatEther = exports.isAddress = exports.getCreate2Address = exports.getContractAddress = exports.getIcapAddress = exports.getAddress = exports._TypedDataEncoder = exports.id = exports.isValidName = exports.namehash = exports.hashMessage = exports.dnsEncode = exports.parseBytes32String = void 0;
 
-	Object.defineProperty(exports, "AbiCoder", { enumerable: true, get: function () { return lib$X.AbiCoder; } });
-	Object.defineProperty(exports, "checkResultErrors", { enumerable: true, get: function () { return lib$X.checkResultErrors; } });
-	Object.defineProperty(exports, "ConstructorFragment", { enumerable: true, get: function () { return lib$X.ConstructorFragment; } });
-	Object.defineProperty(exports, "defaultAbiCoder", { enumerable: true, get: function () { return lib$X.defaultAbiCoder; } });
-	Object.defineProperty(exports, "ErrorFragment", { enumerable: true, get: function () { return lib$X.ErrorFragment; } });
-	Object.defineProperty(exports, "EventFragment", { enumerable: true, get: function () { return lib$X.EventFragment; } });
-	Object.defineProperty(exports, "FormatTypes", { enumerable: true, get: function () { return lib$X.FormatTypes; } });
-	Object.defineProperty(exports, "Fragment", { enumerable: true, get: function () { return lib$X.Fragment; } });
-	Object.defineProperty(exports, "FunctionFragment", { enumerable: true, get: function () { return lib$X.FunctionFragment; } });
-	Object.defineProperty(exports, "Indexed", { enumerable: true, get: function () { return lib$X.Indexed; } });
-	Object.defineProperty(exports, "Interface", { enumerable: true, get: function () { return lib$X.Interface; } });
-	Object.defineProperty(exports, "LogDescription", { enumerable: true, get: function () { return lib$X.LogDescription; } });
-	Object.defineProperty(exports, "ParamType", { enumerable: true, get: function () { return lib$X.ParamType; } });
-	Object.defineProperty(exports, "TransactionDescription", { enumerable: true, get: function () { return lib$X.TransactionDescription; } });
+	Object.defineProperty(exports, "AbiCoder", { enumerable: true, get: function () { return lib$Y.AbiCoder; } });
+	Object.defineProperty(exports, "checkResultErrors", { enumerable: true, get: function () { return lib$Y.checkResultErrors; } });
+	Object.defineProperty(exports, "ConstructorFragment", { enumerable: true, get: function () { return lib$Y.ConstructorFragment; } });
+	Object.defineProperty(exports, "defaultAbiCoder", { enumerable: true, get: function () { return lib$Y.defaultAbiCoder; } });
+	Object.defineProperty(exports, "ErrorFragment", { enumerable: true, get: function () { return lib$Y.ErrorFragment; } });
+	Object.defineProperty(exports, "EventFragment", { enumerable: true, get: function () { return lib$Y.EventFragment; } });
+	Object.defineProperty(exports, "FormatTypes", { enumerable: true, get: function () { return lib$Y.FormatTypes; } });
+	Object.defineProperty(exports, "Fragment", { enumerable: true, get: function () { return lib$Y.Fragment; } });
+	Object.defineProperty(exports, "FunctionFragment", { enumerable: true, get: function () { return lib$Y.FunctionFragment; } });
+	Object.defineProperty(exports, "Indexed", { enumerable: true, get: function () { return lib$Y.Indexed; } });
+	Object.defineProperty(exports, "Interface", { enumerable: true, get: function () { return lib$Y.Interface; } });
+	Object.defineProperty(exports, "LogDescription", { enumerable: true, get: function () { return lib$Y.LogDescription; } });
+	Object.defineProperty(exports, "ParamType", { enumerable: true, get: function () { return lib$Y.ParamType; } });
+	Object.defineProperty(exports, "TransactionDescription", { enumerable: true, get: function () { return lib$Y.TransactionDescription; } });
 
-	Object.defineProperty(exports, "getAddress", { enumerable: true, get: function () { return lib$k.getAddress; } });
-	Object.defineProperty(exports, "getCreate2Address", { enumerable: true, get: function () { return lib$k.getCreate2Address; } });
-	Object.defineProperty(exports, "getContractAddress", { enumerable: true, get: function () { return lib$k.getContractAddress; } });
-	Object.defineProperty(exports, "getIcapAddress", { enumerable: true, get: function () { return lib$k.getIcapAddress; } });
-	Object.defineProperty(exports, "isAddress", { enumerable: true, get: function () { return lib$k.isAddress; } });
-	var base64 = __importStar(lib$1u);
+	Object.defineProperty(exports, "getAddress", { enumerable: true, get: function () { return lib$l.getAddress; } });
+	Object.defineProperty(exports, "getCreate2Address", { enumerable: true, get: function () { return lib$l.getCreate2Address; } });
+	Object.defineProperty(exports, "getContractAddress", { enumerable: true, get: function () { return lib$l.getContractAddress; } });
+	Object.defineProperty(exports, "getIcapAddress", { enumerable: true, get: function () { return lib$l.getIcapAddress; } });
+	Object.defineProperty(exports, "isAddress", { enumerable: true, get: function () { return lib$l.isAddress; } });
+	var base64 = __importStar(lib$1v);
 	exports.base64 = base64;
 
-	Object.defineProperty(exports, "base58", { enumerable: true, get: function () { return lib$1i.Base58; } });
+	Object.defineProperty(exports, "base58", { enumerable: true, get: function () { return lib$1j.Base58; } });
 
-	Object.defineProperty(exports, "arrayify", { enumerable: true, get: function () { return lib$7.arrayify; } });
-	Object.defineProperty(exports, "concat", { enumerable: true, get: function () { return lib$7.concat; } });
-	Object.defineProperty(exports, "hexConcat", { enumerable: true, get: function () { return lib$7.hexConcat; } });
-	Object.defineProperty(exports, "hexDataSlice", { enumerable: true, get: function () { return lib$7.hexDataSlice; } });
-	Object.defineProperty(exports, "hexDataLength", { enumerable: true, get: function () { return lib$7.hexDataLength; } });
-	Object.defineProperty(exports, "hexlify", { enumerable: true, get: function () { return lib$7.hexlify; } });
-	Object.defineProperty(exports, "hexStripZeros", { enumerable: true, get: function () { return lib$7.hexStripZeros; } });
-	Object.defineProperty(exports, "hexValue", { enumerable: true, get: function () { return lib$7.hexValue; } });
-	Object.defineProperty(exports, "hexZeroPad", { enumerable: true, get: function () { return lib$7.hexZeroPad; } });
-	Object.defineProperty(exports, "isBytes", { enumerable: true, get: function () { return lib$7.isBytes; } });
-	Object.defineProperty(exports, "isBytesLike", { enumerable: true, get: function () { return lib$7.isBytesLike; } });
-	Object.defineProperty(exports, "isHexString", { enumerable: true, get: function () { return lib$7.isHexString; } });
-	Object.defineProperty(exports, "joinSignature", { enumerable: true, get: function () { return lib$7.joinSignature; } });
-	Object.defineProperty(exports, "zeroPad", { enumerable: true, get: function () { return lib$7.zeroPad; } });
-	Object.defineProperty(exports, "splitSignature", { enumerable: true, get: function () { return lib$7.splitSignature; } });
-	Object.defineProperty(exports, "stripZeros", { enumerable: true, get: function () { return lib$7.stripZeros; } });
+	Object.defineProperty(exports, "arrayify", { enumerable: true, get: function () { return lib$8.arrayify; } });
+	Object.defineProperty(exports, "concat", { enumerable: true, get: function () { return lib$8.concat; } });
+	Object.defineProperty(exports, "hexConcat", { enumerable: true, get: function () { return lib$8.hexConcat; } });
+	Object.defineProperty(exports, "hexDataSlice", { enumerable: true, get: function () { return lib$8.hexDataSlice; } });
+	Object.defineProperty(exports, "hexDataLength", { enumerable: true, get: function () { return lib$8.hexDataLength; } });
+	Object.defineProperty(exports, "hexlify", { enumerable: true, get: function () { return lib$8.hexlify; } });
+	Object.defineProperty(exports, "hexStripZeros", { enumerable: true, get: function () { return lib$8.hexStripZeros; } });
+	Object.defineProperty(exports, "hexValue", { enumerable: true, get: function () { return lib$8.hexValue; } });
+	Object.defineProperty(exports, "hexZeroPad", { enumerable: true, get: function () { return lib$8.hexZeroPad; } });
+	Object.defineProperty(exports, "isBytes", { enumerable: true, get: function () { return lib$8.isBytes; } });
+	Object.defineProperty(exports, "isBytesLike", { enumerable: true, get: function () { return lib$8.isBytesLike; } });
+	Object.defineProperty(exports, "isHexString", { enumerable: true, get: function () { return lib$8.isHexString; } });
+	Object.defineProperty(exports, "joinSignature", { enumerable: true, get: function () { return lib$8.joinSignature; } });
+	Object.defineProperty(exports, "zeroPad", { enumerable: true, get: function () { return lib$8.zeroPad; } });
+	Object.defineProperty(exports, "splitSignature", { enumerable: true, get: function () { return lib$8.splitSignature; } });
+	Object.defineProperty(exports, "stripZeros", { enumerable: true, get: function () { return lib$8.stripZeros; } });
 
-	Object.defineProperty(exports, "_TypedDataEncoder", { enumerable: true, get: function () { return lib$U._TypedDataEncoder; } });
-	Object.defineProperty(exports, "dnsEncode", { enumerable: true, get: function () { return lib$U.dnsEncode; } });
-	Object.defineProperty(exports, "hashMessage", { enumerable: true, get: function () { return lib$U.hashMessage; } });
-	Object.defineProperty(exports, "id", { enumerable: true, get: function () { return lib$U.id; } });
-	Object.defineProperty(exports, "isValidName", { enumerable: true, get: function () { return lib$U.isValidName; } });
-	Object.defineProperty(exports, "namehash", { enumerable: true, get: function () { return lib$U.namehash; } });
+	Object.defineProperty(exports, "_TypedDataEncoder", { enumerable: true, get: function () { return lib$V._TypedDataEncoder; } });
+	Object.defineProperty(exports, "dnsEncode", { enumerable: true, get: function () { return lib$V.dnsEncode; } });
+	Object.defineProperty(exports, "hashMessage", { enumerable: true, get: function () { return lib$V.hashMessage; } });
+	Object.defineProperty(exports, "id", { enumerable: true, get: function () { return lib$V.id; } });
+	Object.defineProperty(exports, "isValidName", { enumerable: true, get: function () { return lib$V.isValidName; } });
+	Object.defineProperty(exports, "namehash", { enumerable: true, get: function () { return lib$V.namehash; } });
 
-	Object.defineProperty(exports, "defaultPath", { enumerable: true, get: function () { return lib$1B.defaultPath; } });
-	Object.defineProperty(exports, "entropyToMnemonic", { enumerable: true, get: function () { return lib$1B.entropyToMnemonic; } });
-	Object.defineProperty(exports, "getAccountPath", { enumerable: true, get: function () { return lib$1B.getAccountPath; } });
-	Object.defineProperty(exports, "HDNode", { enumerable: true, get: function () { return lib$1B.HDNode; } });
-	Object.defineProperty(exports, "isValidMnemonic", { enumerable: true, get: function () { return lib$1B.isValidMnemonic; } });
-	Object.defineProperty(exports, "mnemonicToEntropy", { enumerable: true, get: function () { return lib$1B.mnemonicToEntropy; } });
-	Object.defineProperty(exports, "mnemonicToSeed", { enumerable: true, get: function () { return lib$1B.mnemonicToSeed; } });
+	Object.defineProperty(exports, "defaultPath", { enumerable: true, get: function () { return lib$1C.defaultPath; } });
+	Object.defineProperty(exports, "entropyToMnemonic", { enumerable: true, get: function () { return lib$1C.entropyToMnemonic; } });
+	Object.defineProperty(exports, "getAccountPath", { enumerable: true, get: function () { return lib$1C.getAccountPath; } });
+	Object.defineProperty(exports, "HDNode", { enumerable: true, get: function () { return lib$1C.HDNode; } });
+	Object.defineProperty(exports, "isValidMnemonic", { enumerable: true, get: function () { return lib$1C.isValidMnemonic; } });
+	Object.defineProperty(exports, "mnemonicToEntropy", { enumerable: true, get: function () { return lib$1C.mnemonicToEntropy; } });
+	Object.defineProperty(exports, "mnemonicToSeed", { enumerable: true, get: function () { return lib$1C.mnemonicToSeed; } });
 
-	Object.defineProperty(exports, "getJsonWalletAddress", { enumerable: true, get: function () { return lib$1D.getJsonWalletAddress; } });
+	Object.defineProperty(exports, "getJsonWalletAddress", { enumerable: true, get: function () { return lib$1E.getJsonWalletAddress; } });
 
-	Object.defineProperty(exports, "keccak256", { enumerable: true, get: function () { return lib$W.keccak256; } });
+	Object.defineProperty(exports, "keccak256", { enumerable: true, get: function () { return lib$X.keccak256; } });
 
-	Object.defineProperty(exports, "Logger", { enumerable: true, get: function () { return lib$4.Logger; } });
+	Object.defineProperty(exports, "Logger", { enumerable: true, get: function () { return lib$6.Logger; } });
 
-	Object.defineProperty(exports, "computeHmac", { enumerable: true, get: function () { return lib$1s.computeHmac; } });
-	Object.defineProperty(exports, "ripemd160", { enumerable: true, get: function () { return lib$1s.ripemd160; } });
-	Object.defineProperty(exports, "sha256", { enumerable: true, get: function () { return lib$1s.sha256; } });
-	Object.defineProperty(exports, "sha512", { enumerable: true, get: function () { return lib$1s.sha512; } });
+	Object.defineProperty(exports, "computeHmac", { enumerable: true, get: function () { return lib$1t.computeHmac; } });
+	Object.defineProperty(exports, "ripemd160", { enumerable: true, get: function () { return lib$1t.ripemd160; } });
+	Object.defineProperty(exports, "sha256", { enumerable: true, get: function () { return lib$1t.sha256; } });
+	Object.defineProperty(exports, "sha512", { enumerable: true, get: function () { return lib$1t.sha512; } });
 
-	Object.defineProperty(exports, "solidityKeccak256", { enumerable: true, get: function () { return lib$1O.keccak256; } });
-	Object.defineProperty(exports, "solidityPack", { enumerable: true, get: function () { return lib$1O.pack; } });
-	Object.defineProperty(exports, "soliditySha256", { enumerable: true, get: function () { return lib$1O.sha256; } });
+	Object.defineProperty(exports, "solidityKeccak256", { enumerable: true, get: function () { return lib$1P.keccak256; } });
+	Object.defineProperty(exports, "solidityPack", { enumerable: true, get: function () { return lib$1P.pack; } });
+	Object.defineProperty(exports, "soliditySha256", { enumerable: true, get: function () { return lib$1P.sha256; } });
 
-	Object.defineProperty(exports, "randomBytes", { enumerable: true, get: function () { return lib$1C.randomBytes; } });
-	Object.defineProperty(exports, "shuffled", { enumerable: true, get: function () { return lib$1C.shuffled; } });
+	Object.defineProperty(exports, "randomBytes", { enumerable: true, get: function () { return lib$1D.randomBytes; } });
+	Object.defineProperty(exports, "shuffled", { enumerable: true, get: function () { return lib$1D.shuffled; } });
 
 	Object.defineProperty(exports, "checkProperties", { enumerable: true, get: function () { return lib$5.checkProperties; } });
 	Object.defineProperty(exports, "deepCopy", { enumerable: true, get: function () { return lib$5.deepCopy; } });
@@ -83756,46 +84143,46 @@
 	Object.defineProperty(exports, "getStatic", { enumerable: true, get: function () { return lib$5.getStatic; } });
 	Object.defineProperty(exports, "resolveProperties", { enumerable: true, get: function () { return lib$5.resolveProperties; } });
 	Object.defineProperty(exports, "shallowCopy", { enumerable: true, get: function () { return lib$5.shallowCopy; } });
-	var RLP = __importStar(lib$15);
+	var RLP = __importStar(lib$16);
 	exports.RLP = RLP;
 
-	Object.defineProperty(exports, "computePublicKey", { enumerable: true, get: function () { return lib$1p.computePublicKey; } });
-	Object.defineProperty(exports, "recoverPublicKey", { enumerable: true, get: function () { return lib$1p.recoverPublicKey; } });
-	Object.defineProperty(exports, "SigningKey", { enumerable: true, get: function () { return lib$1p.SigningKey; } });
+	Object.defineProperty(exports, "computePublicKey", { enumerable: true, get: function () { return lib$1q.computePublicKey; } });
+	Object.defineProperty(exports, "recoverPublicKey", { enumerable: true, get: function () { return lib$1q.recoverPublicKey; } });
+	Object.defineProperty(exports, "SigningKey", { enumerable: true, get: function () { return lib$1q.SigningKey; } });
 
-	Object.defineProperty(exports, "formatBytes32String", { enumerable: true, get: function () { return lib$s.formatBytes32String; } });
-	Object.defineProperty(exports, "nameprep", { enumerable: true, get: function () { return lib$s.nameprep; } });
-	Object.defineProperty(exports, "parseBytes32String", { enumerable: true, get: function () { return lib$s.parseBytes32String; } });
-	Object.defineProperty(exports, "_toEscapedUtf8String", { enumerable: true, get: function () { return lib$s._toEscapedUtf8String; } });
-	Object.defineProperty(exports, "toUtf8Bytes", { enumerable: true, get: function () { return lib$s.toUtf8Bytes; } });
-	Object.defineProperty(exports, "toUtf8CodePoints", { enumerable: true, get: function () { return lib$s.toUtf8CodePoints; } });
-	Object.defineProperty(exports, "toUtf8String", { enumerable: true, get: function () { return lib$s.toUtf8String; } });
-	Object.defineProperty(exports, "Utf8ErrorFuncs", { enumerable: true, get: function () { return lib$s.Utf8ErrorFuncs; } });
+	Object.defineProperty(exports, "formatBytes32String", { enumerable: true, get: function () { return lib$t.formatBytes32String; } });
+	Object.defineProperty(exports, "nameprep", { enumerable: true, get: function () { return lib$t.nameprep; } });
+	Object.defineProperty(exports, "parseBytes32String", { enumerable: true, get: function () { return lib$t.parseBytes32String; } });
+	Object.defineProperty(exports, "_toEscapedUtf8String", { enumerable: true, get: function () { return lib$t._toEscapedUtf8String; } });
+	Object.defineProperty(exports, "toUtf8Bytes", { enumerable: true, get: function () { return lib$t.toUtf8Bytes; } });
+	Object.defineProperty(exports, "toUtf8CodePoints", { enumerable: true, get: function () { return lib$t.toUtf8CodePoints; } });
+	Object.defineProperty(exports, "toUtf8String", { enumerable: true, get: function () { return lib$t.toUtf8String; } });
+	Object.defineProperty(exports, "Utf8ErrorFuncs", { enumerable: true, get: function () { return lib$t.Utf8ErrorFuncs; } });
 
-	Object.defineProperty(exports, "accessListify", { enumerable: true, get: function () { return lib$1e.accessListify; } });
-	Object.defineProperty(exports, "computeAddress", { enumerable: true, get: function () { return lib$1e.computeAddress; } });
-	Object.defineProperty(exports, "parseTransaction", { enumerable: true, get: function () { return lib$1e.parse; } });
-	Object.defineProperty(exports, "recoverAddress", { enumerable: true, get: function () { return lib$1e.recoverAddress; } });
-	Object.defineProperty(exports, "serializeTransaction", { enumerable: true, get: function () { return lib$1e.serialize; } });
-	Object.defineProperty(exports, "TransactionTypes", { enumerable: true, get: function () { return lib$1e.TransactionTypes; } });
+	Object.defineProperty(exports, "accessListify", { enumerable: true, get: function () { return lib$1f.accessListify; } });
+	Object.defineProperty(exports, "computeAddress", { enumerable: true, get: function () { return lib$1f.computeAddress; } });
+	Object.defineProperty(exports, "parseTransaction", { enumerable: true, get: function () { return lib$1f.parse; } });
+	Object.defineProperty(exports, "recoverAddress", { enumerable: true, get: function () { return lib$1f.recoverAddress; } });
+	Object.defineProperty(exports, "serializeTransaction", { enumerable: true, get: function () { return lib$1f.serialize; } });
+	Object.defineProperty(exports, "TransactionTypes", { enumerable: true, get: function () { return lib$1f.TransactionTypes; } });
 
-	Object.defineProperty(exports, "commify", { enumerable: true, get: function () { return lib$1P.commify; } });
-	Object.defineProperty(exports, "formatEther", { enumerable: true, get: function () { return lib$1P.formatEther; } });
-	Object.defineProperty(exports, "parseEther", { enumerable: true, get: function () { return lib$1P.parseEther; } });
-	Object.defineProperty(exports, "formatUnits", { enumerable: true, get: function () { return lib$1P.formatUnits; } });
-	Object.defineProperty(exports, "parseUnits", { enumerable: true, get: function () { return lib$1P.parseUnits; } });
+	Object.defineProperty(exports, "commify", { enumerable: true, get: function () { return lib$1Q.commify; } });
+	Object.defineProperty(exports, "formatEther", { enumerable: true, get: function () { return lib$1Q.formatEther; } });
+	Object.defineProperty(exports, "parseEther", { enumerable: true, get: function () { return lib$1Q.parseEther; } });
+	Object.defineProperty(exports, "formatUnits", { enumerable: true, get: function () { return lib$1Q.formatUnits; } });
+	Object.defineProperty(exports, "parseUnits", { enumerable: true, get: function () { return lib$1Q.parseUnits; } });
 
-	Object.defineProperty(exports, "verifyMessage", { enumerable: true, get: function () { return lib$1E.verifyMessage; } });
-	Object.defineProperty(exports, "verifyTypedData", { enumerable: true, get: function () { return lib$1E.verifyTypedData; } });
+	Object.defineProperty(exports, "verifyMessage", { enumerable: true, get: function () { return lib$1F.verifyMessage; } });
+	Object.defineProperty(exports, "verifyTypedData", { enumerable: true, get: function () { return lib$1F.verifyTypedData; } });
 
-	Object.defineProperty(exports, "_fetchData", { enumerable: true, get: function () { return lib$1M._fetchData; } });
-	Object.defineProperty(exports, "fetchJson", { enumerable: true, get: function () { return lib$1M.fetchJson; } });
-	Object.defineProperty(exports, "poll", { enumerable: true, get: function () { return lib$1M.poll; } });
+	Object.defineProperty(exports, "_fetchData", { enumerable: true, get: function () { return lib$1N._fetchData; } });
+	Object.defineProperty(exports, "fetchJson", { enumerable: true, get: function () { return lib$1N.fetchJson; } });
+	Object.defineProperty(exports, "poll", { enumerable: true, get: function () { return lib$1N.poll; } });
 	////////////////////////
 	// Enums
-	var sha2_2 = lib$1s;
+	var sha2_2 = lib$1t;
 	Object.defineProperty(exports, "SupportedAlgorithm", { enumerable: true, get: function () { return sha2_2.SupportedAlgorithm; } });
-	var strings_2 = lib$s;
+	var strings_2 = lib$t;
 	Object.defineProperty(exports, "UnicodeNormalizationForm", { enumerable: true, get: function () { return strings_2.UnicodeNormalizationForm; } });
 	Object.defineProperty(exports, "Utf8ErrorReason", { enumerable: true, get: function () { return strings_2.Utf8ErrorReason; } });
 
@@ -83803,7 +84190,7 @@
 
 	var utils$4 = /*@__PURE__*/getDefaultExportFromCjs(utils$3);
 
-	var _version$34 = createCommonjsModule(function (module, exports) {
+	var _version$36 = createCommonjsModule(function (module, exports) {
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.version = void 0;
@@ -83811,7 +84198,7 @@
 
 	});
 
-	var _version$35 = /*@__PURE__*/getDefaultExportFromCjs(_version$34);
+	var _version$37 = /*@__PURE__*/getDefaultExportFromCjs(_version$36);
 
 	var quais = createCommonjsModule(function (module, exports) {
 	"use strict";
@@ -83837,43 +84224,43 @@
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.Wordlist = exports.version = exports.wordlists = exports.utils = exports.logger = exports.errors = exports.constants = exports.FixedNumber = exports.BigNumber = exports.ContractFactory = exports.Contract = exports.BaseContract = exports.providers = exports.getDefaultProvider = exports.VoidSigner = exports.Wallet = exports.Signer = void 0;
 
-	Object.defineProperty(exports, "BaseContract", { enumerable: true, get: function () { return lib$1f.BaseContract; } });
-	Object.defineProperty(exports, "Contract", { enumerable: true, get: function () { return lib$1f.Contract; } });
-	Object.defineProperty(exports, "ContractFactory", { enumerable: true, get: function () { return lib$1f.ContractFactory; } });
+	Object.defineProperty(exports, "BaseContract", { enumerable: true, get: function () { return lib$1g.BaseContract; } });
+	Object.defineProperty(exports, "Contract", { enumerable: true, get: function () { return lib$1g.Contract; } });
+	Object.defineProperty(exports, "ContractFactory", { enumerable: true, get: function () { return lib$1g.ContractFactory; } });
 
 	Object.defineProperty(exports, "BigNumber", { enumerable: true, get: function () { return lib$3.BigNumber; } });
 	Object.defineProperty(exports, "FixedNumber", { enumerable: true, get: function () { return lib$3.FixedNumber; } });
 
-	Object.defineProperty(exports, "Signer", { enumerable: true, get: function () { return lib$12.Signer; } });
-	Object.defineProperty(exports, "VoidSigner", { enumerable: true, get: function () { return lib$12.VoidSigner; } });
+	Object.defineProperty(exports, "Signer", { enumerable: true, get: function () { return lib$13.Signer; } });
+	Object.defineProperty(exports, "VoidSigner", { enumerable: true, get: function () { return lib$13.VoidSigner; } });
 
-	Object.defineProperty(exports, "Wallet", { enumerable: true, get: function () { return lib$1E.Wallet; } });
-	var constants = __importStar(lib$o);
+	Object.defineProperty(exports, "Wallet", { enumerable: true, get: function () { return lib$1F.Wallet; } });
+	var constants = __importStar(lib$p);
 	exports.constants = constants;
-	var providers = __importStar(lib$1N);
+	var providers = __importStar(lib$1O);
 	exports.providers = providers;
-	var providers_1 = lib$1N;
+	var providers_1 = lib$1O;
 	Object.defineProperty(exports, "getDefaultProvider", { enumerable: true, get: function () { return providers_1.getDefaultProvider; } });
 
-	Object.defineProperty(exports, "Wordlist", { enumerable: true, get: function () { return lib$1A.Wordlist; } });
-	Object.defineProperty(exports, "wordlists", { enumerable: true, get: function () { return lib$1A.wordlists; } });
+	Object.defineProperty(exports, "Wordlist", { enumerable: true, get: function () { return lib$1B.Wordlist; } });
+	Object.defineProperty(exports, "wordlists", { enumerable: true, get: function () { return lib$1B.wordlists; } });
 	var utils = __importStar(utils$3);
 	exports.utils = utils;
 
-	Object.defineProperty(exports, "errors", { enumerable: true, get: function () { return lib$4.ErrorCode; } });
+	Object.defineProperty(exports, "errors", { enumerable: true, get: function () { return lib$6.ErrorCode; } });
 	////////////////////////
 	// Compile-Time Constants
 	// This is generated by "npm run dist"
 
-	Object.defineProperty(exports, "version", { enumerable: true, get: function () { return _version$34.version; } });
-	var logger = new lib$4.Logger(_version$34.version);
+	Object.defineProperty(exports, "version", { enumerable: true, get: function () { return _version$36.version; } });
+	var logger = new lib$6.Logger(_version$36.version);
 	exports.logger = logger;
 
 	});
 
 	var quais$1 = /*@__PURE__*/getDefaultExportFromCjs(quais);
 
-	var lib$1Q = createCommonjsModule(function (module, exports) {
+	var lib$1R = createCommonjsModule(function (module, exports) {
 	"use strict";
 	var __createBinding = (commonjsGlobal && commonjsGlobal.__createBinding) || (Object.create ? (function(o, m, k, k2) {
 	    if (k2 === undefined) k2 = k;
@@ -83929,9 +84316,9 @@
 
 	});
 
-	var index$1M = /*@__PURE__*/getDefaultExportFromCjs(lib$1Q);
+	var index$1N = /*@__PURE__*/getDefaultExportFromCjs(lib$1R);
 
-	return index$1M;
+	return index$1N;
 
 })));
 //# sourceMappingURL=quais.umd.js.map

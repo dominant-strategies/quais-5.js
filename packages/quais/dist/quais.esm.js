@@ -5365,7 +5365,7 @@ class FixedNumber {
 const ONE = FixedNumber.from(1);
 const BUMP = FixedNumber.from("0.5");
 
-const version$4 = "logger/0.1.0";
+const version$4 = "logger/5.7.0";
 
 "use strict";
 let _permanentCensorErrors$2 = false;
@@ -5847,860 +5847,7 @@ class Description {
     }
 }
 
-const version$6 = "abi/0.1.0";
-
-"use strict";
-const logger$4 = new Logger$2(version$6);
-;
-const _constructorGuard$2 = {};
-let ModifiersBytes = { calldata: true, memory: true, storage: true };
-let ModifiersNest = { calldata: true, memory: true };
-function checkModifier(type, name) {
-    if (type === "bytes" || type === "string") {
-        if (ModifiersBytes[name]) {
-            return true;
-        }
-    }
-    else if (type === "address") {
-        if (name === "payable") {
-            return true;
-        }
-    }
-    else if (type.indexOf("[") >= 0 || type === "tuple") {
-        if (ModifiersNest[name]) {
-            return true;
-        }
-    }
-    if (ModifiersBytes[name] || name === "payable") {
-        logger$4.throwArgumentError("invalid modifier", "name", name);
-    }
-    return false;
-}
-// @TODO: Make sure that children of an indexed tuple are marked with a null indexed
-function parseParamType(param, allowIndexed) {
-    let originalParam = param;
-    function throwError(i) {
-        logger$4.throwArgumentError(`unexpected character at position ${i}`, "param", param);
-    }
-    param = param.replace(/\s/g, " ");
-    function newNode(parent) {
-        let node = { type: "", name: "", parent: parent, state: { allowType: true } };
-        if (allowIndexed) {
-            node.indexed = false;
-        }
-        return node;
-    }
-    let parent = { type: "", name: "", state: { allowType: true } };
-    let node = parent;
-    for (let i = 0; i < param.length; i++) {
-        let c = param[i];
-        switch (c) {
-            case "(":
-                if (node.state.allowType && node.type === "") {
-                    node.type = "tuple";
-                }
-                else if (!node.state.allowParams) {
-                    throwError(i);
-                }
-                node.state.allowType = false;
-                node.type = verifyType(node.type);
-                node.components = [newNode(node)];
-                node = node.components[0];
-                break;
-            case ")":
-                delete node.state;
-                if (node.name === "indexed") {
-                    if (!allowIndexed) {
-                        throwError(i);
-                    }
-                    node.indexed = true;
-                    node.name = "";
-                }
-                if (checkModifier(node.type, node.name)) {
-                    node.name = "";
-                }
-                node.type = verifyType(node.type);
-                let child = node;
-                node = node.parent;
-                if (!node) {
-                    throwError(i);
-                }
-                delete child.parent;
-                node.state.allowParams = false;
-                node.state.allowName = true;
-                node.state.allowArray = true;
-                break;
-            case ",":
-                delete node.state;
-                if (node.name === "indexed") {
-                    if (!allowIndexed) {
-                        throwError(i);
-                    }
-                    node.indexed = true;
-                    node.name = "";
-                }
-                if (checkModifier(node.type, node.name)) {
-                    node.name = "";
-                }
-                node.type = verifyType(node.type);
-                let sibling = newNode(node.parent);
-                //{ type: "", name: "", parent: node.parent, state: { allowType: true } };
-                node.parent.components.push(sibling);
-                delete node.parent;
-                node = sibling;
-                break;
-            // Hit a space...
-            case " ":
-                // If reading type, the type is done and may read a param or name
-                if (node.state.allowType) {
-                    if (node.type !== "") {
-                        node.type = verifyType(node.type);
-                        delete node.state.allowType;
-                        node.state.allowName = true;
-                        node.state.allowParams = true;
-                    }
-                }
-                // If reading name, the name is done
-                if (node.state.allowName) {
-                    if (node.name !== "") {
-                        if (node.name === "indexed") {
-                            if (!allowIndexed) {
-                                throwError(i);
-                            }
-                            if (node.indexed) {
-                                throwError(i);
-                            }
-                            node.indexed = true;
-                            node.name = "";
-                        }
-                        else if (checkModifier(node.type, node.name)) {
-                            node.name = "";
-                        }
-                        else {
-                            node.state.allowName = false;
-                        }
-                    }
-                }
-                break;
-            case "[":
-                if (!node.state.allowArray) {
-                    throwError(i);
-                }
-                node.type += c;
-                node.state.allowArray = false;
-                node.state.allowName = false;
-                node.state.readArray = true;
-                break;
-            case "]":
-                if (!node.state.readArray) {
-                    throwError(i);
-                }
-                node.type += c;
-                node.state.readArray = false;
-                node.state.allowArray = true;
-                node.state.allowName = true;
-                break;
-            default:
-                if (node.state.allowType) {
-                    node.type += c;
-                    node.state.allowParams = true;
-                    node.state.allowArray = true;
-                }
-                else if (node.state.allowName) {
-                    node.name += c;
-                    delete node.state.allowArray;
-                }
-                else if (node.state.readArray) {
-                    node.type += c;
-                }
-                else {
-                    throwError(i);
-                }
-        }
-    }
-    if (node.parent) {
-        logger$4.throwArgumentError("unexpected eof", "param", param);
-    }
-    delete parent.state;
-    if (node.name === "indexed") {
-        if (!allowIndexed) {
-            throwError(originalParam.length - 7);
-        }
-        if (node.indexed) {
-            throwError(originalParam.length - 7);
-        }
-        node.indexed = true;
-        node.name = "";
-    }
-    else if (checkModifier(node.type, node.name)) {
-        node.name = "";
-    }
-    parent.type = verifyType(parent.type);
-    return parent;
-}
-function populate(object, params) {
-    for (let key in params) {
-        defineReadOnly(object, key, params[key]);
-    }
-}
-const FormatTypes = Object.freeze({
-    // Bare formatting, as is needed for computing a sighash of an event or function
-    sighash: "sighash",
-    // Human-Readable with Minimal spacing and without names (compact human-readable)
-    minimal: "minimal",
-    // Human-Readable with nice spacing, including all names
-    full: "full",
-    // JSON-format a la Solidity
-    json: "json"
-});
-const paramTypeArray = new RegExp(/^(.*)\[([0-9]*)\]$/);
-class ParamType {
-    constructor(constructorGuard, params) {
-        if (constructorGuard !== _constructorGuard$2) {
-            logger$4.throwError("use fromString", Logger$2.errors.UNSUPPORTED_OPERATION, {
-                operation: "new ParamType()"
-            });
-        }
-        populate(this, params);
-        let match = this.type.match(paramTypeArray);
-        if (match) {
-            populate(this, {
-                arrayLength: parseInt(match[2] || "-1"),
-                arrayChildren: ParamType.fromObject({
-                    type: match[1],
-                    components: this.components
-                }),
-                baseType: "array"
-            });
-        }
-        else {
-            populate(this, {
-                arrayLength: null,
-                arrayChildren: null,
-                baseType: ((this.components != null) ? "tuple" : this.type)
-            });
-        }
-        this._isParamType = true;
-        Object.freeze(this);
-    }
-    // Format the parameter fragment
-    //   - sighash: "(uint256,address)"
-    //   - minimal: "tuple(uint256,address) indexed"
-    //   - full:    "tuple(uint256 foo, address bar) indexed baz"
-    format(format) {
-        if (!format) {
-            format = FormatTypes.sighash;
-        }
-        if (!FormatTypes[format]) {
-            logger$4.throwArgumentError("invalid format type", "format", format);
-        }
-        if (format === FormatTypes.json) {
-            let result = {
-                type: ((this.baseType === "tuple") ? "tuple" : this.type),
-                name: (this.name || undefined)
-            };
-            if (typeof (this.indexed) === "boolean") {
-                result.indexed = this.indexed;
-            }
-            if (this.components) {
-                result.components = this.components.map((comp) => JSON.parse(comp.format(format)));
-            }
-            return JSON.stringify(result);
-        }
-        let result = "";
-        // Array
-        if (this.baseType === "array") {
-            result += this.arrayChildren.format(format);
-            result += "[" + (this.arrayLength < 0 ? "" : String(this.arrayLength)) + "]";
-        }
-        else {
-            if (this.baseType === "tuple") {
-                if (format !== FormatTypes.sighash) {
-                    result += this.type;
-                }
-                result += "(" + this.components.map((comp) => comp.format(format)).join((format === FormatTypes.full) ? ", " : ",") + ")";
-            }
-            else {
-                result += this.type;
-            }
-        }
-        if (format !== FormatTypes.sighash) {
-            if (this.indexed === true) {
-                result += " indexed";
-            }
-            if (format === FormatTypes.full && this.name) {
-                result += " " + this.name;
-            }
-        }
-        return result;
-    }
-    static from(value, allowIndexed) {
-        if (typeof (value) === "string") {
-            return ParamType.fromString(value, allowIndexed);
-        }
-        return ParamType.fromObject(value);
-    }
-    static fromObject(value) {
-        if (ParamType.isParamType(value)) {
-            return value;
-        }
-        return new ParamType(_constructorGuard$2, {
-            name: (value.name || null),
-            type: verifyType(value.type),
-            indexed: ((value.indexed == null) ? null : !!value.indexed),
-            components: (value.components ? value.components.map(ParamType.fromObject) : null)
-        });
-    }
-    static fromString(value, allowIndexed) {
-        function ParamTypify(node) {
-            return ParamType.fromObject({
-                name: node.name,
-                type: node.type,
-                indexed: node.indexed,
-                components: node.components
-            });
-        }
-        return ParamTypify(parseParamType(value, !!allowIndexed));
-    }
-    static isParamType(value) {
-        return !!(value != null && value._isParamType);
-    }
-}
-;
-function parseParams(value, allowIndex) {
-    return splitNesting(value).map((param) => ParamType.fromString(param, allowIndex));
-}
-class Fragment {
-    constructor(constructorGuard, params) {
-        if (constructorGuard !== _constructorGuard$2) {
-            logger$4.throwError("use a static from method", Logger$2.errors.UNSUPPORTED_OPERATION, {
-                operation: "new Fragment()"
-            });
-        }
-        populate(this, params);
-        this._isFragment = true;
-        Object.freeze(this);
-    }
-    static from(value) {
-        if (Fragment.isFragment(value)) {
-            return value;
-        }
-        if (typeof (value) === "string") {
-            return Fragment.fromString(value);
-        }
-        return Fragment.fromObject(value);
-    }
-    static fromObject(value) {
-        if (Fragment.isFragment(value)) {
-            return value;
-        }
-        switch (value.type) {
-            case "function":
-                return FunctionFragment.fromObject(value);
-            case "event":
-                return EventFragment.fromObject(value);
-            case "constructor":
-                return ConstructorFragment.fromObject(value);
-            case "error":
-                return ErrorFragment.fromObject(value);
-            case "fallback":
-            case "receive":
-                // @TODO: Something? Maybe return a FunctionFragment? A custom DefaultFunctionFragment?
-                return null;
-        }
-        return logger$4.throwArgumentError("invalid fragment object", "value", value);
-    }
-    static fromString(value) {
-        // Make sure the "returns" is surrounded by a space and all whitespace is exactly one space
-        value = value.replace(/\s/g, " ");
-        value = value.replace(/\(/g, " (").replace(/\)/g, ") ").replace(/\s+/g, " ");
-        value = value.trim();
-        if (value.split(" ")[0] === "event") {
-            return EventFragment.fromString(value.substring(5).trim());
-        }
-        else if (value.split(" ")[0] === "function") {
-            return FunctionFragment.fromString(value.substring(8).trim());
-        }
-        else if (value.split("(")[0].trim() === "constructor") {
-            return ConstructorFragment.fromString(value.trim());
-        }
-        else if (value.split(" ")[0] === "error") {
-            return ErrorFragment.fromString(value.substring(5).trim());
-        }
-        return logger$4.throwArgumentError("unsupported fragment", "value", value);
-    }
-    static isFragment(value) {
-        return !!(value && value._isFragment);
-    }
-}
-class EventFragment extends Fragment {
-    format(format) {
-        if (!format) {
-            format = FormatTypes.sighash;
-        }
-        if (!FormatTypes[format]) {
-            logger$4.throwArgumentError("invalid format type", "format", format);
-        }
-        if (format === FormatTypes.json) {
-            return JSON.stringify({
-                type: "event",
-                anonymous: this.anonymous,
-                name: this.name,
-                inputs: this.inputs.map((input) => JSON.parse(input.format(format)))
-            });
-        }
-        let result = "";
-        if (format !== FormatTypes.sighash) {
-            result += "event ";
-        }
-        result += this.name + "(" + this.inputs.map((input) => input.format(format)).join((format === FormatTypes.full) ? ", " : ",") + ") ";
-        if (format !== FormatTypes.sighash) {
-            if (this.anonymous) {
-                result += "anonymous ";
-            }
-        }
-        return result.trim();
-    }
-    static from(value) {
-        if (typeof (value) === "string") {
-            return EventFragment.fromString(value);
-        }
-        return EventFragment.fromObject(value);
-    }
-    static fromObject(value) {
-        if (EventFragment.isEventFragment(value)) {
-            return value;
-        }
-        if (value.type !== "event") {
-            logger$4.throwArgumentError("invalid event object", "value", value);
-        }
-        const params = {
-            name: verifyIdentifier(value.name),
-            anonymous: value.anonymous,
-            inputs: (value.inputs ? value.inputs.map(ParamType.fromObject) : []),
-            type: "event"
-        };
-        return new EventFragment(_constructorGuard$2, params);
-    }
-    static fromString(value) {
-        let match = value.match(regexParen);
-        if (!match) {
-            logger$4.throwArgumentError("invalid event string", "value", value);
-        }
-        let anonymous = false;
-        match[3].split(" ").forEach((modifier) => {
-            switch (modifier.trim()) {
-                case "anonymous":
-                    anonymous = true;
-                    break;
-                case "":
-                    break;
-                default:
-                    logger$4.warn("unknown modifier: " + modifier);
-            }
-        });
-        return EventFragment.fromObject({
-            name: match[1].trim(),
-            anonymous: anonymous,
-            inputs: parseParams(match[2], true),
-            type: "event"
-        });
-    }
-    static isEventFragment(value) {
-        return (value && value._isFragment && value.type === "event");
-    }
-}
-function parseGas(value, params) {
-    params.gas = null;
-    let comps = value.split("@");
-    if (comps.length !== 1) {
-        if (comps.length > 2) {
-            logger$4.throwArgumentError("invalid human-readable ABI signature", "value", value);
-        }
-        if (!comps[1].match(/^[0-9]+$/)) {
-            logger$4.throwArgumentError("invalid human-readable ABI signature gas", "value", value);
-        }
-        params.gas = BigNumber.from(comps[1]);
-        return comps[0];
-    }
-    return value;
-}
-function parseModifiers(value, params) {
-    params.constant = false;
-    params.payable = false;
-    params.stateMutability = "nonpayable";
-    value.split(" ").forEach((modifier) => {
-        switch (modifier.trim()) {
-            case "constant":
-                params.constant = true;
-                break;
-            case "payable":
-                params.payable = true;
-                params.stateMutability = "payable";
-                break;
-            case "nonpayable":
-                params.payable = false;
-                params.stateMutability = "nonpayable";
-                break;
-            case "pure":
-                params.constant = true;
-                params.stateMutability = "pure";
-                break;
-            case "view":
-                params.constant = true;
-                params.stateMutability = "view";
-                break;
-            case "external":
-            case "public":
-            case "":
-                break;
-            default:
-                console.log("unknown modifier: " + modifier);
-        }
-    });
-}
-function verifyState(value) {
-    let result = {
-        constant: false,
-        payable: true,
-        stateMutability: "payable"
-    };
-    if (value.stateMutability != null) {
-        result.stateMutability = value.stateMutability;
-        // Set (and check things are consistent) the constant property
-        result.constant = (result.stateMutability === "view" || result.stateMutability === "pure");
-        if (value.constant != null) {
-            if ((!!value.constant) !== result.constant) {
-                logger$4.throwArgumentError("cannot have constant function with mutability " + result.stateMutability, "value", value);
-            }
-        }
-        // Set (and check things are consistent) the payable property
-        result.payable = (result.stateMutability === "payable");
-        if (value.payable != null) {
-            if ((!!value.payable) !== result.payable) {
-                logger$4.throwArgumentError("cannot have payable function with mutability " + result.stateMutability, "value", value);
-            }
-        }
-    }
-    else if (value.payable != null) {
-        result.payable = !!value.payable;
-        // If payable we can assume non-constant; otherwise we can't assume
-        if (value.constant == null && !result.payable && value.type !== "constructor") {
-            logger$4.throwArgumentError("unable to determine stateMutability", "value", value);
-        }
-        result.constant = !!value.constant;
-        if (result.constant) {
-            result.stateMutability = "view";
-        }
-        else {
-            result.stateMutability = (result.payable ? "payable" : "nonpayable");
-        }
-        if (result.payable && result.constant) {
-            logger$4.throwArgumentError("cannot have constant payable function", "value", value);
-        }
-    }
-    else if (value.constant != null) {
-        result.constant = !!value.constant;
-        result.payable = !result.constant;
-        result.stateMutability = (result.constant ? "view" : "payable");
-    }
-    else if (value.type !== "constructor") {
-        logger$4.throwArgumentError("unable to determine stateMutability", "value", value);
-    }
-    return result;
-}
-class ConstructorFragment extends Fragment {
-    format(format) {
-        if (!format) {
-            format = FormatTypes.sighash;
-        }
-        if (!FormatTypes[format]) {
-            logger$4.throwArgumentError("invalid format type", "format", format);
-        }
-        if (format === FormatTypes.json) {
-            return JSON.stringify({
-                type: "constructor",
-                stateMutability: ((this.stateMutability !== "nonpayable") ? this.stateMutability : undefined),
-                payable: this.payable,
-                gas: (this.gas ? this.gas.toNumber() : undefined),
-                inputs: this.inputs.map((input) => JSON.parse(input.format(format)))
-            });
-        }
-        if (format === FormatTypes.sighash) {
-            logger$4.throwError("cannot format a constructor for sighash", Logger$2.errors.UNSUPPORTED_OPERATION, {
-                operation: "format(sighash)"
-            });
-        }
-        let result = "constructor(" + this.inputs.map((input) => input.format(format)).join((format === FormatTypes.full) ? ", " : ",") + ") ";
-        if (this.stateMutability && this.stateMutability !== "nonpayable") {
-            result += this.stateMutability + " ";
-        }
-        return result.trim();
-    }
-    static from(value) {
-        if (typeof (value) === "string") {
-            return ConstructorFragment.fromString(value);
-        }
-        return ConstructorFragment.fromObject(value);
-    }
-    static fromObject(value) {
-        if (ConstructorFragment.isConstructorFragment(value)) {
-            return value;
-        }
-        if (value.type !== "constructor") {
-            logger$4.throwArgumentError("invalid constructor object", "value", value);
-        }
-        let state = verifyState(value);
-        if (state.constant) {
-            logger$4.throwArgumentError("constructor cannot be constant", "value", value);
-        }
-        const params = {
-            name: null,
-            type: value.type,
-            inputs: (value.inputs ? value.inputs.map(ParamType.fromObject) : []),
-            payable: state.payable,
-            stateMutability: state.stateMutability,
-            gas: (value.gas ? BigNumber.from(value.gas) : null)
-        };
-        return new ConstructorFragment(_constructorGuard$2, params);
-    }
-    static fromString(value) {
-        let params = { type: "constructor" };
-        value = parseGas(value, params);
-        let parens = value.match(regexParen);
-        if (!parens || parens[1].trim() !== "constructor") {
-            logger$4.throwArgumentError("invalid constructor string", "value", value);
-        }
-        params.inputs = parseParams(parens[2].trim(), false);
-        parseModifiers(parens[3].trim(), params);
-        return ConstructorFragment.fromObject(params);
-    }
-    static isConstructorFragment(value) {
-        return (value && value._isFragment && value.type === "constructor");
-    }
-}
-class FunctionFragment extends ConstructorFragment {
-    format(format) {
-        if (!format) {
-            format = FormatTypes.sighash;
-        }
-        if (!FormatTypes[format]) {
-            logger$4.throwArgumentError("invalid format type", "format", format);
-        }
-        if (format === FormatTypes.json) {
-            return JSON.stringify({
-                type: "function",
-                name: this.name,
-                constant: this.constant,
-                stateMutability: ((this.stateMutability !== "nonpayable") ? this.stateMutability : undefined),
-                payable: this.payable,
-                gas: (this.gas ? this.gas.toNumber() : undefined),
-                inputs: this.inputs.map((input) => JSON.parse(input.format(format))),
-                outputs: this.outputs.map((output) => JSON.parse(output.format(format))),
-            });
-        }
-        let result = "";
-        if (format !== FormatTypes.sighash) {
-            result += "function ";
-        }
-        result += this.name + "(" + this.inputs.map((input) => input.format(format)).join((format === FormatTypes.full) ? ", " : ",") + ") ";
-        if (format !== FormatTypes.sighash) {
-            if (this.stateMutability) {
-                if (this.stateMutability !== "nonpayable") {
-                    result += (this.stateMutability + " ");
-                }
-            }
-            else if (this.constant) {
-                result += "view ";
-            }
-            if (this.outputs && this.outputs.length) {
-                result += "returns (" + this.outputs.map((output) => output.format(format)).join(", ") + ") ";
-            }
-            if (this.gas != null) {
-                result += "@" + this.gas.toString() + " ";
-            }
-        }
-        return result.trim();
-    }
-    static from(value) {
-        if (typeof (value) === "string") {
-            return FunctionFragment.fromString(value);
-        }
-        return FunctionFragment.fromObject(value);
-    }
-    static fromObject(value) {
-        if (FunctionFragment.isFunctionFragment(value)) {
-            return value;
-        }
-        if (value.type !== "function") {
-            logger$4.throwArgumentError("invalid function object", "value", value);
-        }
-        let state = verifyState(value);
-        const params = {
-            type: value.type,
-            name: verifyIdentifier(value.name),
-            constant: state.constant,
-            inputs: (value.inputs ? value.inputs.map(ParamType.fromObject) : []),
-            outputs: (value.outputs ? value.outputs.map(ParamType.fromObject) : []),
-            payable: state.payable,
-            stateMutability: state.stateMutability,
-            gas: (value.gas ? BigNumber.from(value.gas) : null)
-        };
-        return new FunctionFragment(_constructorGuard$2, params);
-    }
-    static fromString(value) {
-        let params = { type: "function" };
-        value = parseGas(value, params);
-        let comps = value.split(" returns ");
-        if (comps.length > 2) {
-            logger$4.throwArgumentError("invalid function string", "value", value);
-        }
-        let parens = comps[0].match(regexParen);
-        if (!parens) {
-            logger$4.throwArgumentError("invalid function signature", "value", value);
-        }
-        params.name = parens[1].trim();
-        if (params.name) {
-            verifyIdentifier(params.name);
-        }
-        params.inputs = parseParams(parens[2], false);
-        parseModifiers(parens[3].trim(), params);
-        // We have outputs
-        if (comps.length > 1) {
-            let returns = comps[1].match(regexParen);
-            if (returns[1].trim() != "" || returns[3].trim() != "") {
-                logger$4.throwArgumentError("unexpected tokens", "value", value);
-            }
-            params.outputs = parseParams(returns[2], false);
-        }
-        else {
-            params.outputs = [];
-        }
-        return FunctionFragment.fromObject(params);
-    }
-    static isFunctionFragment(value) {
-        return (value && value._isFragment && value.type === "function");
-    }
-}
-//export class StructFragment extends Fragment {
-//}
-function checkForbidden(fragment) {
-    const sig = fragment.format();
-    if (sig === "Error(string)" || sig === "Panic(uint256)") {
-        logger$4.throwArgumentError(`cannot specify user defined ${sig} error`, "fragment", fragment);
-    }
-    return fragment;
-}
-class ErrorFragment extends Fragment {
-    format(format) {
-        if (!format) {
-            format = FormatTypes.sighash;
-        }
-        if (!FormatTypes[format]) {
-            logger$4.throwArgumentError("invalid format type", "format", format);
-        }
-        if (format === FormatTypes.json) {
-            return JSON.stringify({
-                type: "error",
-                name: this.name,
-                inputs: this.inputs.map((input) => JSON.parse(input.format(format))),
-            });
-        }
-        let result = "";
-        if (format !== FormatTypes.sighash) {
-            result += "error ";
-        }
-        result += this.name + "(" + this.inputs.map((input) => input.format(format)).join((format === FormatTypes.full) ? ", " : ",") + ") ";
-        return result.trim();
-    }
-    static from(value) {
-        if (typeof (value) === "string") {
-            return ErrorFragment.fromString(value);
-        }
-        return ErrorFragment.fromObject(value);
-    }
-    static fromObject(value) {
-        if (ErrorFragment.isErrorFragment(value)) {
-            return value;
-        }
-        if (value.type !== "error") {
-            logger$4.throwArgumentError("invalid error object", "value", value);
-        }
-        const params = {
-            type: value.type,
-            name: verifyIdentifier(value.name),
-            inputs: (value.inputs ? value.inputs.map(ParamType.fromObject) : [])
-        };
-        return checkForbidden(new ErrorFragment(_constructorGuard$2, params));
-    }
-    static fromString(value) {
-        let params = { type: "error" };
-        let parens = value.match(regexParen);
-        if (!parens) {
-            logger$4.throwArgumentError("invalid error signature", "value", value);
-        }
-        params.name = parens[1].trim();
-        if (params.name) {
-            verifyIdentifier(params.name);
-        }
-        params.inputs = parseParams(parens[2], false);
-        return checkForbidden(ErrorFragment.fromObject(params));
-    }
-    static isErrorFragment(value) {
-        return (value && value._isFragment && value.type === "error");
-    }
-}
-function verifyType(type) {
-    // These need to be transformed to their full description
-    if (type.match(/^uint($|[^1-9])/)) {
-        type = "uint256" + type.substring(4);
-    }
-    else if (type.match(/^int($|[^1-9])/)) {
-        type = "int256" + type.substring(3);
-    }
-    // @TODO: more verification
-    return type;
-}
-// See: https://github.com/ethereum/solidity/blob/1f8f1a3db93a548d0555e3e14cfc55a10e25b60e/docs/grammar/SolidityLexer.g4#L234
-const regexIdentifier = new RegExp("^[a-zA-Z$_][a-zA-Z0-9$_]*$");
-function verifyIdentifier(value) {
-    if (!value || !value.match(regexIdentifier)) {
-        logger$4.throwArgumentError(`invalid identifier "${value}"`, "value", value);
-    }
-    return value;
-}
-const regexParen = new RegExp("^([^)(]*)\\((.*)\\)([^)(]*)$");
-function splitNesting(value) {
-    value = value.trim();
-    let result = [];
-    let accum = "";
-    let depth = 0;
-    for (let offset = 0; offset < value.length; offset++) {
-        let c = value[offset];
-        if (c === "," && depth === 0) {
-            result.push(accum);
-            accum = "";
-        }
-        else {
-            accum += c;
-            if (c === "(") {
-                depth++;
-            }
-            else if (c === ")") {
-                depth--;
-                if (depth === -1) {
-                    logger$4.throwArgumentError("unbalanced parenthesis", "value", value);
-                }
-            }
-        }
-    }
-    if (accum) {
-        result.push(accum);
-    }
-    return result;
-}
-
-const version$7 = "logger/5.7.0";
+const version$6 = "logger/0.1.0";
 
 "use strict";
 let _permanentCensorErrors$3 = false;
@@ -7020,7 +6167,7 @@ class Logger$3 {
     }
     static globalLogger() {
         if (!_globalLogger$3) {
-            _globalLogger$3 = new Logger$3(version$7);
+            _globalLogger$3 = new Logger$3(version$6);
         }
         return _globalLogger$3;
     }
@@ -7056,10 +6203,1219 @@ class Logger$3 {
 Logger$3.errors = ErrorCode$3;
 Logger$3.levels = LogLevel$3;
 
-const version$8 = "bytes/0.1.0";
+const version$7 = "abi/0.1.0";
 
 "use strict";
-const logger$5 = new Logger$3(version$8);
+const logger$4 = new Logger$3(version$7);
+;
+const _constructorGuard$2 = {};
+let ModifiersBytes = { calldata: true, memory: true, storage: true };
+let ModifiersNest = { calldata: true, memory: true };
+function checkModifier(type, name) {
+    if (type === "bytes" || type === "string") {
+        if (ModifiersBytes[name]) {
+            return true;
+        }
+    }
+    else if (type === "address") {
+        if (name === "payable") {
+            return true;
+        }
+    }
+    else if (type.indexOf("[") >= 0 || type === "tuple") {
+        if (ModifiersNest[name]) {
+            return true;
+        }
+    }
+    if (ModifiersBytes[name] || name === "payable") {
+        logger$4.throwArgumentError("invalid modifier", "name", name);
+    }
+    return false;
+}
+// @TODO: Make sure that children of an indexed tuple are marked with a null indexed
+function parseParamType(param, allowIndexed) {
+    let originalParam = param;
+    function throwError(i) {
+        logger$4.throwArgumentError(`unexpected character at position ${i}`, "param", param);
+    }
+    param = param.replace(/\s/g, " ");
+    function newNode(parent) {
+        let node = { type: "", name: "", parent: parent, state: { allowType: true } };
+        if (allowIndexed) {
+            node.indexed = false;
+        }
+        return node;
+    }
+    let parent = { type: "", name: "", state: { allowType: true } };
+    let node = parent;
+    for (let i = 0; i < param.length; i++) {
+        let c = param[i];
+        switch (c) {
+            case "(":
+                if (node.state.allowType && node.type === "") {
+                    node.type = "tuple";
+                }
+                else if (!node.state.allowParams) {
+                    throwError(i);
+                }
+                node.state.allowType = false;
+                node.type = verifyType(node.type);
+                node.components = [newNode(node)];
+                node = node.components[0];
+                break;
+            case ")":
+                delete node.state;
+                if (node.name === "indexed") {
+                    if (!allowIndexed) {
+                        throwError(i);
+                    }
+                    node.indexed = true;
+                    node.name = "";
+                }
+                if (checkModifier(node.type, node.name)) {
+                    node.name = "";
+                }
+                node.type = verifyType(node.type);
+                let child = node;
+                node = node.parent;
+                if (!node) {
+                    throwError(i);
+                }
+                delete child.parent;
+                node.state.allowParams = false;
+                node.state.allowName = true;
+                node.state.allowArray = true;
+                break;
+            case ",":
+                delete node.state;
+                if (node.name === "indexed") {
+                    if (!allowIndexed) {
+                        throwError(i);
+                    }
+                    node.indexed = true;
+                    node.name = "";
+                }
+                if (checkModifier(node.type, node.name)) {
+                    node.name = "";
+                }
+                node.type = verifyType(node.type);
+                let sibling = newNode(node.parent);
+                //{ type: "", name: "", parent: node.parent, state: { allowType: true } };
+                node.parent.components.push(sibling);
+                delete node.parent;
+                node = sibling;
+                break;
+            // Hit a space...
+            case " ":
+                // If reading type, the type is done and may read a param or name
+                if (node.state.allowType) {
+                    if (node.type !== "") {
+                        node.type = verifyType(node.type);
+                        delete node.state.allowType;
+                        node.state.allowName = true;
+                        node.state.allowParams = true;
+                    }
+                }
+                // If reading name, the name is done
+                if (node.state.allowName) {
+                    if (node.name !== "") {
+                        if (node.name === "indexed") {
+                            if (!allowIndexed) {
+                                throwError(i);
+                            }
+                            if (node.indexed) {
+                                throwError(i);
+                            }
+                            node.indexed = true;
+                            node.name = "";
+                        }
+                        else if (checkModifier(node.type, node.name)) {
+                            node.name = "";
+                        }
+                        else {
+                            node.state.allowName = false;
+                        }
+                    }
+                }
+                break;
+            case "[":
+                if (!node.state.allowArray) {
+                    throwError(i);
+                }
+                node.type += c;
+                node.state.allowArray = false;
+                node.state.allowName = false;
+                node.state.readArray = true;
+                break;
+            case "]":
+                if (!node.state.readArray) {
+                    throwError(i);
+                }
+                node.type += c;
+                node.state.readArray = false;
+                node.state.allowArray = true;
+                node.state.allowName = true;
+                break;
+            default:
+                if (node.state.allowType) {
+                    node.type += c;
+                    node.state.allowParams = true;
+                    node.state.allowArray = true;
+                }
+                else if (node.state.allowName) {
+                    node.name += c;
+                    delete node.state.allowArray;
+                }
+                else if (node.state.readArray) {
+                    node.type += c;
+                }
+                else {
+                    throwError(i);
+                }
+        }
+    }
+    if (node.parent) {
+        logger$4.throwArgumentError("unexpected eof", "param", param);
+    }
+    delete parent.state;
+    if (node.name === "indexed") {
+        if (!allowIndexed) {
+            throwError(originalParam.length - 7);
+        }
+        if (node.indexed) {
+            throwError(originalParam.length - 7);
+        }
+        node.indexed = true;
+        node.name = "";
+    }
+    else if (checkModifier(node.type, node.name)) {
+        node.name = "";
+    }
+    parent.type = verifyType(parent.type);
+    return parent;
+}
+function populate(object, params) {
+    for (let key in params) {
+        defineReadOnly(object, key, params[key]);
+    }
+}
+const FormatTypes = Object.freeze({
+    // Bare formatting, as is needed for computing a sighash of an event or function
+    sighash: "sighash",
+    // Human-Readable with Minimal spacing and without names (compact human-readable)
+    minimal: "minimal",
+    // Human-Readable with nice spacing, including all names
+    full: "full",
+    // JSON-format a la Solidity
+    json: "json"
+});
+const paramTypeArray = new RegExp(/^(.*)\[([0-9]*)\]$/);
+class ParamType {
+    constructor(constructorGuard, params) {
+        if (constructorGuard !== _constructorGuard$2) {
+            logger$4.throwError("use fromString", Logger$3.errors.UNSUPPORTED_OPERATION, {
+                operation: "new ParamType()"
+            });
+        }
+        populate(this, params);
+        let match = this.type.match(paramTypeArray);
+        if (match) {
+            populate(this, {
+                arrayLength: parseInt(match[2] || "-1"),
+                arrayChildren: ParamType.fromObject({
+                    type: match[1],
+                    components: this.components
+                }),
+                baseType: "array"
+            });
+        }
+        else {
+            populate(this, {
+                arrayLength: null,
+                arrayChildren: null,
+                baseType: ((this.components != null) ? "tuple" : this.type)
+            });
+        }
+        this._isParamType = true;
+        Object.freeze(this);
+    }
+    // Format the parameter fragment
+    //   - sighash: "(uint256,address)"
+    //   - minimal: "tuple(uint256,address) indexed"
+    //   - full:    "tuple(uint256 foo, address bar) indexed baz"
+    format(format) {
+        if (!format) {
+            format = FormatTypes.sighash;
+        }
+        if (!FormatTypes[format]) {
+            logger$4.throwArgumentError("invalid format type", "format", format);
+        }
+        if (format === FormatTypes.json) {
+            let result = {
+                type: ((this.baseType === "tuple") ? "tuple" : this.type),
+                name: (this.name || undefined)
+            };
+            if (typeof (this.indexed) === "boolean") {
+                result.indexed = this.indexed;
+            }
+            if (this.components) {
+                result.components = this.components.map((comp) => JSON.parse(comp.format(format)));
+            }
+            return JSON.stringify(result);
+        }
+        let result = "";
+        // Array
+        if (this.baseType === "array") {
+            result += this.arrayChildren.format(format);
+            result += "[" + (this.arrayLength < 0 ? "" : String(this.arrayLength)) + "]";
+        }
+        else {
+            if (this.baseType === "tuple") {
+                if (format !== FormatTypes.sighash) {
+                    result += this.type;
+                }
+                result += "(" + this.components.map((comp) => comp.format(format)).join((format === FormatTypes.full) ? ", " : ",") + ")";
+            }
+            else {
+                result += this.type;
+            }
+        }
+        if (format !== FormatTypes.sighash) {
+            if (this.indexed === true) {
+                result += " indexed";
+            }
+            if (format === FormatTypes.full && this.name) {
+                result += " " + this.name;
+            }
+        }
+        return result;
+    }
+    static from(value, allowIndexed) {
+        if (typeof (value) === "string") {
+            return ParamType.fromString(value, allowIndexed);
+        }
+        return ParamType.fromObject(value);
+    }
+    static fromObject(value) {
+        if (ParamType.isParamType(value)) {
+            return value;
+        }
+        return new ParamType(_constructorGuard$2, {
+            name: (value.name || null),
+            type: verifyType(value.type),
+            indexed: ((value.indexed == null) ? null : !!value.indexed),
+            components: (value.components ? value.components.map(ParamType.fromObject) : null)
+        });
+    }
+    static fromString(value, allowIndexed) {
+        function ParamTypify(node) {
+            return ParamType.fromObject({
+                name: node.name,
+                type: node.type,
+                indexed: node.indexed,
+                components: node.components
+            });
+        }
+        return ParamTypify(parseParamType(value, !!allowIndexed));
+    }
+    static isParamType(value) {
+        return !!(value != null && value._isParamType);
+    }
+}
+;
+function parseParams(value, allowIndex) {
+    return splitNesting(value).map((param) => ParamType.fromString(param, allowIndex));
+}
+class Fragment {
+    constructor(constructorGuard, params) {
+        if (constructorGuard !== _constructorGuard$2) {
+            logger$4.throwError("use a static from method", Logger$3.errors.UNSUPPORTED_OPERATION, {
+                operation: "new Fragment()"
+            });
+        }
+        populate(this, params);
+        this._isFragment = true;
+        Object.freeze(this);
+    }
+    static from(value) {
+        if (Fragment.isFragment(value)) {
+            return value;
+        }
+        if (typeof (value) === "string") {
+            return Fragment.fromString(value);
+        }
+        return Fragment.fromObject(value);
+    }
+    static fromObject(value) {
+        if (Fragment.isFragment(value)) {
+            return value;
+        }
+        switch (value.type) {
+            case "function":
+                return FunctionFragment.fromObject(value);
+            case "event":
+                return EventFragment.fromObject(value);
+            case "constructor":
+                return ConstructorFragment.fromObject(value);
+            case "error":
+                return ErrorFragment.fromObject(value);
+            case "fallback":
+            case "receive":
+                // @TODO: Something? Maybe return a FunctionFragment? A custom DefaultFunctionFragment?
+                return null;
+        }
+        return logger$4.throwArgumentError("invalid fragment object", "value", value);
+    }
+    static fromString(value) {
+        // Make sure the "returns" is surrounded by a space and all whitespace is exactly one space
+        value = value.replace(/\s/g, " ");
+        value = value.replace(/\(/g, " (").replace(/\)/g, ") ").replace(/\s+/g, " ");
+        value = value.trim();
+        if (value.split(" ")[0] === "event") {
+            return EventFragment.fromString(value.substring(5).trim());
+        }
+        else if (value.split(" ")[0] === "function") {
+            return FunctionFragment.fromString(value.substring(8).trim());
+        }
+        else if (value.split("(")[0].trim() === "constructor") {
+            return ConstructorFragment.fromString(value.trim());
+        }
+        else if (value.split(" ")[0] === "error") {
+            return ErrorFragment.fromString(value.substring(5).trim());
+        }
+        return logger$4.throwArgumentError("unsupported fragment", "value", value);
+    }
+    static isFragment(value) {
+        return !!(value && value._isFragment);
+    }
+}
+class EventFragment extends Fragment {
+    format(format) {
+        if (!format) {
+            format = FormatTypes.sighash;
+        }
+        if (!FormatTypes[format]) {
+            logger$4.throwArgumentError("invalid format type", "format", format);
+        }
+        if (format === FormatTypes.json) {
+            return JSON.stringify({
+                type: "event",
+                anonymous: this.anonymous,
+                name: this.name,
+                inputs: this.inputs.map((input) => JSON.parse(input.format(format)))
+            });
+        }
+        let result = "";
+        if (format !== FormatTypes.sighash) {
+            result += "event ";
+        }
+        result += this.name + "(" + this.inputs.map((input) => input.format(format)).join((format === FormatTypes.full) ? ", " : ",") + ") ";
+        if (format !== FormatTypes.sighash) {
+            if (this.anonymous) {
+                result += "anonymous ";
+            }
+        }
+        return result.trim();
+    }
+    static from(value) {
+        if (typeof (value) === "string") {
+            return EventFragment.fromString(value);
+        }
+        return EventFragment.fromObject(value);
+    }
+    static fromObject(value) {
+        if (EventFragment.isEventFragment(value)) {
+            return value;
+        }
+        if (value.type !== "event") {
+            logger$4.throwArgumentError("invalid event object", "value", value);
+        }
+        const params = {
+            name: verifyIdentifier(value.name),
+            anonymous: value.anonymous,
+            inputs: (value.inputs ? value.inputs.map(ParamType.fromObject) : []),
+            type: "event"
+        };
+        return new EventFragment(_constructorGuard$2, params);
+    }
+    static fromString(value) {
+        let match = value.match(regexParen);
+        if (!match) {
+            logger$4.throwArgumentError("invalid event string", "value", value);
+        }
+        let anonymous = false;
+        match[3].split(" ").forEach((modifier) => {
+            switch (modifier.trim()) {
+                case "anonymous":
+                    anonymous = true;
+                    break;
+                case "":
+                    break;
+                default:
+                    logger$4.warn("unknown modifier: " + modifier);
+            }
+        });
+        return EventFragment.fromObject({
+            name: match[1].trim(),
+            anonymous: anonymous,
+            inputs: parseParams(match[2], true),
+            type: "event"
+        });
+    }
+    static isEventFragment(value) {
+        return (value && value._isFragment && value.type === "event");
+    }
+}
+function parseGas(value, params) {
+    params.gas = null;
+    let comps = value.split("@");
+    if (comps.length !== 1) {
+        if (comps.length > 2) {
+            logger$4.throwArgumentError("invalid human-readable ABI signature", "value", value);
+        }
+        if (!comps[1].match(/^[0-9]+$/)) {
+            logger$4.throwArgumentError("invalid human-readable ABI signature gas", "value", value);
+        }
+        params.gas = BigNumber.from(comps[1]);
+        return comps[0];
+    }
+    return value;
+}
+function parseModifiers(value, params) {
+    params.constant = false;
+    params.payable = false;
+    params.stateMutability = "nonpayable";
+    value.split(" ").forEach((modifier) => {
+        switch (modifier.trim()) {
+            case "constant":
+                params.constant = true;
+                break;
+            case "payable":
+                params.payable = true;
+                params.stateMutability = "payable";
+                break;
+            case "nonpayable":
+                params.payable = false;
+                params.stateMutability = "nonpayable";
+                break;
+            case "pure":
+                params.constant = true;
+                params.stateMutability = "pure";
+                break;
+            case "view":
+                params.constant = true;
+                params.stateMutability = "view";
+                break;
+            case "external":
+            case "public":
+            case "":
+                break;
+            default:
+                console.log("unknown modifier: " + modifier);
+        }
+    });
+}
+function verifyState(value) {
+    let result = {
+        constant: false,
+        payable: true,
+        stateMutability: "payable"
+    };
+    if (value.stateMutability != null) {
+        result.stateMutability = value.stateMutability;
+        // Set (and check things are consistent) the constant property
+        result.constant = (result.stateMutability === "view" || result.stateMutability === "pure");
+        if (value.constant != null) {
+            if ((!!value.constant) !== result.constant) {
+                logger$4.throwArgumentError("cannot have constant function with mutability " + result.stateMutability, "value", value);
+            }
+        }
+        // Set (and check things are consistent) the payable property
+        result.payable = (result.stateMutability === "payable");
+        if (value.payable != null) {
+            if ((!!value.payable) !== result.payable) {
+                logger$4.throwArgumentError("cannot have payable function with mutability " + result.stateMutability, "value", value);
+            }
+        }
+    }
+    else if (value.payable != null) {
+        result.payable = !!value.payable;
+        // If payable we can assume non-constant; otherwise we can't assume
+        if (value.constant == null && !result.payable && value.type !== "constructor") {
+            logger$4.throwArgumentError("unable to determine stateMutability", "value", value);
+        }
+        result.constant = !!value.constant;
+        if (result.constant) {
+            result.stateMutability = "view";
+        }
+        else {
+            result.stateMutability = (result.payable ? "payable" : "nonpayable");
+        }
+        if (result.payable && result.constant) {
+            logger$4.throwArgumentError("cannot have constant payable function", "value", value);
+        }
+    }
+    else if (value.constant != null) {
+        result.constant = !!value.constant;
+        result.payable = !result.constant;
+        result.stateMutability = (result.constant ? "view" : "payable");
+    }
+    else if (value.type !== "constructor") {
+        logger$4.throwArgumentError("unable to determine stateMutability", "value", value);
+    }
+    return result;
+}
+class ConstructorFragment extends Fragment {
+    format(format) {
+        if (!format) {
+            format = FormatTypes.sighash;
+        }
+        if (!FormatTypes[format]) {
+            logger$4.throwArgumentError("invalid format type", "format", format);
+        }
+        if (format === FormatTypes.json) {
+            return JSON.stringify({
+                type: "constructor",
+                stateMutability: ((this.stateMutability !== "nonpayable") ? this.stateMutability : undefined),
+                payable: this.payable,
+                gas: (this.gas ? this.gas.toNumber() : undefined),
+                inputs: this.inputs.map((input) => JSON.parse(input.format(format)))
+            });
+        }
+        if (format === FormatTypes.sighash) {
+            logger$4.throwError("cannot format a constructor for sighash", Logger$3.errors.UNSUPPORTED_OPERATION, {
+                operation: "format(sighash)"
+            });
+        }
+        let result = "constructor(" + this.inputs.map((input) => input.format(format)).join((format === FormatTypes.full) ? ", " : ",") + ") ";
+        if (this.stateMutability && this.stateMutability !== "nonpayable") {
+            result += this.stateMutability + " ";
+        }
+        return result.trim();
+    }
+    static from(value) {
+        if (typeof (value) === "string") {
+            return ConstructorFragment.fromString(value);
+        }
+        return ConstructorFragment.fromObject(value);
+    }
+    static fromObject(value) {
+        if (ConstructorFragment.isConstructorFragment(value)) {
+            return value;
+        }
+        if (value.type !== "constructor") {
+            logger$4.throwArgumentError("invalid constructor object", "value", value);
+        }
+        let state = verifyState(value);
+        if (state.constant) {
+            logger$4.throwArgumentError("constructor cannot be constant", "value", value);
+        }
+        const params = {
+            name: null,
+            type: value.type,
+            inputs: (value.inputs ? value.inputs.map(ParamType.fromObject) : []),
+            payable: state.payable,
+            stateMutability: state.stateMutability,
+            gas: (value.gas ? BigNumber.from(value.gas) : null)
+        };
+        return new ConstructorFragment(_constructorGuard$2, params);
+    }
+    static fromString(value) {
+        let params = { type: "constructor" };
+        value = parseGas(value, params);
+        let parens = value.match(regexParen);
+        if (!parens || parens[1].trim() !== "constructor") {
+            logger$4.throwArgumentError("invalid constructor string", "value", value);
+        }
+        params.inputs = parseParams(parens[2].trim(), false);
+        parseModifiers(parens[3].trim(), params);
+        return ConstructorFragment.fromObject(params);
+    }
+    static isConstructorFragment(value) {
+        return (value && value._isFragment && value.type === "constructor");
+    }
+}
+class FunctionFragment extends ConstructorFragment {
+    format(format) {
+        if (!format) {
+            format = FormatTypes.sighash;
+        }
+        if (!FormatTypes[format]) {
+            logger$4.throwArgumentError("invalid format type", "format", format);
+        }
+        if (format === FormatTypes.json) {
+            return JSON.stringify({
+                type: "function",
+                name: this.name,
+                constant: this.constant,
+                stateMutability: ((this.stateMutability !== "nonpayable") ? this.stateMutability : undefined),
+                payable: this.payable,
+                gas: (this.gas ? this.gas.toNumber() : undefined),
+                inputs: this.inputs.map((input) => JSON.parse(input.format(format))),
+                outputs: this.outputs.map((output) => JSON.parse(output.format(format))),
+            });
+        }
+        let result = "";
+        if (format !== FormatTypes.sighash) {
+            result += "function ";
+        }
+        result += this.name + "(" + this.inputs.map((input) => input.format(format)).join((format === FormatTypes.full) ? ", " : ",") + ") ";
+        if (format !== FormatTypes.sighash) {
+            if (this.stateMutability) {
+                if (this.stateMutability !== "nonpayable") {
+                    result += (this.stateMutability + " ");
+                }
+            }
+            else if (this.constant) {
+                result += "view ";
+            }
+            if (this.outputs && this.outputs.length) {
+                result += "returns (" + this.outputs.map((output) => output.format(format)).join(", ") + ") ";
+            }
+            if (this.gas != null) {
+                result += "@" + this.gas.toString() + " ";
+            }
+        }
+        return result.trim();
+    }
+    static from(value) {
+        if (typeof (value) === "string") {
+            return FunctionFragment.fromString(value);
+        }
+        return FunctionFragment.fromObject(value);
+    }
+    static fromObject(value) {
+        if (FunctionFragment.isFunctionFragment(value)) {
+            return value;
+        }
+        if (value.type !== "function") {
+            logger$4.throwArgumentError("invalid function object", "value", value);
+        }
+        let state = verifyState(value);
+        const params = {
+            type: value.type,
+            name: verifyIdentifier(value.name),
+            constant: state.constant,
+            inputs: (value.inputs ? value.inputs.map(ParamType.fromObject) : []),
+            outputs: (value.outputs ? value.outputs.map(ParamType.fromObject) : []),
+            payable: state.payable,
+            stateMutability: state.stateMutability,
+            gas: (value.gas ? BigNumber.from(value.gas) : null)
+        };
+        return new FunctionFragment(_constructorGuard$2, params);
+    }
+    static fromString(value) {
+        let params = { type: "function" };
+        value = parseGas(value, params);
+        let comps = value.split(" returns ");
+        if (comps.length > 2) {
+            logger$4.throwArgumentError("invalid function string", "value", value);
+        }
+        let parens = comps[0].match(regexParen);
+        if (!parens) {
+            logger$4.throwArgumentError("invalid function signature", "value", value);
+        }
+        params.name = parens[1].trim();
+        if (params.name) {
+            verifyIdentifier(params.name);
+        }
+        params.inputs = parseParams(parens[2], false);
+        parseModifiers(parens[3].trim(), params);
+        // We have outputs
+        if (comps.length > 1) {
+            let returns = comps[1].match(regexParen);
+            if (returns[1].trim() != "" || returns[3].trim() != "") {
+                logger$4.throwArgumentError("unexpected tokens", "value", value);
+            }
+            params.outputs = parseParams(returns[2], false);
+        }
+        else {
+            params.outputs = [];
+        }
+        return FunctionFragment.fromObject(params);
+    }
+    static isFunctionFragment(value) {
+        return (value && value._isFragment && value.type === "function");
+    }
+}
+//export class StructFragment extends Fragment {
+//}
+function checkForbidden(fragment) {
+    const sig = fragment.format();
+    if (sig === "Error(string)" || sig === "Panic(uint256)") {
+        logger$4.throwArgumentError(`cannot specify user defined ${sig} error`, "fragment", fragment);
+    }
+    return fragment;
+}
+class ErrorFragment extends Fragment {
+    format(format) {
+        if (!format) {
+            format = FormatTypes.sighash;
+        }
+        if (!FormatTypes[format]) {
+            logger$4.throwArgumentError("invalid format type", "format", format);
+        }
+        if (format === FormatTypes.json) {
+            return JSON.stringify({
+                type: "error",
+                name: this.name,
+                inputs: this.inputs.map((input) => JSON.parse(input.format(format))),
+            });
+        }
+        let result = "";
+        if (format !== FormatTypes.sighash) {
+            result += "error ";
+        }
+        result += this.name + "(" + this.inputs.map((input) => input.format(format)).join((format === FormatTypes.full) ? ", " : ",") + ") ";
+        return result.trim();
+    }
+    static from(value) {
+        if (typeof (value) === "string") {
+            return ErrorFragment.fromString(value);
+        }
+        return ErrorFragment.fromObject(value);
+    }
+    static fromObject(value) {
+        if (ErrorFragment.isErrorFragment(value)) {
+            return value;
+        }
+        if (value.type !== "error") {
+            logger$4.throwArgumentError("invalid error object", "value", value);
+        }
+        const params = {
+            type: value.type,
+            name: verifyIdentifier(value.name),
+            inputs: (value.inputs ? value.inputs.map(ParamType.fromObject) : [])
+        };
+        return checkForbidden(new ErrorFragment(_constructorGuard$2, params));
+    }
+    static fromString(value) {
+        let params = { type: "error" };
+        let parens = value.match(regexParen);
+        if (!parens) {
+            logger$4.throwArgumentError("invalid error signature", "value", value);
+        }
+        params.name = parens[1].trim();
+        if (params.name) {
+            verifyIdentifier(params.name);
+        }
+        params.inputs = parseParams(parens[2], false);
+        return checkForbidden(ErrorFragment.fromObject(params));
+    }
+    static isErrorFragment(value) {
+        return (value && value._isFragment && value.type === "error");
+    }
+}
+function verifyType(type) {
+    // These need to be transformed to their full description
+    if (type.match(/^uint($|[^1-9])/)) {
+        type = "uint256" + type.substring(4);
+    }
+    else if (type.match(/^int($|[^1-9])/)) {
+        type = "int256" + type.substring(3);
+    }
+    // @TODO: more verification
+    return type;
+}
+// See: https://github.com/ethereum/solidity/blob/1f8f1a3db93a548d0555e3e14cfc55a10e25b60e/docs/grammar/SolidityLexer.g4#L234
+const regexIdentifier = new RegExp("^[a-zA-Z$_][a-zA-Z0-9$_]*$");
+function verifyIdentifier(value) {
+    if (!value || !value.match(regexIdentifier)) {
+        logger$4.throwArgumentError(`invalid identifier "${value}"`, "value", value);
+    }
+    return value;
+}
+const regexParen = new RegExp("^([^)(]*)\\((.*)\\)([^)(]*)$");
+function splitNesting(value) {
+    value = value.trim();
+    let result = [];
+    let accum = "";
+    let depth = 0;
+    for (let offset = 0; offset < value.length; offset++) {
+        let c = value[offset];
+        if (c === "," && depth === 0) {
+            result.push(accum);
+            accum = "";
+        }
+        else {
+            accum += c;
+            if (c === "(") {
+                depth++;
+            }
+            else if (c === ")") {
+                depth--;
+                if (depth === -1) {
+                    logger$4.throwArgumentError("unbalanced parenthesis", "value", value);
+                }
+            }
+        }
+    }
+    if (accum) {
+        result.push(accum);
+    }
+    return result;
+}
+
+const version$8 = "logger/5.7.0";
+
+"use strict";
+let _permanentCensorErrors$4 = false;
+let _censorErrors$4 = false;
+const LogLevels$4 = { debug: 1, "default": 2, info: 2, warning: 3, error: 4, off: 5 };
+let _logLevel$4 = LogLevels$4["default"];
+let _globalLogger$4 = null;
+function _checkNormalize$4() {
+    try {
+        const missing = [];
+        // Make sure all forms of normalization are supported
+        ["NFD", "NFC", "NFKD", "NFKC"].forEach((form) => {
+            try {
+                if ("test".normalize(form) !== "test") {
+                    throw new Error("bad normalize");
+                }
+                ;
+            }
+            catch (error) {
+                missing.push(form);
+            }
+        });
+        if (missing.length) {
+            throw new Error("missing " + missing.join(", "));
+        }
+        if (String.fromCharCode(0xe9).normalize("NFD") !== String.fromCharCode(0x65, 0x0301)) {
+            throw new Error("broken implementation");
+        }
+    }
+    catch (error) {
+        return error.message;
+    }
+    return null;
+}
+const _normalizeError$4 = _checkNormalize$4();
+var LogLevel$4;
+(function (LogLevel) {
+    LogLevel["DEBUG"] = "DEBUG";
+    LogLevel["INFO"] = "INFO";
+    LogLevel["WARNING"] = "WARNING";
+    LogLevel["ERROR"] = "ERROR";
+    LogLevel["OFF"] = "OFF";
+})(LogLevel$4 || (LogLevel$4 = {}));
+var ErrorCode$4;
+(function (ErrorCode) {
+    ///////////////////
+    // Generic Errors
+    // Unknown Error
+    ErrorCode["UNKNOWN_ERROR"] = "UNKNOWN_ERROR";
+    // Not Implemented
+    ErrorCode["NOT_IMPLEMENTED"] = "NOT_IMPLEMENTED";
+    // Unsupported Operation
+    //   - operation
+    ErrorCode["UNSUPPORTED_OPERATION"] = "UNSUPPORTED_OPERATION";
+    // Network Error (i.e. Ethereum Network, such as an invalid chain ID)
+    //   - event ("noNetwork" is not re-thrown in provider.ready; otherwise thrown)
+    ErrorCode["NETWORK_ERROR"] = "NETWORK_ERROR";
+    // Some sort of bad response from the server
+    ErrorCode["SERVER_ERROR"] = "SERVER_ERROR";
+    // Timeout
+    ErrorCode["TIMEOUT"] = "TIMEOUT";
+    ///////////////////
+    // Operational  Errors
+    // Buffer Overrun
+    ErrorCode["BUFFER_OVERRUN"] = "BUFFER_OVERRUN";
+    // Numeric Fault
+    //   - operation: the operation being executed
+    //   - fault: the reason this faulted
+    ErrorCode["NUMERIC_FAULT"] = "NUMERIC_FAULT";
+    ///////////////////
+    // Argument Errors
+    // Missing new operator to an object
+    //  - name: The name of the class
+    ErrorCode["MISSING_NEW"] = "MISSING_NEW";
+    // Invalid argument (e.g. value is incompatible with type) to a function:
+    //   - argument: The argument name that was invalid
+    //   - value: The value of the argument
+    ErrorCode["INVALID_ARGUMENT"] = "INVALID_ARGUMENT";
+    // Missing argument to a function:
+    //   - count: The number of arguments received
+    //   - expectedCount: The number of arguments expected
+    ErrorCode["MISSING_ARGUMENT"] = "MISSING_ARGUMENT";
+    // Too many arguments
+    //   - count: The number of arguments received
+    //   - expectedCount: The number of arguments expected
+    ErrorCode["UNEXPECTED_ARGUMENT"] = "UNEXPECTED_ARGUMENT";
+    ///////////////////
+    // Blockchain Errors
+    // Call exception
+    //  - transaction: the transaction
+    //  - address?: the contract address
+    //  - args?: The arguments passed into the function
+    //  - method?: The Solidity method signature
+    //  - errorSignature?: The EIP848 error signature
+    //  - errorArgs?: The EIP848 error parameters
+    //  - reason: The reason (only for EIP848 "Error(string)")
+    ErrorCode["CALL_EXCEPTION"] = "CALL_EXCEPTION";
+    // Insufficient funds (< value + gasLimit * gasPrice)
+    //   - transaction: the transaction attempted
+    ErrorCode["INSUFFICIENT_FUNDS"] = "INSUFFICIENT_FUNDS";
+    // Nonce has already been used
+    //   - transaction: the transaction attempted
+    ErrorCode["NONCE_EXPIRED"] = "NONCE_EXPIRED";
+    // The replacement fee for the transaction is too low
+    //   - transaction: the transaction attempted
+    ErrorCode["REPLACEMENT_UNDERPRICED"] = "REPLACEMENT_UNDERPRICED";
+    // The gas limit could not be estimated
+    //   - transaction: the transaction passed to estimateGas
+    ErrorCode["UNPREDICTABLE_GAS_LIMIT"] = "UNPREDICTABLE_GAS_LIMIT";
+    // The transaction was replaced by one with a higher gas price
+    //   - reason: "cancelled", "replaced" or "repriced"
+    //   - cancelled: true if reason == "cancelled" or reason == "replaced")
+    //   - hash: original transaction hash
+    //   - replacement: the full TransactionsResponse for the replacement
+    //   - receipt: the receipt of the replacement
+    ErrorCode["TRANSACTION_REPLACED"] = "TRANSACTION_REPLACED";
+    ///////////////////
+    // Interaction Errors
+    // The user rejected the action, such as signing a message or sending
+    // a transaction
+    ErrorCode["ACTION_REJECTED"] = "ACTION_REJECTED";
+})(ErrorCode$4 || (ErrorCode$4 = {}));
+;
+const HEX$4 = "0123456789abcdef";
+class Logger$4 {
+    constructor(version) {
+        Object.defineProperty(this, "version", {
+            enumerable: true,
+            value: version,
+            writable: false
+        });
+    }
+    _log(logLevel, args) {
+        const level = logLevel.toLowerCase();
+        if (LogLevels$4[level] == null) {
+            this.throwArgumentError("invalid log level name", "logLevel", logLevel);
+        }
+        if (_logLevel$4 > LogLevels$4[level]) {
+            return;
+        }
+        console.log.apply(console, args);
+    }
+    debug(...args) {
+        this._log(Logger$4.levels.DEBUG, args);
+    }
+    info(...args) {
+        this._log(Logger$4.levels.INFO, args);
+    }
+    warn(...args) {
+        this._log(Logger$4.levels.WARNING, args);
+    }
+    makeError(message, code, params) {
+        // Errors are being censored
+        if (_censorErrors$4) {
+            return this.makeError("censored error", code, {});
+        }
+        if (!code) {
+            code = Logger$4.errors.UNKNOWN_ERROR;
+        }
+        if (!params) {
+            params = {};
+        }
+        const messageDetails = [];
+        Object.keys(params).forEach((key) => {
+            const value = params[key];
+            try {
+                if (value instanceof Uint8Array) {
+                    let hex = "";
+                    for (let i = 0; i < value.length; i++) {
+                        hex += HEX$4[value[i] >> 4];
+                        hex += HEX$4[value[i] & 0x0f];
+                    }
+                    messageDetails.push(key + "=Uint8Array(0x" + hex + ")");
+                }
+                else {
+                    messageDetails.push(key + "=" + JSON.stringify(value));
+                }
+            }
+            catch (error) {
+                messageDetails.push(key + "=" + JSON.stringify(params[key].toString()));
+            }
+        });
+        messageDetails.push(`code=${code}`);
+        messageDetails.push(`version=${this.version}`);
+        const reason = message;
+        let url = "";
+        switch (code) {
+            case ErrorCode$4.NUMERIC_FAULT: {
+                url = "NUMERIC_FAULT";
+                const fault = message;
+                switch (fault) {
+                    case "overflow":
+                    case "underflow":
+                    case "division-by-zero":
+                        url += "-" + fault;
+                        break;
+                    case "negative-power":
+                    case "negative-width":
+                        url += "-unsupported";
+                        break;
+                    case "unbound-bitwise-result":
+                        url += "-unbound-result";
+                        break;
+                }
+                break;
+            }
+            case ErrorCode$4.CALL_EXCEPTION:
+            case ErrorCode$4.INSUFFICIENT_FUNDS:
+            case ErrorCode$4.MISSING_NEW:
+            case ErrorCode$4.NONCE_EXPIRED:
+            case ErrorCode$4.REPLACEMENT_UNDERPRICED:
+            case ErrorCode$4.TRANSACTION_REPLACED:
+            case ErrorCode$4.UNPREDICTABLE_GAS_LIMIT:
+                url = code;
+                break;
+        }
+        if (url) {
+            message += " [ See: https:/\/links.quais.org/v5-errors-" + url + " ]";
+        }
+        if (messageDetails.length) {
+            message += " (" + messageDetails.join(", ") + ")";
+        }
+        // @TODO: Any??
+        const error = new Error(message);
+        error.reason = reason;
+        error.code = code;
+        Object.keys(params).forEach(function (key) {
+            error[key] = params[key];
+        });
+        return error;
+    }
+    throwError(message, code, params) {
+        throw this.makeError(message, code, params);
+    }
+    throwArgumentError(message, name, value) {
+        return this.throwError(message, Logger$4.errors.INVALID_ARGUMENT, {
+            argument: name,
+            value: value
+        });
+    }
+    assert(condition, message, code, params) {
+        if (!!condition) {
+            return;
+        }
+        this.throwError(message, code, params);
+    }
+    assertArgument(condition, message, name, value) {
+        if (!!condition) {
+            return;
+        }
+        this.throwArgumentError(message, name, value);
+    }
+    checkNormalize(message) {
+        if (message == null) {
+            message = "platform missing String.prototype.normalize";
+        }
+        if (_normalizeError$4) {
+            this.throwError("platform missing String.prototype.normalize", Logger$4.errors.UNSUPPORTED_OPERATION, {
+                operation: "String.prototype.normalize", form: _normalizeError$4
+            });
+        }
+    }
+    checkSafeUint53(value, message) {
+        if (typeof (value) !== "number") {
+            return;
+        }
+        if (message == null) {
+            message = "value not safe";
+        }
+        if (value < 0 || value >= 0x1fffffffffffff) {
+            this.throwError(message, Logger$4.errors.NUMERIC_FAULT, {
+                operation: "checkSafeInteger",
+                fault: "out-of-safe-range",
+                value: value
+            });
+        }
+        if (value % 1) {
+            this.throwError(message, Logger$4.errors.NUMERIC_FAULT, {
+                operation: "checkSafeInteger",
+                fault: "non-integer",
+                value: value
+            });
+        }
+    }
+    checkArgumentCount(count, expectedCount, message) {
+        if (message) {
+            message = ": " + message;
+        }
+        else {
+            message = "";
+        }
+        if (count < expectedCount) {
+            this.throwError("missing argument" + message, Logger$4.errors.MISSING_ARGUMENT, {
+                count: count,
+                expectedCount: expectedCount
+            });
+        }
+        if (count > expectedCount) {
+            this.throwError("too many arguments" + message, Logger$4.errors.UNEXPECTED_ARGUMENT, {
+                count: count,
+                expectedCount: expectedCount
+            });
+        }
+    }
+    checkNew(target, kind) {
+        if (target === Object || target == null) {
+            this.throwError("missing new", Logger$4.errors.MISSING_NEW, { name: kind.name });
+        }
+    }
+    checkAbstract(target, kind) {
+        if (target === kind) {
+            this.throwError("cannot instantiate abstract class " + JSON.stringify(kind.name) + " directly; use a sub-class", Logger$4.errors.UNSUPPORTED_OPERATION, { name: target.name, operation: "new" });
+        }
+        else if (target === Object || target == null) {
+            this.throwError("missing new", Logger$4.errors.MISSING_NEW, { name: kind.name });
+        }
+    }
+    static globalLogger() {
+        if (!_globalLogger$4) {
+            _globalLogger$4 = new Logger$4(version$8);
+        }
+        return _globalLogger$4;
+    }
+    static setCensorship(censorship, permanent) {
+        if (!censorship && permanent) {
+            this.globalLogger().throwError("cannot permanently disable censorship", Logger$4.errors.UNSUPPORTED_OPERATION, {
+                operation: "setCensorship"
+            });
+        }
+        if (_permanentCensorErrors$4) {
+            if (!censorship) {
+                return;
+            }
+            this.globalLogger().throwError("error censorship permanent", Logger$4.errors.UNSUPPORTED_OPERATION, {
+                operation: "setCensorship"
+            });
+        }
+        _censorErrors$4 = !!censorship;
+        _permanentCensorErrors$4 = !!permanent;
+    }
+    static setLogLevel(logLevel) {
+        const level = LogLevels$4[logLevel.toLowerCase()];
+        if (level == null) {
+            Logger$4.globalLogger().warn("invalid log level - " + logLevel);
+            return;
+        }
+        _logLevel$4 = level;
+    }
+    static from(version) {
+        return new Logger$4(version);
+    }
+}
+Logger$4.errors = ErrorCode$4;
+Logger$4.levels = LogLevel$4;
+
+const version$9 = "bytes/0.1.0";
+
+"use strict";
+const logger$5 = new Logger$4(version$9);
 ///////////////////////////////
 function isHexable$1(value) {
     return !!(value.toHexString);
@@ -7466,7 +7822,7 @@ function joinSignature$1(signature) {
 }
 
 "use strict";
-const logger$6 = new Logger$2(version$6);
+const logger$6 = new Logger$3(version$7);
 function checkResultErrors(result) {
     // Find the first error (if any)
     const errors = [];
@@ -7531,7 +7887,7 @@ class Writer {
     _getValue(value) {
         let bytes = arrayify$1(BigNumber.from(value));
         if (bytes.length > this.wordSize) {
-            logger$6.throwError("value out-of-bounds", Logger$2.errors.BUFFER_OVERRUN, {
+            logger$6.throwError("value out-of-bounds", Logger$3.errors.BUFFER_OVERRUN, {
                 length: this.wordSize,
                 offset: bytes.length
             });
@@ -7585,7 +7941,7 @@ class Reader {
                 alignedLength = length;
             }
             else {
-                logger$6.throwError("data out-of-bounds", Logger$2.errors.BUFFER_OVERRUN, {
+                logger$6.throwError("data out-of-bounds", Logger$3.errors.BUFFER_OVERRUN, {
                     length: this._data.length,
                     offset: this._offset + alignedLength
                 });
@@ -7607,15 +7963,15 @@ class Reader {
     }
 }
 
-const version$9 = "logger/5.7.0";
+const version$a = "logger/5.7.0";
 
 "use strict";
-let _permanentCensorErrors$4 = false;
-let _censorErrors$4 = false;
-const LogLevels$4 = { debug: 1, "default": 2, info: 2, warning: 3, error: 4, off: 5 };
-let _logLevel$4 = LogLevels$4["default"];
-let _globalLogger$4 = null;
-function _checkNormalize$4() {
+let _permanentCensorErrors$5 = false;
+let _censorErrors$5 = false;
+const LogLevels$5 = { debug: 1, "default": 2, info: 2, warning: 3, error: 4, off: 5 };
+let _logLevel$5 = LogLevels$5["default"];
+let _globalLogger$5 = null;
+function _checkNormalize$5() {
     try {
         const missing = [];
         // Make sure all forms of normalization are supported
@@ -7642,16 +7998,16 @@ function _checkNormalize$4() {
     }
     return null;
 }
-const _normalizeError$4 = _checkNormalize$4();
-var LogLevel$4;
+const _normalizeError$5 = _checkNormalize$5();
+var LogLevel$5;
 (function (LogLevel) {
     LogLevel["DEBUG"] = "DEBUG";
     LogLevel["INFO"] = "INFO";
     LogLevel["WARNING"] = "WARNING";
     LogLevel["ERROR"] = "ERROR";
     LogLevel["OFF"] = "OFF";
-})(LogLevel$4 || (LogLevel$4 = {}));
-var ErrorCode$4;
+})(LogLevel$5 || (LogLevel$5 = {}));
+var ErrorCode$5;
 (function (ErrorCode) {
     ///////////////////
     // Generic Errors
@@ -7729,10 +8085,10 @@ var ErrorCode$4;
     // The user rejected the action, such as signing a message or sending
     // a transaction
     ErrorCode["ACTION_REJECTED"] = "ACTION_REJECTED";
-})(ErrorCode$4 || (ErrorCode$4 = {}));
+})(ErrorCode$5 || (ErrorCode$5 = {}));
 ;
-const HEX$4 = "0123456789abcdef";
-class Logger$4 {
+const HEX$5 = "0123456789abcdef";
+class Logger$5 {
     constructor(version) {
         Object.defineProperty(this, "version", {
             enumerable: true,
@@ -7742,30 +8098,30 @@ class Logger$4 {
     }
     _log(logLevel, args) {
         const level = logLevel.toLowerCase();
-        if (LogLevels$4[level] == null) {
+        if (LogLevels$5[level] == null) {
             this.throwArgumentError("invalid log level name", "logLevel", logLevel);
         }
-        if (_logLevel$4 > LogLevels$4[level]) {
+        if (_logLevel$5 > LogLevels$5[level]) {
             return;
         }
         console.log.apply(console, args);
     }
     debug(...args) {
-        this._log(Logger$4.levels.DEBUG, args);
+        this._log(Logger$5.levels.DEBUG, args);
     }
     info(...args) {
-        this._log(Logger$4.levels.INFO, args);
+        this._log(Logger$5.levels.INFO, args);
     }
     warn(...args) {
-        this._log(Logger$4.levels.WARNING, args);
+        this._log(Logger$5.levels.WARNING, args);
     }
     makeError(message, code, params) {
         // Errors are being censored
-        if (_censorErrors$4) {
+        if (_censorErrors$5) {
             return this.makeError("censored error", code, {});
         }
         if (!code) {
-            code = Logger$4.errors.UNKNOWN_ERROR;
+            code = Logger$5.errors.UNKNOWN_ERROR;
         }
         if (!params) {
             params = {};
@@ -7777,8 +8133,8 @@ class Logger$4 {
                 if (value instanceof Uint8Array) {
                     let hex = "";
                     for (let i = 0; i < value.length; i++) {
-                        hex += HEX$4[value[i] >> 4];
-                        hex += HEX$4[value[i] & 0x0f];
+                        hex += HEX$5[value[i] >> 4];
+                        hex += HEX$5[value[i] & 0x0f];
                     }
                     messageDetails.push(key + "=Uint8Array(0x" + hex + ")");
                 }
@@ -7795,7 +8151,7 @@ class Logger$4 {
         const reason = message;
         let url = "";
         switch (code) {
-            case ErrorCode$4.NUMERIC_FAULT: {
+            case ErrorCode$5.NUMERIC_FAULT: {
                 url = "NUMERIC_FAULT";
                 const fault = message;
                 switch (fault) {
@@ -7814,13 +8170,13 @@ class Logger$4 {
                 }
                 break;
             }
-            case ErrorCode$4.CALL_EXCEPTION:
-            case ErrorCode$4.INSUFFICIENT_FUNDS:
-            case ErrorCode$4.MISSING_NEW:
-            case ErrorCode$4.NONCE_EXPIRED:
-            case ErrorCode$4.REPLACEMENT_UNDERPRICED:
-            case ErrorCode$4.TRANSACTION_REPLACED:
-            case ErrorCode$4.UNPREDICTABLE_GAS_LIMIT:
+            case ErrorCode$5.CALL_EXCEPTION:
+            case ErrorCode$5.INSUFFICIENT_FUNDS:
+            case ErrorCode$5.MISSING_NEW:
+            case ErrorCode$5.NONCE_EXPIRED:
+            case ErrorCode$5.REPLACEMENT_UNDERPRICED:
+            case ErrorCode$5.TRANSACTION_REPLACED:
+            case ErrorCode$5.UNPREDICTABLE_GAS_LIMIT:
                 url = code;
                 break;
         }
@@ -7843,7 +8199,7 @@ class Logger$4 {
         throw this.makeError(message, code, params);
     }
     throwArgumentError(message, name, value) {
-        return this.throwError(message, Logger$4.errors.INVALID_ARGUMENT, {
+        return this.throwError(message, Logger$5.errors.INVALID_ARGUMENT, {
             argument: name,
             value: value
         });
@@ -7864,9 +8220,9 @@ class Logger$4 {
         if (message == null) {
             message = "platform missing String.prototype.normalize";
         }
-        if (_normalizeError$4) {
-            this.throwError("platform missing String.prototype.normalize", Logger$4.errors.UNSUPPORTED_OPERATION, {
-                operation: "String.prototype.normalize", form: _normalizeError$4
+        if (_normalizeError$5) {
+            this.throwError("platform missing String.prototype.normalize", Logger$5.errors.UNSUPPORTED_OPERATION, {
+                operation: "String.prototype.normalize", form: _normalizeError$5
             });
         }
     }
@@ -7878,14 +8234,14 @@ class Logger$4 {
             message = "value not safe";
         }
         if (value < 0 || value >= 0x1fffffffffffff) {
-            this.throwError(message, Logger$4.errors.NUMERIC_FAULT, {
+            this.throwError(message, Logger$5.errors.NUMERIC_FAULT, {
                 operation: "checkSafeInteger",
                 fault: "out-of-safe-range",
                 value: value
             });
         }
         if (value % 1) {
-            this.throwError(message, Logger$4.errors.NUMERIC_FAULT, {
+            this.throwError(message, Logger$5.errors.NUMERIC_FAULT, {
                 operation: "checkSafeInteger",
                 fault: "non-integer",
                 value: value
@@ -7900,13 +8256,13 @@ class Logger$4 {
             message = "";
         }
         if (count < expectedCount) {
-            this.throwError("missing argument" + message, Logger$4.errors.MISSING_ARGUMENT, {
+            this.throwError("missing argument" + message, Logger$5.errors.MISSING_ARGUMENT, {
                 count: count,
                 expectedCount: expectedCount
             });
         }
         if (count > expectedCount) {
-            this.throwError("too many arguments" + message, Logger$4.errors.UNEXPECTED_ARGUMENT, {
+            this.throwError("too many arguments" + message, Logger$5.errors.UNEXPECTED_ARGUMENT, {
                 count: count,
                 expectedCount: expectedCount
             });
@@ -7914,59 +8270,59 @@ class Logger$4 {
     }
     checkNew(target, kind) {
         if (target === Object || target == null) {
-            this.throwError("missing new", Logger$4.errors.MISSING_NEW, { name: kind.name });
+            this.throwError("missing new", Logger$5.errors.MISSING_NEW, { name: kind.name });
         }
     }
     checkAbstract(target, kind) {
         if (target === kind) {
-            this.throwError("cannot instantiate abstract class " + JSON.stringify(kind.name) + " directly; use a sub-class", Logger$4.errors.UNSUPPORTED_OPERATION, { name: target.name, operation: "new" });
+            this.throwError("cannot instantiate abstract class " + JSON.stringify(kind.name) + " directly; use a sub-class", Logger$5.errors.UNSUPPORTED_OPERATION, { name: target.name, operation: "new" });
         }
         else if (target === Object || target == null) {
-            this.throwError("missing new", Logger$4.errors.MISSING_NEW, { name: kind.name });
+            this.throwError("missing new", Logger$5.errors.MISSING_NEW, { name: kind.name });
         }
     }
     static globalLogger() {
-        if (!_globalLogger$4) {
-            _globalLogger$4 = new Logger$4(version$9);
+        if (!_globalLogger$5) {
+            _globalLogger$5 = new Logger$5(version$a);
         }
-        return _globalLogger$4;
+        return _globalLogger$5;
     }
     static setCensorship(censorship, permanent) {
         if (!censorship && permanent) {
-            this.globalLogger().throwError("cannot permanently disable censorship", Logger$4.errors.UNSUPPORTED_OPERATION, {
+            this.globalLogger().throwError("cannot permanently disable censorship", Logger$5.errors.UNSUPPORTED_OPERATION, {
                 operation: "setCensorship"
             });
         }
-        if (_permanentCensorErrors$4) {
+        if (_permanentCensorErrors$5) {
             if (!censorship) {
                 return;
             }
-            this.globalLogger().throwError("error censorship permanent", Logger$4.errors.UNSUPPORTED_OPERATION, {
+            this.globalLogger().throwError("error censorship permanent", Logger$5.errors.UNSUPPORTED_OPERATION, {
                 operation: "setCensorship"
             });
         }
-        _censorErrors$4 = !!censorship;
-        _permanentCensorErrors$4 = !!permanent;
+        _censorErrors$5 = !!censorship;
+        _permanentCensorErrors$5 = !!permanent;
     }
     static setLogLevel(logLevel) {
-        const level = LogLevels$4[logLevel.toLowerCase()];
+        const level = LogLevels$5[logLevel.toLowerCase()];
         if (level == null) {
-            Logger$4.globalLogger().warn("invalid log level - " + logLevel);
+            Logger$5.globalLogger().warn("invalid log level - " + logLevel);
             return;
         }
-        _logLevel$4 = level;
+        _logLevel$5 = level;
     }
     static from(version) {
-        return new Logger$4(version);
+        return new Logger$5(version);
     }
 }
-Logger$4.errors = ErrorCode$4;
-Logger$4.levels = LogLevel$4;
+Logger$5.errors = ErrorCode$5;
+Logger$5.levels = LogLevel$5;
 
-const version$a = "bytes/5.7.0";
+const version$b = "bytes/5.7.0";
 
 "use strict";
-const logger$7 = new Logger$4(version$a);
+const logger$7 = new Logger$5(version$b);
 ///////////////////////////////
 function isHexable$2(value) {
     return !!(value.toHexString);
@@ -11922,15 +12278,15 @@ var bn$1 = createCommonjsModule(function (module) {
 })('object' === 'undefined' || module, commonjsGlobal);
 });
 
-const version$b = "logger/5.7.0";
+const version$c = "logger/5.7.0";
 
 "use strict";
-let _permanentCensorErrors$5 = false;
-let _censorErrors$5 = false;
-const LogLevels$5 = { debug: 1, "default": 2, info: 2, warning: 3, error: 4, off: 5 };
-let _logLevel$5 = LogLevels$5["default"];
-let _globalLogger$5 = null;
-function _checkNormalize$5() {
+let _permanentCensorErrors$6 = false;
+let _censorErrors$6 = false;
+const LogLevels$6 = { debug: 1, "default": 2, info: 2, warning: 3, error: 4, off: 5 };
+let _logLevel$6 = LogLevels$6["default"];
+let _globalLogger$6 = null;
+function _checkNormalize$6() {
     try {
         const missing = [];
         // Make sure all forms of normalization are supported
@@ -11957,16 +12313,16 @@ function _checkNormalize$5() {
     }
     return null;
 }
-const _normalizeError$5 = _checkNormalize$5();
-var LogLevel$5;
+const _normalizeError$6 = _checkNormalize$6();
+var LogLevel$6;
 (function (LogLevel) {
     LogLevel["DEBUG"] = "DEBUG";
     LogLevel["INFO"] = "INFO";
     LogLevel["WARNING"] = "WARNING";
     LogLevel["ERROR"] = "ERROR";
     LogLevel["OFF"] = "OFF";
-})(LogLevel$5 || (LogLevel$5 = {}));
-var ErrorCode$5;
+})(LogLevel$6 || (LogLevel$6 = {}));
+var ErrorCode$6;
 (function (ErrorCode) {
     ///////////////////
     // Generic Errors
@@ -12044,10 +12400,10 @@ var ErrorCode$5;
     // The user rejected the action, such as signing a message or sending
     // a transaction
     ErrorCode["ACTION_REJECTED"] = "ACTION_REJECTED";
-})(ErrorCode$5 || (ErrorCode$5 = {}));
+})(ErrorCode$6 || (ErrorCode$6 = {}));
 ;
-const HEX$5 = "0123456789abcdef";
-class Logger$5 {
+const HEX$6 = "0123456789abcdef";
+class Logger$6 {
     constructor(version) {
         Object.defineProperty(this, "version", {
             enumerable: true,
@@ -12057,30 +12413,30 @@ class Logger$5 {
     }
     _log(logLevel, args) {
         const level = logLevel.toLowerCase();
-        if (LogLevels$5[level] == null) {
+        if (LogLevels$6[level] == null) {
             this.throwArgumentError("invalid log level name", "logLevel", logLevel);
         }
-        if (_logLevel$5 > LogLevels$5[level]) {
+        if (_logLevel$6 > LogLevels$6[level]) {
             return;
         }
         console.log.apply(console, args);
     }
     debug(...args) {
-        this._log(Logger$5.levels.DEBUG, args);
+        this._log(Logger$6.levels.DEBUG, args);
     }
     info(...args) {
-        this._log(Logger$5.levels.INFO, args);
+        this._log(Logger$6.levels.INFO, args);
     }
     warn(...args) {
-        this._log(Logger$5.levels.WARNING, args);
+        this._log(Logger$6.levels.WARNING, args);
     }
     makeError(message, code, params) {
         // Errors are being censored
-        if (_censorErrors$5) {
+        if (_censorErrors$6) {
             return this.makeError("censored error", code, {});
         }
         if (!code) {
-            code = Logger$5.errors.UNKNOWN_ERROR;
+            code = Logger$6.errors.UNKNOWN_ERROR;
         }
         if (!params) {
             params = {};
@@ -12092,8 +12448,8 @@ class Logger$5 {
                 if (value instanceof Uint8Array) {
                     let hex = "";
                     for (let i = 0; i < value.length; i++) {
-                        hex += HEX$5[value[i] >> 4];
-                        hex += HEX$5[value[i] & 0x0f];
+                        hex += HEX$6[value[i] >> 4];
+                        hex += HEX$6[value[i] & 0x0f];
                     }
                     messageDetails.push(key + "=Uint8Array(0x" + hex + ")");
                 }
@@ -12110,7 +12466,7 @@ class Logger$5 {
         const reason = message;
         let url = "";
         switch (code) {
-            case ErrorCode$5.NUMERIC_FAULT: {
+            case ErrorCode$6.NUMERIC_FAULT: {
                 url = "NUMERIC_FAULT";
                 const fault = message;
                 switch (fault) {
@@ -12129,13 +12485,13 @@ class Logger$5 {
                 }
                 break;
             }
-            case ErrorCode$5.CALL_EXCEPTION:
-            case ErrorCode$5.INSUFFICIENT_FUNDS:
-            case ErrorCode$5.MISSING_NEW:
-            case ErrorCode$5.NONCE_EXPIRED:
-            case ErrorCode$5.REPLACEMENT_UNDERPRICED:
-            case ErrorCode$5.TRANSACTION_REPLACED:
-            case ErrorCode$5.UNPREDICTABLE_GAS_LIMIT:
+            case ErrorCode$6.CALL_EXCEPTION:
+            case ErrorCode$6.INSUFFICIENT_FUNDS:
+            case ErrorCode$6.MISSING_NEW:
+            case ErrorCode$6.NONCE_EXPIRED:
+            case ErrorCode$6.REPLACEMENT_UNDERPRICED:
+            case ErrorCode$6.TRANSACTION_REPLACED:
+            case ErrorCode$6.UNPREDICTABLE_GAS_LIMIT:
                 url = code;
                 break;
         }
@@ -12158,7 +12514,7 @@ class Logger$5 {
         throw this.makeError(message, code, params);
     }
     throwArgumentError(message, name, value) {
-        return this.throwError(message, Logger$5.errors.INVALID_ARGUMENT, {
+        return this.throwError(message, Logger$6.errors.INVALID_ARGUMENT, {
             argument: name,
             value: value
         });
@@ -12179,9 +12535,9 @@ class Logger$5 {
         if (message == null) {
             message = "platform missing String.prototype.normalize";
         }
-        if (_normalizeError$5) {
-            this.throwError("platform missing String.prototype.normalize", Logger$5.errors.UNSUPPORTED_OPERATION, {
-                operation: "String.prototype.normalize", form: _normalizeError$5
+        if (_normalizeError$6) {
+            this.throwError("platform missing String.prototype.normalize", Logger$6.errors.UNSUPPORTED_OPERATION, {
+                operation: "String.prototype.normalize", form: _normalizeError$6
             });
         }
     }
@@ -12193,14 +12549,14 @@ class Logger$5 {
             message = "value not safe";
         }
         if (value < 0 || value >= 0x1fffffffffffff) {
-            this.throwError(message, Logger$5.errors.NUMERIC_FAULT, {
+            this.throwError(message, Logger$6.errors.NUMERIC_FAULT, {
                 operation: "checkSafeInteger",
                 fault: "out-of-safe-range",
                 value: value
             });
         }
         if (value % 1) {
-            this.throwError(message, Logger$5.errors.NUMERIC_FAULT, {
+            this.throwError(message, Logger$6.errors.NUMERIC_FAULT, {
                 operation: "checkSafeInteger",
                 fault: "non-integer",
                 value: value
@@ -12215,13 +12571,13 @@ class Logger$5 {
             message = "";
         }
         if (count < expectedCount) {
-            this.throwError("missing argument" + message, Logger$5.errors.MISSING_ARGUMENT, {
+            this.throwError("missing argument" + message, Logger$6.errors.MISSING_ARGUMENT, {
                 count: count,
                 expectedCount: expectedCount
             });
         }
         if (count > expectedCount) {
-            this.throwError("too many arguments" + message, Logger$5.errors.UNEXPECTED_ARGUMENT, {
+            this.throwError("too many arguments" + message, Logger$6.errors.UNEXPECTED_ARGUMENT, {
                 count: count,
                 expectedCount: expectedCount
             });
@@ -12229,59 +12585,59 @@ class Logger$5 {
     }
     checkNew(target, kind) {
         if (target === Object || target == null) {
-            this.throwError("missing new", Logger$5.errors.MISSING_NEW, { name: kind.name });
+            this.throwError("missing new", Logger$6.errors.MISSING_NEW, { name: kind.name });
         }
     }
     checkAbstract(target, kind) {
         if (target === kind) {
-            this.throwError("cannot instantiate abstract class " + JSON.stringify(kind.name) + " directly; use a sub-class", Logger$5.errors.UNSUPPORTED_OPERATION, { name: target.name, operation: "new" });
+            this.throwError("cannot instantiate abstract class " + JSON.stringify(kind.name) + " directly; use a sub-class", Logger$6.errors.UNSUPPORTED_OPERATION, { name: target.name, operation: "new" });
         }
         else if (target === Object || target == null) {
-            this.throwError("missing new", Logger$5.errors.MISSING_NEW, { name: kind.name });
+            this.throwError("missing new", Logger$6.errors.MISSING_NEW, { name: kind.name });
         }
     }
     static globalLogger() {
-        if (!_globalLogger$5) {
-            _globalLogger$5 = new Logger$5(version$b);
+        if (!_globalLogger$6) {
+            _globalLogger$6 = new Logger$6(version$c);
         }
-        return _globalLogger$5;
+        return _globalLogger$6;
     }
     static setCensorship(censorship, permanent) {
         if (!censorship && permanent) {
-            this.globalLogger().throwError("cannot permanently disable censorship", Logger$5.errors.UNSUPPORTED_OPERATION, {
+            this.globalLogger().throwError("cannot permanently disable censorship", Logger$6.errors.UNSUPPORTED_OPERATION, {
                 operation: "setCensorship"
             });
         }
-        if (_permanentCensorErrors$5) {
+        if (_permanentCensorErrors$6) {
             if (!censorship) {
                 return;
             }
-            this.globalLogger().throwError("error censorship permanent", Logger$5.errors.UNSUPPORTED_OPERATION, {
+            this.globalLogger().throwError("error censorship permanent", Logger$6.errors.UNSUPPORTED_OPERATION, {
                 operation: "setCensorship"
             });
         }
-        _censorErrors$5 = !!censorship;
-        _permanentCensorErrors$5 = !!permanent;
+        _censorErrors$6 = !!censorship;
+        _permanentCensorErrors$6 = !!permanent;
     }
     static setLogLevel(logLevel) {
-        const level = LogLevels$5[logLevel.toLowerCase()];
+        const level = LogLevels$6[logLevel.toLowerCase()];
         if (level == null) {
-            Logger$5.globalLogger().warn("invalid log level - " + logLevel);
+            Logger$6.globalLogger().warn("invalid log level - " + logLevel);
             return;
         }
-        _logLevel$5 = level;
+        _logLevel$6 = level;
     }
     static from(version) {
-        return new Logger$5(version);
+        return new Logger$6(version);
     }
 }
-Logger$5.errors = ErrorCode$5;
-Logger$5.levels = LogLevel$5;
+Logger$6.errors = ErrorCode$6;
+Logger$6.levels = LogLevel$6;
 
-const version$c = "bytes/5.7.0";
+const version$d = "bytes/5.7.0";
 
 "use strict";
-const logger$8 = new Logger$5(version$c);
+const logger$8 = new Logger$6(version$d);
 ///////////////////////////////
 function isHexable$3(value) {
     return !!(value.toHexString);
@@ -12687,11 +13043,11 @@ function joinSignature$3(signature) {
     ]));
 }
 
-const version$d = "bignumber/5.7.0";
+const version$e = "bignumber/5.7.0";
 
 "use strict";
 var BN$1 = bn$1.BN;
-const logger$9 = new Logger$5(version$d);
+const logger$9 = new Logger$6(version$e);
 const _constructorGuard$3 = {};
 const MAX_SAFE$1 = 0x1fffffffffffff;
 function isBigNumberish$1(value) {
@@ -12707,7 +13063,7 @@ let _warnedToStringRadix$1 = false;
 class BigNumber$1 {
     constructor(constructorGuard, hex) {
         if (constructorGuard !== _constructorGuard$3) {
-            logger$9.throwError("cannot call constructor directly; use BigNumber.from", Logger$5.errors.UNSUPPORTED_OPERATION, {
+            logger$9.throwError("cannot call constructor directly; use BigNumber.from", Logger$6.errors.UNSUPPORTED_OPERATION, {
                 operation: "new (BigNumber)"
             });
         }
@@ -12831,7 +13187,7 @@ class BigNumber$1 {
             return BigInt(this.toString());
         }
         catch (e) { }
-        return logger$9.throwError("this platform does not support BigInt", Logger$5.errors.UNSUPPORTED_OPERATION, {
+        return logger$9.throwError("this platform does not support BigInt", Logger$6.errors.UNSUPPORTED_OPERATION, {
             value: this.toString()
         });
     }
@@ -12845,10 +13201,10 @@ class BigNumber$1 {
                 }
             }
             else if (arguments[0] === 16) {
-                logger$9.throwError("BigNumber.toString does not accept any parameters; use bigNumber.toHexString()", Logger$5.errors.UNEXPECTED_ARGUMENT, {});
+                logger$9.throwError("BigNumber.toString does not accept any parameters; use bigNumber.toHexString()", Logger$6.errors.UNEXPECTED_ARGUMENT, {});
             }
             else {
-                logger$9.throwError("BigNumber.toString does not accept parameters", Logger$5.errors.UNEXPECTED_ARGUMENT, {});
+                logger$9.throwError("BigNumber.toString does not accept parameters", Logger$6.errors.UNEXPECTED_ARGUMENT, {});
             }
         }
         return toBN$1(this).toString(10);
@@ -12972,7 +13328,7 @@ function throwFault$2(fault, operation, value) {
     if (value != null) {
         params.value = value;
     }
-    return logger$9.throwError(fault, Logger$5.errors.NUMERIC_FAULT, params);
+    return logger$9.throwError(fault, Logger$6.errors.NUMERIC_FAULT, params);
 }
 // value should have no prefix
 function _base36To16$1(value) {
@@ -12984,7 +13340,7 @@ function _base16To36$1(value) {
 }
 
 "use strict";
-const logger$a = new Logger$5(version$d);
+const logger$a = new Logger$6(version$e);
 const _constructorGuard$4 = {};
 const Zero$1 = BigNumber$1.from(0);
 const NegativeOne$1 = BigNumber$1.from(-1);
@@ -12993,7 +13349,7 @@ function throwFault$3(message, fault, operation, value) {
     if (value !== undefined) {
         params.value = value;
     }
-    return logger$a.throwError(message, Logger$5.errors.NUMERIC_FAULT, params);
+    return logger$a.throwError(message, Logger$6.errors.NUMERIC_FAULT, params);
 }
 // Constant to pull zeros from for multipliers
 let zeros$1 = "0";
@@ -13097,7 +13453,7 @@ function parseFixed$1(value, decimals) {
 class FixedFormat$1 {
     constructor(constructorGuard, signed, width, decimals) {
         if (constructorGuard !== _constructorGuard$4) {
-            logger$a.throwError("cannot use FixedFormat constructor; use FixedFormat.from", Logger$5.errors.UNSUPPORTED_OPERATION, {
+            logger$a.throwError("cannot use FixedFormat constructor; use FixedFormat.from", Logger$6.errors.UNSUPPORTED_OPERATION, {
                 operation: "new FixedFormat"
             });
         }
@@ -13161,7 +13517,7 @@ class FixedFormat$1 {
 class FixedNumber$1 {
     constructor(constructorGuard, hex, value, format) {
         if (constructorGuard !== _constructorGuard$4) {
-            logger$a.throwError("cannot use FixedNumber constructor; use FixedNumber.from", Logger$5.errors.UNSUPPORTED_OPERATION, {
+            logger$a.throwError("cannot use FixedNumber constructor; use FixedNumber.from", Logger$6.errors.UNSUPPORTED_OPERATION, {
                 operation: "new FixedFormat"
             });
         }
@@ -13327,7 +13683,7 @@ class FixedNumber$1 {
         }
         catch (error) {
             // Allow NUMERIC_FAULT to bubble up
-            if (error.code !== Logger$5.errors.INVALID_ARGUMENT) {
+            if (error.code !== Logger$6.errors.INVALID_ARGUMENT) {
                 throw error;
             }
         }
@@ -13999,15 +14355,15 @@ var sha3 = createCommonjsModule(function (module) {
 })();
 });
 
-const version$e = "logger/5.7.0";
+const version$f = "logger/5.7.0";
 
 "use strict";
-let _permanentCensorErrors$6 = false;
-let _censorErrors$6 = false;
-const LogLevels$6 = { debug: 1, "default": 2, info: 2, warning: 3, error: 4, off: 5 };
-let _logLevel$6 = LogLevels$6["default"];
-let _globalLogger$6 = null;
-function _checkNormalize$6() {
+let _permanentCensorErrors$7 = false;
+let _censorErrors$7 = false;
+const LogLevels$7 = { debug: 1, "default": 2, info: 2, warning: 3, error: 4, off: 5 };
+let _logLevel$7 = LogLevels$7["default"];
+let _globalLogger$7 = null;
+function _checkNormalize$7() {
     try {
         const missing = [];
         // Make sure all forms of normalization are supported
@@ -14034,16 +14390,16 @@ function _checkNormalize$6() {
     }
     return null;
 }
-const _normalizeError$6 = _checkNormalize$6();
-var LogLevel$6;
+const _normalizeError$7 = _checkNormalize$7();
+var LogLevel$7;
 (function (LogLevel) {
     LogLevel["DEBUG"] = "DEBUG";
     LogLevel["INFO"] = "INFO";
     LogLevel["WARNING"] = "WARNING";
     LogLevel["ERROR"] = "ERROR";
     LogLevel["OFF"] = "OFF";
-})(LogLevel$6 || (LogLevel$6 = {}));
-var ErrorCode$6;
+})(LogLevel$7 || (LogLevel$7 = {}));
+var ErrorCode$7;
 (function (ErrorCode) {
     ///////////////////
     // Generic Errors
@@ -14121,10 +14477,10 @@ var ErrorCode$6;
     // The user rejected the action, such as signing a message or sending
     // a transaction
     ErrorCode["ACTION_REJECTED"] = "ACTION_REJECTED";
-})(ErrorCode$6 || (ErrorCode$6 = {}));
+})(ErrorCode$7 || (ErrorCode$7 = {}));
 ;
-const HEX$6 = "0123456789abcdef";
-class Logger$6 {
+const HEX$7 = "0123456789abcdef";
+class Logger$7 {
     constructor(version) {
         Object.defineProperty(this, "version", {
             enumerable: true,
@@ -14134,30 +14490,30 @@ class Logger$6 {
     }
     _log(logLevel, args) {
         const level = logLevel.toLowerCase();
-        if (LogLevels$6[level] == null) {
+        if (LogLevels$7[level] == null) {
             this.throwArgumentError("invalid log level name", "logLevel", logLevel);
         }
-        if (_logLevel$6 > LogLevels$6[level]) {
+        if (_logLevel$7 > LogLevels$7[level]) {
             return;
         }
         console.log.apply(console, args);
     }
     debug(...args) {
-        this._log(Logger$6.levels.DEBUG, args);
+        this._log(Logger$7.levels.DEBUG, args);
     }
     info(...args) {
-        this._log(Logger$6.levels.INFO, args);
+        this._log(Logger$7.levels.INFO, args);
     }
     warn(...args) {
-        this._log(Logger$6.levels.WARNING, args);
+        this._log(Logger$7.levels.WARNING, args);
     }
     makeError(message, code, params) {
         // Errors are being censored
-        if (_censorErrors$6) {
+        if (_censorErrors$7) {
             return this.makeError("censored error", code, {});
         }
         if (!code) {
-            code = Logger$6.errors.UNKNOWN_ERROR;
+            code = Logger$7.errors.UNKNOWN_ERROR;
         }
         if (!params) {
             params = {};
@@ -14169,8 +14525,8 @@ class Logger$6 {
                 if (value instanceof Uint8Array) {
                     let hex = "";
                     for (let i = 0; i < value.length; i++) {
-                        hex += HEX$6[value[i] >> 4];
-                        hex += HEX$6[value[i] & 0x0f];
+                        hex += HEX$7[value[i] >> 4];
+                        hex += HEX$7[value[i] & 0x0f];
                     }
                     messageDetails.push(key + "=Uint8Array(0x" + hex + ")");
                 }
@@ -14187,7 +14543,7 @@ class Logger$6 {
         const reason = message;
         let url = "";
         switch (code) {
-            case ErrorCode$6.NUMERIC_FAULT: {
+            case ErrorCode$7.NUMERIC_FAULT: {
                 url = "NUMERIC_FAULT";
                 const fault = message;
                 switch (fault) {
@@ -14206,13 +14562,13 @@ class Logger$6 {
                 }
                 break;
             }
-            case ErrorCode$6.CALL_EXCEPTION:
-            case ErrorCode$6.INSUFFICIENT_FUNDS:
-            case ErrorCode$6.MISSING_NEW:
-            case ErrorCode$6.NONCE_EXPIRED:
-            case ErrorCode$6.REPLACEMENT_UNDERPRICED:
-            case ErrorCode$6.TRANSACTION_REPLACED:
-            case ErrorCode$6.UNPREDICTABLE_GAS_LIMIT:
+            case ErrorCode$7.CALL_EXCEPTION:
+            case ErrorCode$7.INSUFFICIENT_FUNDS:
+            case ErrorCode$7.MISSING_NEW:
+            case ErrorCode$7.NONCE_EXPIRED:
+            case ErrorCode$7.REPLACEMENT_UNDERPRICED:
+            case ErrorCode$7.TRANSACTION_REPLACED:
+            case ErrorCode$7.UNPREDICTABLE_GAS_LIMIT:
                 url = code;
                 break;
         }
@@ -14235,7 +14591,7 @@ class Logger$6 {
         throw this.makeError(message, code, params);
     }
     throwArgumentError(message, name, value) {
-        return this.throwError(message, Logger$6.errors.INVALID_ARGUMENT, {
+        return this.throwError(message, Logger$7.errors.INVALID_ARGUMENT, {
             argument: name,
             value: value
         });
@@ -14256,9 +14612,9 @@ class Logger$6 {
         if (message == null) {
             message = "platform missing String.prototype.normalize";
         }
-        if (_normalizeError$6) {
-            this.throwError("platform missing String.prototype.normalize", Logger$6.errors.UNSUPPORTED_OPERATION, {
-                operation: "String.prototype.normalize", form: _normalizeError$6
+        if (_normalizeError$7) {
+            this.throwError("platform missing String.prototype.normalize", Logger$7.errors.UNSUPPORTED_OPERATION, {
+                operation: "String.prototype.normalize", form: _normalizeError$7
             });
         }
     }
@@ -14270,14 +14626,14 @@ class Logger$6 {
             message = "value not safe";
         }
         if (value < 0 || value >= 0x1fffffffffffff) {
-            this.throwError(message, Logger$6.errors.NUMERIC_FAULT, {
+            this.throwError(message, Logger$7.errors.NUMERIC_FAULT, {
                 operation: "checkSafeInteger",
                 fault: "out-of-safe-range",
                 value: value
             });
         }
         if (value % 1) {
-            this.throwError(message, Logger$6.errors.NUMERIC_FAULT, {
+            this.throwError(message, Logger$7.errors.NUMERIC_FAULT, {
                 operation: "checkSafeInteger",
                 fault: "non-integer",
                 value: value
@@ -14292,13 +14648,13 @@ class Logger$6 {
             message = "";
         }
         if (count < expectedCount) {
-            this.throwError("missing argument" + message, Logger$6.errors.MISSING_ARGUMENT, {
+            this.throwError("missing argument" + message, Logger$7.errors.MISSING_ARGUMENT, {
                 count: count,
                 expectedCount: expectedCount
             });
         }
         if (count > expectedCount) {
-            this.throwError("too many arguments" + message, Logger$6.errors.UNEXPECTED_ARGUMENT, {
+            this.throwError("too many arguments" + message, Logger$7.errors.UNEXPECTED_ARGUMENT, {
                 count: count,
                 expectedCount: expectedCount
             });
@@ -14306,59 +14662,59 @@ class Logger$6 {
     }
     checkNew(target, kind) {
         if (target === Object || target == null) {
-            this.throwError("missing new", Logger$6.errors.MISSING_NEW, { name: kind.name });
+            this.throwError("missing new", Logger$7.errors.MISSING_NEW, { name: kind.name });
         }
     }
     checkAbstract(target, kind) {
         if (target === kind) {
-            this.throwError("cannot instantiate abstract class " + JSON.stringify(kind.name) + " directly; use a sub-class", Logger$6.errors.UNSUPPORTED_OPERATION, { name: target.name, operation: "new" });
+            this.throwError("cannot instantiate abstract class " + JSON.stringify(kind.name) + " directly; use a sub-class", Logger$7.errors.UNSUPPORTED_OPERATION, { name: target.name, operation: "new" });
         }
         else if (target === Object || target == null) {
-            this.throwError("missing new", Logger$6.errors.MISSING_NEW, { name: kind.name });
+            this.throwError("missing new", Logger$7.errors.MISSING_NEW, { name: kind.name });
         }
     }
     static globalLogger() {
-        if (!_globalLogger$6) {
-            _globalLogger$6 = new Logger$6(version$e);
+        if (!_globalLogger$7) {
+            _globalLogger$7 = new Logger$7(version$f);
         }
-        return _globalLogger$6;
+        return _globalLogger$7;
     }
     static setCensorship(censorship, permanent) {
         if (!censorship && permanent) {
-            this.globalLogger().throwError("cannot permanently disable censorship", Logger$6.errors.UNSUPPORTED_OPERATION, {
+            this.globalLogger().throwError("cannot permanently disable censorship", Logger$7.errors.UNSUPPORTED_OPERATION, {
                 operation: "setCensorship"
             });
         }
-        if (_permanentCensorErrors$6) {
+        if (_permanentCensorErrors$7) {
             if (!censorship) {
                 return;
             }
-            this.globalLogger().throwError("error censorship permanent", Logger$6.errors.UNSUPPORTED_OPERATION, {
+            this.globalLogger().throwError("error censorship permanent", Logger$7.errors.UNSUPPORTED_OPERATION, {
                 operation: "setCensorship"
             });
         }
-        _censorErrors$6 = !!censorship;
-        _permanentCensorErrors$6 = !!permanent;
+        _censorErrors$7 = !!censorship;
+        _permanentCensorErrors$7 = !!permanent;
     }
     static setLogLevel(logLevel) {
-        const level = LogLevels$6[logLevel.toLowerCase()];
+        const level = LogLevels$7[logLevel.toLowerCase()];
         if (level == null) {
-            Logger$6.globalLogger().warn("invalid log level - " + logLevel);
+            Logger$7.globalLogger().warn("invalid log level - " + logLevel);
             return;
         }
-        _logLevel$6 = level;
+        _logLevel$7 = level;
     }
     static from(version) {
-        return new Logger$6(version);
+        return new Logger$7(version);
     }
 }
-Logger$6.errors = ErrorCode$6;
-Logger$6.levels = LogLevel$6;
+Logger$7.errors = ErrorCode$7;
+Logger$7.levels = LogLevel$7;
 
-const version$f = "bytes/5.7.0";
+const version$g = "bytes/5.7.0";
 
 "use strict";
-const logger$b = new Logger$6(version$f);
+const logger$b = new Logger$7(version$g);
 ///////////////////////////////
 function isHexable$4(value) {
     return !!(value.toHexString);
@@ -14769,15 +15125,15 @@ function keccak256(data) {
     return '0x' + sha3.keccak_256(arrayify$4(data));
 }
 
-const version$g = "logger/5.7.0";
+const version$h = "logger/5.7.0";
 
 "use strict";
-let _permanentCensorErrors$7 = false;
-let _censorErrors$7 = false;
-const LogLevels$7 = { debug: 1, "default": 2, info: 2, warning: 3, error: 4, off: 5 };
-let _logLevel$7 = LogLevels$7["default"];
-let _globalLogger$7 = null;
-function _checkNormalize$7() {
+let _permanentCensorErrors$8 = false;
+let _censorErrors$8 = false;
+const LogLevels$8 = { debug: 1, "default": 2, info: 2, warning: 3, error: 4, off: 5 };
+let _logLevel$8 = LogLevels$8["default"];
+let _globalLogger$8 = null;
+function _checkNormalize$8() {
     try {
         const missing = [];
         // Make sure all forms of normalization are supported
@@ -14804,16 +15160,16 @@ function _checkNormalize$7() {
     }
     return null;
 }
-const _normalizeError$7 = _checkNormalize$7();
-var LogLevel$7;
+const _normalizeError$8 = _checkNormalize$8();
+var LogLevel$8;
 (function (LogLevel) {
     LogLevel["DEBUG"] = "DEBUG";
     LogLevel["INFO"] = "INFO";
     LogLevel["WARNING"] = "WARNING";
     LogLevel["ERROR"] = "ERROR";
     LogLevel["OFF"] = "OFF";
-})(LogLevel$7 || (LogLevel$7 = {}));
-var ErrorCode$7;
+})(LogLevel$8 || (LogLevel$8 = {}));
+var ErrorCode$8;
 (function (ErrorCode) {
     ///////////////////
     // Generic Errors
@@ -14891,10 +15247,10 @@ var ErrorCode$7;
     // The user rejected the action, such as signing a message or sending
     // a transaction
     ErrorCode["ACTION_REJECTED"] = "ACTION_REJECTED";
-})(ErrorCode$7 || (ErrorCode$7 = {}));
+})(ErrorCode$8 || (ErrorCode$8 = {}));
 ;
-const HEX$7 = "0123456789abcdef";
-class Logger$7 {
+const HEX$8 = "0123456789abcdef";
+class Logger$8 {
     constructor(version) {
         Object.defineProperty(this, "version", {
             enumerable: true,
@@ -14904,30 +15260,30 @@ class Logger$7 {
     }
     _log(logLevel, args) {
         const level = logLevel.toLowerCase();
-        if (LogLevels$7[level] == null) {
+        if (LogLevels$8[level] == null) {
             this.throwArgumentError("invalid log level name", "logLevel", logLevel);
         }
-        if (_logLevel$7 > LogLevels$7[level]) {
+        if (_logLevel$8 > LogLevels$8[level]) {
             return;
         }
         console.log.apply(console, args);
     }
     debug(...args) {
-        this._log(Logger$7.levels.DEBUG, args);
+        this._log(Logger$8.levels.DEBUG, args);
     }
     info(...args) {
-        this._log(Logger$7.levels.INFO, args);
+        this._log(Logger$8.levels.INFO, args);
     }
     warn(...args) {
-        this._log(Logger$7.levels.WARNING, args);
+        this._log(Logger$8.levels.WARNING, args);
     }
     makeError(message, code, params) {
         // Errors are being censored
-        if (_censorErrors$7) {
+        if (_censorErrors$8) {
             return this.makeError("censored error", code, {});
         }
         if (!code) {
-            code = Logger$7.errors.UNKNOWN_ERROR;
+            code = Logger$8.errors.UNKNOWN_ERROR;
         }
         if (!params) {
             params = {};
@@ -14939,8 +15295,8 @@ class Logger$7 {
                 if (value instanceof Uint8Array) {
                     let hex = "";
                     for (let i = 0; i < value.length; i++) {
-                        hex += HEX$7[value[i] >> 4];
-                        hex += HEX$7[value[i] & 0x0f];
+                        hex += HEX$8[value[i] >> 4];
+                        hex += HEX$8[value[i] & 0x0f];
                     }
                     messageDetails.push(key + "=Uint8Array(0x" + hex + ")");
                 }
@@ -14957,7 +15313,7 @@ class Logger$7 {
         const reason = message;
         let url = "";
         switch (code) {
-            case ErrorCode$7.NUMERIC_FAULT: {
+            case ErrorCode$8.NUMERIC_FAULT: {
                 url = "NUMERIC_FAULT";
                 const fault = message;
                 switch (fault) {
@@ -14976,13 +15332,13 @@ class Logger$7 {
                 }
                 break;
             }
-            case ErrorCode$7.CALL_EXCEPTION:
-            case ErrorCode$7.INSUFFICIENT_FUNDS:
-            case ErrorCode$7.MISSING_NEW:
-            case ErrorCode$7.NONCE_EXPIRED:
-            case ErrorCode$7.REPLACEMENT_UNDERPRICED:
-            case ErrorCode$7.TRANSACTION_REPLACED:
-            case ErrorCode$7.UNPREDICTABLE_GAS_LIMIT:
+            case ErrorCode$8.CALL_EXCEPTION:
+            case ErrorCode$8.INSUFFICIENT_FUNDS:
+            case ErrorCode$8.MISSING_NEW:
+            case ErrorCode$8.NONCE_EXPIRED:
+            case ErrorCode$8.REPLACEMENT_UNDERPRICED:
+            case ErrorCode$8.TRANSACTION_REPLACED:
+            case ErrorCode$8.UNPREDICTABLE_GAS_LIMIT:
                 url = code;
                 break;
         }
@@ -15005,7 +15361,7 @@ class Logger$7 {
         throw this.makeError(message, code, params);
     }
     throwArgumentError(message, name, value) {
-        return this.throwError(message, Logger$7.errors.INVALID_ARGUMENT, {
+        return this.throwError(message, Logger$8.errors.INVALID_ARGUMENT, {
             argument: name,
             value: value
         });
@@ -15026,9 +15382,9 @@ class Logger$7 {
         if (message == null) {
             message = "platform missing String.prototype.normalize";
         }
-        if (_normalizeError$7) {
-            this.throwError("platform missing String.prototype.normalize", Logger$7.errors.UNSUPPORTED_OPERATION, {
-                operation: "String.prototype.normalize", form: _normalizeError$7
+        if (_normalizeError$8) {
+            this.throwError("platform missing String.prototype.normalize", Logger$8.errors.UNSUPPORTED_OPERATION, {
+                operation: "String.prototype.normalize", form: _normalizeError$8
             });
         }
     }
@@ -15040,14 +15396,14 @@ class Logger$7 {
             message = "value not safe";
         }
         if (value < 0 || value >= 0x1fffffffffffff) {
-            this.throwError(message, Logger$7.errors.NUMERIC_FAULT, {
+            this.throwError(message, Logger$8.errors.NUMERIC_FAULT, {
                 operation: "checkSafeInteger",
                 fault: "out-of-safe-range",
                 value: value
             });
         }
         if (value % 1) {
-            this.throwError(message, Logger$7.errors.NUMERIC_FAULT, {
+            this.throwError(message, Logger$8.errors.NUMERIC_FAULT, {
                 operation: "checkSafeInteger",
                 fault: "non-integer",
                 value: value
@@ -15062,13 +15418,13 @@ class Logger$7 {
             message = "";
         }
         if (count < expectedCount) {
-            this.throwError("missing argument" + message, Logger$7.errors.MISSING_ARGUMENT, {
+            this.throwError("missing argument" + message, Logger$8.errors.MISSING_ARGUMENT, {
                 count: count,
                 expectedCount: expectedCount
             });
         }
         if (count > expectedCount) {
-            this.throwError("too many arguments" + message, Logger$7.errors.UNEXPECTED_ARGUMENT, {
+            this.throwError("too many arguments" + message, Logger$8.errors.UNEXPECTED_ARGUMENT, {
                 count: count,
                 expectedCount: expectedCount
             });
@@ -15076,59 +15432,59 @@ class Logger$7 {
     }
     checkNew(target, kind) {
         if (target === Object || target == null) {
-            this.throwError("missing new", Logger$7.errors.MISSING_NEW, { name: kind.name });
+            this.throwError("missing new", Logger$8.errors.MISSING_NEW, { name: kind.name });
         }
     }
     checkAbstract(target, kind) {
         if (target === kind) {
-            this.throwError("cannot instantiate abstract class " + JSON.stringify(kind.name) + " directly; use a sub-class", Logger$7.errors.UNSUPPORTED_OPERATION, { name: target.name, operation: "new" });
+            this.throwError("cannot instantiate abstract class " + JSON.stringify(kind.name) + " directly; use a sub-class", Logger$8.errors.UNSUPPORTED_OPERATION, { name: target.name, operation: "new" });
         }
         else if (target === Object || target == null) {
-            this.throwError("missing new", Logger$7.errors.MISSING_NEW, { name: kind.name });
+            this.throwError("missing new", Logger$8.errors.MISSING_NEW, { name: kind.name });
         }
     }
     static globalLogger() {
-        if (!_globalLogger$7) {
-            _globalLogger$7 = new Logger$7(version$g);
+        if (!_globalLogger$8) {
+            _globalLogger$8 = new Logger$8(version$h);
         }
-        return _globalLogger$7;
+        return _globalLogger$8;
     }
     static setCensorship(censorship, permanent) {
         if (!censorship && permanent) {
-            this.globalLogger().throwError("cannot permanently disable censorship", Logger$7.errors.UNSUPPORTED_OPERATION, {
+            this.globalLogger().throwError("cannot permanently disable censorship", Logger$8.errors.UNSUPPORTED_OPERATION, {
                 operation: "setCensorship"
             });
         }
-        if (_permanentCensorErrors$7) {
+        if (_permanentCensorErrors$8) {
             if (!censorship) {
                 return;
             }
-            this.globalLogger().throwError("error censorship permanent", Logger$7.errors.UNSUPPORTED_OPERATION, {
+            this.globalLogger().throwError("error censorship permanent", Logger$8.errors.UNSUPPORTED_OPERATION, {
                 operation: "setCensorship"
             });
         }
-        _censorErrors$7 = !!censorship;
-        _permanentCensorErrors$7 = !!permanent;
+        _censorErrors$8 = !!censorship;
+        _permanentCensorErrors$8 = !!permanent;
     }
     static setLogLevel(logLevel) {
-        const level = LogLevels$7[logLevel.toLowerCase()];
+        const level = LogLevels$8[logLevel.toLowerCase()];
         if (level == null) {
-            Logger$7.globalLogger().warn("invalid log level - " + logLevel);
+            Logger$8.globalLogger().warn("invalid log level - " + logLevel);
             return;
         }
-        _logLevel$7 = level;
+        _logLevel$8 = level;
     }
     static from(version) {
-        return new Logger$7(version);
+        return new Logger$8(version);
     }
 }
-Logger$7.errors = ErrorCode$7;
-Logger$7.levels = LogLevel$7;
+Logger$8.errors = ErrorCode$8;
+Logger$8.levels = LogLevel$8;
 
-const version$h = "bytes/5.7.0";
+const version$i = "bytes/5.7.0";
 
 "use strict";
-const logger$c = new Logger$7(version$h);
+const logger$c = new Logger$8(version$i);
 ///////////////////////////////
 function isHexable$5(value) {
     return !!(value.toHexString);
@@ -15534,10 +15890,10 @@ function joinSignature$5(signature) {
     ]));
 }
 
-const version$i = "rlp/5.7.0";
+const version$j = "rlp/5.7.0";
 
 "use strict";
-const logger$d = new Logger$7(version$i);
+const logger$d = new Logger$8(version$j);
 function arrayifyInteger(value) {
     const result = [];
     while (value) {
@@ -15592,7 +15948,7 @@ function _decodeChildren(data, offset, childOffset, length) {
         result.push(decoded.result);
         childOffset += decoded.consumed;
         if (childOffset > offset + 1 + length) {
-            logger$d.throwError("child data too short", Logger$7.errors.BUFFER_OVERRUN, {});
+            logger$d.throwError("child data too short", Logger$8.errors.BUFFER_OVERRUN, {});
         }
     }
     return { consumed: (1 + length), result: result };
@@ -15600,35 +15956,35 @@ function _decodeChildren(data, offset, childOffset, length) {
 // returns { consumed: number, result: Object }
 function _decode(data, offset) {
     if (data.length === 0) {
-        logger$d.throwError("data too short", Logger$7.errors.BUFFER_OVERRUN, {});
+        logger$d.throwError("data too short", Logger$8.errors.BUFFER_OVERRUN, {});
     }
     // Array with extra length prefix
     if (data[offset] >= 0xf8) {
         const lengthLength = data[offset] - 0xf7;
         if (offset + 1 + lengthLength > data.length) {
-            logger$d.throwError("data short segment too short", Logger$7.errors.BUFFER_OVERRUN, {});
+            logger$d.throwError("data short segment too short", Logger$8.errors.BUFFER_OVERRUN, {});
         }
         const length = unarrayifyInteger(data, offset + 1, lengthLength);
         if (offset + 1 + lengthLength + length > data.length) {
-            logger$d.throwError("data long segment too short", Logger$7.errors.BUFFER_OVERRUN, {});
+            logger$d.throwError("data long segment too short", Logger$8.errors.BUFFER_OVERRUN, {});
         }
         return _decodeChildren(data, offset, offset + 1 + lengthLength, lengthLength + length);
     }
     else if (data[offset] >= 0xc0) {
         const length = data[offset] - 0xc0;
         if (offset + 1 + length > data.length) {
-            logger$d.throwError("data array too short", Logger$7.errors.BUFFER_OVERRUN, {});
+            logger$d.throwError("data array too short", Logger$8.errors.BUFFER_OVERRUN, {});
         }
         return _decodeChildren(data, offset, offset + 1, length);
     }
     else if (data[offset] >= 0xb8) {
         const lengthLength = data[offset] - 0xb7;
         if (offset + 1 + lengthLength > data.length) {
-            logger$d.throwError("data array too short", Logger$7.errors.BUFFER_OVERRUN, {});
+            logger$d.throwError("data array too short", Logger$8.errors.BUFFER_OVERRUN, {});
         }
         const length = unarrayifyInteger(data, offset + 1, lengthLength);
         if (offset + 1 + lengthLength + length > data.length) {
-            logger$d.throwError("data array too short", Logger$7.errors.BUFFER_OVERRUN, {});
+            logger$d.throwError("data array too short", Logger$8.errors.BUFFER_OVERRUN, {});
         }
         const result = hexlify$5(data.slice(offset + 1 + lengthLength, offset + 1 + lengthLength + length));
         return { consumed: (1 + lengthLength + length), result: result };
@@ -15636,7 +15992,7 @@ function _decode(data, offset) {
     else if (data[offset] >= 0x80) {
         const length = data[offset] - 0x80;
         if (offset + 1 + length > data.length) {
-            logger$d.throwError("data too short", Logger$7.errors.BUFFER_OVERRUN, {});
+            logger$d.throwError("data too short", Logger$8.errors.BUFFER_OVERRUN, {});
         }
         const result = hexlify$5(data.slice(offset + 1, offset + 1 + length));
         return { consumed: (1 + length), result: result };
@@ -15652,15 +16008,15 @@ function decode(data) {
     return decoded.result;
 }
 
-const version$j = "logger/5.7.0";
+const version$k = "logger/5.7.0";
 
 "use strict";
-let _permanentCensorErrors$8 = false;
-let _censorErrors$8 = false;
-const LogLevels$8 = { debug: 1, "default": 2, info: 2, warning: 3, error: 4, off: 5 };
-let _logLevel$8 = LogLevels$8["default"];
-let _globalLogger$8 = null;
-function _checkNormalize$8() {
+let _permanentCensorErrors$9 = false;
+let _censorErrors$9 = false;
+const LogLevels$9 = { debug: 1, "default": 2, info: 2, warning: 3, error: 4, off: 5 };
+let _logLevel$9 = LogLevels$9["default"];
+let _globalLogger$9 = null;
+function _checkNormalize$9() {
     try {
         const missing = [];
         // Make sure all forms of normalization are supported
@@ -15687,16 +16043,16 @@ function _checkNormalize$8() {
     }
     return null;
 }
-const _normalizeError$8 = _checkNormalize$8();
-var LogLevel$8;
+const _normalizeError$9 = _checkNormalize$9();
+var LogLevel$9;
 (function (LogLevel) {
     LogLevel["DEBUG"] = "DEBUG";
     LogLevel["INFO"] = "INFO";
     LogLevel["WARNING"] = "WARNING";
     LogLevel["ERROR"] = "ERROR";
     LogLevel["OFF"] = "OFF";
-})(LogLevel$8 || (LogLevel$8 = {}));
-var ErrorCode$8;
+})(LogLevel$9 || (LogLevel$9 = {}));
+var ErrorCode$9;
 (function (ErrorCode) {
     ///////////////////
     // Generic Errors
@@ -15774,10 +16130,10 @@ var ErrorCode$8;
     // The user rejected the action, such as signing a message or sending
     // a transaction
     ErrorCode["ACTION_REJECTED"] = "ACTION_REJECTED";
-})(ErrorCode$8 || (ErrorCode$8 = {}));
+})(ErrorCode$9 || (ErrorCode$9 = {}));
 ;
-const HEX$8 = "0123456789abcdef";
-class Logger$8 {
+const HEX$9 = "0123456789abcdef";
+class Logger$9 {
     constructor(version) {
         Object.defineProperty(this, "version", {
             enumerable: true,
@@ -15787,30 +16143,30 @@ class Logger$8 {
     }
     _log(logLevel, args) {
         const level = logLevel.toLowerCase();
-        if (LogLevels$8[level] == null) {
+        if (LogLevels$9[level] == null) {
             this.throwArgumentError("invalid log level name", "logLevel", logLevel);
         }
-        if (_logLevel$8 > LogLevels$8[level]) {
+        if (_logLevel$9 > LogLevels$9[level]) {
             return;
         }
         console.log.apply(console, args);
     }
     debug(...args) {
-        this._log(Logger$8.levels.DEBUG, args);
+        this._log(Logger$9.levels.DEBUG, args);
     }
     info(...args) {
-        this._log(Logger$8.levels.INFO, args);
+        this._log(Logger$9.levels.INFO, args);
     }
     warn(...args) {
-        this._log(Logger$8.levels.WARNING, args);
+        this._log(Logger$9.levels.WARNING, args);
     }
     makeError(message, code, params) {
         // Errors are being censored
-        if (_censorErrors$8) {
+        if (_censorErrors$9) {
             return this.makeError("censored error", code, {});
         }
         if (!code) {
-            code = Logger$8.errors.UNKNOWN_ERROR;
+            code = Logger$9.errors.UNKNOWN_ERROR;
         }
         if (!params) {
             params = {};
@@ -15822,8 +16178,8 @@ class Logger$8 {
                 if (value instanceof Uint8Array) {
                     let hex = "";
                     for (let i = 0; i < value.length; i++) {
-                        hex += HEX$8[value[i] >> 4];
-                        hex += HEX$8[value[i] & 0x0f];
+                        hex += HEX$9[value[i] >> 4];
+                        hex += HEX$9[value[i] & 0x0f];
                     }
                     messageDetails.push(key + "=Uint8Array(0x" + hex + ")");
                 }
@@ -15840,7 +16196,7 @@ class Logger$8 {
         const reason = message;
         let url = "";
         switch (code) {
-            case ErrorCode$8.NUMERIC_FAULT: {
+            case ErrorCode$9.NUMERIC_FAULT: {
                 url = "NUMERIC_FAULT";
                 const fault = message;
                 switch (fault) {
@@ -15859,13 +16215,13 @@ class Logger$8 {
                 }
                 break;
             }
-            case ErrorCode$8.CALL_EXCEPTION:
-            case ErrorCode$8.INSUFFICIENT_FUNDS:
-            case ErrorCode$8.MISSING_NEW:
-            case ErrorCode$8.NONCE_EXPIRED:
-            case ErrorCode$8.REPLACEMENT_UNDERPRICED:
-            case ErrorCode$8.TRANSACTION_REPLACED:
-            case ErrorCode$8.UNPREDICTABLE_GAS_LIMIT:
+            case ErrorCode$9.CALL_EXCEPTION:
+            case ErrorCode$9.INSUFFICIENT_FUNDS:
+            case ErrorCode$9.MISSING_NEW:
+            case ErrorCode$9.NONCE_EXPIRED:
+            case ErrorCode$9.REPLACEMENT_UNDERPRICED:
+            case ErrorCode$9.TRANSACTION_REPLACED:
+            case ErrorCode$9.UNPREDICTABLE_GAS_LIMIT:
                 url = code;
                 break;
         }
@@ -15888,7 +16244,7 @@ class Logger$8 {
         throw this.makeError(message, code, params);
     }
     throwArgumentError(message, name, value) {
-        return this.throwError(message, Logger$8.errors.INVALID_ARGUMENT, {
+        return this.throwError(message, Logger$9.errors.INVALID_ARGUMENT, {
             argument: name,
             value: value
         });
@@ -15909,9 +16265,9 @@ class Logger$8 {
         if (message == null) {
             message = "platform missing String.prototype.normalize";
         }
-        if (_normalizeError$8) {
-            this.throwError("platform missing String.prototype.normalize", Logger$8.errors.UNSUPPORTED_OPERATION, {
-                operation: "String.prototype.normalize", form: _normalizeError$8
+        if (_normalizeError$9) {
+            this.throwError("platform missing String.prototype.normalize", Logger$9.errors.UNSUPPORTED_OPERATION, {
+                operation: "String.prototype.normalize", form: _normalizeError$9
             });
         }
     }
@@ -15923,14 +16279,14 @@ class Logger$8 {
             message = "value not safe";
         }
         if (value < 0 || value >= 0x1fffffffffffff) {
-            this.throwError(message, Logger$8.errors.NUMERIC_FAULT, {
+            this.throwError(message, Logger$9.errors.NUMERIC_FAULT, {
                 operation: "checkSafeInteger",
                 fault: "out-of-safe-range",
                 value: value
             });
         }
         if (value % 1) {
-            this.throwError(message, Logger$8.errors.NUMERIC_FAULT, {
+            this.throwError(message, Logger$9.errors.NUMERIC_FAULT, {
                 operation: "checkSafeInteger",
                 fault: "non-integer",
                 value: value
@@ -15945,13 +16301,13 @@ class Logger$8 {
             message = "";
         }
         if (count < expectedCount) {
-            this.throwError("missing argument" + message, Logger$8.errors.MISSING_ARGUMENT, {
+            this.throwError("missing argument" + message, Logger$9.errors.MISSING_ARGUMENT, {
                 count: count,
                 expectedCount: expectedCount
             });
         }
         if (count > expectedCount) {
-            this.throwError("too many arguments" + message, Logger$8.errors.UNEXPECTED_ARGUMENT, {
+            this.throwError("too many arguments" + message, Logger$9.errors.UNEXPECTED_ARGUMENT, {
                 count: count,
                 expectedCount: expectedCount
             });
@@ -15959,59 +16315,59 @@ class Logger$8 {
     }
     checkNew(target, kind) {
         if (target === Object || target == null) {
-            this.throwError("missing new", Logger$8.errors.MISSING_NEW, { name: kind.name });
+            this.throwError("missing new", Logger$9.errors.MISSING_NEW, { name: kind.name });
         }
     }
     checkAbstract(target, kind) {
         if (target === kind) {
-            this.throwError("cannot instantiate abstract class " + JSON.stringify(kind.name) + " directly; use a sub-class", Logger$8.errors.UNSUPPORTED_OPERATION, { name: target.name, operation: "new" });
+            this.throwError("cannot instantiate abstract class " + JSON.stringify(kind.name) + " directly; use a sub-class", Logger$9.errors.UNSUPPORTED_OPERATION, { name: target.name, operation: "new" });
         }
         else if (target === Object || target == null) {
-            this.throwError("missing new", Logger$8.errors.MISSING_NEW, { name: kind.name });
+            this.throwError("missing new", Logger$9.errors.MISSING_NEW, { name: kind.name });
         }
     }
     static globalLogger() {
-        if (!_globalLogger$8) {
-            _globalLogger$8 = new Logger$8(version$j);
+        if (!_globalLogger$9) {
+            _globalLogger$9 = new Logger$9(version$k);
         }
-        return _globalLogger$8;
+        return _globalLogger$9;
     }
     static setCensorship(censorship, permanent) {
         if (!censorship && permanent) {
-            this.globalLogger().throwError("cannot permanently disable censorship", Logger$8.errors.UNSUPPORTED_OPERATION, {
+            this.globalLogger().throwError("cannot permanently disable censorship", Logger$9.errors.UNSUPPORTED_OPERATION, {
                 operation: "setCensorship"
             });
         }
-        if (_permanentCensorErrors$8) {
+        if (_permanentCensorErrors$9) {
             if (!censorship) {
                 return;
             }
-            this.globalLogger().throwError("error censorship permanent", Logger$8.errors.UNSUPPORTED_OPERATION, {
+            this.globalLogger().throwError("error censorship permanent", Logger$9.errors.UNSUPPORTED_OPERATION, {
                 operation: "setCensorship"
             });
         }
-        _censorErrors$8 = !!censorship;
-        _permanentCensorErrors$8 = !!permanent;
+        _censorErrors$9 = !!censorship;
+        _permanentCensorErrors$9 = !!permanent;
     }
     static setLogLevel(logLevel) {
-        const level = LogLevels$8[logLevel.toLowerCase()];
+        const level = LogLevels$9[logLevel.toLowerCase()];
         if (level == null) {
-            Logger$8.globalLogger().warn("invalid log level - " + logLevel);
+            Logger$9.globalLogger().warn("invalid log level - " + logLevel);
             return;
         }
-        _logLevel$8 = level;
+        _logLevel$9 = level;
     }
     static from(version) {
-        return new Logger$8(version);
+        return new Logger$9(version);
     }
 }
-Logger$8.errors = ErrorCode$8;
-Logger$8.levels = LogLevel$8;
+Logger$9.errors = ErrorCode$9;
+Logger$9.levels = LogLevel$9;
 
-const version$k = "address/0.1.0";
+const version$l = "address/0.1.0";
 
 "use strict";
-const logger$e = new Logger$8(version$k);
+const logger$e = new Logger$9(version$l);
 function getChecksumAddress(address) {
     if (!isHexString$2(address, 20)) {
         logger$e.throwArgumentError("invalid address", "address", address);
@@ -16179,7 +16535,7 @@ class AnonymousCoder extends Coder {
 }
 
 "use strict";
-const logger$f = new Logger$2(version$6);
+const logger$f = new Logger$3(version$7);
 function pack(writer, coders, values) {
     let arrayValues = null;
     if (Array.isArray(values)) {
@@ -16190,14 +16546,14 @@ function pack(writer, coders, values) {
         arrayValues = coders.map((coder) => {
             const name = coder.localName;
             if (!name) {
-                logger$f.throwError("cannot encode object for signature with missing names", Logger$2.errors.INVALID_ARGUMENT, {
+                logger$f.throwError("cannot encode object for signature with missing names", Logger$3.errors.INVALID_ARGUMENT, {
                     argument: "values",
                     coder: coder,
                     value: values
                 });
             }
             if (unique[name]) {
-                logger$f.throwError("cannot encode object for signature with duplicate names", Logger$2.errors.INVALID_ARGUMENT, {
+                logger$f.throwError("cannot encode object for signature with duplicate names", Logger$3.errors.INVALID_ARGUMENT, {
                     argument: "values",
                     coder: coder,
                     value: values
@@ -16253,7 +16609,7 @@ function unpack(reader, coders) {
             }
             catch (error) {
                 // Cannot recover from this
-                if (error.code === Logger$2.errors.BUFFER_OVERRUN) {
+                if (error.code === Logger$3.errors.BUFFER_OVERRUN) {
                     throw error;
                 }
                 value = error;
@@ -16268,7 +16624,7 @@ function unpack(reader, coders) {
             }
             catch (error) {
                 // Cannot recover from this
-                if (error.code === Logger$2.errors.BUFFER_OVERRUN) {
+                if (error.code === Logger$3.errors.BUFFER_OVERRUN) {
                     throw error;
                 }
                 value = error;
@@ -16369,7 +16725,7 @@ class ArrayCoder extends Coder {
             // bytes as a link to the data). This could use a much
             // tighter bound, but we are erroring on the side of safety.
             if (count * 32 > reader._data.length) {
-                logger$f.throwError("insufficient data length", Logger$2.errors.BUFFER_OVERRUN, {
+                logger$f.throwError("insufficient data length", Logger$3.errors.BUFFER_OVERRUN, {
                     length: reader._data.length,
                     count: count
                 });
@@ -20021,15 +20377,15 @@ var bn$2 = createCommonjsModule(function (module) {
 })('object' === 'undefined' || module, commonjsGlobal);
 });
 
-const version$l = "logger/5.7.0";
+const version$m = "logger/5.7.0";
 
 "use strict";
-let _permanentCensorErrors$9 = false;
-let _censorErrors$9 = false;
-const LogLevels$9 = { debug: 1, "default": 2, info: 2, warning: 3, error: 4, off: 5 };
-let _logLevel$9 = LogLevels$9["default"];
-let _globalLogger$9 = null;
-function _checkNormalize$9() {
+let _permanentCensorErrors$a = false;
+let _censorErrors$a = false;
+const LogLevels$a = { debug: 1, "default": 2, info: 2, warning: 3, error: 4, off: 5 };
+let _logLevel$a = LogLevels$a["default"];
+let _globalLogger$a = null;
+function _checkNormalize$a() {
     try {
         const missing = [];
         // Make sure all forms of normalization are supported
@@ -20056,16 +20412,16 @@ function _checkNormalize$9() {
     }
     return null;
 }
-const _normalizeError$9 = _checkNormalize$9();
-var LogLevel$9;
+const _normalizeError$a = _checkNormalize$a();
+var LogLevel$a;
 (function (LogLevel) {
     LogLevel["DEBUG"] = "DEBUG";
     LogLevel["INFO"] = "INFO";
     LogLevel["WARNING"] = "WARNING";
     LogLevel["ERROR"] = "ERROR";
     LogLevel["OFF"] = "OFF";
-})(LogLevel$9 || (LogLevel$9 = {}));
-var ErrorCode$9;
+})(LogLevel$a || (LogLevel$a = {}));
+var ErrorCode$a;
 (function (ErrorCode) {
     ///////////////////
     // Generic Errors
@@ -20143,10 +20499,10 @@ var ErrorCode$9;
     // The user rejected the action, such as signing a message or sending
     // a transaction
     ErrorCode["ACTION_REJECTED"] = "ACTION_REJECTED";
-})(ErrorCode$9 || (ErrorCode$9 = {}));
+})(ErrorCode$a || (ErrorCode$a = {}));
 ;
-const HEX$9 = "0123456789abcdef";
-class Logger$9 {
+const HEX$a = "0123456789abcdef";
+class Logger$a {
     constructor(version) {
         Object.defineProperty(this, "version", {
             enumerable: true,
@@ -20156,30 +20512,30 @@ class Logger$9 {
     }
     _log(logLevel, args) {
         const level = logLevel.toLowerCase();
-        if (LogLevels$9[level] == null) {
+        if (LogLevels$a[level] == null) {
             this.throwArgumentError("invalid log level name", "logLevel", logLevel);
         }
-        if (_logLevel$9 > LogLevels$9[level]) {
+        if (_logLevel$a > LogLevels$a[level]) {
             return;
         }
         console.log.apply(console, args);
     }
     debug(...args) {
-        this._log(Logger$9.levels.DEBUG, args);
+        this._log(Logger$a.levels.DEBUG, args);
     }
     info(...args) {
-        this._log(Logger$9.levels.INFO, args);
+        this._log(Logger$a.levels.INFO, args);
     }
     warn(...args) {
-        this._log(Logger$9.levels.WARNING, args);
+        this._log(Logger$a.levels.WARNING, args);
     }
     makeError(message, code, params) {
         // Errors are being censored
-        if (_censorErrors$9) {
+        if (_censorErrors$a) {
             return this.makeError("censored error", code, {});
         }
         if (!code) {
-            code = Logger$9.errors.UNKNOWN_ERROR;
+            code = Logger$a.errors.UNKNOWN_ERROR;
         }
         if (!params) {
             params = {};
@@ -20191,8 +20547,8 @@ class Logger$9 {
                 if (value instanceof Uint8Array) {
                     let hex = "";
                     for (let i = 0; i < value.length; i++) {
-                        hex += HEX$9[value[i] >> 4];
-                        hex += HEX$9[value[i] & 0x0f];
+                        hex += HEX$a[value[i] >> 4];
+                        hex += HEX$a[value[i] & 0x0f];
                     }
                     messageDetails.push(key + "=Uint8Array(0x" + hex + ")");
                 }
@@ -20209,7 +20565,7 @@ class Logger$9 {
         const reason = message;
         let url = "";
         switch (code) {
-            case ErrorCode$9.NUMERIC_FAULT: {
+            case ErrorCode$a.NUMERIC_FAULT: {
                 url = "NUMERIC_FAULT";
                 const fault = message;
                 switch (fault) {
@@ -20228,13 +20584,13 @@ class Logger$9 {
                 }
                 break;
             }
-            case ErrorCode$9.CALL_EXCEPTION:
-            case ErrorCode$9.INSUFFICIENT_FUNDS:
-            case ErrorCode$9.MISSING_NEW:
-            case ErrorCode$9.NONCE_EXPIRED:
-            case ErrorCode$9.REPLACEMENT_UNDERPRICED:
-            case ErrorCode$9.TRANSACTION_REPLACED:
-            case ErrorCode$9.UNPREDICTABLE_GAS_LIMIT:
+            case ErrorCode$a.CALL_EXCEPTION:
+            case ErrorCode$a.INSUFFICIENT_FUNDS:
+            case ErrorCode$a.MISSING_NEW:
+            case ErrorCode$a.NONCE_EXPIRED:
+            case ErrorCode$a.REPLACEMENT_UNDERPRICED:
+            case ErrorCode$a.TRANSACTION_REPLACED:
+            case ErrorCode$a.UNPREDICTABLE_GAS_LIMIT:
                 url = code;
                 break;
         }
@@ -20257,7 +20613,7 @@ class Logger$9 {
         throw this.makeError(message, code, params);
     }
     throwArgumentError(message, name, value) {
-        return this.throwError(message, Logger$9.errors.INVALID_ARGUMENT, {
+        return this.throwError(message, Logger$a.errors.INVALID_ARGUMENT, {
             argument: name,
             value: value
         });
@@ -20278,9 +20634,9 @@ class Logger$9 {
         if (message == null) {
             message = "platform missing String.prototype.normalize";
         }
-        if (_normalizeError$9) {
-            this.throwError("platform missing String.prototype.normalize", Logger$9.errors.UNSUPPORTED_OPERATION, {
-                operation: "String.prototype.normalize", form: _normalizeError$9
+        if (_normalizeError$a) {
+            this.throwError("platform missing String.prototype.normalize", Logger$a.errors.UNSUPPORTED_OPERATION, {
+                operation: "String.prototype.normalize", form: _normalizeError$a
             });
         }
     }
@@ -20292,14 +20648,14 @@ class Logger$9 {
             message = "value not safe";
         }
         if (value < 0 || value >= 0x1fffffffffffff) {
-            this.throwError(message, Logger$9.errors.NUMERIC_FAULT, {
+            this.throwError(message, Logger$a.errors.NUMERIC_FAULT, {
                 operation: "checkSafeInteger",
                 fault: "out-of-safe-range",
                 value: value
             });
         }
         if (value % 1) {
-            this.throwError(message, Logger$9.errors.NUMERIC_FAULT, {
+            this.throwError(message, Logger$a.errors.NUMERIC_FAULT, {
                 operation: "checkSafeInteger",
                 fault: "non-integer",
                 value: value
@@ -20314,13 +20670,13 @@ class Logger$9 {
             message = "";
         }
         if (count < expectedCount) {
-            this.throwError("missing argument" + message, Logger$9.errors.MISSING_ARGUMENT, {
+            this.throwError("missing argument" + message, Logger$a.errors.MISSING_ARGUMENT, {
                 count: count,
                 expectedCount: expectedCount
             });
         }
         if (count > expectedCount) {
-            this.throwError("too many arguments" + message, Logger$9.errors.UNEXPECTED_ARGUMENT, {
+            this.throwError("too many arguments" + message, Logger$a.errors.UNEXPECTED_ARGUMENT, {
                 count: count,
                 expectedCount: expectedCount
             });
@@ -20328,59 +20684,59 @@ class Logger$9 {
     }
     checkNew(target, kind) {
         if (target === Object || target == null) {
-            this.throwError("missing new", Logger$9.errors.MISSING_NEW, { name: kind.name });
+            this.throwError("missing new", Logger$a.errors.MISSING_NEW, { name: kind.name });
         }
     }
     checkAbstract(target, kind) {
         if (target === kind) {
-            this.throwError("cannot instantiate abstract class " + JSON.stringify(kind.name) + " directly; use a sub-class", Logger$9.errors.UNSUPPORTED_OPERATION, { name: target.name, operation: "new" });
+            this.throwError("cannot instantiate abstract class " + JSON.stringify(kind.name) + " directly; use a sub-class", Logger$a.errors.UNSUPPORTED_OPERATION, { name: target.name, operation: "new" });
         }
         else if (target === Object || target == null) {
-            this.throwError("missing new", Logger$9.errors.MISSING_NEW, { name: kind.name });
+            this.throwError("missing new", Logger$a.errors.MISSING_NEW, { name: kind.name });
         }
     }
     static globalLogger() {
-        if (!_globalLogger$9) {
-            _globalLogger$9 = new Logger$9(version$l);
+        if (!_globalLogger$a) {
+            _globalLogger$a = new Logger$a(version$m);
         }
-        return _globalLogger$9;
+        return _globalLogger$a;
     }
     static setCensorship(censorship, permanent) {
         if (!censorship && permanent) {
-            this.globalLogger().throwError("cannot permanently disable censorship", Logger$9.errors.UNSUPPORTED_OPERATION, {
+            this.globalLogger().throwError("cannot permanently disable censorship", Logger$a.errors.UNSUPPORTED_OPERATION, {
                 operation: "setCensorship"
             });
         }
-        if (_permanentCensorErrors$9) {
+        if (_permanentCensorErrors$a) {
             if (!censorship) {
                 return;
             }
-            this.globalLogger().throwError("error censorship permanent", Logger$9.errors.UNSUPPORTED_OPERATION, {
+            this.globalLogger().throwError("error censorship permanent", Logger$a.errors.UNSUPPORTED_OPERATION, {
                 operation: "setCensorship"
             });
         }
-        _censorErrors$9 = !!censorship;
-        _permanentCensorErrors$9 = !!permanent;
+        _censorErrors$a = !!censorship;
+        _permanentCensorErrors$a = !!permanent;
     }
     static setLogLevel(logLevel) {
-        const level = LogLevels$9[logLevel.toLowerCase()];
+        const level = LogLevels$a[logLevel.toLowerCase()];
         if (level == null) {
-            Logger$9.globalLogger().warn("invalid log level - " + logLevel);
+            Logger$a.globalLogger().warn("invalid log level - " + logLevel);
             return;
         }
-        _logLevel$9 = level;
+        _logLevel$a = level;
     }
     static from(version) {
-        return new Logger$9(version);
+        return new Logger$a(version);
     }
 }
-Logger$9.errors = ErrorCode$9;
-Logger$9.levels = LogLevel$9;
+Logger$a.errors = ErrorCode$a;
+Logger$a.levels = LogLevel$a;
 
-const version$m = "bytes/5.7.0";
+const version$n = "bytes/5.7.0";
 
 "use strict";
-const logger$g = new Logger$9(version$m);
+const logger$g = new Logger$a(version$n);
 ///////////////////////////////
 function isHexable$6(value) {
     return !!(value.toHexString);
@@ -20786,11 +21142,11 @@ function joinSignature$6(signature) {
     ]));
 }
 
-const version$n = "bignumber/5.7.0";
+const version$o = "bignumber/5.7.0";
 
 "use strict";
 var BN$2 = bn$2.BN;
-const logger$h = new Logger$9(version$n);
+const logger$h = new Logger$a(version$o);
 const _constructorGuard$5 = {};
 const MAX_SAFE$2 = 0x1fffffffffffff;
 function isBigNumberish$2(value) {
@@ -20806,7 +21162,7 @@ let _warnedToStringRadix$2 = false;
 class BigNumber$2 {
     constructor(constructorGuard, hex) {
         if (constructorGuard !== _constructorGuard$5) {
-            logger$h.throwError("cannot call constructor directly; use BigNumber.from", Logger$9.errors.UNSUPPORTED_OPERATION, {
+            logger$h.throwError("cannot call constructor directly; use BigNumber.from", Logger$a.errors.UNSUPPORTED_OPERATION, {
                 operation: "new (BigNumber)"
             });
         }
@@ -20930,7 +21286,7 @@ class BigNumber$2 {
             return BigInt(this.toString());
         }
         catch (e) { }
-        return logger$h.throwError("this platform does not support BigInt", Logger$9.errors.UNSUPPORTED_OPERATION, {
+        return logger$h.throwError("this platform does not support BigInt", Logger$a.errors.UNSUPPORTED_OPERATION, {
             value: this.toString()
         });
     }
@@ -20944,10 +21300,10 @@ class BigNumber$2 {
                 }
             }
             else if (arguments[0] === 16) {
-                logger$h.throwError("BigNumber.toString does not accept any parameters; use bigNumber.toHexString()", Logger$9.errors.UNEXPECTED_ARGUMENT, {});
+                logger$h.throwError("BigNumber.toString does not accept any parameters; use bigNumber.toHexString()", Logger$a.errors.UNEXPECTED_ARGUMENT, {});
             }
             else {
-                logger$h.throwError("BigNumber.toString does not accept parameters", Logger$9.errors.UNEXPECTED_ARGUMENT, {});
+                logger$h.throwError("BigNumber.toString does not accept parameters", Logger$a.errors.UNEXPECTED_ARGUMENT, {});
             }
         }
         return toBN$2(this).toString(10);
@@ -21071,7 +21427,7 @@ function throwFault$4(fault, operation, value) {
     if (value != null) {
         params.value = value;
     }
-    return logger$h.throwError(fault, Logger$9.errors.NUMERIC_FAULT, params);
+    return logger$h.throwError(fault, Logger$a.errors.NUMERIC_FAULT, params);
 }
 // value should have no prefix
 function _base36To16$2(value) {
@@ -21083,7 +21439,7 @@ function _base16To36$2(value) {
 }
 
 "use strict";
-const logger$i = new Logger$9(version$n);
+const logger$i = new Logger$a(version$o);
 const _constructorGuard$6 = {};
 const Zero$2 = BigNumber$2.from(0);
 const NegativeOne$2 = BigNumber$2.from(-1);
@@ -21092,7 +21448,7 @@ function throwFault$5(message, fault, operation, value) {
     if (value !== undefined) {
         params.value = value;
     }
-    return logger$i.throwError(message, Logger$9.errors.NUMERIC_FAULT, params);
+    return logger$i.throwError(message, Logger$a.errors.NUMERIC_FAULT, params);
 }
 // Constant to pull zeros from for multipliers
 let zeros$2 = "0";
@@ -21196,7 +21552,7 @@ function parseFixed$2(value, decimals) {
 class FixedFormat$2 {
     constructor(constructorGuard, signed, width, decimals) {
         if (constructorGuard !== _constructorGuard$6) {
-            logger$i.throwError("cannot use FixedFormat constructor; use FixedFormat.from", Logger$9.errors.UNSUPPORTED_OPERATION, {
+            logger$i.throwError("cannot use FixedFormat constructor; use FixedFormat.from", Logger$a.errors.UNSUPPORTED_OPERATION, {
                 operation: "new FixedFormat"
             });
         }
@@ -21260,7 +21616,7 @@ class FixedFormat$2 {
 class FixedNumber$2 {
     constructor(constructorGuard, hex, value, format) {
         if (constructorGuard !== _constructorGuard$6) {
-            logger$i.throwError("cannot use FixedNumber constructor; use FixedNumber.from", Logger$9.errors.UNSUPPORTED_OPERATION, {
+            logger$i.throwError("cannot use FixedNumber constructor; use FixedNumber.from", Logger$a.errors.UNSUPPORTED_OPERATION, {
                 operation: "new FixedFormat"
             });
         }
@@ -21426,7 +21782,7 @@ class FixedNumber$2 {
         }
         catch (error) {
             // Allow NUMERIC_FAULT to bubble up
-            if (error.code !== Logger$9.errors.INVALID_ARGUMENT) {
+            if (error.code !== Logger$a.errors.INVALID_ARGUMENT) {
                 throw error;
             }
         }
@@ -21527,10 +21883,10 @@ const EtherSymbol$1 = "\u039e"; // "\uD835\uDF63";
 
 "use strict";
 
-const version$o = "bytes/5.7.0";
+const version$p = "bytes/5.7.0";
 
 "use strict";
-const logger$j = new Logger$2(version$o);
+const logger$j = new Logger$3(version$p);
 ///////////////////////////////
 function isHexable$7(value) {
     return !!(value.toHexString);
@@ -21936,15 +22292,15 @@ function joinSignature$7(signature) {
     ]));
 }
 
-const version$p = "logger/5.7.0";
+const version$q = "logger/5.7.0";
 
 "use strict";
-let _permanentCensorErrors$a = false;
-let _censorErrors$a = false;
-const LogLevels$a = { debug: 1, "default": 2, info: 2, warning: 3, error: 4, off: 5 };
-let _logLevel$a = LogLevels$a["default"];
-let _globalLogger$a = null;
-function _checkNormalize$a() {
+let _permanentCensorErrors$b = false;
+let _censorErrors$b = false;
+const LogLevels$b = { debug: 1, "default": 2, info: 2, warning: 3, error: 4, off: 5 };
+let _logLevel$b = LogLevels$b["default"];
+let _globalLogger$b = null;
+function _checkNormalize$b() {
     try {
         const missing = [];
         // Make sure all forms of normalization are supported
@@ -21971,16 +22327,16 @@ function _checkNormalize$a() {
     }
     return null;
 }
-const _normalizeError$a = _checkNormalize$a();
-var LogLevel$a;
+const _normalizeError$b = _checkNormalize$b();
+var LogLevel$b;
 (function (LogLevel) {
     LogLevel["DEBUG"] = "DEBUG";
     LogLevel["INFO"] = "INFO";
     LogLevel["WARNING"] = "WARNING";
     LogLevel["ERROR"] = "ERROR";
     LogLevel["OFF"] = "OFF";
-})(LogLevel$a || (LogLevel$a = {}));
-var ErrorCode$a;
+})(LogLevel$b || (LogLevel$b = {}));
+var ErrorCode$b;
 (function (ErrorCode) {
     ///////////////////
     // Generic Errors
@@ -22058,10 +22414,10 @@ var ErrorCode$a;
     // The user rejected the action, such as signing a message or sending
     // a transaction
     ErrorCode["ACTION_REJECTED"] = "ACTION_REJECTED";
-})(ErrorCode$a || (ErrorCode$a = {}));
+})(ErrorCode$b || (ErrorCode$b = {}));
 ;
-const HEX$a = "0123456789abcdef";
-class Logger$a {
+const HEX$b = "0123456789abcdef";
+class Logger$b {
     constructor(version) {
         Object.defineProperty(this, "version", {
             enumerable: true,
@@ -22071,30 +22427,30 @@ class Logger$a {
     }
     _log(logLevel, args) {
         const level = logLevel.toLowerCase();
-        if (LogLevels$a[level] == null) {
+        if (LogLevels$b[level] == null) {
             this.throwArgumentError("invalid log level name", "logLevel", logLevel);
         }
-        if (_logLevel$a > LogLevels$a[level]) {
+        if (_logLevel$b > LogLevels$b[level]) {
             return;
         }
         console.log.apply(console, args);
     }
     debug(...args) {
-        this._log(Logger$a.levels.DEBUG, args);
+        this._log(Logger$b.levels.DEBUG, args);
     }
     info(...args) {
-        this._log(Logger$a.levels.INFO, args);
+        this._log(Logger$b.levels.INFO, args);
     }
     warn(...args) {
-        this._log(Logger$a.levels.WARNING, args);
+        this._log(Logger$b.levels.WARNING, args);
     }
     makeError(message, code, params) {
         // Errors are being censored
-        if (_censorErrors$a) {
+        if (_censorErrors$b) {
             return this.makeError("censored error", code, {});
         }
         if (!code) {
-            code = Logger$a.errors.UNKNOWN_ERROR;
+            code = Logger$b.errors.UNKNOWN_ERROR;
         }
         if (!params) {
             params = {};
@@ -22106,8 +22462,8 @@ class Logger$a {
                 if (value instanceof Uint8Array) {
                     let hex = "";
                     for (let i = 0; i < value.length; i++) {
-                        hex += HEX$a[value[i] >> 4];
-                        hex += HEX$a[value[i] & 0x0f];
+                        hex += HEX$b[value[i] >> 4];
+                        hex += HEX$b[value[i] & 0x0f];
                     }
                     messageDetails.push(key + "=Uint8Array(0x" + hex + ")");
                 }
@@ -22124,7 +22480,7 @@ class Logger$a {
         const reason = message;
         let url = "";
         switch (code) {
-            case ErrorCode$a.NUMERIC_FAULT: {
+            case ErrorCode$b.NUMERIC_FAULT: {
                 url = "NUMERIC_FAULT";
                 const fault = message;
                 switch (fault) {
@@ -22143,13 +22499,13 @@ class Logger$a {
                 }
                 break;
             }
-            case ErrorCode$a.CALL_EXCEPTION:
-            case ErrorCode$a.INSUFFICIENT_FUNDS:
-            case ErrorCode$a.MISSING_NEW:
-            case ErrorCode$a.NONCE_EXPIRED:
-            case ErrorCode$a.REPLACEMENT_UNDERPRICED:
-            case ErrorCode$a.TRANSACTION_REPLACED:
-            case ErrorCode$a.UNPREDICTABLE_GAS_LIMIT:
+            case ErrorCode$b.CALL_EXCEPTION:
+            case ErrorCode$b.INSUFFICIENT_FUNDS:
+            case ErrorCode$b.MISSING_NEW:
+            case ErrorCode$b.NONCE_EXPIRED:
+            case ErrorCode$b.REPLACEMENT_UNDERPRICED:
+            case ErrorCode$b.TRANSACTION_REPLACED:
+            case ErrorCode$b.UNPREDICTABLE_GAS_LIMIT:
                 url = code;
                 break;
         }
@@ -22172,7 +22528,7 @@ class Logger$a {
         throw this.makeError(message, code, params);
     }
     throwArgumentError(message, name, value) {
-        return this.throwError(message, Logger$a.errors.INVALID_ARGUMENT, {
+        return this.throwError(message, Logger$b.errors.INVALID_ARGUMENT, {
             argument: name,
             value: value
         });
@@ -22193,9 +22549,9 @@ class Logger$a {
         if (message == null) {
             message = "platform missing String.prototype.normalize";
         }
-        if (_normalizeError$a) {
-            this.throwError("platform missing String.prototype.normalize", Logger$a.errors.UNSUPPORTED_OPERATION, {
-                operation: "String.prototype.normalize", form: _normalizeError$a
+        if (_normalizeError$b) {
+            this.throwError("platform missing String.prototype.normalize", Logger$b.errors.UNSUPPORTED_OPERATION, {
+                operation: "String.prototype.normalize", form: _normalizeError$b
             });
         }
     }
@@ -22207,14 +22563,14 @@ class Logger$a {
             message = "value not safe";
         }
         if (value < 0 || value >= 0x1fffffffffffff) {
-            this.throwError(message, Logger$a.errors.NUMERIC_FAULT, {
+            this.throwError(message, Logger$b.errors.NUMERIC_FAULT, {
                 operation: "checkSafeInteger",
                 fault: "out-of-safe-range",
                 value: value
             });
         }
         if (value % 1) {
-            this.throwError(message, Logger$a.errors.NUMERIC_FAULT, {
+            this.throwError(message, Logger$b.errors.NUMERIC_FAULT, {
                 operation: "checkSafeInteger",
                 fault: "non-integer",
                 value: value
@@ -22229,13 +22585,13 @@ class Logger$a {
             message = "";
         }
         if (count < expectedCount) {
-            this.throwError("missing argument" + message, Logger$a.errors.MISSING_ARGUMENT, {
+            this.throwError("missing argument" + message, Logger$b.errors.MISSING_ARGUMENT, {
                 count: count,
                 expectedCount: expectedCount
             });
         }
         if (count > expectedCount) {
-            this.throwError("too many arguments" + message, Logger$a.errors.UNEXPECTED_ARGUMENT, {
+            this.throwError("too many arguments" + message, Logger$b.errors.UNEXPECTED_ARGUMENT, {
                 count: count,
                 expectedCount: expectedCount
             });
@@ -22243,59 +22599,59 @@ class Logger$a {
     }
     checkNew(target, kind) {
         if (target === Object || target == null) {
-            this.throwError("missing new", Logger$a.errors.MISSING_NEW, { name: kind.name });
+            this.throwError("missing new", Logger$b.errors.MISSING_NEW, { name: kind.name });
         }
     }
     checkAbstract(target, kind) {
         if (target === kind) {
-            this.throwError("cannot instantiate abstract class " + JSON.stringify(kind.name) + " directly; use a sub-class", Logger$a.errors.UNSUPPORTED_OPERATION, { name: target.name, operation: "new" });
+            this.throwError("cannot instantiate abstract class " + JSON.stringify(kind.name) + " directly; use a sub-class", Logger$b.errors.UNSUPPORTED_OPERATION, { name: target.name, operation: "new" });
         }
         else if (target === Object || target == null) {
-            this.throwError("missing new", Logger$a.errors.MISSING_NEW, { name: kind.name });
+            this.throwError("missing new", Logger$b.errors.MISSING_NEW, { name: kind.name });
         }
     }
     static globalLogger() {
-        if (!_globalLogger$a) {
-            _globalLogger$a = new Logger$a(version$p);
+        if (!_globalLogger$b) {
+            _globalLogger$b = new Logger$b(version$q);
         }
-        return _globalLogger$a;
+        return _globalLogger$b;
     }
     static setCensorship(censorship, permanent) {
         if (!censorship && permanent) {
-            this.globalLogger().throwError("cannot permanently disable censorship", Logger$a.errors.UNSUPPORTED_OPERATION, {
+            this.globalLogger().throwError("cannot permanently disable censorship", Logger$b.errors.UNSUPPORTED_OPERATION, {
                 operation: "setCensorship"
             });
         }
-        if (_permanentCensorErrors$a) {
+        if (_permanentCensorErrors$b) {
             if (!censorship) {
                 return;
             }
-            this.globalLogger().throwError("error censorship permanent", Logger$a.errors.UNSUPPORTED_OPERATION, {
+            this.globalLogger().throwError("error censorship permanent", Logger$b.errors.UNSUPPORTED_OPERATION, {
                 operation: "setCensorship"
             });
         }
-        _censorErrors$a = !!censorship;
-        _permanentCensorErrors$a = !!permanent;
+        _censorErrors$b = !!censorship;
+        _permanentCensorErrors$b = !!permanent;
     }
     static setLogLevel(logLevel) {
-        const level = LogLevels$a[logLevel.toLowerCase()];
+        const level = LogLevels$b[logLevel.toLowerCase()];
         if (level == null) {
-            Logger$a.globalLogger().warn("invalid log level - " + logLevel);
+            Logger$b.globalLogger().warn("invalid log level - " + logLevel);
             return;
         }
-        _logLevel$a = level;
+        _logLevel$b = level;
     }
     static from(version) {
-        return new Logger$a(version);
+        return new Logger$b(version);
     }
 }
-Logger$a.errors = ErrorCode$a;
-Logger$a.levels = LogLevel$a;
+Logger$b.errors = ErrorCode$b;
+Logger$b.levels = LogLevel$b;
 
-const version$q = "strings/0.1.0";
+const version$r = "strings/0.1.0";
 
 "use strict";
-const logger$k = new Logger$a(version$q);
+const logger$k = new Logger$b(version$r);
 ///////////////////////////////
 var UnicodeNormalizationForm;
 (function (UnicodeNormalizationForm) {
@@ -22825,7 +23181,7 @@ class TupleCoder extends Coder {
 }
 
 "use strict";
-const logger$l = new Logger$2(version$6);
+const logger$l = new Logger$3(version$7);
 const paramTypeBytes = new RegExp(/^bytes([0-9]*)$/);
 const paramTypeNumber = new RegExp(/^(u?int)([0-9]*)$/);
 class AbiCoder {
@@ -22885,7 +23241,7 @@ class AbiCoder {
     }
     encode(types, values) {
         if (types.length !== values.length) {
-            logger$l.throwError("types/values length mismatch", Logger$2.errors.INVALID_ARGUMENT, {
+            logger$l.throwError("types/values length mismatch", Logger$3.errors.INVALID_ARGUMENT, {
                 count: { types: types.length, values: values.length },
                 value: { types: types, values: values }
             });
@@ -23563,15 +23919,15 @@ var sha3$1 = createCommonjsModule(function (module) {
 })();
 });
 
-const version$r = "logger/5.7.0";
+const version$s = "logger/5.7.0";
 
 "use strict";
-let _permanentCensorErrors$b = false;
-let _censorErrors$b = false;
-const LogLevels$b = { debug: 1, "default": 2, info: 2, warning: 3, error: 4, off: 5 };
-let _logLevel$b = LogLevels$b["default"];
-let _globalLogger$b = null;
-function _checkNormalize$b() {
+let _permanentCensorErrors$c = false;
+let _censorErrors$c = false;
+const LogLevels$c = { debug: 1, "default": 2, info: 2, warning: 3, error: 4, off: 5 };
+let _logLevel$c = LogLevels$c["default"];
+let _globalLogger$c = null;
+function _checkNormalize$c() {
     try {
         const missing = [];
         // Make sure all forms of normalization are supported
@@ -23598,16 +23954,16 @@ function _checkNormalize$b() {
     }
     return null;
 }
-const _normalizeError$b = _checkNormalize$b();
-var LogLevel$b;
+const _normalizeError$c = _checkNormalize$c();
+var LogLevel$c;
 (function (LogLevel) {
     LogLevel["DEBUG"] = "DEBUG";
     LogLevel["INFO"] = "INFO";
     LogLevel["WARNING"] = "WARNING";
     LogLevel["ERROR"] = "ERROR";
     LogLevel["OFF"] = "OFF";
-})(LogLevel$b || (LogLevel$b = {}));
-var ErrorCode$b;
+})(LogLevel$c || (LogLevel$c = {}));
+var ErrorCode$c;
 (function (ErrorCode) {
     ///////////////////
     // Generic Errors
@@ -23685,10 +24041,10 @@ var ErrorCode$b;
     // The user rejected the action, such as signing a message or sending
     // a transaction
     ErrorCode["ACTION_REJECTED"] = "ACTION_REJECTED";
-})(ErrorCode$b || (ErrorCode$b = {}));
+})(ErrorCode$c || (ErrorCode$c = {}));
 ;
-const HEX$b = "0123456789abcdef";
-class Logger$b {
+const HEX$c = "0123456789abcdef";
+class Logger$c {
     constructor(version) {
         Object.defineProperty(this, "version", {
             enumerable: true,
@@ -23698,30 +24054,30 @@ class Logger$b {
     }
     _log(logLevel, args) {
         const level = logLevel.toLowerCase();
-        if (LogLevels$b[level] == null) {
+        if (LogLevels$c[level] == null) {
             this.throwArgumentError("invalid log level name", "logLevel", logLevel);
         }
-        if (_logLevel$b > LogLevels$b[level]) {
+        if (_logLevel$c > LogLevels$c[level]) {
             return;
         }
         console.log.apply(console, args);
     }
     debug(...args) {
-        this._log(Logger$b.levels.DEBUG, args);
+        this._log(Logger$c.levels.DEBUG, args);
     }
     info(...args) {
-        this._log(Logger$b.levels.INFO, args);
+        this._log(Logger$c.levels.INFO, args);
     }
     warn(...args) {
-        this._log(Logger$b.levels.WARNING, args);
+        this._log(Logger$c.levels.WARNING, args);
     }
     makeError(message, code, params) {
         // Errors are being censored
-        if (_censorErrors$b) {
+        if (_censorErrors$c) {
             return this.makeError("censored error", code, {});
         }
         if (!code) {
-            code = Logger$b.errors.UNKNOWN_ERROR;
+            code = Logger$c.errors.UNKNOWN_ERROR;
         }
         if (!params) {
             params = {};
@@ -23733,8 +24089,8 @@ class Logger$b {
                 if (value instanceof Uint8Array) {
                     let hex = "";
                     for (let i = 0; i < value.length; i++) {
-                        hex += HEX$b[value[i] >> 4];
-                        hex += HEX$b[value[i] & 0x0f];
+                        hex += HEX$c[value[i] >> 4];
+                        hex += HEX$c[value[i] & 0x0f];
                     }
                     messageDetails.push(key + "=Uint8Array(0x" + hex + ")");
                 }
@@ -23751,7 +24107,7 @@ class Logger$b {
         const reason = message;
         let url = "";
         switch (code) {
-            case ErrorCode$b.NUMERIC_FAULT: {
+            case ErrorCode$c.NUMERIC_FAULT: {
                 url = "NUMERIC_FAULT";
                 const fault = message;
                 switch (fault) {
@@ -23770,13 +24126,13 @@ class Logger$b {
                 }
                 break;
             }
-            case ErrorCode$b.CALL_EXCEPTION:
-            case ErrorCode$b.INSUFFICIENT_FUNDS:
-            case ErrorCode$b.MISSING_NEW:
-            case ErrorCode$b.NONCE_EXPIRED:
-            case ErrorCode$b.REPLACEMENT_UNDERPRICED:
-            case ErrorCode$b.TRANSACTION_REPLACED:
-            case ErrorCode$b.UNPREDICTABLE_GAS_LIMIT:
+            case ErrorCode$c.CALL_EXCEPTION:
+            case ErrorCode$c.INSUFFICIENT_FUNDS:
+            case ErrorCode$c.MISSING_NEW:
+            case ErrorCode$c.NONCE_EXPIRED:
+            case ErrorCode$c.REPLACEMENT_UNDERPRICED:
+            case ErrorCode$c.TRANSACTION_REPLACED:
+            case ErrorCode$c.UNPREDICTABLE_GAS_LIMIT:
                 url = code;
                 break;
         }
@@ -23799,7 +24155,7 @@ class Logger$b {
         throw this.makeError(message, code, params);
     }
     throwArgumentError(message, name, value) {
-        return this.throwError(message, Logger$b.errors.INVALID_ARGUMENT, {
+        return this.throwError(message, Logger$c.errors.INVALID_ARGUMENT, {
             argument: name,
             value: value
         });
@@ -23820,9 +24176,9 @@ class Logger$b {
         if (message == null) {
             message = "platform missing String.prototype.normalize";
         }
-        if (_normalizeError$b) {
-            this.throwError("platform missing String.prototype.normalize", Logger$b.errors.UNSUPPORTED_OPERATION, {
-                operation: "String.prototype.normalize", form: _normalizeError$b
+        if (_normalizeError$c) {
+            this.throwError("platform missing String.prototype.normalize", Logger$c.errors.UNSUPPORTED_OPERATION, {
+                operation: "String.prototype.normalize", form: _normalizeError$c
             });
         }
     }
@@ -23834,14 +24190,14 @@ class Logger$b {
             message = "value not safe";
         }
         if (value < 0 || value >= 0x1fffffffffffff) {
-            this.throwError(message, Logger$b.errors.NUMERIC_FAULT, {
+            this.throwError(message, Logger$c.errors.NUMERIC_FAULT, {
                 operation: "checkSafeInteger",
                 fault: "out-of-safe-range",
                 value: value
             });
         }
         if (value % 1) {
-            this.throwError(message, Logger$b.errors.NUMERIC_FAULT, {
+            this.throwError(message, Logger$c.errors.NUMERIC_FAULT, {
                 operation: "checkSafeInteger",
                 fault: "non-integer",
                 value: value
@@ -23856,13 +24212,13 @@ class Logger$b {
             message = "";
         }
         if (count < expectedCount) {
-            this.throwError("missing argument" + message, Logger$b.errors.MISSING_ARGUMENT, {
+            this.throwError("missing argument" + message, Logger$c.errors.MISSING_ARGUMENT, {
                 count: count,
                 expectedCount: expectedCount
             });
         }
         if (count > expectedCount) {
-            this.throwError("too many arguments" + message, Logger$b.errors.UNEXPECTED_ARGUMENT, {
+            this.throwError("too many arguments" + message, Logger$c.errors.UNEXPECTED_ARGUMENT, {
                 count: count,
                 expectedCount: expectedCount
             });
@@ -23870,59 +24226,59 @@ class Logger$b {
     }
     checkNew(target, kind) {
         if (target === Object || target == null) {
-            this.throwError("missing new", Logger$b.errors.MISSING_NEW, { name: kind.name });
+            this.throwError("missing new", Logger$c.errors.MISSING_NEW, { name: kind.name });
         }
     }
     checkAbstract(target, kind) {
         if (target === kind) {
-            this.throwError("cannot instantiate abstract class " + JSON.stringify(kind.name) + " directly; use a sub-class", Logger$b.errors.UNSUPPORTED_OPERATION, { name: target.name, operation: "new" });
+            this.throwError("cannot instantiate abstract class " + JSON.stringify(kind.name) + " directly; use a sub-class", Logger$c.errors.UNSUPPORTED_OPERATION, { name: target.name, operation: "new" });
         }
         else if (target === Object || target == null) {
-            this.throwError("missing new", Logger$b.errors.MISSING_NEW, { name: kind.name });
+            this.throwError("missing new", Logger$c.errors.MISSING_NEW, { name: kind.name });
         }
     }
     static globalLogger() {
-        if (!_globalLogger$b) {
-            _globalLogger$b = new Logger$b(version$r);
+        if (!_globalLogger$c) {
+            _globalLogger$c = new Logger$c(version$s);
         }
-        return _globalLogger$b;
+        return _globalLogger$c;
     }
     static setCensorship(censorship, permanent) {
         if (!censorship && permanent) {
-            this.globalLogger().throwError("cannot permanently disable censorship", Logger$b.errors.UNSUPPORTED_OPERATION, {
+            this.globalLogger().throwError("cannot permanently disable censorship", Logger$c.errors.UNSUPPORTED_OPERATION, {
                 operation: "setCensorship"
             });
         }
-        if (_permanentCensorErrors$b) {
+        if (_permanentCensorErrors$c) {
             if (!censorship) {
                 return;
             }
-            this.globalLogger().throwError("error censorship permanent", Logger$b.errors.UNSUPPORTED_OPERATION, {
+            this.globalLogger().throwError("error censorship permanent", Logger$c.errors.UNSUPPORTED_OPERATION, {
                 operation: "setCensorship"
             });
         }
-        _censorErrors$b = !!censorship;
-        _permanentCensorErrors$b = !!permanent;
+        _censorErrors$c = !!censorship;
+        _permanentCensorErrors$c = !!permanent;
     }
     static setLogLevel(logLevel) {
-        const level = LogLevels$b[logLevel.toLowerCase()];
+        const level = LogLevels$c[logLevel.toLowerCase()];
         if (level == null) {
-            Logger$b.globalLogger().warn("invalid log level - " + logLevel);
+            Logger$c.globalLogger().warn("invalid log level - " + logLevel);
             return;
         }
-        _logLevel$b = level;
+        _logLevel$c = level;
     }
     static from(version) {
-        return new Logger$b(version);
+        return new Logger$c(version);
     }
 }
-Logger$b.errors = ErrorCode$b;
-Logger$b.levels = LogLevel$b;
+Logger$c.errors = ErrorCode$c;
+Logger$c.levels = LogLevel$c;
 
-const version$s = "bytes/5.7.0";
+const version$t = "bytes/5.7.0";
 
 "use strict";
-const logger$m = new Logger$b(version$s);
+const logger$m = new Logger$c(version$t);
 ///////////////////////////////
 function isHexable$8(value) {
     return !!(value.toHexString);
@@ -27885,15 +28241,15 @@ var bn$3 = createCommonjsModule(function (module) {
 })('object' === 'undefined' || module, commonjsGlobal);
 });
 
-const version$t = "logger/5.7.0";
+const version$u = "logger/5.7.0";
 
 "use strict";
-let _permanentCensorErrors$c = false;
-let _censorErrors$c = false;
-const LogLevels$c = { debug: 1, "default": 2, info: 2, warning: 3, error: 4, off: 5 };
-let _logLevel$c = LogLevels$c["default"];
-let _globalLogger$c = null;
-function _checkNormalize$c() {
+let _permanentCensorErrors$d = false;
+let _censorErrors$d = false;
+const LogLevels$d = { debug: 1, "default": 2, info: 2, warning: 3, error: 4, off: 5 };
+let _logLevel$d = LogLevels$d["default"];
+let _globalLogger$d = null;
+function _checkNormalize$d() {
     try {
         const missing = [];
         // Make sure all forms of normalization are supported
@@ -27920,16 +28276,16 @@ function _checkNormalize$c() {
     }
     return null;
 }
-const _normalizeError$c = _checkNormalize$c();
-var LogLevel$c;
+const _normalizeError$d = _checkNormalize$d();
+var LogLevel$d;
 (function (LogLevel) {
     LogLevel["DEBUG"] = "DEBUG";
     LogLevel["INFO"] = "INFO";
     LogLevel["WARNING"] = "WARNING";
     LogLevel["ERROR"] = "ERROR";
     LogLevel["OFF"] = "OFF";
-})(LogLevel$c || (LogLevel$c = {}));
-var ErrorCode$c;
+})(LogLevel$d || (LogLevel$d = {}));
+var ErrorCode$d;
 (function (ErrorCode) {
     ///////////////////
     // Generic Errors
@@ -28007,10 +28363,10 @@ var ErrorCode$c;
     // The user rejected the action, such as signing a message or sending
     // a transaction
     ErrorCode["ACTION_REJECTED"] = "ACTION_REJECTED";
-})(ErrorCode$c || (ErrorCode$c = {}));
+})(ErrorCode$d || (ErrorCode$d = {}));
 ;
-const HEX$c = "0123456789abcdef";
-class Logger$c {
+const HEX$d = "0123456789abcdef";
+class Logger$d {
     constructor(version) {
         Object.defineProperty(this, "version", {
             enumerable: true,
@@ -28020,30 +28376,30 @@ class Logger$c {
     }
     _log(logLevel, args) {
         const level = logLevel.toLowerCase();
-        if (LogLevels$c[level] == null) {
+        if (LogLevels$d[level] == null) {
             this.throwArgumentError("invalid log level name", "logLevel", logLevel);
         }
-        if (_logLevel$c > LogLevels$c[level]) {
+        if (_logLevel$d > LogLevels$d[level]) {
             return;
         }
         console.log.apply(console, args);
     }
     debug(...args) {
-        this._log(Logger$c.levels.DEBUG, args);
+        this._log(Logger$d.levels.DEBUG, args);
     }
     info(...args) {
-        this._log(Logger$c.levels.INFO, args);
+        this._log(Logger$d.levels.INFO, args);
     }
     warn(...args) {
-        this._log(Logger$c.levels.WARNING, args);
+        this._log(Logger$d.levels.WARNING, args);
     }
     makeError(message, code, params) {
         // Errors are being censored
-        if (_censorErrors$c) {
+        if (_censorErrors$d) {
             return this.makeError("censored error", code, {});
         }
         if (!code) {
-            code = Logger$c.errors.UNKNOWN_ERROR;
+            code = Logger$d.errors.UNKNOWN_ERROR;
         }
         if (!params) {
             params = {};
@@ -28055,8 +28411,8 @@ class Logger$c {
                 if (value instanceof Uint8Array) {
                     let hex = "";
                     for (let i = 0; i < value.length; i++) {
-                        hex += HEX$c[value[i] >> 4];
-                        hex += HEX$c[value[i] & 0x0f];
+                        hex += HEX$d[value[i] >> 4];
+                        hex += HEX$d[value[i] & 0x0f];
                     }
                     messageDetails.push(key + "=Uint8Array(0x" + hex + ")");
                 }
@@ -28073,7 +28429,7 @@ class Logger$c {
         const reason = message;
         let url = "";
         switch (code) {
-            case ErrorCode$c.NUMERIC_FAULT: {
+            case ErrorCode$d.NUMERIC_FAULT: {
                 url = "NUMERIC_FAULT";
                 const fault = message;
                 switch (fault) {
@@ -28092,13 +28448,13 @@ class Logger$c {
                 }
                 break;
             }
-            case ErrorCode$c.CALL_EXCEPTION:
-            case ErrorCode$c.INSUFFICIENT_FUNDS:
-            case ErrorCode$c.MISSING_NEW:
-            case ErrorCode$c.NONCE_EXPIRED:
-            case ErrorCode$c.REPLACEMENT_UNDERPRICED:
-            case ErrorCode$c.TRANSACTION_REPLACED:
-            case ErrorCode$c.UNPREDICTABLE_GAS_LIMIT:
+            case ErrorCode$d.CALL_EXCEPTION:
+            case ErrorCode$d.INSUFFICIENT_FUNDS:
+            case ErrorCode$d.MISSING_NEW:
+            case ErrorCode$d.NONCE_EXPIRED:
+            case ErrorCode$d.REPLACEMENT_UNDERPRICED:
+            case ErrorCode$d.TRANSACTION_REPLACED:
+            case ErrorCode$d.UNPREDICTABLE_GAS_LIMIT:
                 url = code;
                 break;
         }
@@ -28121,7 +28477,7 @@ class Logger$c {
         throw this.makeError(message, code, params);
     }
     throwArgumentError(message, name, value) {
-        return this.throwError(message, Logger$c.errors.INVALID_ARGUMENT, {
+        return this.throwError(message, Logger$d.errors.INVALID_ARGUMENT, {
             argument: name,
             value: value
         });
@@ -28142,9 +28498,9 @@ class Logger$c {
         if (message == null) {
             message = "platform missing String.prototype.normalize";
         }
-        if (_normalizeError$c) {
-            this.throwError("platform missing String.prototype.normalize", Logger$c.errors.UNSUPPORTED_OPERATION, {
-                operation: "String.prototype.normalize", form: _normalizeError$c
+        if (_normalizeError$d) {
+            this.throwError("platform missing String.prototype.normalize", Logger$d.errors.UNSUPPORTED_OPERATION, {
+                operation: "String.prototype.normalize", form: _normalizeError$d
             });
         }
     }
@@ -28156,14 +28512,14 @@ class Logger$c {
             message = "value not safe";
         }
         if (value < 0 || value >= 0x1fffffffffffff) {
-            this.throwError(message, Logger$c.errors.NUMERIC_FAULT, {
+            this.throwError(message, Logger$d.errors.NUMERIC_FAULT, {
                 operation: "checkSafeInteger",
                 fault: "out-of-safe-range",
                 value: value
             });
         }
         if (value % 1) {
-            this.throwError(message, Logger$c.errors.NUMERIC_FAULT, {
+            this.throwError(message, Logger$d.errors.NUMERIC_FAULT, {
                 operation: "checkSafeInteger",
                 fault: "non-integer",
                 value: value
@@ -28178,13 +28534,13 @@ class Logger$c {
             message = "";
         }
         if (count < expectedCount) {
-            this.throwError("missing argument" + message, Logger$c.errors.MISSING_ARGUMENT, {
+            this.throwError("missing argument" + message, Logger$d.errors.MISSING_ARGUMENT, {
                 count: count,
                 expectedCount: expectedCount
             });
         }
         if (count > expectedCount) {
-            this.throwError("too many arguments" + message, Logger$c.errors.UNEXPECTED_ARGUMENT, {
+            this.throwError("too many arguments" + message, Logger$d.errors.UNEXPECTED_ARGUMENT, {
                 count: count,
                 expectedCount: expectedCount
             });
@@ -28192,59 +28548,59 @@ class Logger$c {
     }
     checkNew(target, kind) {
         if (target === Object || target == null) {
-            this.throwError("missing new", Logger$c.errors.MISSING_NEW, { name: kind.name });
+            this.throwError("missing new", Logger$d.errors.MISSING_NEW, { name: kind.name });
         }
     }
     checkAbstract(target, kind) {
         if (target === kind) {
-            this.throwError("cannot instantiate abstract class " + JSON.stringify(kind.name) + " directly; use a sub-class", Logger$c.errors.UNSUPPORTED_OPERATION, { name: target.name, operation: "new" });
+            this.throwError("cannot instantiate abstract class " + JSON.stringify(kind.name) + " directly; use a sub-class", Logger$d.errors.UNSUPPORTED_OPERATION, { name: target.name, operation: "new" });
         }
         else if (target === Object || target == null) {
-            this.throwError("missing new", Logger$c.errors.MISSING_NEW, { name: kind.name });
+            this.throwError("missing new", Logger$d.errors.MISSING_NEW, { name: kind.name });
         }
     }
     static globalLogger() {
-        if (!_globalLogger$c) {
-            _globalLogger$c = new Logger$c(version$t);
+        if (!_globalLogger$d) {
+            _globalLogger$d = new Logger$d(version$u);
         }
-        return _globalLogger$c;
+        return _globalLogger$d;
     }
     static setCensorship(censorship, permanent) {
         if (!censorship && permanent) {
-            this.globalLogger().throwError("cannot permanently disable censorship", Logger$c.errors.UNSUPPORTED_OPERATION, {
+            this.globalLogger().throwError("cannot permanently disable censorship", Logger$d.errors.UNSUPPORTED_OPERATION, {
                 operation: "setCensorship"
             });
         }
-        if (_permanentCensorErrors$c) {
+        if (_permanentCensorErrors$d) {
             if (!censorship) {
                 return;
             }
-            this.globalLogger().throwError("error censorship permanent", Logger$c.errors.UNSUPPORTED_OPERATION, {
+            this.globalLogger().throwError("error censorship permanent", Logger$d.errors.UNSUPPORTED_OPERATION, {
                 operation: "setCensorship"
             });
         }
-        _censorErrors$c = !!censorship;
-        _permanentCensorErrors$c = !!permanent;
+        _censorErrors$d = !!censorship;
+        _permanentCensorErrors$d = !!permanent;
     }
     static setLogLevel(logLevel) {
-        const level = LogLevels$c[logLevel.toLowerCase()];
+        const level = LogLevels$d[logLevel.toLowerCase()];
         if (level == null) {
-            Logger$c.globalLogger().warn("invalid log level - " + logLevel);
+            Logger$d.globalLogger().warn("invalid log level - " + logLevel);
             return;
         }
-        _logLevel$c = level;
+        _logLevel$d = level;
     }
     static from(version) {
-        return new Logger$c(version);
+        return new Logger$d(version);
     }
 }
-Logger$c.errors = ErrorCode$c;
-Logger$c.levels = LogLevel$c;
+Logger$d.errors = ErrorCode$d;
+Logger$d.levels = LogLevel$d;
 
-const version$u = "bytes/5.7.0";
+const version$v = "bytes/5.7.0";
 
 "use strict";
-const logger$n = new Logger$c(version$u);
+const logger$n = new Logger$d(version$v);
 ///////////////////////////////
 function isHexable$9(value) {
     return !!(value.toHexString);
@@ -28650,11 +29006,11 @@ function joinSignature$9(signature) {
     ]));
 }
 
-const version$v = "bignumber/5.7.0";
+const version$w = "bignumber/5.7.0";
 
 "use strict";
 var BN$3 = bn$3.BN;
-const logger$o = new Logger$c(version$v);
+const logger$o = new Logger$d(version$w);
 const _constructorGuard$7 = {};
 const MAX_SAFE$3 = 0x1fffffffffffff;
 function isBigNumberish$3(value) {
@@ -28670,7 +29026,7 @@ let _warnedToStringRadix$3 = false;
 class BigNumber$3 {
     constructor(constructorGuard, hex) {
         if (constructorGuard !== _constructorGuard$7) {
-            logger$o.throwError("cannot call constructor directly; use BigNumber.from", Logger$c.errors.UNSUPPORTED_OPERATION, {
+            logger$o.throwError("cannot call constructor directly; use BigNumber.from", Logger$d.errors.UNSUPPORTED_OPERATION, {
                 operation: "new (BigNumber)"
             });
         }
@@ -28794,7 +29150,7 @@ class BigNumber$3 {
             return BigInt(this.toString());
         }
         catch (e) { }
-        return logger$o.throwError("this platform does not support BigInt", Logger$c.errors.UNSUPPORTED_OPERATION, {
+        return logger$o.throwError("this platform does not support BigInt", Logger$d.errors.UNSUPPORTED_OPERATION, {
             value: this.toString()
         });
     }
@@ -28808,10 +29164,10 @@ class BigNumber$3 {
                 }
             }
             else if (arguments[0] === 16) {
-                logger$o.throwError("BigNumber.toString does not accept any parameters; use bigNumber.toHexString()", Logger$c.errors.UNEXPECTED_ARGUMENT, {});
+                logger$o.throwError("BigNumber.toString does not accept any parameters; use bigNumber.toHexString()", Logger$d.errors.UNEXPECTED_ARGUMENT, {});
             }
             else {
-                logger$o.throwError("BigNumber.toString does not accept parameters", Logger$c.errors.UNEXPECTED_ARGUMENT, {});
+                logger$o.throwError("BigNumber.toString does not accept parameters", Logger$d.errors.UNEXPECTED_ARGUMENT, {});
             }
         }
         return toBN$3(this).toString(10);
@@ -28935,7 +29291,7 @@ function throwFault$6(fault, operation, value) {
     if (value != null) {
         params.value = value;
     }
-    return logger$o.throwError(fault, Logger$c.errors.NUMERIC_FAULT, params);
+    return logger$o.throwError(fault, Logger$d.errors.NUMERIC_FAULT, params);
 }
 // value should have no prefix
 function _base36To16$3(value) {
@@ -28947,7 +29303,7 @@ function _base16To36$3(value) {
 }
 
 "use strict";
-const logger$p = new Logger$c(version$v);
+const logger$p = new Logger$d(version$w);
 const _constructorGuard$8 = {};
 const Zero$5 = BigNumber$3.from(0);
 const NegativeOne$5 = BigNumber$3.from(-1);
@@ -28956,7 +29312,7 @@ function throwFault$7(message, fault, operation, value) {
     if (value !== undefined) {
         params.value = value;
     }
-    return logger$p.throwError(message, Logger$c.errors.NUMERIC_FAULT, params);
+    return logger$p.throwError(message, Logger$d.errors.NUMERIC_FAULT, params);
 }
 // Constant to pull zeros from for multipliers
 let zeros$3 = "0";
@@ -29060,7 +29416,7 @@ function parseFixed$3(value, decimals) {
 class FixedFormat$3 {
     constructor(constructorGuard, signed, width, decimals) {
         if (constructorGuard !== _constructorGuard$8) {
-            logger$p.throwError("cannot use FixedFormat constructor; use FixedFormat.from", Logger$c.errors.UNSUPPORTED_OPERATION, {
+            logger$p.throwError("cannot use FixedFormat constructor; use FixedFormat.from", Logger$d.errors.UNSUPPORTED_OPERATION, {
                 operation: "new FixedFormat"
             });
         }
@@ -29124,7 +29480,7 @@ class FixedFormat$3 {
 class FixedNumber$3 {
     constructor(constructorGuard, hex, value, format) {
         if (constructorGuard !== _constructorGuard$8) {
-            logger$p.throwError("cannot use FixedNumber constructor; use FixedNumber.from", Logger$c.errors.UNSUPPORTED_OPERATION, {
+            logger$p.throwError("cannot use FixedNumber constructor; use FixedNumber.from", Logger$d.errors.UNSUPPORTED_OPERATION, {
                 operation: "new FixedFormat"
             });
         }
@@ -29290,7 +29646,7 @@ class FixedNumber$3 {
         }
         catch (error) {
             // Allow NUMERIC_FAULT to bubble up
-            if (error.code !== Logger$c.errors.INVALID_ARGUMENT) {
+            if (error.code !== Logger$d.errors.INVALID_ARGUMENT) {
                 throw error;
             }
         }
@@ -29319,10 +29675,10 @@ const EtherSymbol$2 = "\u039e"; // "\uD835\uDF63";
 
 "use strict";
 
-const version$w = "strings/5.7.0";
+const version$x = "strings/5.7.0";
 
 "use strict";
-const logger$q = new Logger$c(version$w);
+const logger$q = new Logger$d(version$x);
 ///////////////////////////////
 var UnicodeNormalizationForm$1;
 (function (UnicodeNormalizationForm) {
@@ -29784,15 +30140,15 @@ function id(text) {
     return keccak256$1(toUtf8Bytes$1(text));
 }
 
-const version$x = "logger/5.7.0";
+const version$y = "logger/5.7.0";
 
 "use strict";
-let _permanentCensorErrors$d = false;
-let _censorErrors$d = false;
-const LogLevels$d = { debug: 1, "default": 2, info: 2, warning: 3, error: 4, off: 5 };
-let _logLevel$d = LogLevels$d["default"];
-let _globalLogger$d = null;
-function _checkNormalize$d() {
+let _permanentCensorErrors$e = false;
+let _censorErrors$e = false;
+const LogLevels$e = { debug: 1, "default": 2, info: 2, warning: 3, error: 4, off: 5 };
+let _logLevel$e = LogLevels$e["default"];
+let _globalLogger$e = null;
+function _checkNormalize$e() {
     try {
         const missing = [];
         // Make sure all forms of normalization are supported
@@ -29819,16 +30175,16 @@ function _checkNormalize$d() {
     }
     return null;
 }
-const _normalizeError$d = _checkNormalize$d();
-var LogLevel$d;
+const _normalizeError$e = _checkNormalize$e();
+var LogLevel$e;
 (function (LogLevel) {
     LogLevel["DEBUG"] = "DEBUG";
     LogLevel["INFO"] = "INFO";
     LogLevel["WARNING"] = "WARNING";
     LogLevel["ERROR"] = "ERROR";
     LogLevel["OFF"] = "OFF";
-})(LogLevel$d || (LogLevel$d = {}));
-var ErrorCode$d;
+})(LogLevel$e || (LogLevel$e = {}));
+var ErrorCode$e;
 (function (ErrorCode) {
     ///////////////////
     // Generic Errors
@@ -29906,10 +30262,10 @@ var ErrorCode$d;
     // The user rejected the action, such as signing a message or sending
     // a transaction
     ErrorCode["ACTION_REJECTED"] = "ACTION_REJECTED";
-})(ErrorCode$d || (ErrorCode$d = {}));
+})(ErrorCode$e || (ErrorCode$e = {}));
 ;
-const HEX$d = "0123456789abcdef";
-class Logger$d {
+const HEX$e = "0123456789abcdef";
+class Logger$e {
     constructor(version) {
         Object.defineProperty(this, "version", {
             enumerable: true,
@@ -29919,30 +30275,30 @@ class Logger$d {
     }
     _log(logLevel, args) {
         const level = logLevel.toLowerCase();
-        if (LogLevels$d[level] == null) {
+        if (LogLevels$e[level] == null) {
             this.throwArgumentError("invalid log level name", "logLevel", logLevel);
         }
-        if (_logLevel$d > LogLevels$d[level]) {
+        if (_logLevel$e > LogLevels$e[level]) {
             return;
         }
         console.log.apply(console, args);
     }
     debug(...args) {
-        this._log(Logger$d.levels.DEBUG, args);
+        this._log(Logger$e.levels.DEBUG, args);
     }
     info(...args) {
-        this._log(Logger$d.levels.INFO, args);
+        this._log(Logger$e.levels.INFO, args);
     }
     warn(...args) {
-        this._log(Logger$d.levels.WARNING, args);
+        this._log(Logger$e.levels.WARNING, args);
     }
     makeError(message, code, params) {
         // Errors are being censored
-        if (_censorErrors$d) {
+        if (_censorErrors$e) {
             return this.makeError("censored error", code, {});
         }
         if (!code) {
-            code = Logger$d.errors.UNKNOWN_ERROR;
+            code = Logger$e.errors.UNKNOWN_ERROR;
         }
         if (!params) {
             params = {};
@@ -29954,8 +30310,8 @@ class Logger$d {
                 if (value instanceof Uint8Array) {
                     let hex = "";
                     for (let i = 0; i < value.length; i++) {
-                        hex += HEX$d[value[i] >> 4];
-                        hex += HEX$d[value[i] & 0x0f];
+                        hex += HEX$e[value[i] >> 4];
+                        hex += HEX$e[value[i] & 0x0f];
                     }
                     messageDetails.push(key + "=Uint8Array(0x" + hex + ")");
                 }
@@ -29972,7 +30328,7 @@ class Logger$d {
         const reason = message;
         let url = "";
         switch (code) {
-            case ErrorCode$d.NUMERIC_FAULT: {
+            case ErrorCode$e.NUMERIC_FAULT: {
                 url = "NUMERIC_FAULT";
                 const fault = message;
                 switch (fault) {
@@ -29991,13 +30347,13 @@ class Logger$d {
                 }
                 break;
             }
-            case ErrorCode$d.CALL_EXCEPTION:
-            case ErrorCode$d.INSUFFICIENT_FUNDS:
-            case ErrorCode$d.MISSING_NEW:
-            case ErrorCode$d.NONCE_EXPIRED:
-            case ErrorCode$d.REPLACEMENT_UNDERPRICED:
-            case ErrorCode$d.TRANSACTION_REPLACED:
-            case ErrorCode$d.UNPREDICTABLE_GAS_LIMIT:
+            case ErrorCode$e.CALL_EXCEPTION:
+            case ErrorCode$e.INSUFFICIENT_FUNDS:
+            case ErrorCode$e.MISSING_NEW:
+            case ErrorCode$e.NONCE_EXPIRED:
+            case ErrorCode$e.REPLACEMENT_UNDERPRICED:
+            case ErrorCode$e.TRANSACTION_REPLACED:
+            case ErrorCode$e.UNPREDICTABLE_GAS_LIMIT:
                 url = code;
                 break;
         }
@@ -30020,7 +30376,7 @@ class Logger$d {
         throw this.makeError(message, code, params);
     }
     throwArgumentError(message, name, value) {
-        return this.throwError(message, Logger$d.errors.INVALID_ARGUMENT, {
+        return this.throwError(message, Logger$e.errors.INVALID_ARGUMENT, {
             argument: name,
             value: value
         });
@@ -30041,9 +30397,9 @@ class Logger$d {
         if (message == null) {
             message = "platform missing String.prototype.normalize";
         }
-        if (_normalizeError$d) {
-            this.throwError("platform missing String.prototype.normalize", Logger$d.errors.UNSUPPORTED_OPERATION, {
-                operation: "String.prototype.normalize", form: _normalizeError$d
+        if (_normalizeError$e) {
+            this.throwError("platform missing String.prototype.normalize", Logger$e.errors.UNSUPPORTED_OPERATION, {
+                operation: "String.prototype.normalize", form: _normalizeError$e
             });
         }
     }
@@ -30055,14 +30411,14 @@ class Logger$d {
             message = "value not safe";
         }
         if (value < 0 || value >= 0x1fffffffffffff) {
-            this.throwError(message, Logger$d.errors.NUMERIC_FAULT, {
+            this.throwError(message, Logger$e.errors.NUMERIC_FAULT, {
                 operation: "checkSafeInteger",
                 fault: "out-of-safe-range",
                 value: value
             });
         }
         if (value % 1) {
-            this.throwError(message, Logger$d.errors.NUMERIC_FAULT, {
+            this.throwError(message, Logger$e.errors.NUMERIC_FAULT, {
                 operation: "checkSafeInteger",
                 fault: "non-integer",
                 value: value
@@ -30077,13 +30433,13 @@ class Logger$d {
             message = "";
         }
         if (count < expectedCount) {
-            this.throwError("missing argument" + message, Logger$d.errors.MISSING_ARGUMENT, {
+            this.throwError("missing argument" + message, Logger$e.errors.MISSING_ARGUMENT, {
                 count: count,
                 expectedCount: expectedCount
             });
         }
         if (count > expectedCount) {
-            this.throwError("too many arguments" + message, Logger$d.errors.UNEXPECTED_ARGUMENT, {
+            this.throwError("too many arguments" + message, Logger$e.errors.UNEXPECTED_ARGUMENT, {
                 count: count,
                 expectedCount: expectedCount
             });
@@ -30091,59 +30447,59 @@ class Logger$d {
     }
     checkNew(target, kind) {
         if (target === Object || target == null) {
-            this.throwError("missing new", Logger$d.errors.MISSING_NEW, { name: kind.name });
+            this.throwError("missing new", Logger$e.errors.MISSING_NEW, { name: kind.name });
         }
     }
     checkAbstract(target, kind) {
         if (target === kind) {
-            this.throwError("cannot instantiate abstract class " + JSON.stringify(kind.name) + " directly; use a sub-class", Logger$d.errors.UNSUPPORTED_OPERATION, { name: target.name, operation: "new" });
+            this.throwError("cannot instantiate abstract class " + JSON.stringify(kind.name) + " directly; use a sub-class", Logger$e.errors.UNSUPPORTED_OPERATION, { name: target.name, operation: "new" });
         }
         else if (target === Object || target == null) {
-            this.throwError("missing new", Logger$d.errors.MISSING_NEW, { name: kind.name });
+            this.throwError("missing new", Logger$e.errors.MISSING_NEW, { name: kind.name });
         }
     }
     static globalLogger() {
-        if (!_globalLogger$d) {
-            _globalLogger$d = new Logger$d(version$x);
+        if (!_globalLogger$e) {
+            _globalLogger$e = new Logger$e(version$y);
         }
-        return _globalLogger$d;
+        return _globalLogger$e;
     }
     static setCensorship(censorship, permanent) {
         if (!censorship && permanent) {
-            this.globalLogger().throwError("cannot permanently disable censorship", Logger$d.errors.UNSUPPORTED_OPERATION, {
+            this.globalLogger().throwError("cannot permanently disable censorship", Logger$e.errors.UNSUPPORTED_OPERATION, {
                 operation: "setCensorship"
             });
         }
-        if (_permanentCensorErrors$d) {
+        if (_permanentCensorErrors$e) {
             if (!censorship) {
                 return;
             }
-            this.globalLogger().throwError("error censorship permanent", Logger$d.errors.UNSUPPORTED_OPERATION, {
+            this.globalLogger().throwError("error censorship permanent", Logger$e.errors.UNSUPPORTED_OPERATION, {
                 operation: "setCensorship"
             });
         }
-        _censorErrors$d = !!censorship;
-        _permanentCensorErrors$d = !!permanent;
+        _censorErrors$e = !!censorship;
+        _permanentCensorErrors$e = !!permanent;
     }
     static setLogLevel(logLevel) {
-        const level = LogLevels$d[logLevel.toLowerCase()];
+        const level = LogLevels$e[logLevel.toLowerCase()];
         if (level == null) {
-            Logger$d.globalLogger().warn("invalid log level - " + logLevel);
+            Logger$e.globalLogger().warn("invalid log level - " + logLevel);
             return;
         }
-        _logLevel$d = level;
+        _logLevel$e = level;
     }
     static from(version) {
-        return new Logger$d(version);
+        return new Logger$e(version);
     }
 }
-Logger$d.errors = ErrorCode$d;
-Logger$d.levels = LogLevel$d;
+Logger$e.errors = ErrorCode$e;
+Logger$e.levels = LogLevel$e;
 
-const version$y = "bytes/5.7.0";
+const version$z = "bytes/5.7.0";
 
 "use strict";
-const logger$r = new Logger$d(version$y);
+const logger$r = new Logger$e(version$z);
 ///////////////////////////////
 function isHexable$a(value) {
     return !!(value.toHexString);
@@ -30549,365 +30905,7 @@ function joinSignature$a(signature) {
     ]));
 }
 
-const version$z = "logger/5.7.0";
-
-"use strict";
-let _permanentCensorErrors$e = false;
-let _censorErrors$e = false;
-const LogLevels$e = { debug: 1, "default": 2, info: 2, warning: 3, error: 4, off: 5 };
-let _logLevel$e = LogLevels$e["default"];
-let _globalLogger$e = null;
-function _checkNormalize$e() {
-    try {
-        const missing = [];
-        // Make sure all forms of normalization are supported
-        ["NFD", "NFC", "NFKD", "NFKC"].forEach((form) => {
-            try {
-                if ("test".normalize(form) !== "test") {
-                    throw new Error("bad normalize");
-                }
-                ;
-            }
-            catch (error) {
-                missing.push(form);
-            }
-        });
-        if (missing.length) {
-            throw new Error("missing " + missing.join(", "));
-        }
-        if (String.fromCharCode(0xe9).normalize("NFD") !== String.fromCharCode(0x65, 0x0301)) {
-            throw new Error("broken implementation");
-        }
-    }
-    catch (error) {
-        return error.message;
-    }
-    return null;
-}
-const _normalizeError$e = _checkNormalize$e();
-var LogLevel$e;
-(function (LogLevel) {
-    LogLevel["DEBUG"] = "DEBUG";
-    LogLevel["INFO"] = "INFO";
-    LogLevel["WARNING"] = "WARNING";
-    LogLevel["ERROR"] = "ERROR";
-    LogLevel["OFF"] = "OFF";
-})(LogLevel$e || (LogLevel$e = {}));
-var ErrorCode$e;
-(function (ErrorCode) {
-    ///////////////////
-    // Generic Errors
-    // Unknown Error
-    ErrorCode["UNKNOWN_ERROR"] = "UNKNOWN_ERROR";
-    // Not Implemented
-    ErrorCode["NOT_IMPLEMENTED"] = "NOT_IMPLEMENTED";
-    // Unsupported Operation
-    //   - operation
-    ErrorCode["UNSUPPORTED_OPERATION"] = "UNSUPPORTED_OPERATION";
-    // Network Error (i.e. Ethereum Network, such as an invalid chain ID)
-    //   - event ("noNetwork" is not re-thrown in provider.ready; otherwise thrown)
-    ErrorCode["NETWORK_ERROR"] = "NETWORK_ERROR";
-    // Some sort of bad response from the server
-    ErrorCode["SERVER_ERROR"] = "SERVER_ERROR";
-    // Timeout
-    ErrorCode["TIMEOUT"] = "TIMEOUT";
-    ///////////////////
-    // Operational  Errors
-    // Buffer Overrun
-    ErrorCode["BUFFER_OVERRUN"] = "BUFFER_OVERRUN";
-    // Numeric Fault
-    //   - operation: the operation being executed
-    //   - fault: the reason this faulted
-    ErrorCode["NUMERIC_FAULT"] = "NUMERIC_FAULT";
-    ///////////////////
-    // Argument Errors
-    // Missing new operator to an object
-    //  - name: The name of the class
-    ErrorCode["MISSING_NEW"] = "MISSING_NEW";
-    // Invalid argument (e.g. value is incompatible with type) to a function:
-    //   - argument: The argument name that was invalid
-    //   - value: The value of the argument
-    ErrorCode["INVALID_ARGUMENT"] = "INVALID_ARGUMENT";
-    // Missing argument to a function:
-    //   - count: The number of arguments received
-    //   - expectedCount: The number of arguments expected
-    ErrorCode["MISSING_ARGUMENT"] = "MISSING_ARGUMENT";
-    // Too many arguments
-    //   - count: The number of arguments received
-    //   - expectedCount: The number of arguments expected
-    ErrorCode["UNEXPECTED_ARGUMENT"] = "UNEXPECTED_ARGUMENT";
-    ///////////////////
-    // Blockchain Errors
-    // Call exception
-    //  - transaction: the transaction
-    //  - address?: the contract address
-    //  - args?: The arguments passed into the function
-    //  - method?: The Solidity method signature
-    //  - errorSignature?: The EIP848 error signature
-    //  - errorArgs?: The EIP848 error parameters
-    //  - reason: The reason (only for EIP848 "Error(string)")
-    ErrorCode["CALL_EXCEPTION"] = "CALL_EXCEPTION";
-    // Insufficient funds (< value + gasLimit * gasPrice)
-    //   - transaction: the transaction attempted
-    ErrorCode["INSUFFICIENT_FUNDS"] = "INSUFFICIENT_FUNDS";
-    // Nonce has already been used
-    //   - transaction: the transaction attempted
-    ErrorCode["NONCE_EXPIRED"] = "NONCE_EXPIRED";
-    // The replacement fee for the transaction is too low
-    //   - transaction: the transaction attempted
-    ErrorCode["REPLACEMENT_UNDERPRICED"] = "REPLACEMENT_UNDERPRICED";
-    // The gas limit could not be estimated
-    //   - transaction: the transaction passed to estimateGas
-    ErrorCode["UNPREDICTABLE_GAS_LIMIT"] = "UNPREDICTABLE_GAS_LIMIT";
-    // The transaction was replaced by one with a higher gas price
-    //   - reason: "cancelled", "replaced" or "repriced"
-    //   - cancelled: true if reason == "cancelled" or reason == "replaced")
-    //   - hash: original transaction hash
-    //   - replacement: the full TransactionsResponse for the replacement
-    //   - receipt: the receipt of the replacement
-    ErrorCode["TRANSACTION_REPLACED"] = "TRANSACTION_REPLACED";
-    ///////////////////
-    // Interaction Errors
-    // The user rejected the action, such as signing a message or sending
-    // a transaction
-    ErrorCode["ACTION_REJECTED"] = "ACTION_REJECTED";
-})(ErrorCode$e || (ErrorCode$e = {}));
-;
-const HEX$e = "0123456789abcdef";
-class Logger$e {
-    constructor(version) {
-        Object.defineProperty(this, "version", {
-            enumerable: true,
-            value: version,
-            writable: false
-        });
-    }
-    _log(logLevel, args) {
-        const level = logLevel.toLowerCase();
-        if (LogLevels$e[level] == null) {
-            this.throwArgumentError("invalid log level name", "logLevel", logLevel);
-        }
-        if (_logLevel$e > LogLevels$e[level]) {
-            return;
-        }
-        console.log.apply(console, args);
-    }
-    debug(...args) {
-        this._log(Logger$e.levels.DEBUG, args);
-    }
-    info(...args) {
-        this._log(Logger$e.levels.INFO, args);
-    }
-    warn(...args) {
-        this._log(Logger$e.levels.WARNING, args);
-    }
-    makeError(message, code, params) {
-        // Errors are being censored
-        if (_censorErrors$e) {
-            return this.makeError("censored error", code, {});
-        }
-        if (!code) {
-            code = Logger$e.errors.UNKNOWN_ERROR;
-        }
-        if (!params) {
-            params = {};
-        }
-        const messageDetails = [];
-        Object.keys(params).forEach((key) => {
-            const value = params[key];
-            try {
-                if (value instanceof Uint8Array) {
-                    let hex = "";
-                    for (let i = 0; i < value.length; i++) {
-                        hex += HEX$e[value[i] >> 4];
-                        hex += HEX$e[value[i] & 0x0f];
-                    }
-                    messageDetails.push(key + "=Uint8Array(0x" + hex + ")");
-                }
-                else {
-                    messageDetails.push(key + "=" + JSON.stringify(value));
-                }
-            }
-            catch (error) {
-                messageDetails.push(key + "=" + JSON.stringify(params[key].toString()));
-            }
-        });
-        messageDetails.push(`code=${code}`);
-        messageDetails.push(`version=${this.version}`);
-        const reason = message;
-        let url = "";
-        switch (code) {
-            case ErrorCode$e.NUMERIC_FAULT: {
-                url = "NUMERIC_FAULT";
-                const fault = message;
-                switch (fault) {
-                    case "overflow":
-                    case "underflow":
-                    case "division-by-zero":
-                        url += "-" + fault;
-                        break;
-                    case "negative-power":
-                    case "negative-width":
-                        url += "-unsupported";
-                        break;
-                    case "unbound-bitwise-result":
-                        url += "-unbound-result";
-                        break;
-                }
-                break;
-            }
-            case ErrorCode$e.CALL_EXCEPTION:
-            case ErrorCode$e.INSUFFICIENT_FUNDS:
-            case ErrorCode$e.MISSING_NEW:
-            case ErrorCode$e.NONCE_EXPIRED:
-            case ErrorCode$e.REPLACEMENT_UNDERPRICED:
-            case ErrorCode$e.TRANSACTION_REPLACED:
-            case ErrorCode$e.UNPREDICTABLE_GAS_LIMIT:
-                url = code;
-                break;
-        }
-        if (url) {
-            message += " [ See: https:/\/links.quais.org/v5-errors-" + url + " ]";
-        }
-        if (messageDetails.length) {
-            message += " (" + messageDetails.join(", ") + ")";
-        }
-        // @TODO: Any??
-        const error = new Error(message);
-        error.reason = reason;
-        error.code = code;
-        Object.keys(params).forEach(function (key) {
-            error[key] = params[key];
-        });
-        return error;
-    }
-    throwError(message, code, params) {
-        throw this.makeError(message, code, params);
-    }
-    throwArgumentError(message, name, value) {
-        return this.throwError(message, Logger$e.errors.INVALID_ARGUMENT, {
-            argument: name,
-            value: value
-        });
-    }
-    assert(condition, message, code, params) {
-        if (!!condition) {
-            return;
-        }
-        this.throwError(message, code, params);
-    }
-    assertArgument(condition, message, name, value) {
-        if (!!condition) {
-            return;
-        }
-        this.throwArgumentError(message, name, value);
-    }
-    checkNormalize(message) {
-        if (message == null) {
-            message = "platform missing String.prototype.normalize";
-        }
-        if (_normalizeError$e) {
-            this.throwError("platform missing String.prototype.normalize", Logger$e.errors.UNSUPPORTED_OPERATION, {
-                operation: "String.prototype.normalize", form: _normalizeError$e
-            });
-        }
-    }
-    checkSafeUint53(value, message) {
-        if (typeof (value) !== "number") {
-            return;
-        }
-        if (message == null) {
-            message = "value not safe";
-        }
-        if (value < 0 || value >= 0x1fffffffffffff) {
-            this.throwError(message, Logger$e.errors.NUMERIC_FAULT, {
-                operation: "checkSafeInteger",
-                fault: "out-of-safe-range",
-                value: value
-            });
-        }
-        if (value % 1) {
-            this.throwError(message, Logger$e.errors.NUMERIC_FAULT, {
-                operation: "checkSafeInteger",
-                fault: "non-integer",
-                value: value
-            });
-        }
-    }
-    checkArgumentCount(count, expectedCount, message) {
-        if (message) {
-            message = ": " + message;
-        }
-        else {
-            message = "";
-        }
-        if (count < expectedCount) {
-            this.throwError("missing argument" + message, Logger$e.errors.MISSING_ARGUMENT, {
-                count: count,
-                expectedCount: expectedCount
-            });
-        }
-        if (count > expectedCount) {
-            this.throwError("too many arguments" + message, Logger$e.errors.UNEXPECTED_ARGUMENT, {
-                count: count,
-                expectedCount: expectedCount
-            });
-        }
-    }
-    checkNew(target, kind) {
-        if (target === Object || target == null) {
-            this.throwError("missing new", Logger$e.errors.MISSING_NEW, { name: kind.name });
-        }
-    }
-    checkAbstract(target, kind) {
-        if (target === kind) {
-            this.throwError("cannot instantiate abstract class " + JSON.stringify(kind.name) + " directly; use a sub-class", Logger$e.errors.UNSUPPORTED_OPERATION, { name: target.name, operation: "new" });
-        }
-        else if (target === Object || target == null) {
-            this.throwError("missing new", Logger$e.errors.MISSING_NEW, { name: kind.name });
-        }
-    }
-    static globalLogger() {
-        if (!_globalLogger$e) {
-            _globalLogger$e = new Logger$e(version$z);
-        }
-        return _globalLogger$e;
-    }
-    static setCensorship(censorship, permanent) {
-        if (!censorship && permanent) {
-            this.globalLogger().throwError("cannot permanently disable censorship", Logger$e.errors.UNSUPPORTED_OPERATION, {
-                operation: "setCensorship"
-            });
-        }
-        if (_permanentCensorErrors$e) {
-            if (!censorship) {
-                return;
-            }
-            this.globalLogger().throwError("error censorship permanent", Logger$e.errors.UNSUPPORTED_OPERATION, {
-                operation: "setCensorship"
-            });
-        }
-        _censorErrors$e = !!censorship;
-        _permanentCensorErrors$e = !!permanent;
-    }
-    static setLogLevel(logLevel) {
-        const level = LogLevels$e[logLevel.toLowerCase()];
-        if (level == null) {
-            Logger$e.globalLogger().warn("invalid log level - " + logLevel);
-            return;
-        }
-        _logLevel$e = level;
-    }
-    static from(version) {
-        return new Logger$e(version);
-    }
-}
-Logger$e.errors = ErrorCode$e;
-Logger$e.levels = LogLevel$e;
-
-const version$A = "hash/0.1.0";
-
-const version$B = "logger/5.7.0";
+const version$A = "logger/5.7.0";
 
 "use strict";
 let _permanentCensorErrors$f = false;
@@ -31227,7 +31225,7 @@ class Logger$f {
     }
     static globalLogger() {
         if (!_globalLogger$f) {
-            _globalLogger$f = new Logger$f(version$B);
+            _globalLogger$f = new Logger$f(version$A);
         }
         return _globalLogger$f;
     }
@@ -31263,10 +31261,368 @@ class Logger$f {
 Logger$f.errors = ErrorCode$f;
 Logger$f.levels = LogLevel$f;
 
-const version$C = "bytes/5.7.0";
+const version$B = "hash/0.1.0";
+
+const version$C = "logger/5.7.0";
 
 "use strict";
-const logger$s = new Logger$f(version$C);
+let _permanentCensorErrors$g = false;
+let _censorErrors$g = false;
+const LogLevels$g = { debug: 1, "default": 2, info: 2, warning: 3, error: 4, off: 5 };
+let _logLevel$g = LogLevels$g["default"];
+let _globalLogger$g = null;
+function _checkNormalize$g() {
+    try {
+        const missing = [];
+        // Make sure all forms of normalization are supported
+        ["NFD", "NFC", "NFKD", "NFKC"].forEach((form) => {
+            try {
+                if ("test".normalize(form) !== "test") {
+                    throw new Error("bad normalize");
+                }
+                ;
+            }
+            catch (error) {
+                missing.push(form);
+            }
+        });
+        if (missing.length) {
+            throw new Error("missing " + missing.join(", "));
+        }
+        if (String.fromCharCode(0xe9).normalize("NFD") !== String.fromCharCode(0x65, 0x0301)) {
+            throw new Error("broken implementation");
+        }
+    }
+    catch (error) {
+        return error.message;
+    }
+    return null;
+}
+const _normalizeError$g = _checkNormalize$g();
+var LogLevel$g;
+(function (LogLevel) {
+    LogLevel["DEBUG"] = "DEBUG";
+    LogLevel["INFO"] = "INFO";
+    LogLevel["WARNING"] = "WARNING";
+    LogLevel["ERROR"] = "ERROR";
+    LogLevel["OFF"] = "OFF";
+})(LogLevel$g || (LogLevel$g = {}));
+var ErrorCode$g;
+(function (ErrorCode) {
+    ///////////////////
+    // Generic Errors
+    // Unknown Error
+    ErrorCode["UNKNOWN_ERROR"] = "UNKNOWN_ERROR";
+    // Not Implemented
+    ErrorCode["NOT_IMPLEMENTED"] = "NOT_IMPLEMENTED";
+    // Unsupported Operation
+    //   - operation
+    ErrorCode["UNSUPPORTED_OPERATION"] = "UNSUPPORTED_OPERATION";
+    // Network Error (i.e. Ethereum Network, such as an invalid chain ID)
+    //   - event ("noNetwork" is not re-thrown in provider.ready; otherwise thrown)
+    ErrorCode["NETWORK_ERROR"] = "NETWORK_ERROR";
+    // Some sort of bad response from the server
+    ErrorCode["SERVER_ERROR"] = "SERVER_ERROR";
+    // Timeout
+    ErrorCode["TIMEOUT"] = "TIMEOUT";
+    ///////////////////
+    // Operational  Errors
+    // Buffer Overrun
+    ErrorCode["BUFFER_OVERRUN"] = "BUFFER_OVERRUN";
+    // Numeric Fault
+    //   - operation: the operation being executed
+    //   - fault: the reason this faulted
+    ErrorCode["NUMERIC_FAULT"] = "NUMERIC_FAULT";
+    ///////////////////
+    // Argument Errors
+    // Missing new operator to an object
+    //  - name: The name of the class
+    ErrorCode["MISSING_NEW"] = "MISSING_NEW";
+    // Invalid argument (e.g. value is incompatible with type) to a function:
+    //   - argument: The argument name that was invalid
+    //   - value: The value of the argument
+    ErrorCode["INVALID_ARGUMENT"] = "INVALID_ARGUMENT";
+    // Missing argument to a function:
+    //   - count: The number of arguments received
+    //   - expectedCount: The number of arguments expected
+    ErrorCode["MISSING_ARGUMENT"] = "MISSING_ARGUMENT";
+    // Too many arguments
+    //   - count: The number of arguments received
+    //   - expectedCount: The number of arguments expected
+    ErrorCode["UNEXPECTED_ARGUMENT"] = "UNEXPECTED_ARGUMENT";
+    ///////////////////
+    // Blockchain Errors
+    // Call exception
+    //  - transaction: the transaction
+    //  - address?: the contract address
+    //  - args?: The arguments passed into the function
+    //  - method?: The Solidity method signature
+    //  - errorSignature?: The EIP848 error signature
+    //  - errorArgs?: The EIP848 error parameters
+    //  - reason: The reason (only for EIP848 "Error(string)")
+    ErrorCode["CALL_EXCEPTION"] = "CALL_EXCEPTION";
+    // Insufficient funds (< value + gasLimit * gasPrice)
+    //   - transaction: the transaction attempted
+    ErrorCode["INSUFFICIENT_FUNDS"] = "INSUFFICIENT_FUNDS";
+    // Nonce has already been used
+    //   - transaction: the transaction attempted
+    ErrorCode["NONCE_EXPIRED"] = "NONCE_EXPIRED";
+    // The replacement fee for the transaction is too low
+    //   - transaction: the transaction attempted
+    ErrorCode["REPLACEMENT_UNDERPRICED"] = "REPLACEMENT_UNDERPRICED";
+    // The gas limit could not be estimated
+    //   - transaction: the transaction passed to estimateGas
+    ErrorCode["UNPREDICTABLE_GAS_LIMIT"] = "UNPREDICTABLE_GAS_LIMIT";
+    // The transaction was replaced by one with a higher gas price
+    //   - reason: "cancelled", "replaced" or "repriced"
+    //   - cancelled: true if reason == "cancelled" or reason == "replaced")
+    //   - hash: original transaction hash
+    //   - replacement: the full TransactionsResponse for the replacement
+    //   - receipt: the receipt of the replacement
+    ErrorCode["TRANSACTION_REPLACED"] = "TRANSACTION_REPLACED";
+    ///////////////////
+    // Interaction Errors
+    // The user rejected the action, such as signing a message or sending
+    // a transaction
+    ErrorCode["ACTION_REJECTED"] = "ACTION_REJECTED";
+})(ErrorCode$g || (ErrorCode$g = {}));
+;
+const HEX$g = "0123456789abcdef";
+class Logger$g {
+    constructor(version) {
+        Object.defineProperty(this, "version", {
+            enumerable: true,
+            value: version,
+            writable: false
+        });
+    }
+    _log(logLevel, args) {
+        const level = logLevel.toLowerCase();
+        if (LogLevels$g[level] == null) {
+            this.throwArgumentError("invalid log level name", "logLevel", logLevel);
+        }
+        if (_logLevel$g > LogLevels$g[level]) {
+            return;
+        }
+        console.log.apply(console, args);
+    }
+    debug(...args) {
+        this._log(Logger$g.levels.DEBUG, args);
+    }
+    info(...args) {
+        this._log(Logger$g.levels.INFO, args);
+    }
+    warn(...args) {
+        this._log(Logger$g.levels.WARNING, args);
+    }
+    makeError(message, code, params) {
+        // Errors are being censored
+        if (_censorErrors$g) {
+            return this.makeError("censored error", code, {});
+        }
+        if (!code) {
+            code = Logger$g.errors.UNKNOWN_ERROR;
+        }
+        if (!params) {
+            params = {};
+        }
+        const messageDetails = [];
+        Object.keys(params).forEach((key) => {
+            const value = params[key];
+            try {
+                if (value instanceof Uint8Array) {
+                    let hex = "";
+                    for (let i = 0; i < value.length; i++) {
+                        hex += HEX$g[value[i] >> 4];
+                        hex += HEX$g[value[i] & 0x0f];
+                    }
+                    messageDetails.push(key + "=Uint8Array(0x" + hex + ")");
+                }
+                else {
+                    messageDetails.push(key + "=" + JSON.stringify(value));
+                }
+            }
+            catch (error) {
+                messageDetails.push(key + "=" + JSON.stringify(params[key].toString()));
+            }
+        });
+        messageDetails.push(`code=${code}`);
+        messageDetails.push(`version=${this.version}`);
+        const reason = message;
+        let url = "";
+        switch (code) {
+            case ErrorCode$g.NUMERIC_FAULT: {
+                url = "NUMERIC_FAULT";
+                const fault = message;
+                switch (fault) {
+                    case "overflow":
+                    case "underflow":
+                    case "division-by-zero":
+                        url += "-" + fault;
+                        break;
+                    case "negative-power":
+                    case "negative-width":
+                        url += "-unsupported";
+                        break;
+                    case "unbound-bitwise-result":
+                        url += "-unbound-result";
+                        break;
+                }
+                break;
+            }
+            case ErrorCode$g.CALL_EXCEPTION:
+            case ErrorCode$g.INSUFFICIENT_FUNDS:
+            case ErrorCode$g.MISSING_NEW:
+            case ErrorCode$g.NONCE_EXPIRED:
+            case ErrorCode$g.REPLACEMENT_UNDERPRICED:
+            case ErrorCode$g.TRANSACTION_REPLACED:
+            case ErrorCode$g.UNPREDICTABLE_GAS_LIMIT:
+                url = code;
+                break;
+        }
+        if (url) {
+            message += " [ See: https:/\/links.quais.org/v5-errors-" + url + " ]";
+        }
+        if (messageDetails.length) {
+            message += " (" + messageDetails.join(", ") + ")";
+        }
+        // @TODO: Any??
+        const error = new Error(message);
+        error.reason = reason;
+        error.code = code;
+        Object.keys(params).forEach(function (key) {
+            error[key] = params[key];
+        });
+        return error;
+    }
+    throwError(message, code, params) {
+        throw this.makeError(message, code, params);
+    }
+    throwArgumentError(message, name, value) {
+        return this.throwError(message, Logger$g.errors.INVALID_ARGUMENT, {
+            argument: name,
+            value: value
+        });
+    }
+    assert(condition, message, code, params) {
+        if (!!condition) {
+            return;
+        }
+        this.throwError(message, code, params);
+    }
+    assertArgument(condition, message, name, value) {
+        if (!!condition) {
+            return;
+        }
+        this.throwArgumentError(message, name, value);
+    }
+    checkNormalize(message) {
+        if (message == null) {
+            message = "platform missing String.prototype.normalize";
+        }
+        if (_normalizeError$g) {
+            this.throwError("platform missing String.prototype.normalize", Logger$g.errors.UNSUPPORTED_OPERATION, {
+                operation: "String.prototype.normalize", form: _normalizeError$g
+            });
+        }
+    }
+    checkSafeUint53(value, message) {
+        if (typeof (value) !== "number") {
+            return;
+        }
+        if (message == null) {
+            message = "value not safe";
+        }
+        if (value < 0 || value >= 0x1fffffffffffff) {
+            this.throwError(message, Logger$g.errors.NUMERIC_FAULT, {
+                operation: "checkSafeInteger",
+                fault: "out-of-safe-range",
+                value: value
+            });
+        }
+        if (value % 1) {
+            this.throwError(message, Logger$g.errors.NUMERIC_FAULT, {
+                operation: "checkSafeInteger",
+                fault: "non-integer",
+                value: value
+            });
+        }
+    }
+    checkArgumentCount(count, expectedCount, message) {
+        if (message) {
+            message = ": " + message;
+        }
+        else {
+            message = "";
+        }
+        if (count < expectedCount) {
+            this.throwError("missing argument" + message, Logger$g.errors.MISSING_ARGUMENT, {
+                count: count,
+                expectedCount: expectedCount
+            });
+        }
+        if (count > expectedCount) {
+            this.throwError("too many arguments" + message, Logger$g.errors.UNEXPECTED_ARGUMENT, {
+                count: count,
+                expectedCount: expectedCount
+            });
+        }
+    }
+    checkNew(target, kind) {
+        if (target === Object || target == null) {
+            this.throwError("missing new", Logger$g.errors.MISSING_NEW, { name: kind.name });
+        }
+    }
+    checkAbstract(target, kind) {
+        if (target === kind) {
+            this.throwError("cannot instantiate abstract class " + JSON.stringify(kind.name) + " directly; use a sub-class", Logger$g.errors.UNSUPPORTED_OPERATION, { name: target.name, operation: "new" });
+        }
+        else if (target === Object || target == null) {
+            this.throwError("missing new", Logger$g.errors.MISSING_NEW, { name: kind.name });
+        }
+    }
+    static globalLogger() {
+        if (!_globalLogger$g) {
+            _globalLogger$g = new Logger$g(version$C);
+        }
+        return _globalLogger$g;
+    }
+    static setCensorship(censorship, permanent) {
+        if (!censorship && permanent) {
+            this.globalLogger().throwError("cannot permanently disable censorship", Logger$g.errors.UNSUPPORTED_OPERATION, {
+                operation: "setCensorship"
+            });
+        }
+        if (_permanentCensorErrors$g) {
+            if (!censorship) {
+                return;
+            }
+            this.globalLogger().throwError("error censorship permanent", Logger$g.errors.UNSUPPORTED_OPERATION, {
+                operation: "setCensorship"
+            });
+        }
+        _censorErrors$g = !!censorship;
+        _permanentCensorErrors$g = !!permanent;
+    }
+    static setLogLevel(logLevel) {
+        const level = LogLevels$g[logLevel.toLowerCase()];
+        if (level == null) {
+            Logger$g.globalLogger().warn("invalid log level - " + logLevel);
+            return;
+        }
+        _logLevel$g = level;
+    }
+    static from(version) {
+        return new Logger$g(version);
+    }
+}
+Logger$g.errors = ErrorCode$g;
+Logger$g.levels = LogLevel$g;
+
+const version$D = "bytes/5.7.0";
+
+"use strict";
+const logger$s = new Logger$g(version$D);
 ///////////////////////////////
 function isHexable$b(value) {
     return !!(value.toHexString);
@@ -32113,7 +32469,7 @@ function consume_emoji_reversed(cps, eaten) {
     return emoji;
 }
 
-const logger$t = new Logger$e(version$A);
+const logger$t = new Logger$f(version$B);
 const Zeros = new Uint8Array(32);
 Zeros.fill(0);
 function checkComponent(comp) {
@@ -32191,15 +32547,15 @@ function hashMessage(message) {
     ]));
 }
 
-const version$D = "logger/5.7.0";
+const version$E = "logger/5.7.0";
 
 "use strict";
-let _permanentCensorErrors$g = false;
-let _censorErrors$g = false;
-const LogLevels$g = { debug: 1, "default": 2, info: 2, warning: 3, error: 4, off: 5 };
-let _logLevel$g = LogLevels$g["default"];
-let _globalLogger$g = null;
-function _checkNormalize$g() {
+let _permanentCensorErrors$h = false;
+let _censorErrors$h = false;
+const LogLevels$h = { debug: 1, "default": 2, info: 2, warning: 3, error: 4, off: 5 };
+let _logLevel$h = LogLevels$h["default"];
+let _globalLogger$h = null;
+function _checkNormalize$h() {
     try {
         const missing = [];
         // Make sure all forms of normalization are supported
@@ -32226,16 +32582,16 @@ function _checkNormalize$g() {
     }
     return null;
 }
-const _normalizeError$g = _checkNormalize$g();
-var LogLevel$g;
+const _normalizeError$h = _checkNormalize$h();
+var LogLevel$h;
 (function (LogLevel) {
     LogLevel["DEBUG"] = "DEBUG";
     LogLevel["INFO"] = "INFO";
     LogLevel["WARNING"] = "WARNING";
     LogLevel["ERROR"] = "ERROR";
     LogLevel["OFF"] = "OFF";
-})(LogLevel$g || (LogLevel$g = {}));
-var ErrorCode$g;
+})(LogLevel$h || (LogLevel$h = {}));
+var ErrorCode$h;
 (function (ErrorCode) {
     ///////////////////
     // Generic Errors
@@ -32313,10 +32669,10 @@ var ErrorCode$g;
     // The user rejected the action, such as signing a message or sending
     // a transaction
     ErrorCode["ACTION_REJECTED"] = "ACTION_REJECTED";
-})(ErrorCode$g || (ErrorCode$g = {}));
+})(ErrorCode$h || (ErrorCode$h = {}));
 ;
-const HEX$g = "0123456789abcdef";
-class Logger$g {
+const HEX$h = "0123456789abcdef";
+class Logger$h {
     constructor(version) {
         Object.defineProperty(this, "version", {
             enumerable: true,
@@ -32326,30 +32682,30 @@ class Logger$g {
     }
     _log(logLevel, args) {
         const level = logLevel.toLowerCase();
-        if (LogLevels$g[level] == null) {
+        if (LogLevels$h[level] == null) {
             this.throwArgumentError("invalid log level name", "logLevel", logLevel);
         }
-        if (_logLevel$g > LogLevels$g[level]) {
+        if (_logLevel$h > LogLevels$h[level]) {
             return;
         }
         console.log.apply(console, args);
     }
     debug(...args) {
-        this._log(Logger$g.levels.DEBUG, args);
+        this._log(Logger$h.levels.DEBUG, args);
     }
     info(...args) {
-        this._log(Logger$g.levels.INFO, args);
+        this._log(Logger$h.levels.INFO, args);
     }
     warn(...args) {
-        this._log(Logger$g.levels.WARNING, args);
+        this._log(Logger$h.levels.WARNING, args);
     }
     makeError(message, code, params) {
         // Errors are being censored
-        if (_censorErrors$g) {
+        if (_censorErrors$h) {
             return this.makeError("censored error", code, {});
         }
         if (!code) {
-            code = Logger$g.errors.UNKNOWN_ERROR;
+            code = Logger$h.errors.UNKNOWN_ERROR;
         }
         if (!params) {
             params = {};
@@ -32361,8 +32717,8 @@ class Logger$g {
                 if (value instanceof Uint8Array) {
                     let hex = "";
                     for (let i = 0; i < value.length; i++) {
-                        hex += HEX$g[value[i] >> 4];
-                        hex += HEX$g[value[i] & 0x0f];
+                        hex += HEX$h[value[i] >> 4];
+                        hex += HEX$h[value[i] & 0x0f];
                     }
                     messageDetails.push(key + "=Uint8Array(0x" + hex + ")");
                 }
@@ -32379,7 +32735,7 @@ class Logger$g {
         const reason = message;
         let url = "";
         switch (code) {
-            case ErrorCode$g.NUMERIC_FAULT: {
+            case ErrorCode$h.NUMERIC_FAULT: {
                 url = "NUMERIC_FAULT";
                 const fault = message;
                 switch (fault) {
@@ -32398,13 +32754,13 @@ class Logger$g {
                 }
                 break;
             }
-            case ErrorCode$g.CALL_EXCEPTION:
-            case ErrorCode$g.INSUFFICIENT_FUNDS:
-            case ErrorCode$g.MISSING_NEW:
-            case ErrorCode$g.NONCE_EXPIRED:
-            case ErrorCode$g.REPLACEMENT_UNDERPRICED:
-            case ErrorCode$g.TRANSACTION_REPLACED:
-            case ErrorCode$g.UNPREDICTABLE_GAS_LIMIT:
+            case ErrorCode$h.CALL_EXCEPTION:
+            case ErrorCode$h.INSUFFICIENT_FUNDS:
+            case ErrorCode$h.MISSING_NEW:
+            case ErrorCode$h.NONCE_EXPIRED:
+            case ErrorCode$h.REPLACEMENT_UNDERPRICED:
+            case ErrorCode$h.TRANSACTION_REPLACED:
+            case ErrorCode$h.UNPREDICTABLE_GAS_LIMIT:
                 url = code;
                 break;
         }
@@ -32427,7 +32783,7 @@ class Logger$g {
         throw this.makeError(message, code, params);
     }
     throwArgumentError(message, name, value) {
-        return this.throwError(message, Logger$g.errors.INVALID_ARGUMENT, {
+        return this.throwError(message, Logger$h.errors.INVALID_ARGUMENT, {
             argument: name,
             value: value
         });
@@ -32448,9 +32804,9 @@ class Logger$g {
         if (message == null) {
             message = "platform missing String.prototype.normalize";
         }
-        if (_normalizeError$g) {
-            this.throwError("platform missing String.prototype.normalize", Logger$g.errors.UNSUPPORTED_OPERATION, {
-                operation: "String.prototype.normalize", form: _normalizeError$g
+        if (_normalizeError$h) {
+            this.throwError("platform missing String.prototype.normalize", Logger$h.errors.UNSUPPORTED_OPERATION, {
+                operation: "String.prototype.normalize", form: _normalizeError$h
             });
         }
     }
@@ -32462,14 +32818,14 @@ class Logger$g {
             message = "value not safe";
         }
         if (value < 0 || value >= 0x1fffffffffffff) {
-            this.throwError(message, Logger$g.errors.NUMERIC_FAULT, {
+            this.throwError(message, Logger$h.errors.NUMERIC_FAULT, {
                 operation: "checkSafeInteger",
                 fault: "out-of-safe-range",
                 value: value
             });
         }
         if (value % 1) {
-            this.throwError(message, Logger$g.errors.NUMERIC_FAULT, {
+            this.throwError(message, Logger$h.errors.NUMERIC_FAULT, {
                 operation: "checkSafeInteger",
                 fault: "non-integer",
                 value: value
@@ -32484,13 +32840,13 @@ class Logger$g {
             message = "";
         }
         if (count < expectedCount) {
-            this.throwError("missing argument" + message, Logger$g.errors.MISSING_ARGUMENT, {
+            this.throwError("missing argument" + message, Logger$h.errors.MISSING_ARGUMENT, {
                 count: count,
                 expectedCount: expectedCount
             });
         }
         if (count > expectedCount) {
-            this.throwError("too many arguments" + message, Logger$g.errors.UNEXPECTED_ARGUMENT, {
+            this.throwError("too many arguments" + message, Logger$h.errors.UNEXPECTED_ARGUMENT, {
                 count: count,
                 expectedCount: expectedCount
             });
@@ -32498,59 +32854,59 @@ class Logger$g {
     }
     checkNew(target, kind) {
         if (target === Object || target == null) {
-            this.throwError("missing new", Logger$g.errors.MISSING_NEW, { name: kind.name });
+            this.throwError("missing new", Logger$h.errors.MISSING_NEW, { name: kind.name });
         }
     }
     checkAbstract(target, kind) {
         if (target === kind) {
-            this.throwError("cannot instantiate abstract class " + JSON.stringify(kind.name) + " directly; use a sub-class", Logger$g.errors.UNSUPPORTED_OPERATION, { name: target.name, operation: "new" });
+            this.throwError("cannot instantiate abstract class " + JSON.stringify(kind.name) + " directly; use a sub-class", Logger$h.errors.UNSUPPORTED_OPERATION, { name: target.name, operation: "new" });
         }
         else if (target === Object || target == null) {
-            this.throwError("missing new", Logger$g.errors.MISSING_NEW, { name: kind.name });
+            this.throwError("missing new", Logger$h.errors.MISSING_NEW, { name: kind.name });
         }
     }
     static globalLogger() {
-        if (!_globalLogger$g) {
-            _globalLogger$g = new Logger$g(version$D);
+        if (!_globalLogger$h) {
+            _globalLogger$h = new Logger$h(version$E);
         }
-        return _globalLogger$g;
+        return _globalLogger$h;
     }
     static setCensorship(censorship, permanent) {
         if (!censorship && permanent) {
-            this.globalLogger().throwError("cannot permanently disable censorship", Logger$g.errors.UNSUPPORTED_OPERATION, {
+            this.globalLogger().throwError("cannot permanently disable censorship", Logger$h.errors.UNSUPPORTED_OPERATION, {
                 operation: "setCensorship"
             });
         }
-        if (_permanentCensorErrors$g) {
+        if (_permanentCensorErrors$h) {
             if (!censorship) {
                 return;
             }
-            this.globalLogger().throwError("error censorship permanent", Logger$g.errors.UNSUPPORTED_OPERATION, {
+            this.globalLogger().throwError("error censorship permanent", Logger$h.errors.UNSUPPORTED_OPERATION, {
                 operation: "setCensorship"
             });
         }
-        _censorErrors$g = !!censorship;
-        _permanentCensorErrors$g = !!permanent;
+        _censorErrors$h = !!censorship;
+        _permanentCensorErrors$h = !!permanent;
     }
     static setLogLevel(logLevel) {
-        const level = LogLevels$g[logLevel.toLowerCase()];
+        const level = LogLevels$h[logLevel.toLowerCase()];
         if (level == null) {
-            Logger$g.globalLogger().warn("invalid log level - " + logLevel);
+            Logger$h.globalLogger().warn("invalid log level - " + logLevel);
             return;
         }
-        _logLevel$g = level;
+        _logLevel$h = level;
     }
     static from(version) {
-        return new Logger$g(version);
+        return new Logger$h(version);
     }
 }
-Logger$g.errors = ErrorCode$g;
-Logger$g.levels = LogLevel$g;
+Logger$h.errors = ErrorCode$h;
+Logger$h.levels = LogLevel$h;
 
-const version$E = "bytes/5.7.0";
+const version$F = "bytes/5.7.0";
 
 "use strict";
-const logger$u = new Logger$g(version$E);
+const logger$u = new Logger$h(version$F);
 ///////////////////////////////
 function isHexable$c(value) {
     return !!(value.toHexString);
@@ -36506,11 +36862,11 @@ var bn$4 = createCommonjsModule(function (module) {
 })('object' === 'undefined' || module, commonjsGlobal);
 });
 
-const version$F = "bignumber/5.7.0";
+const version$G = "bignumber/5.7.0";
 
 "use strict";
 var BN$4 = bn$4.BN;
-const logger$v = new Logger$g(version$F);
+const logger$v = new Logger$h(version$G);
 const _constructorGuard$9 = {};
 const MAX_SAFE$4 = 0x1fffffffffffff;
 function isBigNumberish$4(value) {
@@ -36526,7 +36882,7 @@ let _warnedToStringRadix$4 = false;
 class BigNumber$4 {
     constructor(constructorGuard, hex) {
         if (constructorGuard !== _constructorGuard$9) {
-            logger$v.throwError("cannot call constructor directly; use BigNumber.from", Logger$g.errors.UNSUPPORTED_OPERATION, {
+            logger$v.throwError("cannot call constructor directly; use BigNumber.from", Logger$h.errors.UNSUPPORTED_OPERATION, {
                 operation: "new (BigNumber)"
             });
         }
@@ -36650,7 +37006,7 @@ class BigNumber$4 {
             return BigInt(this.toString());
         }
         catch (e) { }
-        return logger$v.throwError("this platform does not support BigInt", Logger$g.errors.UNSUPPORTED_OPERATION, {
+        return logger$v.throwError("this platform does not support BigInt", Logger$h.errors.UNSUPPORTED_OPERATION, {
             value: this.toString()
         });
     }
@@ -36664,10 +37020,10 @@ class BigNumber$4 {
                 }
             }
             else if (arguments[0] === 16) {
-                logger$v.throwError("BigNumber.toString does not accept any parameters; use bigNumber.toHexString()", Logger$g.errors.UNEXPECTED_ARGUMENT, {});
+                logger$v.throwError("BigNumber.toString does not accept any parameters; use bigNumber.toHexString()", Logger$h.errors.UNEXPECTED_ARGUMENT, {});
             }
             else {
-                logger$v.throwError("BigNumber.toString does not accept parameters", Logger$g.errors.UNEXPECTED_ARGUMENT, {});
+                logger$v.throwError("BigNumber.toString does not accept parameters", Logger$h.errors.UNEXPECTED_ARGUMENT, {});
             }
         }
         return toBN$4(this).toString(10);
@@ -36791,7 +37147,7 @@ function throwFault$8(fault, operation, value) {
     if (value != null) {
         params.value = value;
     }
-    return logger$v.throwError(fault, Logger$g.errors.NUMERIC_FAULT, params);
+    return logger$v.throwError(fault, Logger$h.errors.NUMERIC_FAULT, params);
 }
 // value should have no prefix
 function _base36To16$4(value) {
@@ -36803,7 +37159,7 @@ function _base16To36$4(value) {
 }
 
 "use strict";
-const logger$w = new Logger$g(version$F);
+const logger$w = new Logger$h(version$G);
 const _constructorGuard$a = {};
 const Zero$7 = BigNumber$4.from(0);
 const NegativeOne$7 = BigNumber$4.from(-1);
@@ -36812,7 +37168,7 @@ function throwFault$9(message, fault, operation, value) {
     if (value !== undefined) {
         params.value = value;
     }
-    return logger$w.throwError(message, Logger$g.errors.NUMERIC_FAULT, params);
+    return logger$w.throwError(message, Logger$h.errors.NUMERIC_FAULT, params);
 }
 // Constant to pull zeros from for multipliers
 let zeros$4 = "0";
@@ -36916,7 +37272,7 @@ function parseFixed$4(value, decimals) {
 class FixedFormat$4 {
     constructor(constructorGuard, signed, width, decimals) {
         if (constructorGuard !== _constructorGuard$a) {
-            logger$w.throwError("cannot use FixedFormat constructor; use FixedFormat.from", Logger$g.errors.UNSUPPORTED_OPERATION, {
+            logger$w.throwError("cannot use FixedFormat constructor; use FixedFormat.from", Logger$h.errors.UNSUPPORTED_OPERATION, {
                 operation: "new FixedFormat"
             });
         }
@@ -36980,7 +37336,7 @@ class FixedFormat$4 {
 class FixedNumber$4 {
     constructor(constructorGuard, hex, value, format) {
         if (constructorGuard !== _constructorGuard$a) {
-            logger$w.throwError("cannot use FixedNumber constructor; use FixedNumber.from", Logger$g.errors.UNSUPPORTED_OPERATION, {
+            logger$w.throwError("cannot use FixedNumber constructor; use FixedNumber.from", Logger$h.errors.UNSUPPORTED_OPERATION, {
                 operation: "new FixedFormat"
             });
         }
@@ -37146,7 +37502,7 @@ class FixedNumber$4 {
         }
         catch (error) {
             // Allow NUMERIC_FAULT to bubble up
-            if (error.code !== Logger$g.errors.INVALID_ARGUMENT) {
+            if (error.code !== Logger$h.errors.INVALID_ARGUMENT) {
                 throw error;
             }
         }
@@ -37823,10 +38179,10 @@ function keccak256$2(data) {
     return '0x' + sha3$2.keccak_256(arrayify$c(data));
 }
 
-const version$G = "rlp/5.7.0";
+const version$H = "rlp/5.7.0";
 
 "use strict";
-const logger$x = new Logger$g(version$G);
+const logger$x = new Logger$h(version$H);
 function arrayifyInteger$1(value) {
     const result = [];
     while (value) {
@@ -37881,7 +38237,7 @@ function _decodeChildren$1(data, offset, childOffset, length) {
         result.push(decoded.result);
         childOffset += decoded.consumed;
         if (childOffset > offset + 1 + length) {
-            logger$x.throwError("child data too short", Logger$g.errors.BUFFER_OVERRUN, {});
+            logger$x.throwError("child data too short", Logger$h.errors.BUFFER_OVERRUN, {});
         }
     }
     return { consumed: (1 + length), result: result };
@@ -37889,35 +38245,35 @@ function _decodeChildren$1(data, offset, childOffset, length) {
 // returns { consumed: number, result: Object }
 function _decode$1(data, offset) {
     if (data.length === 0) {
-        logger$x.throwError("data too short", Logger$g.errors.BUFFER_OVERRUN, {});
+        logger$x.throwError("data too short", Logger$h.errors.BUFFER_OVERRUN, {});
     }
     // Array with extra length prefix
     if (data[offset] >= 0xf8) {
         const lengthLength = data[offset] - 0xf7;
         if (offset + 1 + lengthLength > data.length) {
-            logger$x.throwError("data short segment too short", Logger$g.errors.BUFFER_OVERRUN, {});
+            logger$x.throwError("data short segment too short", Logger$h.errors.BUFFER_OVERRUN, {});
         }
         const length = unarrayifyInteger$1(data, offset + 1, lengthLength);
         if (offset + 1 + lengthLength + length > data.length) {
-            logger$x.throwError("data long segment too short", Logger$g.errors.BUFFER_OVERRUN, {});
+            logger$x.throwError("data long segment too short", Logger$h.errors.BUFFER_OVERRUN, {});
         }
         return _decodeChildren$1(data, offset, offset + 1 + lengthLength, lengthLength + length);
     }
     else if (data[offset] >= 0xc0) {
         const length = data[offset] - 0xc0;
         if (offset + 1 + length > data.length) {
-            logger$x.throwError("data array too short", Logger$g.errors.BUFFER_OVERRUN, {});
+            logger$x.throwError("data array too short", Logger$h.errors.BUFFER_OVERRUN, {});
         }
         return _decodeChildren$1(data, offset, offset + 1, length);
     }
     else if (data[offset] >= 0xb8) {
         const lengthLength = data[offset] - 0xb7;
         if (offset + 1 + lengthLength > data.length) {
-            logger$x.throwError("data array too short", Logger$g.errors.BUFFER_OVERRUN, {});
+            logger$x.throwError("data array too short", Logger$h.errors.BUFFER_OVERRUN, {});
         }
         const length = unarrayifyInteger$1(data, offset + 1, lengthLength);
         if (offset + 1 + lengthLength + length > data.length) {
-            logger$x.throwError("data array too short", Logger$g.errors.BUFFER_OVERRUN, {});
+            logger$x.throwError("data array too short", Logger$h.errors.BUFFER_OVERRUN, {});
         }
         const result = hexlify$c(data.slice(offset + 1 + lengthLength, offset + 1 + lengthLength + length));
         return { consumed: (1 + lengthLength + length), result: result };
@@ -37925,7 +38281,7 @@ function _decode$1(data, offset) {
     else if (data[offset] >= 0x80) {
         const length = data[offset] - 0x80;
         if (offset + 1 + length > data.length) {
-            logger$x.throwError("data too short", Logger$g.errors.BUFFER_OVERRUN, {});
+            logger$x.throwError("data too short", Logger$h.errors.BUFFER_OVERRUN, {});
         }
         const result = hexlify$c(data.slice(offset + 1, offset + 1 + length));
         return { consumed: (1 + length), result: result };
@@ -37941,10 +38297,10 @@ function decode$2(data) {
     return decoded.result;
 }
 
-const version$H = "address/5.7.0";
+const version$I = "address/5.7.0";
 
 "use strict";
-const logger$y = new Logger$g(version$H);
+const logger$y = new Logger$h(version$I);
 function getChecksumAddress$1(address) {
     if (!isHexString$c(address, 20)) {
         logger$y.throwArgumentError("invalid address", "address", address);
@@ -41621,15 +41977,15 @@ var bn$5 = createCommonjsModule(function (module) {
 })('object' === 'undefined' || module, commonjsGlobal);
 });
 
-const version$I = "logger/5.7.0";
+const version$J = "logger/5.7.0";
 
 "use strict";
-let _permanentCensorErrors$h = false;
-let _censorErrors$h = false;
-const LogLevels$h = { debug: 1, "default": 2, info: 2, warning: 3, error: 4, off: 5 };
-let _logLevel$h = LogLevels$h["default"];
-let _globalLogger$h = null;
-function _checkNormalize$h() {
+let _permanentCensorErrors$i = false;
+let _censorErrors$i = false;
+const LogLevels$i = { debug: 1, "default": 2, info: 2, warning: 3, error: 4, off: 5 };
+let _logLevel$i = LogLevels$i["default"];
+let _globalLogger$i = null;
+function _checkNormalize$i() {
     try {
         const missing = [];
         // Make sure all forms of normalization are supported
@@ -41656,16 +42012,16 @@ function _checkNormalize$h() {
     }
     return null;
 }
-const _normalizeError$h = _checkNormalize$h();
-var LogLevel$h;
+const _normalizeError$i = _checkNormalize$i();
+var LogLevel$i;
 (function (LogLevel) {
     LogLevel["DEBUG"] = "DEBUG";
     LogLevel["INFO"] = "INFO";
     LogLevel["WARNING"] = "WARNING";
     LogLevel["ERROR"] = "ERROR";
     LogLevel["OFF"] = "OFF";
-})(LogLevel$h || (LogLevel$h = {}));
-var ErrorCode$h;
+})(LogLevel$i || (LogLevel$i = {}));
+var ErrorCode$i;
 (function (ErrorCode) {
     ///////////////////
     // Generic Errors
@@ -41743,10 +42099,10 @@ var ErrorCode$h;
     // The user rejected the action, such as signing a message or sending
     // a transaction
     ErrorCode["ACTION_REJECTED"] = "ACTION_REJECTED";
-})(ErrorCode$h || (ErrorCode$h = {}));
+})(ErrorCode$i || (ErrorCode$i = {}));
 ;
-const HEX$h = "0123456789abcdef";
-class Logger$h {
+const HEX$i = "0123456789abcdef";
+class Logger$i {
     constructor(version) {
         Object.defineProperty(this, "version", {
             enumerable: true,
@@ -41756,30 +42112,30 @@ class Logger$h {
     }
     _log(logLevel, args) {
         const level = logLevel.toLowerCase();
-        if (LogLevels$h[level] == null) {
+        if (LogLevels$i[level] == null) {
             this.throwArgumentError("invalid log level name", "logLevel", logLevel);
         }
-        if (_logLevel$h > LogLevels$h[level]) {
+        if (_logLevel$i > LogLevels$i[level]) {
             return;
         }
         console.log.apply(console, args);
     }
     debug(...args) {
-        this._log(Logger$h.levels.DEBUG, args);
+        this._log(Logger$i.levels.DEBUG, args);
     }
     info(...args) {
-        this._log(Logger$h.levels.INFO, args);
+        this._log(Logger$i.levels.INFO, args);
     }
     warn(...args) {
-        this._log(Logger$h.levels.WARNING, args);
+        this._log(Logger$i.levels.WARNING, args);
     }
     makeError(message, code, params) {
         // Errors are being censored
-        if (_censorErrors$h) {
+        if (_censorErrors$i) {
             return this.makeError("censored error", code, {});
         }
         if (!code) {
-            code = Logger$h.errors.UNKNOWN_ERROR;
+            code = Logger$i.errors.UNKNOWN_ERROR;
         }
         if (!params) {
             params = {};
@@ -41791,8 +42147,8 @@ class Logger$h {
                 if (value instanceof Uint8Array) {
                     let hex = "";
                     for (let i = 0; i < value.length; i++) {
-                        hex += HEX$h[value[i] >> 4];
-                        hex += HEX$h[value[i] & 0x0f];
+                        hex += HEX$i[value[i] >> 4];
+                        hex += HEX$i[value[i] & 0x0f];
                     }
                     messageDetails.push(key + "=Uint8Array(0x" + hex + ")");
                 }
@@ -41809,7 +42165,7 @@ class Logger$h {
         const reason = message;
         let url = "";
         switch (code) {
-            case ErrorCode$h.NUMERIC_FAULT: {
+            case ErrorCode$i.NUMERIC_FAULT: {
                 url = "NUMERIC_FAULT";
                 const fault = message;
                 switch (fault) {
@@ -41828,13 +42184,13 @@ class Logger$h {
                 }
                 break;
             }
-            case ErrorCode$h.CALL_EXCEPTION:
-            case ErrorCode$h.INSUFFICIENT_FUNDS:
-            case ErrorCode$h.MISSING_NEW:
-            case ErrorCode$h.NONCE_EXPIRED:
-            case ErrorCode$h.REPLACEMENT_UNDERPRICED:
-            case ErrorCode$h.TRANSACTION_REPLACED:
-            case ErrorCode$h.UNPREDICTABLE_GAS_LIMIT:
+            case ErrorCode$i.CALL_EXCEPTION:
+            case ErrorCode$i.INSUFFICIENT_FUNDS:
+            case ErrorCode$i.MISSING_NEW:
+            case ErrorCode$i.NONCE_EXPIRED:
+            case ErrorCode$i.REPLACEMENT_UNDERPRICED:
+            case ErrorCode$i.TRANSACTION_REPLACED:
+            case ErrorCode$i.UNPREDICTABLE_GAS_LIMIT:
                 url = code;
                 break;
         }
@@ -41857,7 +42213,7 @@ class Logger$h {
         throw this.makeError(message, code, params);
     }
     throwArgumentError(message, name, value) {
-        return this.throwError(message, Logger$h.errors.INVALID_ARGUMENT, {
+        return this.throwError(message, Logger$i.errors.INVALID_ARGUMENT, {
             argument: name,
             value: value
         });
@@ -41878,9 +42234,9 @@ class Logger$h {
         if (message == null) {
             message = "platform missing String.prototype.normalize";
         }
-        if (_normalizeError$h) {
-            this.throwError("platform missing String.prototype.normalize", Logger$h.errors.UNSUPPORTED_OPERATION, {
-                operation: "String.prototype.normalize", form: _normalizeError$h
+        if (_normalizeError$i) {
+            this.throwError("platform missing String.prototype.normalize", Logger$i.errors.UNSUPPORTED_OPERATION, {
+                operation: "String.prototype.normalize", form: _normalizeError$i
             });
         }
     }
@@ -41892,14 +42248,14 @@ class Logger$h {
             message = "value not safe";
         }
         if (value < 0 || value >= 0x1fffffffffffff) {
-            this.throwError(message, Logger$h.errors.NUMERIC_FAULT, {
+            this.throwError(message, Logger$i.errors.NUMERIC_FAULT, {
                 operation: "checkSafeInteger",
                 fault: "out-of-safe-range",
                 value: value
             });
         }
         if (value % 1) {
-            this.throwError(message, Logger$h.errors.NUMERIC_FAULT, {
+            this.throwError(message, Logger$i.errors.NUMERIC_FAULT, {
                 operation: "checkSafeInteger",
                 fault: "non-integer",
                 value: value
@@ -41914,13 +42270,13 @@ class Logger$h {
             message = "";
         }
         if (count < expectedCount) {
-            this.throwError("missing argument" + message, Logger$h.errors.MISSING_ARGUMENT, {
+            this.throwError("missing argument" + message, Logger$i.errors.MISSING_ARGUMENT, {
                 count: count,
                 expectedCount: expectedCount
             });
         }
         if (count > expectedCount) {
-            this.throwError("too many arguments" + message, Logger$h.errors.UNEXPECTED_ARGUMENT, {
+            this.throwError("too many arguments" + message, Logger$i.errors.UNEXPECTED_ARGUMENT, {
                 count: count,
                 expectedCount: expectedCount
             });
@@ -41928,59 +42284,59 @@ class Logger$h {
     }
     checkNew(target, kind) {
         if (target === Object || target == null) {
-            this.throwError("missing new", Logger$h.errors.MISSING_NEW, { name: kind.name });
+            this.throwError("missing new", Logger$i.errors.MISSING_NEW, { name: kind.name });
         }
     }
     checkAbstract(target, kind) {
         if (target === kind) {
-            this.throwError("cannot instantiate abstract class " + JSON.stringify(kind.name) + " directly; use a sub-class", Logger$h.errors.UNSUPPORTED_OPERATION, { name: target.name, operation: "new" });
+            this.throwError("cannot instantiate abstract class " + JSON.stringify(kind.name) + " directly; use a sub-class", Logger$i.errors.UNSUPPORTED_OPERATION, { name: target.name, operation: "new" });
         }
         else if (target === Object || target == null) {
-            this.throwError("missing new", Logger$h.errors.MISSING_NEW, { name: kind.name });
+            this.throwError("missing new", Logger$i.errors.MISSING_NEW, { name: kind.name });
         }
     }
     static globalLogger() {
-        if (!_globalLogger$h) {
-            _globalLogger$h = new Logger$h(version$I);
+        if (!_globalLogger$i) {
+            _globalLogger$i = new Logger$i(version$J);
         }
-        return _globalLogger$h;
+        return _globalLogger$i;
     }
     static setCensorship(censorship, permanent) {
         if (!censorship && permanent) {
-            this.globalLogger().throwError("cannot permanently disable censorship", Logger$h.errors.UNSUPPORTED_OPERATION, {
+            this.globalLogger().throwError("cannot permanently disable censorship", Logger$i.errors.UNSUPPORTED_OPERATION, {
                 operation: "setCensorship"
             });
         }
-        if (_permanentCensorErrors$h) {
+        if (_permanentCensorErrors$i) {
             if (!censorship) {
                 return;
             }
-            this.globalLogger().throwError("error censorship permanent", Logger$h.errors.UNSUPPORTED_OPERATION, {
+            this.globalLogger().throwError("error censorship permanent", Logger$i.errors.UNSUPPORTED_OPERATION, {
                 operation: "setCensorship"
             });
         }
-        _censorErrors$h = !!censorship;
-        _permanentCensorErrors$h = !!permanent;
+        _censorErrors$i = !!censorship;
+        _permanentCensorErrors$i = !!permanent;
     }
     static setLogLevel(logLevel) {
-        const level = LogLevels$h[logLevel.toLowerCase()];
+        const level = LogLevels$i[logLevel.toLowerCase()];
         if (level == null) {
-            Logger$h.globalLogger().warn("invalid log level - " + logLevel);
+            Logger$i.globalLogger().warn("invalid log level - " + logLevel);
             return;
         }
-        _logLevel$h = level;
+        _logLevel$i = level;
     }
     static from(version) {
-        return new Logger$h(version);
+        return new Logger$i(version);
     }
 }
-Logger$h.errors = ErrorCode$h;
-Logger$h.levels = LogLevel$h;
+Logger$i.errors = ErrorCode$i;
+Logger$i.levels = LogLevel$i;
 
-const version$J = "bytes/5.7.0";
+const version$K = "bytes/5.7.0";
 
 "use strict";
-const logger$z = new Logger$h(version$J);
+const logger$z = new Logger$i(version$K);
 ///////////////////////////////
 function isHexable$d(value) {
     return !!(value.toHexString);
@@ -42386,11 +42742,11 @@ function joinSignature$d(signature) {
     ]));
 }
 
-const version$K = "bignumber/5.7.0";
+const version$L = "bignumber/5.7.0";
 
 "use strict";
 var BN$5 = bn$5.BN;
-const logger$A = new Logger$h(version$K);
+const logger$A = new Logger$i(version$L);
 const _constructorGuard$b = {};
 const MAX_SAFE$5 = 0x1fffffffffffff;
 function isBigNumberish$5(value) {
@@ -42406,7 +42762,7 @@ let _warnedToStringRadix$5 = false;
 class BigNumber$5 {
     constructor(constructorGuard, hex) {
         if (constructorGuard !== _constructorGuard$b) {
-            logger$A.throwError("cannot call constructor directly; use BigNumber.from", Logger$h.errors.UNSUPPORTED_OPERATION, {
+            logger$A.throwError("cannot call constructor directly; use BigNumber.from", Logger$i.errors.UNSUPPORTED_OPERATION, {
                 operation: "new (BigNumber)"
             });
         }
@@ -42530,7 +42886,7 @@ class BigNumber$5 {
             return BigInt(this.toString());
         }
         catch (e) { }
-        return logger$A.throwError("this platform does not support BigInt", Logger$h.errors.UNSUPPORTED_OPERATION, {
+        return logger$A.throwError("this platform does not support BigInt", Logger$i.errors.UNSUPPORTED_OPERATION, {
             value: this.toString()
         });
     }
@@ -42544,10 +42900,10 @@ class BigNumber$5 {
                 }
             }
             else if (arguments[0] === 16) {
-                logger$A.throwError("BigNumber.toString does not accept any parameters; use bigNumber.toHexString()", Logger$h.errors.UNEXPECTED_ARGUMENT, {});
+                logger$A.throwError("BigNumber.toString does not accept any parameters; use bigNumber.toHexString()", Logger$i.errors.UNEXPECTED_ARGUMENT, {});
             }
             else {
-                logger$A.throwError("BigNumber.toString does not accept parameters", Logger$h.errors.UNEXPECTED_ARGUMENT, {});
+                logger$A.throwError("BigNumber.toString does not accept parameters", Logger$i.errors.UNEXPECTED_ARGUMENT, {});
             }
         }
         return toBN$5(this).toString(10);
@@ -42671,7 +43027,7 @@ function throwFault$a(fault, operation, value) {
     if (value != null) {
         params.value = value;
     }
-    return logger$A.throwError(fault, Logger$h.errors.NUMERIC_FAULT, params);
+    return logger$A.throwError(fault, Logger$i.errors.NUMERIC_FAULT, params);
 }
 // value should have no prefix
 function _base36To16$5(value) {
@@ -42683,7 +43039,7 @@ function _base16To36$5(value) {
 }
 
 "use strict";
-const logger$B = new Logger$h(version$K);
+const logger$B = new Logger$i(version$L);
 const _constructorGuard$c = {};
 const Zero$8 = BigNumber$5.from(0);
 const NegativeOne$8 = BigNumber$5.from(-1);
@@ -42692,7 +43048,7 @@ function throwFault$b(message, fault, operation, value) {
     if (value !== undefined) {
         params.value = value;
     }
-    return logger$B.throwError(message, Logger$h.errors.NUMERIC_FAULT, params);
+    return logger$B.throwError(message, Logger$i.errors.NUMERIC_FAULT, params);
 }
 // Constant to pull zeros from for multipliers
 let zeros$5 = "0";
@@ -42796,7 +43152,7 @@ function parseFixed$5(value, decimals) {
 class FixedFormat$5 {
     constructor(constructorGuard, signed, width, decimals) {
         if (constructorGuard !== _constructorGuard$c) {
-            logger$B.throwError("cannot use FixedFormat constructor; use FixedFormat.from", Logger$h.errors.UNSUPPORTED_OPERATION, {
+            logger$B.throwError("cannot use FixedFormat constructor; use FixedFormat.from", Logger$i.errors.UNSUPPORTED_OPERATION, {
                 operation: "new FixedFormat"
             });
         }
@@ -42860,7 +43216,7 @@ class FixedFormat$5 {
 class FixedNumber$5 {
     constructor(constructorGuard, hex, value, format) {
         if (constructorGuard !== _constructorGuard$c) {
-            logger$B.throwError("cannot use FixedNumber constructor; use FixedNumber.from", Logger$h.errors.UNSUPPORTED_OPERATION, {
+            logger$B.throwError("cannot use FixedNumber constructor; use FixedNumber.from", Logger$i.errors.UNSUPPORTED_OPERATION, {
                 operation: "new FixedFormat"
             });
         }
@@ -43026,7 +43382,7 @@ class FixedNumber$5 {
         }
         catch (error) {
             // Allow NUMERIC_FAULT to bubble up
-            if (error.code !== Logger$h.errors.INVALID_ARGUMENT) {
+            if (error.code !== Logger$i.errors.INVALID_ARGUMENT) {
                 throw error;
             }
         }
@@ -43039,15 +43395,15 @@ class FixedNumber$5 {
 const ONE$5 = FixedNumber$5.from(1);
 const BUMP$5 = FixedNumber$5.from("0.5");
 
-const version$L = "logger/5.7.0";
+const version$M = "logger/5.7.0";
 
 "use strict";
-let _permanentCensorErrors$i = false;
-let _censorErrors$i = false;
-const LogLevels$i = { debug: 1, "default": 2, info: 2, warning: 3, error: 4, off: 5 };
-let _logLevel$i = LogLevels$i["default"];
-let _globalLogger$i = null;
-function _checkNormalize$i() {
+let _permanentCensorErrors$j = false;
+let _censorErrors$j = false;
+const LogLevels$j = { debug: 1, "default": 2, info: 2, warning: 3, error: 4, off: 5 };
+let _logLevel$j = LogLevels$j["default"];
+let _globalLogger$j = null;
+function _checkNormalize$j() {
     try {
         const missing = [];
         // Make sure all forms of normalization are supported
@@ -43074,16 +43430,16 @@ function _checkNormalize$i() {
     }
     return null;
 }
-const _normalizeError$i = _checkNormalize$i();
-var LogLevel$i;
+const _normalizeError$j = _checkNormalize$j();
+var LogLevel$j;
 (function (LogLevel) {
     LogLevel["DEBUG"] = "DEBUG";
     LogLevel["INFO"] = "INFO";
     LogLevel["WARNING"] = "WARNING";
     LogLevel["ERROR"] = "ERROR";
     LogLevel["OFF"] = "OFF";
-})(LogLevel$i || (LogLevel$i = {}));
-var ErrorCode$i;
+})(LogLevel$j || (LogLevel$j = {}));
+var ErrorCode$j;
 (function (ErrorCode) {
     ///////////////////
     // Generic Errors
@@ -43161,10 +43517,10 @@ var ErrorCode$i;
     // The user rejected the action, such as signing a message or sending
     // a transaction
     ErrorCode["ACTION_REJECTED"] = "ACTION_REJECTED";
-})(ErrorCode$i || (ErrorCode$i = {}));
+})(ErrorCode$j || (ErrorCode$j = {}));
 ;
-const HEX$i = "0123456789abcdef";
-class Logger$i {
+const HEX$j = "0123456789abcdef";
+class Logger$j {
     constructor(version) {
         Object.defineProperty(this, "version", {
             enumerable: true,
@@ -43174,30 +43530,30 @@ class Logger$i {
     }
     _log(logLevel, args) {
         const level = logLevel.toLowerCase();
-        if (LogLevels$i[level] == null) {
+        if (LogLevels$j[level] == null) {
             this.throwArgumentError("invalid log level name", "logLevel", logLevel);
         }
-        if (_logLevel$i > LogLevels$i[level]) {
+        if (_logLevel$j > LogLevels$j[level]) {
             return;
         }
         console.log.apply(console, args);
     }
     debug(...args) {
-        this._log(Logger$i.levels.DEBUG, args);
+        this._log(Logger$j.levels.DEBUG, args);
     }
     info(...args) {
-        this._log(Logger$i.levels.INFO, args);
+        this._log(Logger$j.levels.INFO, args);
     }
     warn(...args) {
-        this._log(Logger$i.levels.WARNING, args);
+        this._log(Logger$j.levels.WARNING, args);
     }
     makeError(message, code, params) {
         // Errors are being censored
-        if (_censorErrors$i) {
+        if (_censorErrors$j) {
             return this.makeError("censored error", code, {});
         }
         if (!code) {
-            code = Logger$i.errors.UNKNOWN_ERROR;
+            code = Logger$j.errors.UNKNOWN_ERROR;
         }
         if (!params) {
             params = {};
@@ -43209,8 +43565,8 @@ class Logger$i {
                 if (value instanceof Uint8Array) {
                     let hex = "";
                     for (let i = 0; i < value.length; i++) {
-                        hex += HEX$i[value[i] >> 4];
-                        hex += HEX$i[value[i] & 0x0f];
+                        hex += HEX$j[value[i] >> 4];
+                        hex += HEX$j[value[i] & 0x0f];
                     }
                     messageDetails.push(key + "=Uint8Array(0x" + hex + ")");
                 }
@@ -43227,7 +43583,7 @@ class Logger$i {
         const reason = message;
         let url = "";
         switch (code) {
-            case ErrorCode$i.NUMERIC_FAULT: {
+            case ErrorCode$j.NUMERIC_FAULT: {
                 url = "NUMERIC_FAULT";
                 const fault = message;
                 switch (fault) {
@@ -43246,13 +43602,13 @@ class Logger$i {
                 }
                 break;
             }
-            case ErrorCode$i.CALL_EXCEPTION:
-            case ErrorCode$i.INSUFFICIENT_FUNDS:
-            case ErrorCode$i.MISSING_NEW:
-            case ErrorCode$i.NONCE_EXPIRED:
-            case ErrorCode$i.REPLACEMENT_UNDERPRICED:
-            case ErrorCode$i.TRANSACTION_REPLACED:
-            case ErrorCode$i.UNPREDICTABLE_GAS_LIMIT:
+            case ErrorCode$j.CALL_EXCEPTION:
+            case ErrorCode$j.INSUFFICIENT_FUNDS:
+            case ErrorCode$j.MISSING_NEW:
+            case ErrorCode$j.NONCE_EXPIRED:
+            case ErrorCode$j.REPLACEMENT_UNDERPRICED:
+            case ErrorCode$j.TRANSACTION_REPLACED:
+            case ErrorCode$j.UNPREDICTABLE_GAS_LIMIT:
                 url = code;
                 break;
         }
@@ -43275,7 +43631,7 @@ class Logger$i {
         throw this.makeError(message, code, params);
     }
     throwArgumentError(message, name, value) {
-        return this.throwError(message, Logger$i.errors.INVALID_ARGUMENT, {
+        return this.throwError(message, Logger$j.errors.INVALID_ARGUMENT, {
             argument: name,
             value: value
         });
@@ -43296,9 +43652,9 @@ class Logger$i {
         if (message == null) {
             message = "platform missing String.prototype.normalize";
         }
-        if (_normalizeError$i) {
-            this.throwError("platform missing String.prototype.normalize", Logger$i.errors.UNSUPPORTED_OPERATION, {
-                operation: "String.prototype.normalize", form: _normalizeError$i
+        if (_normalizeError$j) {
+            this.throwError("platform missing String.prototype.normalize", Logger$j.errors.UNSUPPORTED_OPERATION, {
+                operation: "String.prototype.normalize", form: _normalizeError$j
             });
         }
     }
@@ -43310,14 +43666,14 @@ class Logger$i {
             message = "value not safe";
         }
         if (value < 0 || value >= 0x1fffffffffffff) {
-            this.throwError(message, Logger$i.errors.NUMERIC_FAULT, {
+            this.throwError(message, Logger$j.errors.NUMERIC_FAULT, {
                 operation: "checkSafeInteger",
                 fault: "out-of-safe-range",
                 value: value
             });
         }
         if (value % 1) {
-            this.throwError(message, Logger$i.errors.NUMERIC_FAULT, {
+            this.throwError(message, Logger$j.errors.NUMERIC_FAULT, {
                 operation: "checkSafeInteger",
                 fault: "non-integer",
                 value: value
@@ -43332,13 +43688,13 @@ class Logger$i {
             message = "";
         }
         if (count < expectedCount) {
-            this.throwError("missing argument" + message, Logger$i.errors.MISSING_ARGUMENT, {
+            this.throwError("missing argument" + message, Logger$j.errors.MISSING_ARGUMENT, {
                 count: count,
                 expectedCount: expectedCount
             });
         }
         if (count > expectedCount) {
-            this.throwError("too many arguments" + message, Logger$i.errors.UNEXPECTED_ARGUMENT, {
+            this.throwError("too many arguments" + message, Logger$j.errors.UNEXPECTED_ARGUMENT, {
                 count: count,
                 expectedCount: expectedCount
             });
@@ -43346,56 +43702,56 @@ class Logger$i {
     }
     checkNew(target, kind) {
         if (target === Object || target == null) {
-            this.throwError("missing new", Logger$i.errors.MISSING_NEW, { name: kind.name });
+            this.throwError("missing new", Logger$j.errors.MISSING_NEW, { name: kind.name });
         }
     }
     checkAbstract(target, kind) {
         if (target === kind) {
-            this.throwError("cannot instantiate abstract class " + JSON.stringify(kind.name) + " directly; use a sub-class", Logger$i.errors.UNSUPPORTED_OPERATION, { name: target.name, operation: "new" });
+            this.throwError("cannot instantiate abstract class " + JSON.stringify(kind.name) + " directly; use a sub-class", Logger$j.errors.UNSUPPORTED_OPERATION, { name: target.name, operation: "new" });
         }
         else if (target === Object || target == null) {
-            this.throwError("missing new", Logger$i.errors.MISSING_NEW, { name: kind.name });
+            this.throwError("missing new", Logger$j.errors.MISSING_NEW, { name: kind.name });
         }
     }
     static globalLogger() {
-        if (!_globalLogger$i) {
-            _globalLogger$i = new Logger$i(version$L);
+        if (!_globalLogger$j) {
+            _globalLogger$j = new Logger$j(version$M);
         }
-        return _globalLogger$i;
+        return _globalLogger$j;
     }
     static setCensorship(censorship, permanent) {
         if (!censorship && permanent) {
-            this.globalLogger().throwError("cannot permanently disable censorship", Logger$i.errors.UNSUPPORTED_OPERATION, {
+            this.globalLogger().throwError("cannot permanently disable censorship", Logger$j.errors.UNSUPPORTED_OPERATION, {
                 operation: "setCensorship"
             });
         }
-        if (_permanentCensorErrors$i) {
+        if (_permanentCensorErrors$j) {
             if (!censorship) {
                 return;
             }
-            this.globalLogger().throwError("error censorship permanent", Logger$i.errors.UNSUPPORTED_OPERATION, {
+            this.globalLogger().throwError("error censorship permanent", Logger$j.errors.UNSUPPORTED_OPERATION, {
                 operation: "setCensorship"
             });
         }
-        _censorErrors$i = !!censorship;
-        _permanentCensorErrors$i = !!permanent;
+        _censorErrors$j = !!censorship;
+        _permanentCensorErrors$j = !!permanent;
     }
     static setLogLevel(logLevel) {
-        const level = LogLevels$i[logLevel.toLowerCase()];
+        const level = LogLevels$j[logLevel.toLowerCase()];
         if (level == null) {
-            Logger$i.globalLogger().warn("invalid log level - " + logLevel);
+            Logger$j.globalLogger().warn("invalid log level - " + logLevel);
             return;
         }
-        _logLevel$i = level;
+        _logLevel$j = level;
     }
     static from(version) {
-        return new Logger$i(version);
+        return new Logger$j(version);
     }
 }
-Logger$i.errors = ErrorCode$i;
-Logger$i.levels = LogLevel$i;
+Logger$j.errors = ErrorCode$j;
+Logger$j.levels = LogLevel$j;
 
-const version$M = "properties/5.7.0";
+const version$N = "properties/5.7.0";
 
 "use strict";
 var __awaiter$1 = (commonjsGlobal && commonjsGlobal.__awaiter) || function (thisArg, _arguments, P, generator) {
@@ -43407,7 +43763,7 @@ var __awaiter$1 = (commonjsGlobal && commonjsGlobal.__awaiter) || function (this
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-const logger$C = new Logger$i(version$M);
+const logger$C = new Logger$j(version$N);
 function defineReadOnly$1(object, name, value) {
     Object.defineProperty(object, name, {
         enumerable: true,
@@ -43530,7 +43886,7 @@ var __awaiter$2 = (commonjsGlobal && commonjsGlobal.__awaiter) || function (this
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-const logger$D = new Logger$e(version$A);
+const logger$D = new Logger$f(version$B);
 const padding = new Uint8Array(32);
 padding.fill(0);
 const NegativeOne$9 = BigNumber$5.from(-1);
@@ -44615,10 +44971,10 @@ var sha3$3 = createCommonjsModule(function (module) {
 })();
 });
 
-const version$N = "bytes/5.7.0";
+const version$O = "bytes/5.7.0";
 
 "use strict";
-const logger$E = new Logger$2(version$N);
+const logger$E = new Logger$3(version$O);
 ///////////////////////////////
 function isHexable$e(value) {
     return !!(value.toHexString);
@@ -45030,7 +45386,7 @@ function keccak256$3(data) {
 }
 
 "use strict";
-const logger$F = new Logger$2(version$6);
+const logger$F = new Logger$3(version$7);
 class LogDescription extends Description {
 }
 class TransactionDescription extends Description {
@@ -45361,7 +45717,7 @@ class Interface {
                 break;
             }
         }
-        return logger$F.throwError("call revert exception" + message, Logger$2.errors.CALL_EXCEPTION, {
+        return logger$F.throwError("call revert exception" + message, Logger$3.errors.CALL_EXCEPTION, {
             method: functionFragment.format(),
             data: hexlify$1(data), errorArgs, errorName, errorSignature, reason
         });
@@ -45379,7 +45735,7 @@ class Interface {
             eventFragment = this.getEvent(eventFragment);
         }
         if (values.length > eventFragment.inputs.length) {
-            logger$F.throwError("too many arguments for " + eventFragment.format(), Logger$2.errors.UNEXPECTED_ARGUMENT, {
+            logger$F.throwError("too many arguments for " + eventFragment.format(), Logger$3.errors.UNEXPECTED_ARGUMENT, {
                 argument: "values",
                 value: values
             });
@@ -45482,7 +45838,7 @@ class Interface {
         if (topics != null && !eventFragment.anonymous) {
             let topicHash = this.getEventTopic(eventFragment);
             if (!isHexString$1(topics[0], 32) || topics[0].toLowerCase() !== topicHash) {
-                logger$F.throwError("fragment/topic mismatch", Logger$2.errors.INVALID_ARGUMENT, { argument: "topics[0]", expected: topicHash, value: topics[0] });
+                logger$F.throwError("fragment/topic mismatch", Logger$3.errors.INVALID_ARGUMENT, { argument: "topics[0]", expected: topicHash, value: topics[0] });
             }
             topics = topics.slice(1);
         }
@@ -45629,10 +45985,10 @@ class Interface {
 
 "use strict";
 
-const version$O = "bytes/5.7.0";
+const version$P = "bytes/5.7.0";
 
 "use strict";
-const logger$G = new Logger$2(version$O);
+const logger$G = new Logger$3(version$P);
 ///////////////////////////////
 function isHexable$f(value) {
     return !!(value.toHexString);
@@ -46038,7 +46394,7 @@ function joinSignature$f(signature) {
     ]));
 }
 
-const version$P = "properties/5.7.0";
+const version$Q = "properties/5.7.0";
 
 "use strict";
 var __awaiter$3 = (commonjsGlobal && commonjsGlobal.__awaiter) || function (thisArg, _arguments, P, generator) {
@@ -46050,7 +46406,7 @@ var __awaiter$3 = (commonjsGlobal && commonjsGlobal.__awaiter) || function (this
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-const logger$H = new Logger$2(version$P);
+const logger$H = new Logger$3(version$Q);
 function defineReadOnly$2(object, name, value) {
     Object.defineProperty(object, name, {
         enumerable: true,
@@ -46164,604 +46520,7 @@ class Description$2 {
     }
 }
 
-const version$Q = "logger/5.7.0";
-
-"use strict";
-let _permanentCensorErrors$j = false;
-let _censorErrors$j = false;
-const LogLevels$j = { debug: 1, "default": 2, info: 2, warning: 3, error: 4, off: 5 };
-let _logLevel$j = LogLevels$j["default"];
-let _globalLogger$j = null;
-function _checkNormalize$j() {
-    try {
-        const missing = [];
-        // Make sure all forms of normalization are supported
-        ["NFD", "NFC", "NFKD", "NFKC"].forEach((form) => {
-            try {
-                if ("test".normalize(form) !== "test") {
-                    throw new Error("bad normalize");
-                }
-                ;
-            }
-            catch (error) {
-                missing.push(form);
-            }
-        });
-        if (missing.length) {
-            throw new Error("missing " + missing.join(", "));
-        }
-        if (String.fromCharCode(0xe9).normalize("NFD") !== String.fromCharCode(0x65, 0x0301)) {
-            throw new Error("broken implementation");
-        }
-    }
-    catch (error) {
-        return error.message;
-    }
-    return null;
-}
-const _normalizeError$j = _checkNormalize$j();
-var LogLevel$j;
-(function (LogLevel) {
-    LogLevel["DEBUG"] = "DEBUG";
-    LogLevel["INFO"] = "INFO";
-    LogLevel["WARNING"] = "WARNING";
-    LogLevel["ERROR"] = "ERROR";
-    LogLevel["OFF"] = "OFF";
-})(LogLevel$j || (LogLevel$j = {}));
-var ErrorCode$j;
-(function (ErrorCode) {
-    ///////////////////
-    // Generic Errors
-    // Unknown Error
-    ErrorCode["UNKNOWN_ERROR"] = "UNKNOWN_ERROR";
-    // Not Implemented
-    ErrorCode["NOT_IMPLEMENTED"] = "NOT_IMPLEMENTED";
-    // Unsupported Operation
-    //   - operation
-    ErrorCode["UNSUPPORTED_OPERATION"] = "UNSUPPORTED_OPERATION";
-    // Network Error (i.e. Ethereum Network, such as an invalid chain ID)
-    //   - event ("noNetwork" is not re-thrown in provider.ready; otherwise thrown)
-    ErrorCode["NETWORK_ERROR"] = "NETWORK_ERROR";
-    // Some sort of bad response from the server
-    ErrorCode["SERVER_ERROR"] = "SERVER_ERROR";
-    // Timeout
-    ErrorCode["TIMEOUT"] = "TIMEOUT";
-    ///////////////////
-    // Operational  Errors
-    // Buffer Overrun
-    ErrorCode["BUFFER_OVERRUN"] = "BUFFER_OVERRUN";
-    // Numeric Fault
-    //   - operation: the operation being executed
-    //   - fault: the reason this faulted
-    ErrorCode["NUMERIC_FAULT"] = "NUMERIC_FAULT";
-    ///////////////////
-    // Argument Errors
-    // Missing new operator to an object
-    //  - name: The name of the class
-    ErrorCode["MISSING_NEW"] = "MISSING_NEW";
-    // Invalid argument (e.g. value is incompatible with type) to a function:
-    //   - argument: The argument name that was invalid
-    //   - value: The value of the argument
-    ErrorCode["INVALID_ARGUMENT"] = "INVALID_ARGUMENT";
-    // Missing argument to a function:
-    //   - count: The number of arguments received
-    //   - expectedCount: The number of arguments expected
-    ErrorCode["MISSING_ARGUMENT"] = "MISSING_ARGUMENT";
-    // Too many arguments
-    //   - count: The number of arguments received
-    //   - expectedCount: The number of arguments expected
-    ErrorCode["UNEXPECTED_ARGUMENT"] = "UNEXPECTED_ARGUMENT";
-    ///////////////////
-    // Blockchain Errors
-    // Call exception
-    //  - transaction: the transaction
-    //  - address?: the contract address
-    //  - args?: The arguments passed into the function
-    //  - method?: The Solidity method signature
-    //  - errorSignature?: The EIP848 error signature
-    //  - errorArgs?: The EIP848 error parameters
-    //  - reason: The reason (only for EIP848 "Error(string)")
-    ErrorCode["CALL_EXCEPTION"] = "CALL_EXCEPTION";
-    // Insufficient funds (< value + gasLimit * gasPrice)
-    //   - transaction: the transaction attempted
-    ErrorCode["INSUFFICIENT_FUNDS"] = "INSUFFICIENT_FUNDS";
-    // Nonce has already been used
-    //   - transaction: the transaction attempted
-    ErrorCode["NONCE_EXPIRED"] = "NONCE_EXPIRED";
-    // The replacement fee for the transaction is too low
-    //   - transaction: the transaction attempted
-    ErrorCode["REPLACEMENT_UNDERPRICED"] = "REPLACEMENT_UNDERPRICED";
-    // The gas limit could not be estimated
-    //   - transaction: the transaction passed to estimateGas
-    ErrorCode["UNPREDICTABLE_GAS_LIMIT"] = "UNPREDICTABLE_GAS_LIMIT";
-    // The transaction was replaced by one with a higher gas price
-    //   - reason: "cancelled", "replaced" or "repriced"
-    //   - cancelled: true if reason == "cancelled" or reason == "replaced")
-    //   - hash: original transaction hash
-    //   - replacement: the full TransactionsResponse for the replacement
-    //   - receipt: the receipt of the replacement
-    ErrorCode["TRANSACTION_REPLACED"] = "TRANSACTION_REPLACED";
-    ///////////////////
-    // Interaction Errors
-    // The user rejected the action, such as signing a message or sending
-    // a transaction
-    ErrorCode["ACTION_REJECTED"] = "ACTION_REJECTED";
-})(ErrorCode$j || (ErrorCode$j = {}));
-;
-const HEX$j = "0123456789abcdef";
-class Logger$j {
-    constructor(version) {
-        Object.defineProperty(this, "version", {
-            enumerable: true,
-            value: version,
-            writable: false
-        });
-    }
-    _log(logLevel, args) {
-        const level = logLevel.toLowerCase();
-        if (LogLevels$j[level] == null) {
-            this.throwArgumentError("invalid log level name", "logLevel", logLevel);
-        }
-        if (_logLevel$j > LogLevels$j[level]) {
-            return;
-        }
-        console.log.apply(console, args);
-    }
-    debug(...args) {
-        this._log(Logger$j.levels.DEBUG, args);
-    }
-    info(...args) {
-        this._log(Logger$j.levels.INFO, args);
-    }
-    warn(...args) {
-        this._log(Logger$j.levels.WARNING, args);
-    }
-    makeError(message, code, params) {
-        // Errors are being censored
-        if (_censorErrors$j) {
-            return this.makeError("censored error", code, {});
-        }
-        if (!code) {
-            code = Logger$j.errors.UNKNOWN_ERROR;
-        }
-        if (!params) {
-            params = {};
-        }
-        const messageDetails = [];
-        Object.keys(params).forEach((key) => {
-            const value = params[key];
-            try {
-                if (value instanceof Uint8Array) {
-                    let hex = "";
-                    for (let i = 0; i < value.length; i++) {
-                        hex += HEX$j[value[i] >> 4];
-                        hex += HEX$j[value[i] & 0x0f];
-                    }
-                    messageDetails.push(key + "=Uint8Array(0x" + hex + ")");
-                }
-                else {
-                    messageDetails.push(key + "=" + JSON.stringify(value));
-                }
-            }
-            catch (error) {
-                messageDetails.push(key + "=" + JSON.stringify(params[key].toString()));
-            }
-        });
-        messageDetails.push(`code=${code}`);
-        messageDetails.push(`version=${this.version}`);
-        const reason = message;
-        let url = "";
-        switch (code) {
-            case ErrorCode$j.NUMERIC_FAULT: {
-                url = "NUMERIC_FAULT";
-                const fault = message;
-                switch (fault) {
-                    case "overflow":
-                    case "underflow":
-                    case "division-by-zero":
-                        url += "-" + fault;
-                        break;
-                    case "negative-power":
-                    case "negative-width":
-                        url += "-unsupported";
-                        break;
-                    case "unbound-bitwise-result":
-                        url += "-unbound-result";
-                        break;
-                }
-                break;
-            }
-            case ErrorCode$j.CALL_EXCEPTION:
-            case ErrorCode$j.INSUFFICIENT_FUNDS:
-            case ErrorCode$j.MISSING_NEW:
-            case ErrorCode$j.NONCE_EXPIRED:
-            case ErrorCode$j.REPLACEMENT_UNDERPRICED:
-            case ErrorCode$j.TRANSACTION_REPLACED:
-            case ErrorCode$j.UNPREDICTABLE_GAS_LIMIT:
-                url = code;
-                break;
-        }
-        if (url) {
-            message += " [ See: https:/\/links.quais.org/v5-errors-" + url + " ]";
-        }
-        if (messageDetails.length) {
-            message += " (" + messageDetails.join(", ") + ")";
-        }
-        // @TODO: Any??
-        const error = new Error(message);
-        error.reason = reason;
-        error.code = code;
-        Object.keys(params).forEach(function (key) {
-            error[key] = params[key];
-        });
-        return error;
-    }
-    throwError(message, code, params) {
-        throw this.makeError(message, code, params);
-    }
-    throwArgumentError(message, name, value) {
-        return this.throwError(message, Logger$j.errors.INVALID_ARGUMENT, {
-            argument: name,
-            value: value
-        });
-    }
-    assert(condition, message, code, params) {
-        if (!!condition) {
-            return;
-        }
-        this.throwError(message, code, params);
-    }
-    assertArgument(condition, message, name, value) {
-        if (!!condition) {
-            return;
-        }
-        this.throwArgumentError(message, name, value);
-    }
-    checkNormalize(message) {
-        if (message == null) {
-            message = "platform missing String.prototype.normalize";
-        }
-        if (_normalizeError$j) {
-            this.throwError("platform missing String.prototype.normalize", Logger$j.errors.UNSUPPORTED_OPERATION, {
-                operation: "String.prototype.normalize", form: _normalizeError$j
-            });
-        }
-    }
-    checkSafeUint53(value, message) {
-        if (typeof (value) !== "number") {
-            return;
-        }
-        if (message == null) {
-            message = "value not safe";
-        }
-        if (value < 0 || value >= 0x1fffffffffffff) {
-            this.throwError(message, Logger$j.errors.NUMERIC_FAULT, {
-                operation: "checkSafeInteger",
-                fault: "out-of-safe-range",
-                value: value
-            });
-        }
-        if (value % 1) {
-            this.throwError(message, Logger$j.errors.NUMERIC_FAULT, {
-                operation: "checkSafeInteger",
-                fault: "non-integer",
-                value: value
-            });
-        }
-    }
-    checkArgumentCount(count, expectedCount, message) {
-        if (message) {
-            message = ": " + message;
-        }
-        else {
-            message = "";
-        }
-        if (count < expectedCount) {
-            this.throwError("missing argument" + message, Logger$j.errors.MISSING_ARGUMENT, {
-                count: count,
-                expectedCount: expectedCount
-            });
-        }
-        if (count > expectedCount) {
-            this.throwError("too many arguments" + message, Logger$j.errors.UNEXPECTED_ARGUMENT, {
-                count: count,
-                expectedCount: expectedCount
-            });
-        }
-    }
-    checkNew(target, kind) {
-        if (target === Object || target == null) {
-            this.throwError("missing new", Logger$j.errors.MISSING_NEW, { name: kind.name });
-        }
-    }
-    checkAbstract(target, kind) {
-        if (target === kind) {
-            this.throwError("cannot instantiate abstract class " + JSON.stringify(kind.name) + " directly; use a sub-class", Logger$j.errors.UNSUPPORTED_OPERATION, { name: target.name, operation: "new" });
-        }
-        else if (target === Object || target == null) {
-            this.throwError("missing new", Logger$j.errors.MISSING_NEW, { name: kind.name });
-        }
-    }
-    static globalLogger() {
-        if (!_globalLogger$j) {
-            _globalLogger$j = new Logger$j(version$Q);
-        }
-        return _globalLogger$j;
-    }
-    static setCensorship(censorship, permanent) {
-        if (!censorship && permanent) {
-            this.globalLogger().throwError("cannot permanently disable censorship", Logger$j.errors.UNSUPPORTED_OPERATION, {
-                operation: "setCensorship"
-            });
-        }
-        if (_permanentCensorErrors$j) {
-            if (!censorship) {
-                return;
-            }
-            this.globalLogger().throwError("error censorship permanent", Logger$j.errors.UNSUPPORTED_OPERATION, {
-                operation: "setCensorship"
-            });
-        }
-        _censorErrors$j = !!censorship;
-        _permanentCensorErrors$j = !!permanent;
-    }
-    static setLogLevel(logLevel) {
-        const level = LogLevels$j[logLevel.toLowerCase()];
-        if (level == null) {
-            Logger$j.globalLogger().warn("invalid log level - " + logLevel);
-            return;
-        }
-        _logLevel$j = level;
-    }
-    static from(version) {
-        return new Logger$j(version);
-    }
-}
-Logger$j.errors = ErrorCode$j;
-Logger$j.levels = LogLevel$j;
-
-const version$R = "abstract-provider/0.1.0";
-
-"use strict";
-var __awaiter$4 = (commonjsGlobal && commonjsGlobal.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
-const logger$I = new Logger$j(version$R);
-;
-;
-//export type CallTransactionable = {
-//    call(transaction: TransactionRequest): Promise<TransactionResponse>;
-//};
-class ForkEvent extends Description$2 {
-    static isForkEvent(value) {
-        return !!(value && value._isForkEvent);
-    }
-}
-class BlockForkEvent extends ForkEvent {
-    constructor(blockHash, expiry) {
-        if (!isHexString$f(blockHash, 32)) {
-            logger$I.throwArgumentError("invalid blockHash", "blockHash", blockHash);
-        }
-        super({
-            _isForkEvent: true,
-            _isBlockForkEvent: true,
-            expiry: (expiry || 0),
-            blockHash: blockHash
-        });
-    }
-}
-class TransactionForkEvent extends ForkEvent {
-    constructor(hash, expiry) {
-        if (!isHexString$f(hash, 32)) {
-            logger$I.throwArgumentError("invalid transaction hash", "hash", hash);
-        }
-        super({
-            _isForkEvent: true,
-            _isTransactionForkEvent: true,
-            expiry: (expiry || 0),
-            hash: hash
-        });
-    }
-}
-class TransactionOrderForkEvent extends ForkEvent {
-    constructor(beforeHash, afterHash, expiry) {
-        if (!isHexString$f(beforeHash, 32)) {
-            logger$I.throwArgumentError("invalid transaction hash", "beforeHash", beforeHash);
-        }
-        if (!isHexString$f(afterHash, 32)) {
-            logger$I.throwArgumentError("invalid transaction hash", "afterHash", afterHash);
-        }
-        super({
-            _isForkEvent: true,
-            _isTransactionOrderForkEvent: true,
-            expiry: (expiry || 0),
-            beforeHash: beforeHash,
-            afterHash: afterHash
-        });
-    }
-}
-///////////////////////////////
-// Exported Abstracts
-class Provider {
-    constructor() {
-        logger$I.checkAbstract(new.target, Provider);
-        defineReadOnly$2(this, "_isProvider", true);
-    }
-    getFeeData() {
-        return __awaiter$4(this, void 0, void 0, function* () {
-            const { block, gasPrice, maxFeePerGas, maxPriorityFeePerGas } = yield resolveProperties$2({
-                block: this.getBlock("latest"),
-                gasPrice: this.getGasPrice().catch((error) => {
-                    console.log(error);
-                    return null;
-                }),
-                maxFeePerGas: this.getGasPrice().catch((error) => {
-                    console.log(error);
-                    return null;
-                }),
-                maxPriorityFeePerGas: this.getMaxPriorityFeePerGas().catch((error) => {
-                    console.log(error);
-                    return null;
-                }),
-            });
-            let lastBaseFeePerGas = null;
-            if (block && block.baseFeePerGas) {
-                // We may want to compute this more accurately in the future,
-                // using the formula "check if the base fee is correct".
-                // See: https://eips.ethereum.org/EIPS/eip-1559
-                // lastBaseFeePerGas = block.baseFeePerGas;
-                // maxPriorityFeePerGas = BigNumber.from("1500000000");
-                // maxFeePerGas = block.baseFeePerGas.mul(2).add(maxPriorityFeePerGas);
-            }
-            return { lastBaseFeePerGas, maxFeePerGas, maxPriorityFeePerGas, gasPrice };
-        });
-    }
-    // Alias for "on"
-    addListener(eventName, listener) {
-        return this.on(eventName, listener);
-    }
-    // Alias for "off"
-    removeListener(eventName, listener) {
-        return this.off(eventName, listener);
-    }
-    static isProvider(value) {
-        return !!(value && value._isProvider);
-    }
-}
-
-const version$S = "properties/5.7.0";
-
-"use strict";
-var __awaiter$5 = (commonjsGlobal && commonjsGlobal.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
-const logger$J = new Logger$2(version$S);
-function defineReadOnly$3(object, name, value) {
-    Object.defineProperty(object, name, {
-        enumerable: true,
-        value: value,
-        writable: false,
-    });
-}
-// Crawl up the constructor chain to find a static method
-function getStatic$3(ctor, key) {
-    for (let i = 0; i < 32; i++) {
-        if (ctor[key]) {
-            return ctor[key];
-        }
-        if (!ctor.prototype || typeof (ctor.prototype) !== "object") {
-            break;
-        }
-        ctor = Object.getPrototypeOf(ctor.prototype).constructor;
-    }
-    return null;
-}
-function resolveProperties$3(object) {
-    return __awaiter$5(this, void 0, void 0, function* () {
-        const promises = Object.keys(object).map((key) => {
-            const value = object[key];
-            return Promise.resolve(value).then((v) => ({ key: key, value: v }));
-        });
-        const results = yield Promise.all(promises);
-        return results.reduce((accum, result) => {
-            accum[(result.key)] = result.value;
-            return accum;
-        }, {});
-    });
-}
-function checkProperties$3(object, properties) {
-    if (!object || typeof (object) !== "object") {
-        logger$J.throwArgumentError("invalid object", "object", object);
-    }
-    Object.keys(object).forEach((key) => {
-        if (!properties[key]) {
-            logger$J.throwArgumentError("invalid object key - " + key, "transaction:" + key, object);
-        }
-    });
-}
-function shallowCopy$3(object) {
-    const result = {};
-    for (const key in object) {
-        result[key] = object[key];
-    }
-    return result;
-}
-const opaque$3 = { bigint: true, boolean: true, "function": true, number: true, string: true };
-function _isFrozen$3(object) {
-    // Opaque objects are not mutable, so safe to copy by assignment
-    if (object === undefined || object === null || opaque$3[typeof (object)]) {
-        return true;
-    }
-    if (Array.isArray(object) || typeof (object) === "object") {
-        if (!Object.isFrozen(object)) {
-            return false;
-        }
-        const keys = Object.keys(object);
-        for (let i = 0; i < keys.length; i++) {
-            let value = null;
-            try {
-                value = object[keys[i]];
-            }
-            catch (error) {
-                // If accessing a value triggers an error, it is a getter
-                // designed to do so (e.g. Result) and is therefore "frozen"
-                continue;
-            }
-            if (!_isFrozen$3(value)) {
-                return false;
-            }
-        }
-        return true;
-    }
-    return logger$J.throwArgumentError(`Cannot deepCopy ${typeof (object)}`, "object", object);
-}
-// Returns a new copy of object, such that no properties may be replaced.
-// New properties may be added only to objects.
-function _deepCopy$3(object) {
-    if (_isFrozen$3(object)) {
-        return object;
-    }
-    // Arrays are mutable, so we need to create a copy
-    if (Array.isArray(object)) {
-        return Object.freeze(object.map((item) => deepCopy$3(item)));
-    }
-    if (typeof (object) === "object") {
-        const result = {};
-        for (const key in object) {
-            const value = object[key];
-            if (value === undefined) {
-                continue;
-            }
-            defineReadOnly$3(result, key, deepCopy$3(value));
-        }
-        return result;
-    }
-    return logger$J.throwArgumentError(`Cannot deepCopy ${typeof (object)}`, "object", object);
-}
-function deepCopy$3(object) {
-    return _deepCopy$3(object);
-}
-class Description$3 {
-    constructor(info) {
-        for (const key in info) {
-            this[key] = deepCopy$3(info[key]);
-        }
-    }
-}
-
-const version$T = "logger/5.7.0";
+const version$R = "logger/5.7.0";
 
 "use strict";
 let _permanentCensorErrors$k = false;
@@ -47081,7 +46840,7 @@ class Logger$k {
     }
     static globalLogger() {
         if (!_globalLogger$k) {
-            _globalLogger$k = new Logger$k(version$T);
+            _globalLogger$k = new Logger$k(version$R);
         }
         return _globalLogger$k;
     }
@@ -47117,7 +46876,604 @@ class Logger$k {
 Logger$k.errors = ErrorCode$k;
 Logger$k.levels = LogLevel$k;
 
-const version$U = "abstract-signer/0.1.0";
+const version$S = "abstract-provider/0.1.0";
+
+"use strict";
+var __awaiter$4 = (commonjsGlobal && commonjsGlobal.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+const logger$I = new Logger$k(version$S);
+;
+;
+//export type CallTransactionable = {
+//    call(transaction: TransactionRequest): Promise<TransactionResponse>;
+//};
+class ForkEvent extends Description$2 {
+    static isForkEvent(value) {
+        return !!(value && value._isForkEvent);
+    }
+}
+class BlockForkEvent extends ForkEvent {
+    constructor(blockHash, expiry) {
+        if (!isHexString$f(blockHash, 32)) {
+            logger$I.throwArgumentError("invalid blockHash", "blockHash", blockHash);
+        }
+        super({
+            _isForkEvent: true,
+            _isBlockForkEvent: true,
+            expiry: (expiry || 0),
+            blockHash: blockHash
+        });
+    }
+}
+class TransactionForkEvent extends ForkEvent {
+    constructor(hash, expiry) {
+        if (!isHexString$f(hash, 32)) {
+            logger$I.throwArgumentError("invalid transaction hash", "hash", hash);
+        }
+        super({
+            _isForkEvent: true,
+            _isTransactionForkEvent: true,
+            expiry: (expiry || 0),
+            hash: hash
+        });
+    }
+}
+class TransactionOrderForkEvent extends ForkEvent {
+    constructor(beforeHash, afterHash, expiry) {
+        if (!isHexString$f(beforeHash, 32)) {
+            logger$I.throwArgumentError("invalid transaction hash", "beforeHash", beforeHash);
+        }
+        if (!isHexString$f(afterHash, 32)) {
+            logger$I.throwArgumentError("invalid transaction hash", "afterHash", afterHash);
+        }
+        super({
+            _isForkEvent: true,
+            _isTransactionOrderForkEvent: true,
+            expiry: (expiry || 0),
+            beforeHash: beforeHash,
+            afterHash: afterHash
+        });
+    }
+}
+///////////////////////////////
+// Exported Abstracts
+class Provider {
+    constructor() {
+        logger$I.checkAbstract(new.target, Provider);
+        defineReadOnly$2(this, "_isProvider", true);
+    }
+    getFeeData() {
+        return __awaiter$4(this, void 0, void 0, function* () {
+            const { block, gasPrice, maxFeePerGas, maxPriorityFeePerGas } = yield resolveProperties$2({
+                block: this.getBlock("latest"),
+                gasPrice: this.getGasPrice().catch((error) => {
+                    console.log(error);
+                    return null;
+                }),
+                maxFeePerGas: this.getGasPrice().catch((error) => {
+                    console.log(error);
+                    return null;
+                }),
+                maxPriorityFeePerGas: this.getMaxPriorityFeePerGas().catch((error) => {
+                    console.log(error);
+                    return null;
+                }),
+            });
+            let lastBaseFeePerGas = null;
+            if (block && block.baseFeePerGas) {
+                // We may want to compute this more accurately in the future,
+                // using the formula "check if the base fee is correct".
+                // See: https://eips.ethereum.org/EIPS/eip-1559
+                // lastBaseFeePerGas = block.baseFeePerGas;
+                // maxPriorityFeePerGas = BigNumber.from("1500000000");
+                // maxFeePerGas = block.baseFeePerGas.mul(2).add(maxPriorityFeePerGas);
+            }
+            return { lastBaseFeePerGas, maxFeePerGas, maxPriorityFeePerGas, gasPrice };
+        });
+    }
+    // Alias for "on"
+    addListener(eventName, listener) {
+        return this.on(eventName, listener);
+    }
+    // Alias for "off"
+    removeListener(eventName, listener) {
+        return this.off(eventName, listener);
+    }
+    static isProvider(value) {
+        return !!(value && value._isProvider);
+    }
+}
+
+const version$T = "properties/5.7.0";
+
+"use strict";
+var __awaiter$5 = (commonjsGlobal && commonjsGlobal.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+const logger$J = new Logger$3(version$T);
+function defineReadOnly$3(object, name, value) {
+    Object.defineProperty(object, name, {
+        enumerable: true,
+        value: value,
+        writable: false,
+    });
+}
+// Crawl up the constructor chain to find a static method
+function getStatic$3(ctor, key) {
+    for (let i = 0; i < 32; i++) {
+        if (ctor[key]) {
+            return ctor[key];
+        }
+        if (!ctor.prototype || typeof (ctor.prototype) !== "object") {
+            break;
+        }
+        ctor = Object.getPrototypeOf(ctor.prototype).constructor;
+    }
+    return null;
+}
+function resolveProperties$3(object) {
+    return __awaiter$5(this, void 0, void 0, function* () {
+        const promises = Object.keys(object).map((key) => {
+            const value = object[key];
+            return Promise.resolve(value).then((v) => ({ key: key, value: v }));
+        });
+        const results = yield Promise.all(promises);
+        return results.reduce((accum, result) => {
+            accum[(result.key)] = result.value;
+            return accum;
+        }, {});
+    });
+}
+function checkProperties$3(object, properties) {
+    if (!object || typeof (object) !== "object") {
+        logger$J.throwArgumentError("invalid object", "object", object);
+    }
+    Object.keys(object).forEach((key) => {
+        if (!properties[key]) {
+            logger$J.throwArgumentError("invalid object key - " + key, "transaction:" + key, object);
+        }
+    });
+}
+function shallowCopy$3(object) {
+    const result = {};
+    for (const key in object) {
+        result[key] = object[key];
+    }
+    return result;
+}
+const opaque$3 = { bigint: true, boolean: true, "function": true, number: true, string: true };
+function _isFrozen$3(object) {
+    // Opaque objects are not mutable, so safe to copy by assignment
+    if (object === undefined || object === null || opaque$3[typeof (object)]) {
+        return true;
+    }
+    if (Array.isArray(object) || typeof (object) === "object") {
+        if (!Object.isFrozen(object)) {
+            return false;
+        }
+        const keys = Object.keys(object);
+        for (let i = 0; i < keys.length; i++) {
+            let value = null;
+            try {
+                value = object[keys[i]];
+            }
+            catch (error) {
+                // If accessing a value triggers an error, it is a getter
+                // designed to do so (e.g. Result) and is therefore "frozen"
+                continue;
+            }
+            if (!_isFrozen$3(value)) {
+                return false;
+            }
+        }
+        return true;
+    }
+    return logger$J.throwArgumentError(`Cannot deepCopy ${typeof (object)}`, "object", object);
+}
+// Returns a new copy of object, such that no properties may be replaced.
+// New properties may be added only to objects.
+function _deepCopy$3(object) {
+    if (_isFrozen$3(object)) {
+        return object;
+    }
+    // Arrays are mutable, so we need to create a copy
+    if (Array.isArray(object)) {
+        return Object.freeze(object.map((item) => deepCopy$3(item)));
+    }
+    if (typeof (object) === "object") {
+        const result = {};
+        for (const key in object) {
+            const value = object[key];
+            if (value === undefined) {
+                continue;
+            }
+            defineReadOnly$3(result, key, deepCopy$3(value));
+        }
+        return result;
+    }
+    return logger$J.throwArgumentError(`Cannot deepCopy ${typeof (object)}`, "object", object);
+}
+function deepCopy$3(object) {
+    return _deepCopy$3(object);
+}
+class Description$3 {
+    constructor(info) {
+        for (const key in info) {
+            this[key] = deepCopy$3(info[key]);
+        }
+    }
+}
+
+const version$U = "logger/5.7.0";
+
+"use strict";
+let _permanentCensorErrors$l = false;
+let _censorErrors$l = false;
+const LogLevels$l = { debug: 1, "default": 2, info: 2, warning: 3, error: 4, off: 5 };
+let _logLevel$l = LogLevels$l["default"];
+let _globalLogger$l = null;
+function _checkNormalize$l() {
+    try {
+        const missing = [];
+        // Make sure all forms of normalization are supported
+        ["NFD", "NFC", "NFKD", "NFKC"].forEach((form) => {
+            try {
+                if ("test".normalize(form) !== "test") {
+                    throw new Error("bad normalize");
+                }
+                ;
+            }
+            catch (error) {
+                missing.push(form);
+            }
+        });
+        if (missing.length) {
+            throw new Error("missing " + missing.join(", "));
+        }
+        if (String.fromCharCode(0xe9).normalize("NFD") !== String.fromCharCode(0x65, 0x0301)) {
+            throw new Error("broken implementation");
+        }
+    }
+    catch (error) {
+        return error.message;
+    }
+    return null;
+}
+const _normalizeError$l = _checkNormalize$l();
+var LogLevel$l;
+(function (LogLevel) {
+    LogLevel["DEBUG"] = "DEBUG";
+    LogLevel["INFO"] = "INFO";
+    LogLevel["WARNING"] = "WARNING";
+    LogLevel["ERROR"] = "ERROR";
+    LogLevel["OFF"] = "OFF";
+})(LogLevel$l || (LogLevel$l = {}));
+var ErrorCode$l;
+(function (ErrorCode) {
+    ///////////////////
+    // Generic Errors
+    // Unknown Error
+    ErrorCode["UNKNOWN_ERROR"] = "UNKNOWN_ERROR";
+    // Not Implemented
+    ErrorCode["NOT_IMPLEMENTED"] = "NOT_IMPLEMENTED";
+    // Unsupported Operation
+    //   - operation
+    ErrorCode["UNSUPPORTED_OPERATION"] = "UNSUPPORTED_OPERATION";
+    // Network Error (i.e. Ethereum Network, such as an invalid chain ID)
+    //   - event ("noNetwork" is not re-thrown in provider.ready; otherwise thrown)
+    ErrorCode["NETWORK_ERROR"] = "NETWORK_ERROR";
+    // Some sort of bad response from the server
+    ErrorCode["SERVER_ERROR"] = "SERVER_ERROR";
+    // Timeout
+    ErrorCode["TIMEOUT"] = "TIMEOUT";
+    ///////////////////
+    // Operational  Errors
+    // Buffer Overrun
+    ErrorCode["BUFFER_OVERRUN"] = "BUFFER_OVERRUN";
+    // Numeric Fault
+    //   - operation: the operation being executed
+    //   - fault: the reason this faulted
+    ErrorCode["NUMERIC_FAULT"] = "NUMERIC_FAULT";
+    ///////////////////
+    // Argument Errors
+    // Missing new operator to an object
+    //  - name: The name of the class
+    ErrorCode["MISSING_NEW"] = "MISSING_NEW";
+    // Invalid argument (e.g. value is incompatible with type) to a function:
+    //   - argument: The argument name that was invalid
+    //   - value: The value of the argument
+    ErrorCode["INVALID_ARGUMENT"] = "INVALID_ARGUMENT";
+    // Missing argument to a function:
+    //   - count: The number of arguments received
+    //   - expectedCount: The number of arguments expected
+    ErrorCode["MISSING_ARGUMENT"] = "MISSING_ARGUMENT";
+    // Too many arguments
+    //   - count: The number of arguments received
+    //   - expectedCount: The number of arguments expected
+    ErrorCode["UNEXPECTED_ARGUMENT"] = "UNEXPECTED_ARGUMENT";
+    ///////////////////
+    // Blockchain Errors
+    // Call exception
+    //  - transaction: the transaction
+    //  - address?: the contract address
+    //  - args?: The arguments passed into the function
+    //  - method?: The Solidity method signature
+    //  - errorSignature?: The EIP848 error signature
+    //  - errorArgs?: The EIP848 error parameters
+    //  - reason: The reason (only for EIP848 "Error(string)")
+    ErrorCode["CALL_EXCEPTION"] = "CALL_EXCEPTION";
+    // Insufficient funds (< value + gasLimit * gasPrice)
+    //   - transaction: the transaction attempted
+    ErrorCode["INSUFFICIENT_FUNDS"] = "INSUFFICIENT_FUNDS";
+    // Nonce has already been used
+    //   - transaction: the transaction attempted
+    ErrorCode["NONCE_EXPIRED"] = "NONCE_EXPIRED";
+    // The replacement fee for the transaction is too low
+    //   - transaction: the transaction attempted
+    ErrorCode["REPLACEMENT_UNDERPRICED"] = "REPLACEMENT_UNDERPRICED";
+    // The gas limit could not be estimated
+    //   - transaction: the transaction passed to estimateGas
+    ErrorCode["UNPREDICTABLE_GAS_LIMIT"] = "UNPREDICTABLE_GAS_LIMIT";
+    // The transaction was replaced by one with a higher gas price
+    //   - reason: "cancelled", "replaced" or "repriced"
+    //   - cancelled: true if reason == "cancelled" or reason == "replaced")
+    //   - hash: original transaction hash
+    //   - replacement: the full TransactionsResponse for the replacement
+    //   - receipt: the receipt of the replacement
+    ErrorCode["TRANSACTION_REPLACED"] = "TRANSACTION_REPLACED";
+    ///////////////////
+    // Interaction Errors
+    // The user rejected the action, such as signing a message or sending
+    // a transaction
+    ErrorCode["ACTION_REJECTED"] = "ACTION_REJECTED";
+})(ErrorCode$l || (ErrorCode$l = {}));
+;
+const HEX$l = "0123456789abcdef";
+class Logger$l {
+    constructor(version) {
+        Object.defineProperty(this, "version", {
+            enumerable: true,
+            value: version,
+            writable: false
+        });
+    }
+    _log(logLevel, args) {
+        const level = logLevel.toLowerCase();
+        if (LogLevels$l[level] == null) {
+            this.throwArgumentError("invalid log level name", "logLevel", logLevel);
+        }
+        if (_logLevel$l > LogLevels$l[level]) {
+            return;
+        }
+        console.log.apply(console, args);
+    }
+    debug(...args) {
+        this._log(Logger$l.levels.DEBUG, args);
+    }
+    info(...args) {
+        this._log(Logger$l.levels.INFO, args);
+    }
+    warn(...args) {
+        this._log(Logger$l.levels.WARNING, args);
+    }
+    makeError(message, code, params) {
+        // Errors are being censored
+        if (_censorErrors$l) {
+            return this.makeError("censored error", code, {});
+        }
+        if (!code) {
+            code = Logger$l.errors.UNKNOWN_ERROR;
+        }
+        if (!params) {
+            params = {};
+        }
+        const messageDetails = [];
+        Object.keys(params).forEach((key) => {
+            const value = params[key];
+            try {
+                if (value instanceof Uint8Array) {
+                    let hex = "";
+                    for (let i = 0; i < value.length; i++) {
+                        hex += HEX$l[value[i] >> 4];
+                        hex += HEX$l[value[i] & 0x0f];
+                    }
+                    messageDetails.push(key + "=Uint8Array(0x" + hex + ")");
+                }
+                else {
+                    messageDetails.push(key + "=" + JSON.stringify(value));
+                }
+            }
+            catch (error) {
+                messageDetails.push(key + "=" + JSON.stringify(params[key].toString()));
+            }
+        });
+        messageDetails.push(`code=${code}`);
+        messageDetails.push(`version=${this.version}`);
+        const reason = message;
+        let url = "";
+        switch (code) {
+            case ErrorCode$l.NUMERIC_FAULT: {
+                url = "NUMERIC_FAULT";
+                const fault = message;
+                switch (fault) {
+                    case "overflow":
+                    case "underflow":
+                    case "division-by-zero":
+                        url += "-" + fault;
+                        break;
+                    case "negative-power":
+                    case "negative-width":
+                        url += "-unsupported";
+                        break;
+                    case "unbound-bitwise-result":
+                        url += "-unbound-result";
+                        break;
+                }
+                break;
+            }
+            case ErrorCode$l.CALL_EXCEPTION:
+            case ErrorCode$l.INSUFFICIENT_FUNDS:
+            case ErrorCode$l.MISSING_NEW:
+            case ErrorCode$l.NONCE_EXPIRED:
+            case ErrorCode$l.REPLACEMENT_UNDERPRICED:
+            case ErrorCode$l.TRANSACTION_REPLACED:
+            case ErrorCode$l.UNPREDICTABLE_GAS_LIMIT:
+                url = code;
+                break;
+        }
+        if (url) {
+            message += " [ See: https:/\/links.quais.org/v5-errors-" + url + " ]";
+        }
+        if (messageDetails.length) {
+            message += " (" + messageDetails.join(", ") + ")";
+        }
+        // @TODO: Any??
+        const error = new Error(message);
+        error.reason = reason;
+        error.code = code;
+        Object.keys(params).forEach(function (key) {
+            error[key] = params[key];
+        });
+        return error;
+    }
+    throwError(message, code, params) {
+        throw this.makeError(message, code, params);
+    }
+    throwArgumentError(message, name, value) {
+        return this.throwError(message, Logger$l.errors.INVALID_ARGUMENT, {
+            argument: name,
+            value: value
+        });
+    }
+    assert(condition, message, code, params) {
+        if (!!condition) {
+            return;
+        }
+        this.throwError(message, code, params);
+    }
+    assertArgument(condition, message, name, value) {
+        if (!!condition) {
+            return;
+        }
+        this.throwArgumentError(message, name, value);
+    }
+    checkNormalize(message) {
+        if (message == null) {
+            message = "platform missing String.prototype.normalize";
+        }
+        if (_normalizeError$l) {
+            this.throwError("platform missing String.prototype.normalize", Logger$l.errors.UNSUPPORTED_OPERATION, {
+                operation: "String.prototype.normalize", form: _normalizeError$l
+            });
+        }
+    }
+    checkSafeUint53(value, message) {
+        if (typeof (value) !== "number") {
+            return;
+        }
+        if (message == null) {
+            message = "value not safe";
+        }
+        if (value < 0 || value >= 0x1fffffffffffff) {
+            this.throwError(message, Logger$l.errors.NUMERIC_FAULT, {
+                operation: "checkSafeInteger",
+                fault: "out-of-safe-range",
+                value: value
+            });
+        }
+        if (value % 1) {
+            this.throwError(message, Logger$l.errors.NUMERIC_FAULT, {
+                operation: "checkSafeInteger",
+                fault: "non-integer",
+                value: value
+            });
+        }
+    }
+    checkArgumentCount(count, expectedCount, message) {
+        if (message) {
+            message = ": " + message;
+        }
+        else {
+            message = "";
+        }
+        if (count < expectedCount) {
+            this.throwError("missing argument" + message, Logger$l.errors.MISSING_ARGUMENT, {
+                count: count,
+                expectedCount: expectedCount
+            });
+        }
+        if (count > expectedCount) {
+            this.throwError("too many arguments" + message, Logger$l.errors.UNEXPECTED_ARGUMENT, {
+                count: count,
+                expectedCount: expectedCount
+            });
+        }
+    }
+    checkNew(target, kind) {
+        if (target === Object || target == null) {
+            this.throwError("missing new", Logger$l.errors.MISSING_NEW, { name: kind.name });
+        }
+    }
+    checkAbstract(target, kind) {
+        if (target === kind) {
+            this.throwError("cannot instantiate abstract class " + JSON.stringify(kind.name) + " directly; use a sub-class", Logger$l.errors.UNSUPPORTED_OPERATION, { name: target.name, operation: "new" });
+        }
+        else if (target === Object || target == null) {
+            this.throwError("missing new", Logger$l.errors.MISSING_NEW, { name: kind.name });
+        }
+    }
+    static globalLogger() {
+        if (!_globalLogger$l) {
+            _globalLogger$l = new Logger$l(version$U);
+        }
+        return _globalLogger$l;
+    }
+    static setCensorship(censorship, permanent) {
+        if (!censorship && permanent) {
+            this.globalLogger().throwError("cannot permanently disable censorship", Logger$l.errors.UNSUPPORTED_OPERATION, {
+                operation: "setCensorship"
+            });
+        }
+        if (_permanentCensorErrors$l) {
+            if (!censorship) {
+                return;
+            }
+            this.globalLogger().throwError("error censorship permanent", Logger$l.errors.UNSUPPORTED_OPERATION, {
+                operation: "setCensorship"
+            });
+        }
+        _censorErrors$l = !!censorship;
+        _permanentCensorErrors$l = !!permanent;
+    }
+    static setLogLevel(logLevel) {
+        const level = LogLevels$l[logLevel.toLowerCase()];
+        if (level == null) {
+            Logger$l.globalLogger().warn("invalid log level - " + logLevel);
+            return;
+        }
+        _logLevel$l = level;
+    }
+    static from(version) {
+        return new Logger$l(version);
+    }
+}
+Logger$l.errors = ErrorCode$l;
+Logger$l.levels = LogLevel$l;
+
+const version$V = "abstract-signer/0.1.0";
 
 "use strict";
 var __awaiter$6 = (commonjsGlobal && commonjsGlobal.__awaiter) || function (thisArg, _arguments, P, generator) {
@@ -47129,14 +47485,14 @@ var __awaiter$6 = (commonjsGlobal && commonjsGlobal.__awaiter) || function (this
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-const logger$K = new Logger$k(version$U);
+const logger$K = new Logger$l(version$V);
 const allowedTransactionKeys = [
     "accessList", "ccipReadEnabled", "chainId", "customData", "data", "from", "gasLimit", "gasPrice", "maxFeePerGas", "maxPriorityFeePerGas", "nonce", "to", "type", "value", "externalGasLimit", "externalGasPrice", "externalGasTip", "externalAccessList", "externalData"
 ];
 const forwardErrors = [
-    Logger$k.errors.INSUFFICIENT_FUNDS,
-    Logger$k.errors.NONCE_EXPIRED,
-    Logger$k.errors.REPLACEMENT_UNDERPRICED,
+    Logger$l.errors.INSUFFICIENT_FUNDS,
+    Logger$l.errors.NONCE_EXPIRED,
+    Logger$l.errors.REPLACEMENT_UNDERPRICED,
 ];
 ;
 ;
@@ -47296,7 +47652,7 @@ class Signer {
                             // Populate missing fee data, assume the receiving context is operating in similar 
                             if (tx.externalGasLimit == null || tx.externalGasPrice == null || tx.externalGasTip == null) {
                                 // Missing external fields
-                                logger$K.throwError("attempting to send an external transaction without all necessary data fields", Logger$k.errors.UNSUPPORTED_OPERATION, {
+                                logger$K.throwError("attempting to send an external transaction without all necessary data fields", Logger$l.errors.UNSUPPORTED_OPERATION, {
                                     operation: "populateTransaction"
                                 });
                             }
@@ -47311,13 +47667,13 @@ class Signer {
                     }
                     else if (feeData.gasPrice != null) {
                         // Network doesn't support EIP-1559...
-                        logger$K.throwError("network does not support EIP-1559", Logger$k.errors.UNSUPPORTED_OPERATION, {
+                        logger$K.throwError("network does not support EIP-1559", Logger$l.errors.UNSUPPORTED_OPERATION, {
                             operation: "populateTransaction"
                         });
                     }
                     else {
                         // getFeeData has failed us.
-                        logger$K.throwError("failed to get consistent fee data", Logger$k.errors.UNSUPPORTED_OPERATION, {
+                        logger$K.throwError("failed to get consistent fee data", Logger$l.errors.UNSUPPORTED_OPERATION, {
                             operation: "signer.getFeeData"
                         });
                     }
@@ -47331,7 +47687,7 @@ class Signer {
                     if (forwardErrors.indexOf(error.code) >= 0) {
                         throw error;
                     }
-                    return logger$K.throwError("abstract-signer: cannot estimate gas; transaction may fail or may require manual gas limit", Logger$k.errors.UNPREDICTABLE_GAS_LIMIT, {
+                    return logger$K.throwError("abstract-signer: cannot estimate gas; transaction may fail or may require manual gas limit", Logger$l.errors.UNPREDICTABLE_GAS_LIMIT, {
                         error: error,
                         tx: tx
                     });
@@ -47358,7 +47714,7 @@ class Signer {
     // Sub-classes SHOULD leave these alone
     _checkProvider(operation) {
         if (!this.provider) {
-            logger$K.throwError("missing provider", Logger$k.errors.UNSUPPORTED_OPERATION, {
+            logger$K.throwError("missing provider", Logger$l.errors.UNSUPPORTED_OPERATION, {
                 operation: (operation || "_checkProvider")
             });
         }
@@ -47378,7 +47734,7 @@ class VoidSigner extends Signer {
     }
     _fail(message, operation) {
         return Promise.resolve().then(() => {
-            logger$K.throwError(message, Logger$k.errors.UNSUPPORTED_OPERATION, { operation: operation });
+            logger$K.throwError(message, Logger$l.errors.UNSUPPORTED_OPERATION, { operation: operation });
         });
     }
     signMessage(message) {
@@ -47395,10 +47751,10 @@ class VoidSigner extends Signer {
     }
 }
 
-const version$V = "bytes/5.7.0";
+const version$W = "bytes/5.7.0";
 
 "use strict";
-const logger$L = new Logger$2(version$V);
+const logger$L = new Logger$3(version$W);
 ///////////////////////////////
 function isHexable$g(value) {
     return !!(value.toHexString);
@@ -47804,15 +48160,15 @@ function joinSignature$g(signature) {
     ]));
 }
 
-const version$W = "logger/5.7.0";
+const version$X = "logger/5.7.0";
 
 "use strict";
-let _permanentCensorErrors$l = false;
-let _censorErrors$l = false;
-const LogLevels$l = { debug: 1, "default": 2, info: 2, warning: 3, error: 4, off: 5 };
-let _logLevel$l = LogLevels$l["default"];
-let _globalLogger$l = null;
-function _checkNormalize$l() {
+let _permanentCensorErrors$m = false;
+let _censorErrors$m = false;
+const LogLevels$m = { debug: 1, "default": 2, info: 2, warning: 3, error: 4, off: 5 };
+let _logLevel$m = LogLevels$m["default"];
+let _globalLogger$m = null;
+function _checkNormalize$m() {
     try {
         const missing = [];
         // Make sure all forms of normalization are supported
@@ -47839,16 +48195,16 @@ function _checkNormalize$l() {
     }
     return null;
 }
-const _normalizeError$l = _checkNormalize$l();
-var LogLevel$l;
+const _normalizeError$m = _checkNormalize$m();
+var LogLevel$m;
 (function (LogLevel) {
     LogLevel["DEBUG"] = "DEBUG";
     LogLevel["INFO"] = "INFO";
     LogLevel["WARNING"] = "WARNING";
     LogLevel["ERROR"] = "ERROR";
     LogLevel["OFF"] = "OFF";
-})(LogLevel$l || (LogLevel$l = {}));
-var ErrorCode$l;
+})(LogLevel$m || (LogLevel$m = {}));
+var ErrorCode$m;
 (function (ErrorCode) {
     ///////////////////
     // Generic Errors
@@ -47926,10 +48282,10 @@ var ErrorCode$l;
     // The user rejected the action, such as signing a message or sending
     // a transaction
     ErrorCode["ACTION_REJECTED"] = "ACTION_REJECTED";
-})(ErrorCode$l || (ErrorCode$l = {}));
+})(ErrorCode$m || (ErrorCode$m = {}));
 ;
-const HEX$l = "0123456789abcdef";
-class Logger$l {
+const HEX$m = "0123456789abcdef";
+class Logger$m {
     constructor(version) {
         Object.defineProperty(this, "version", {
             enumerable: true,
@@ -47939,30 +48295,30 @@ class Logger$l {
     }
     _log(logLevel, args) {
         const level = logLevel.toLowerCase();
-        if (LogLevels$l[level] == null) {
+        if (LogLevels$m[level] == null) {
             this.throwArgumentError("invalid log level name", "logLevel", logLevel);
         }
-        if (_logLevel$l > LogLevels$l[level]) {
+        if (_logLevel$m > LogLevels$m[level]) {
             return;
         }
         console.log.apply(console, args);
     }
     debug(...args) {
-        this._log(Logger$l.levels.DEBUG, args);
+        this._log(Logger$m.levels.DEBUG, args);
     }
     info(...args) {
-        this._log(Logger$l.levels.INFO, args);
+        this._log(Logger$m.levels.INFO, args);
     }
     warn(...args) {
-        this._log(Logger$l.levels.WARNING, args);
+        this._log(Logger$m.levels.WARNING, args);
     }
     makeError(message, code, params) {
         // Errors are being censored
-        if (_censorErrors$l) {
+        if (_censorErrors$m) {
             return this.makeError("censored error", code, {});
         }
         if (!code) {
-            code = Logger$l.errors.UNKNOWN_ERROR;
+            code = Logger$m.errors.UNKNOWN_ERROR;
         }
         if (!params) {
             params = {};
@@ -47974,8 +48330,8 @@ class Logger$l {
                 if (value instanceof Uint8Array) {
                     let hex = "";
                     for (let i = 0; i < value.length; i++) {
-                        hex += HEX$l[value[i] >> 4];
-                        hex += HEX$l[value[i] & 0x0f];
+                        hex += HEX$m[value[i] >> 4];
+                        hex += HEX$m[value[i] & 0x0f];
                     }
                     messageDetails.push(key + "=Uint8Array(0x" + hex + ")");
                 }
@@ -47992,7 +48348,7 @@ class Logger$l {
         const reason = message;
         let url = "";
         switch (code) {
-            case ErrorCode$l.NUMERIC_FAULT: {
+            case ErrorCode$m.NUMERIC_FAULT: {
                 url = "NUMERIC_FAULT";
                 const fault = message;
                 switch (fault) {
@@ -48011,13 +48367,13 @@ class Logger$l {
                 }
                 break;
             }
-            case ErrorCode$l.CALL_EXCEPTION:
-            case ErrorCode$l.INSUFFICIENT_FUNDS:
-            case ErrorCode$l.MISSING_NEW:
-            case ErrorCode$l.NONCE_EXPIRED:
-            case ErrorCode$l.REPLACEMENT_UNDERPRICED:
-            case ErrorCode$l.TRANSACTION_REPLACED:
-            case ErrorCode$l.UNPREDICTABLE_GAS_LIMIT:
+            case ErrorCode$m.CALL_EXCEPTION:
+            case ErrorCode$m.INSUFFICIENT_FUNDS:
+            case ErrorCode$m.MISSING_NEW:
+            case ErrorCode$m.NONCE_EXPIRED:
+            case ErrorCode$m.REPLACEMENT_UNDERPRICED:
+            case ErrorCode$m.TRANSACTION_REPLACED:
+            case ErrorCode$m.UNPREDICTABLE_GAS_LIMIT:
                 url = code;
                 break;
         }
@@ -48040,7 +48396,7 @@ class Logger$l {
         throw this.makeError(message, code, params);
     }
     throwArgumentError(message, name, value) {
-        return this.throwError(message, Logger$l.errors.INVALID_ARGUMENT, {
+        return this.throwError(message, Logger$m.errors.INVALID_ARGUMENT, {
             argument: name,
             value: value
         });
@@ -48061,9 +48417,9 @@ class Logger$l {
         if (message == null) {
             message = "platform missing String.prototype.normalize";
         }
-        if (_normalizeError$l) {
-            this.throwError("platform missing String.prototype.normalize", Logger$l.errors.UNSUPPORTED_OPERATION, {
-                operation: "String.prototype.normalize", form: _normalizeError$l
+        if (_normalizeError$m) {
+            this.throwError("platform missing String.prototype.normalize", Logger$m.errors.UNSUPPORTED_OPERATION, {
+                operation: "String.prototype.normalize", form: _normalizeError$m
             });
         }
     }
@@ -48075,14 +48431,14 @@ class Logger$l {
             message = "value not safe";
         }
         if (value < 0 || value >= 0x1fffffffffffff) {
-            this.throwError(message, Logger$l.errors.NUMERIC_FAULT, {
+            this.throwError(message, Logger$m.errors.NUMERIC_FAULT, {
                 operation: "checkSafeInteger",
                 fault: "out-of-safe-range",
                 value: value
             });
         }
         if (value % 1) {
-            this.throwError(message, Logger$l.errors.NUMERIC_FAULT, {
+            this.throwError(message, Logger$m.errors.NUMERIC_FAULT, {
                 operation: "checkSafeInteger",
                 fault: "non-integer",
                 value: value
@@ -48097,13 +48453,13 @@ class Logger$l {
             message = "";
         }
         if (count < expectedCount) {
-            this.throwError("missing argument" + message, Logger$l.errors.MISSING_ARGUMENT, {
+            this.throwError("missing argument" + message, Logger$m.errors.MISSING_ARGUMENT, {
                 count: count,
                 expectedCount: expectedCount
             });
         }
         if (count > expectedCount) {
-            this.throwError("too many arguments" + message, Logger$l.errors.UNEXPECTED_ARGUMENT, {
+            this.throwError("too many arguments" + message, Logger$m.errors.UNEXPECTED_ARGUMENT, {
                 count: count,
                 expectedCount: expectedCount
             });
@@ -48111,59 +48467,59 @@ class Logger$l {
     }
     checkNew(target, kind) {
         if (target === Object || target == null) {
-            this.throwError("missing new", Logger$l.errors.MISSING_NEW, { name: kind.name });
+            this.throwError("missing new", Logger$m.errors.MISSING_NEW, { name: kind.name });
         }
     }
     checkAbstract(target, kind) {
         if (target === kind) {
-            this.throwError("cannot instantiate abstract class " + JSON.stringify(kind.name) + " directly; use a sub-class", Logger$l.errors.UNSUPPORTED_OPERATION, { name: target.name, operation: "new" });
+            this.throwError("cannot instantiate abstract class " + JSON.stringify(kind.name) + " directly; use a sub-class", Logger$m.errors.UNSUPPORTED_OPERATION, { name: target.name, operation: "new" });
         }
         else if (target === Object || target == null) {
-            this.throwError("missing new", Logger$l.errors.MISSING_NEW, { name: kind.name });
+            this.throwError("missing new", Logger$m.errors.MISSING_NEW, { name: kind.name });
         }
     }
     static globalLogger() {
-        if (!_globalLogger$l) {
-            _globalLogger$l = new Logger$l(version$W);
+        if (!_globalLogger$m) {
+            _globalLogger$m = new Logger$m(version$X);
         }
-        return _globalLogger$l;
+        return _globalLogger$m;
     }
     static setCensorship(censorship, permanent) {
         if (!censorship && permanent) {
-            this.globalLogger().throwError("cannot permanently disable censorship", Logger$l.errors.UNSUPPORTED_OPERATION, {
+            this.globalLogger().throwError("cannot permanently disable censorship", Logger$m.errors.UNSUPPORTED_OPERATION, {
                 operation: "setCensorship"
             });
         }
-        if (_permanentCensorErrors$l) {
+        if (_permanentCensorErrors$m) {
             if (!censorship) {
                 return;
             }
-            this.globalLogger().throwError("error censorship permanent", Logger$l.errors.UNSUPPORTED_OPERATION, {
+            this.globalLogger().throwError("error censorship permanent", Logger$m.errors.UNSUPPORTED_OPERATION, {
                 operation: "setCensorship"
             });
         }
-        _censorErrors$l = !!censorship;
-        _permanentCensorErrors$l = !!permanent;
+        _censorErrors$m = !!censorship;
+        _permanentCensorErrors$m = !!permanent;
     }
     static setLogLevel(logLevel) {
-        const level = LogLevels$l[logLevel.toLowerCase()];
+        const level = LogLevels$m[logLevel.toLowerCase()];
         if (level == null) {
-            Logger$l.globalLogger().warn("invalid log level - " + logLevel);
+            Logger$m.globalLogger().warn("invalid log level - " + logLevel);
             return;
         }
-        _logLevel$l = level;
+        _logLevel$m = level;
     }
     static from(version) {
-        return new Logger$l(version);
+        return new Logger$m(version);
     }
 }
-Logger$l.errors = ErrorCode$l;
-Logger$l.levels = LogLevel$l;
+Logger$m.errors = ErrorCode$m;
+Logger$m.levels = LogLevel$m;
 
-const version$X = "rlp/0.1.0";
+const version$Y = "rlp/0.1.0";
 
 "use strict";
-const logger$M = new Logger$l(version$X);
+const logger$M = new Logger$m(version$Y);
 function arrayifyInteger$2(value) {
     const result = [];
     while (value) {
@@ -48218,7 +48574,7 @@ function _decodeChildren$2(data, offset, childOffset, length) {
         result.push(decoded.result);
         childOffset += decoded.consumed;
         if (childOffset > offset + 1 + length) {
-            logger$M.throwError("child data too short", Logger$l.errors.BUFFER_OVERRUN, {});
+            logger$M.throwError("child data too short", Logger$m.errors.BUFFER_OVERRUN, {});
         }
     }
     return { consumed: (1 + length), result: result };
@@ -48226,35 +48582,35 @@ function _decodeChildren$2(data, offset, childOffset, length) {
 // returns { consumed: number, result: Object }
 function _decode$2(data, offset) {
     if (data.length === 0) {
-        logger$M.throwError("data too short", Logger$l.errors.BUFFER_OVERRUN, {});
+        logger$M.throwError("data too short", Logger$m.errors.BUFFER_OVERRUN, {});
     }
     // Array with extra length prefix
     if (data[offset] >= 0xf8) {
         const lengthLength = data[offset] - 0xf7;
         if (offset + 1 + lengthLength > data.length) {
-            logger$M.throwError("data short segment too short", Logger$l.errors.BUFFER_OVERRUN, {});
+            logger$M.throwError("data short segment too short", Logger$m.errors.BUFFER_OVERRUN, {});
         }
         const length = unarrayifyInteger$2(data, offset + 1, lengthLength);
         if (offset + 1 + lengthLength + length > data.length) {
-            logger$M.throwError("data long segment too short", Logger$l.errors.BUFFER_OVERRUN, {});
+            logger$M.throwError("data long segment too short", Logger$m.errors.BUFFER_OVERRUN, {});
         }
         return _decodeChildren$2(data, offset, offset + 1 + lengthLength, lengthLength + length);
     }
     else if (data[offset] >= 0xc0) {
         const length = data[offset] - 0xc0;
         if (offset + 1 + length > data.length) {
-            logger$M.throwError("data array too short", Logger$l.errors.BUFFER_OVERRUN, {});
+            logger$M.throwError("data array too short", Logger$m.errors.BUFFER_OVERRUN, {});
         }
         return _decodeChildren$2(data, offset, offset + 1, length);
     }
     else if (data[offset] >= 0xb8) {
         const lengthLength = data[offset] - 0xb7;
         if (offset + 1 + lengthLength > data.length) {
-            logger$M.throwError("data array too short", Logger$l.errors.BUFFER_OVERRUN, {});
+            logger$M.throwError("data array too short", Logger$m.errors.BUFFER_OVERRUN, {});
         }
         const length = unarrayifyInteger$2(data, offset + 1, lengthLength);
         if (offset + 1 + lengthLength + length > data.length) {
-            logger$M.throwError("data array too short", Logger$l.errors.BUFFER_OVERRUN, {});
+            logger$M.throwError("data array too short", Logger$m.errors.BUFFER_OVERRUN, {});
         }
         const result = hexlify$g(data.slice(offset + 1 + lengthLength, offset + 1 + lengthLength + length));
         return { consumed: (1 + lengthLength + length), result: result };
@@ -48262,7 +48618,7 @@ function _decode$2(data, offset) {
     else if (data[offset] >= 0x80) {
         const length = data[offset] - 0x80;
         if (offset + 1 + length > data.length) {
-            logger$M.throwError("data too short", Logger$l.errors.BUFFER_OVERRUN, {});
+            logger$M.throwError("data too short", Logger$m.errors.BUFFER_OVERRUN, {});
         }
         const result = hexlify$g(data.slice(offset + 1, offset + 1 + length));
         return { consumed: (1 + length), result: result };
@@ -48284,10 +48640,10 @@ var index$1 = /*#__PURE__*/Object.freeze({
 	decode: decode$3
 });
 
-const version$Y = "address/5.7.0";
+const version$Z = "address/5.7.0";
 
 "use strict";
-const logger$N = new Logger$2(version$Y);
+const logger$N = new Logger$3(version$Z);
 function getChecksumAddress$2(address) {
     if (!isHexString$1(address, 20)) {
         logger$N.throwArgumentError("invalid address", "address", address);
@@ -51964,11 +52320,11 @@ var bn$6 = createCommonjsModule(function (module) {
 })('object' === 'undefined' || module, commonjsGlobal);
 });
 
-const version$Z = "bignumber/5.7.0";
+const version$_ = "bignumber/5.7.0";
 
 "use strict";
 var BN$6 = bn$6.BN;
-const logger$O = new Logger$2(version$Z);
+const logger$O = new Logger$3(version$_);
 const _constructorGuard$d = {};
 const MAX_SAFE$6 = 0x1fffffffffffff;
 function isBigNumberish$6(value) {
@@ -51984,7 +52340,7 @@ let _warnedToStringRadix$6 = false;
 class BigNumber$6 {
     constructor(constructorGuard, hex) {
         if (constructorGuard !== _constructorGuard$d) {
-            logger$O.throwError("cannot call constructor directly; use BigNumber.from", Logger$2.errors.UNSUPPORTED_OPERATION, {
+            logger$O.throwError("cannot call constructor directly; use BigNumber.from", Logger$3.errors.UNSUPPORTED_OPERATION, {
                 operation: "new (BigNumber)"
             });
         }
@@ -52108,7 +52464,7 @@ class BigNumber$6 {
             return BigInt(this.toString());
         }
         catch (e) { }
-        return logger$O.throwError("this platform does not support BigInt", Logger$2.errors.UNSUPPORTED_OPERATION, {
+        return logger$O.throwError("this platform does not support BigInt", Logger$3.errors.UNSUPPORTED_OPERATION, {
             value: this.toString()
         });
     }
@@ -52122,10 +52478,10 @@ class BigNumber$6 {
                 }
             }
             else if (arguments[0] === 16) {
-                logger$O.throwError("BigNumber.toString does not accept any parameters; use bigNumber.toHexString()", Logger$2.errors.UNEXPECTED_ARGUMENT, {});
+                logger$O.throwError("BigNumber.toString does not accept any parameters; use bigNumber.toHexString()", Logger$3.errors.UNEXPECTED_ARGUMENT, {});
             }
             else {
-                logger$O.throwError("BigNumber.toString does not accept parameters", Logger$2.errors.UNEXPECTED_ARGUMENT, {});
+                logger$O.throwError("BigNumber.toString does not accept parameters", Logger$3.errors.UNEXPECTED_ARGUMENT, {});
             }
         }
         return toBN$6(this).toString(10);
@@ -52249,7 +52605,7 @@ function throwFault$c(fault, operation, value) {
     if (value != null) {
         params.value = value;
     }
-    return logger$O.throwError(fault, Logger$2.errors.NUMERIC_FAULT, params);
+    return logger$O.throwError(fault, Logger$3.errors.NUMERIC_FAULT, params);
 }
 // value should have no prefix
 function _base36To16$6(value) {
@@ -52261,7 +52617,7 @@ function _base16To36$6(value) {
 }
 
 "use strict";
-const logger$P = new Logger$2(version$Z);
+const logger$P = new Logger$3(version$_);
 const _constructorGuard$e = {};
 const Zero$a = BigNumber$6.from(0);
 const NegativeOne$a = BigNumber$6.from(-1);
@@ -52270,7 +52626,7 @@ function throwFault$d(message, fault, operation, value) {
     if (value !== undefined) {
         params.value = value;
     }
-    return logger$P.throwError(message, Logger$2.errors.NUMERIC_FAULT, params);
+    return logger$P.throwError(message, Logger$3.errors.NUMERIC_FAULT, params);
 }
 // Constant to pull zeros from for multipliers
 let zeros$6 = "0";
@@ -52374,7 +52730,7 @@ function parseFixed$6(value, decimals) {
 class FixedFormat$6 {
     constructor(constructorGuard, signed, width, decimals) {
         if (constructorGuard !== _constructorGuard$e) {
-            logger$P.throwError("cannot use FixedFormat constructor; use FixedFormat.from", Logger$2.errors.UNSUPPORTED_OPERATION, {
+            logger$P.throwError("cannot use FixedFormat constructor; use FixedFormat.from", Logger$3.errors.UNSUPPORTED_OPERATION, {
                 operation: "new FixedFormat"
             });
         }
@@ -52438,7 +52794,7 @@ class FixedFormat$6 {
 class FixedNumber$6 {
     constructor(constructorGuard, hex, value, format) {
         if (constructorGuard !== _constructorGuard$e) {
-            logger$P.throwError("cannot use FixedNumber constructor; use FixedNumber.from", Logger$2.errors.UNSUPPORTED_OPERATION, {
+            logger$P.throwError("cannot use FixedNumber constructor; use FixedNumber.from", Logger$3.errors.UNSUPPORTED_OPERATION, {
                 operation: "new FixedFormat"
             });
         }
@@ -52604,7 +52960,7 @@ class FixedNumber$6 {
         }
         catch (error) {
             // Allow NUMERIC_FAULT to bubble up
-            if (error.code !== Logger$2.errors.INVALID_ARGUMENT) {
+            if (error.code !== Logger$3.errors.INVALID_ARGUMENT) {
                 throw error;
             }
         }
@@ -52617,10 +52973,10 @@ class FixedNumber$6 {
 const ONE$6 = FixedNumber$6.from(1);
 const BUMP$6 = FixedNumber$6.from("0.5");
 
-const version$_ = "bytes/5.7.0";
+const version$$ = "bytes/5.7.0";
 
 "use strict";
-const logger$Q = new Logger$2(version$_);
+const logger$Q = new Logger$3(version$$);
 ///////////////////////////////
 function isHexable$h(value) {
     return !!(value.toHexString);
@@ -53708,10 +54064,10 @@ function keccak256$4(data) {
     return '0x' + sha3$4.keccak_256(arrayify$1(data));
 }
 
-const version$$ = "rlp/5.7.0";
+const version$10 = "rlp/5.7.0";
 
 "use strict";
-const logger$R = new Logger$2(version$$);
+const logger$R = new Logger$3(version$10);
 function arrayifyInteger$3(value) {
     const result = [];
     while (value) {
@@ -53766,7 +54122,7 @@ function _decodeChildren$3(data, offset, childOffset, length) {
         result.push(decoded.result);
         childOffset += decoded.consumed;
         if (childOffset > offset + 1 + length) {
-            logger$R.throwError("child data too short", Logger$2.errors.BUFFER_OVERRUN, {});
+            logger$R.throwError("child data too short", Logger$3.errors.BUFFER_OVERRUN, {});
         }
     }
     return { consumed: (1 + length), result: result };
@@ -53774,35 +54130,35 @@ function _decodeChildren$3(data, offset, childOffset, length) {
 // returns { consumed: number, result: Object }
 function _decode$3(data, offset) {
     if (data.length === 0) {
-        logger$R.throwError("data too short", Logger$2.errors.BUFFER_OVERRUN, {});
+        logger$R.throwError("data too short", Logger$3.errors.BUFFER_OVERRUN, {});
     }
     // Array with extra length prefix
     if (data[offset] >= 0xf8) {
         const lengthLength = data[offset] - 0xf7;
         if (offset + 1 + lengthLength > data.length) {
-            logger$R.throwError("data short segment too short", Logger$2.errors.BUFFER_OVERRUN, {});
+            logger$R.throwError("data short segment too short", Logger$3.errors.BUFFER_OVERRUN, {});
         }
         const length = unarrayifyInteger$3(data, offset + 1, lengthLength);
         if (offset + 1 + lengthLength + length > data.length) {
-            logger$R.throwError("data long segment too short", Logger$2.errors.BUFFER_OVERRUN, {});
+            logger$R.throwError("data long segment too short", Logger$3.errors.BUFFER_OVERRUN, {});
         }
         return _decodeChildren$3(data, offset, offset + 1 + lengthLength, lengthLength + length);
     }
     else if (data[offset] >= 0xc0) {
         const length = data[offset] - 0xc0;
         if (offset + 1 + length > data.length) {
-            logger$R.throwError("data array too short", Logger$2.errors.BUFFER_OVERRUN, {});
+            logger$R.throwError("data array too short", Logger$3.errors.BUFFER_OVERRUN, {});
         }
         return _decodeChildren$3(data, offset, offset + 1, length);
     }
     else if (data[offset] >= 0xb8) {
         const lengthLength = data[offset] - 0xb7;
         if (offset + 1 + lengthLength > data.length) {
-            logger$R.throwError("data array too short", Logger$2.errors.BUFFER_OVERRUN, {});
+            logger$R.throwError("data array too short", Logger$3.errors.BUFFER_OVERRUN, {});
         }
         const length = unarrayifyInteger$3(data, offset + 1, lengthLength);
         if (offset + 1 + lengthLength + length > data.length) {
-            logger$R.throwError("data array too short", Logger$2.errors.BUFFER_OVERRUN, {});
+            logger$R.throwError("data array too short", Logger$3.errors.BUFFER_OVERRUN, {});
         }
         const result = hexlify$1(data.slice(offset + 1 + lengthLength, offset + 1 + lengthLength + length));
         return { consumed: (1 + lengthLength + length), result: result };
@@ -53810,7 +54166,7 @@ function _decode$3(data, offset) {
     else if (data[offset] >= 0x80) {
         const length = data[offset] - 0x80;
         if (offset + 1 + length > data.length) {
-            logger$R.throwError("data too short", Logger$2.errors.BUFFER_OVERRUN, {});
+            logger$R.throwError("data too short", Logger$3.errors.BUFFER_OVERRUN, {});
         }
         const result = hexlify$1(data.slice(offset + 1, offset + 1 + length));
         return { consumed: (1 + length), result: result };
@@ -57630,10 +57986,10 @@ elliptic.eddsa = /*RicMoo:quais:require(./elliptic/eddsa)*/(null);
 
 var EC$1 = elliptic_1.ec;
 
-const version$10 = "signing-key/5.7.0";
+const version$11 = "signing-key/5.7.0";
 
 "use strict";
-const logger$S = new Logger$2(version$10);
+const logger$S = new Logger$3(version$11);
 let _curve = null;
 function getCurve() {
     if (!_curve) {
@@ -57709,15 +58065,15 @@ function computePublicKey(key, compressed) {
     return logger$S.throwArgumentError("invalid public or private key", "key", "[REDACTED]");
 }
 
-const version$11 = "logger/5.7.0";
+const version$12 = "logger/5.7.0";
 
 "use strict";
-let _permanentCensorErrors$m = false;
-let _censorErrors$m = false;
-const LogLevels$m = { debug: 1, "default": 2, info: 2, warning: 3, error: 4, off: 5 };
-let _logLevel$m = LogLevels$m["default"];
-let _globalLogger$m = null;
-function _checkNormalize$m() {
+let _permanentCensorErrors$n = false;
+let _censorErrors$n = false;
+const LogLevels$n = { debug: 1, "default": 2, info: 2, warning: 3, error: 4, off: 5 };
+let _logLevel$n = LogLevels$n["default"];
+let _globalLogger$n = null;
+function _checkNormalize$n() {
     try {
         const missing = [];
         // Make sure all forms of normalization are supported
@@ -57744,16 +58100,16 @@ function _checkNormalize$m() {
     }
     return null;
 }
-const _normalizeError$m = _checkNormalize$m();
-var LogLevel$m;
+const _normalizeError$n = _checkNormalize$n();
+var LogLevel$n;
 (function (LogLevel) {
     LogLevel["DEBUG"] = "DEBUG";
     LogLevel["INFO"] = "INFO";
     LogLevel["WARNING"] = "WARNING";
     LogLevel["ERROR"] = "ERROR";
     LogLevel["OFF"] = "OFF";
-})(LogLevel$m || (LogLevel$m = {}));
-var ErrorCode$m;
+})(LogLevel$n || (LogLevel$n = {}));
+var ErrorCode$n;
 (function (ErrorCode) {
     ///////////////////
     // Generic Errors
@@ -57831,10 +58187,10 @@ var ErrorCode$m;
     // The user rejected the action, such as signing a message or sending
     // a transaction
     ErrorCode["ACTION_REJECTED"] = "ACTION_REJECTED";
-})(ErrorCode$m || (ErrorCode$m = {}));
+})(ErrorCode$n || (ErrorCode$n = {}));
 ;
-const HEX$m = "0123456789abcdef";
-class Logger$m {
+const HEX$n = "0123456789abcdef";
+class Logger$n {
     constructor(version) {
         Object.defineProperty(this, "version", {
             enumerable: true,
@@ -57844,30 +58200,30 @@ class Logger$m {
     }
     _log(logLevel, args) {
         const level = logLevel.toLowerCase();
-        if (LogLevels$m[level] == null) {
+        if (LogLevels$n[level] == null) {
             this.throwArgumentError("invalid log level name", "logLevel", logLevel);
         }
-        if (_logLevel$m > LogLevels$m[level]) {
+        if (_logLevel$n > LogLevels$n[level]) {
             return;
         }
         console.log.apply(console, args);
     }
     debug(...args) {
-        this._log(Logger$m.levels.DEBUG, args);
+        this._log(Logger$n.levels.DEBUG, args);
     }
     info(...args) {
-        this._log(Logger$m.levels.INFO, args);
+        this._log(Logger$n.levels.INFO, args);
     }
     warn(...args) {
-        this._log(Logger$m.levels.WARNING, args);
+        this._log(Logger$n.levels.WARNING, args);
     }
     makeError(message, code, params) {
         // Errors are being censored
-        if (_censorErrors$m) {
+        if (_censorErrors$n) {
             return this.makeError("censored error", code, {});
         }
         if (!code) {
-            code = Logger$m.errors.UNKNOWN_ERROR;
+            code = Logger$n.errors.UNKNOWN_ERROR;
         }
         if (!params) {
             params = {};
@@ -57879,8 +58235,8 @@ class Logger$m {
                 if (value instanceof Uint8Array) {
                     let hex = "";
                     for (let i = 0; i < value.length; i++) {
-                        hex += HEX$m[value[i] >> 4];
-                        hex += HEX$m[value[i] & 0x0f];
+                        hex += HEX$n[value[i] >> 4];
+                        hex += HEX$n[value[i] & 0x0f];
                     }
                     messageDetails.push(key + "=Uint8Array(0x" + hex + ")");
                 }
@@ -57897,7 +58253,7 @@ class Logger$m {
         const reason = message;
         let url = "";
         switch (code) {
-            case ErrorCode$m.NUMERIC_FAULT: {
+            case ErrorCode$n.NUMERIC_FAULT: {
                 url = "NUMERIC_FAULT";
                 const fault = message;
                 switch (fault) {
@@ -57916,13 +58272,13 @@ class Logger$m {
                 }
                 break;
             }
-            case ErrorCode$m.CALL_EXCEPTION:
-            case ErrorCode$m.INSUFFICIENT_FUNDS:
-            case ErrorCode$m.MISSING_NEW:
-            case ErrorCode$m.NONCE_EXPIRED:
-            case ErrorCode$m.REPLACEMENT_UNDERPRICED:
-            case ErrorCode$m.TRANSACTION_REPLACED:
-            case ErrorCode$m.UNPREDICTABLE_GAS_LIMIT:
+            case ErrorCode$n.CALL_EXCEPTION:
+            case ErrorCode$n.INSUFFICIENT_FUNDS:
+            case ErrorCode$n.MISSING_NEW:
+            case ErrorCode$n.NONCE_EXPIRED:
+            case ErrorCode$n.REPLACEMENT_UNDERPRICED:
+            case ErrorCode$n.TRANSACTION_REPLACED:
+            case ErrorCode$n.UNPREDICTABLE_GAS_LIMIT:
                 url = code;
                 break;
         }
@@ -57945,7 +58301,7 @@ class Logger$m {
         throw this.makeError(message, code, params);
     }
     throwArgumentError(message, name, value) {
-        return this.throwError(message, Logger$m.errors.INVALID_ARGUMENT, {
+        return this.throwError(message, Logger$n.errors.INVALID_ARGUMENT, {
             argument: name,
             value: value
         });
@@ -57966,9 +58322,9 @@ class Logger$m {
         if (message == null) {
             message = "platform missing String.prototype.normalize";
         }
-        if (_normalizeError$m) {
-            this.throwError("platform missing String.prototype.normalize", Logger$m.errors.UNSUPPORTED_OPERATION, {
-                operation: "String.prototype.normalize", form: _normalizeError$m
+        if (_normalizeError$n) {
+            this.throwError("platform missing String.prototype.normalize", Logger$n.errors.UNSUPPORTED_OPERATION, {
+                operation: "String.prototype.normalize", form: _normalizeError$n
             });
         }
     }
@@ -57980,14 +58336,14 @@ class Logger$m {
             message = "value not safe";
         }
         if (value < 0 || value >= 0x1fffffffffffff) {
-            this.throwError(message, Logger$m.errors.NUMERIC_FAULT, {
+            this.throwError(message, Logger$n.errors.NUMERIC_FAULT, {
                 operation: "checkSafeInteger",
                 fault: "out-of-safe-range",
                 value: value
             });
         }
         if (value % 1) {
-            this.throwError(message, Logger$m.errors.NUMERIC_FAULT, {
+            this.throwError(message, Logger$n.errors.NUMERIC_FAULT, {
                 operation: "checkSafeInteger",
                 fault: "non-integer",
                 value: value
@@ -58002,13 +58358,13 @@ class Logger$m {
             message = "";
         }
         if (count < expectedCount) {
-            this.throwError("missing argument" + message, Logger$m.errors.MISSING_ARGUMENT, {
+            this.throwError("missing argument" + message, Logger$n.errors.MISSING_ARGUMENT, {
                 count: count,
                 expectedCount: expectedCount
             });
         }
         if (count > expectedCount) {
-            this.throwError("too many arguments" + message, Logger$m.errors.UNEXPECTED_ARGUMENT, {
+            this.throwError("too many arguments" + message, Logger$n.errors.UNEXPECTED_ARGUMENT, {
                 count: count,
                 expectedCount: expectedCount
             });
@@ -58016,59 +58372,59 @@ class Logger$m {
     }
     checkNew(target, kind) {
         if (target === Object || target == null) {
-            this.throwError("missing new", Logger$m.errors.MISSING_NEW, { name: kind.name });
+            this.throwError("missing new", Logger$n.errors.MISSING_NEW, { name: kind.name });
         }
     }
     checkAbstract(target, kind) {
         if (target === kind) {
-            this.throwError("cannot instantiate abstract class " + JSON.stringify(kind.name) + " directly; use a sub-class", Logger$m.errors.UNSUPPORTED_OPERATION, { name: target.name, operation: "new" });
+            this.throwError("cannot instantiate abstract class " + JSON.stringify(kind.name) + " directly; use a sub-class", Logger$n.errors.UNSUPPORTED_OPERATION, { name: target.name, operation: "new" });
         }
         else if (target === Object || target == null) {
-            this.throwError("missing new", Logger$m.errors.MISSING_NEW, { name: kind.name });
+            this.throwError("missing new", Logger$n.errors.MISSING_NEW, { name: kind.name });
         }
     }
     static globalLogger() {
-        if (!_globalLogger$m) {
-            _globalLogger$m = new Logger$m(version$11);
+        if (!_globalLogger$n) {
+            _globalLogger$n = new Logger$n(version$12);
         }
-        return _globalLogger$m;
+        return _globalLogger$n;
     }
     static setCensorship(censorship, permanent) {
         if (!censorship && permanent) {
-            this.globalLogger().throwError("cannot permanently disable censorship", Logger$m.errors.UNSUPPORTED_OPERATION, {
+            this.globalLogger().throwError("cannot permanently disable censorship", Logger$n.errors.UNSUPPORTED_OPERATION, {
                 operation: "setCensorship"
             });
         }
-        if (_permanentCensorErrors$m) {
+        if (_permanentCensorErrors$n) {
             if (!censorship) {
                 return;
             }
-            this.globalLogger().throwError("error censorship permanent", Logger$m.errors.UNSUPPORTED_OPERATION, {
+            this.globalLogger().throwError("error censorship permanent", Logger$n.errors.UNSUPPORTED_OPERATION, {
                 operation: "setCensorship"
             });
         }
-        _censorErrors$m = !!censorship;
-        _permanentCensorErrors$m = !!permanent;
+        _censorErrors$n = !!censorship;
+        _permanentCensorErrors$n = !!permanent;
     }
     static setLogLevel(logLevel) {
-        const level = LogLevels$m[logLevel.toLowerCase()];
+        const level = LogLevels$n[logLevel.toLowerCase()];
         if (level == null) {
-            Logger$m.globalLogger().warn("invalid log level - " + logLevel);
+            Logger$n.globalLogger().warn("invalid log level - " + logLevel);
             return;
         }
-        _logLevel$m = level;
+        _logLevel$n = level;
     }
     static from(version) {
-        return new Logger$m(version);
+        return new Logger$n(version);
     }
 }
-Logger$m.errors = ErrorCode$m;
-Logger$m.levels = LogLevel$m;
+Logger$n.errors = ErrorCode$n;
+Logger$n.levels = LogLevel$n;
 
-const version$12 = "transactions/0.1.0";
+const version$13 = "transactions/0.1.0";
 
 "use strict";
-const logger$T = new Logger$m(version$12);
+const logger$T = new Logger$n(version$13);
 var TransactionTypes;
 (function (TransactionTypes) {
     TransactionTypes[TransactionTypes["standard"] = 0] = "standard";
@@ -58206,7 +58562,7 @@ function serialize(transaction, signature) {
         default:
             break;
     }
-    return logger$T.throwError(`unsupported transaction type: ${transaction.type}`, Logger$m.errors.UNSUPPORTED_OPERATION, {
+    return logger$T.throwError(`unsupported transaction type: ${transaction.type}`, Logger$n.errors.UNSUPPORTED_OPERATION, {
         operation: "serializeTransaction",
         transactionType: transaction.type
     });
@@ -58302,13 +58658,13 @@ function parse(rawTransaction) {
         default:
             break;
     }
-    return logger$T.throwError(`unsupported transaction type: ${payload[0]}`, Logger$m.errors.UNSUPPORTED_OPERATION, {
+    return logger$T.throwError(`unsupported transaction type: ${payload[0]}`, Logger$n.errors.UNSUPPORTED_OPERATION, {
         operation: "parseTransaction",
         transactionType: payload[0]
     });
 }
 
-const version$13 = "contracts/0.1.0";
+const version$14 = "contracts/0.1.0";
 
 "use strict";
 var __awaiter$7 = (commonjsGlobal && commonjsGlobal.__awaiter) || function (thisArg, _arguments, P, generator) {
@@ -58320,7 +58676,7 @@ var __awaiter$7 = (commonjsGlobal && commonjsGlobal.__awaiter) || function (this
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-const logger$U = new Logger$2(version$13);
+const logger$U = new Logger$3(version$14);
 ;
 ;
 ///////////////////////////////
@@ -58343,7 +58699,7 @@ function resolveName(resolver, nameOrPromise) {
         }
         catch (error) { }
         if (!resolver) {
-            logger$U.throwError("a provider or signer is needed to resolve ENS names", Logger$2.errors.UNSUPPORTED_OPERATION, {
+            logger$U.throwError("a provider or signer is needed to resolve ENS names", Logger$3.errors.UNSUPPORTED_OPERATION, {
                 operation: "resolveName"
             });
         }
@@ -58370,7 +58726,7 @@ function resolveAddresses(resolver, value, paramType) {
         }
         if (paramType.baseType === "array") {
             if (!Array.isArray(value)) {
-                return Promise.reject(logger$U.makeError("invalid value for array", Logger$2.errors.INVALID_ARGUMENT, {
+                return Promise.reject(logger$U.makeError("invalid value for array", Logger$3.errors.INVALID_ARGUMENT, {
                     argument: "value",
                     value
                 }));
@@ -58399,7 +58755,7 @@ function populateTransaction(contract, fragment, args) {
                     signer: contract.signer.getAddress()
                 }).then((check) => __awaiter$7(this, void 0, void 0, function* () {
                     if (getAddress(check.signer) !== check.override) {
-                        logger$U.throwError("Contract with a Signer cannot override from", Logger$2.errors.UNSUPPORTED_OPERATION, {
+                        logger$U.throwError("Contract with a Signer cannot override from", Logger$3.errors.UNSUPPORTED_OPERATION, {
                             operation: "overrides.from"
                         });
                     }
@@ -58477,7 +58833,7 @@ function populateTransaction(contract, fragment, args) {
         if (ro.value) {
             const roValue = BigNumber.from(ro.value);
             if (!roValue.isZero() && !fragment.payable) {
-                logger$U.throwError("non-payable method cannot override value", Logger$2.errors.UNSUPPORTED_OPERATION, {
+                logger$U.throwError("non-payable method cannot override value", Logger$3.errors.UNSUPPORTED_OPERATION, {
                     operation: "overrides.value",
                     value: overrides.value
                 });
@@ -58506,7 +58862,7 @@ function populateTransaction(contract, fragment, args) {
         // typo or using an unsupported key.
         const leftovers = Object.keys(overrides).filter((key) => (overrides[key] != null));
         if (leftovers.length) {
-            logger$U.throwError(`cannot override ${leftovers.map((l) => JSON.stringify(l)).join(",")}`, Logger$2.errors.UNSUPPORTED_OPERATION, {
+            logger$U.throwError(`cannot override ${leftovers.map((l) => JSON.stringify(l)).join(",")}`, Logger$3.errors.UNSUPPORTED_OPERATION, {
                 operation: "overrides",
                 overrides: leftovers
             });
@@ -58524,7 +58880,7 @@ function buildEstimate(contract, fragment) {
     return function (...args) {
         return __awaiter$7(this, void 0, void 0, function* () {
             if (!signerOrProvider) {
-                logger$U.throwError("estimate require a provider or signer", Logger$2.errors.UNSUPPORTED_OPERATION, {
+                logger$U.throwError("estimate require a provider or signer", Logger$3.errors.UNSUPPORTED_OPERATION, {
                     operation: "estimateGas"
                 });
             }
@@ -58599,7 +58955,7 @@ function buildCall(contract, fragment, collapseSimple) {
                 return value;
             }
             catch (error) {
-                if (error.code === Logger$2.errors.CALL_EXCEPTION) {
+                if (error.code === Logger$3.errors.CALL_EXCEPTION) {
                     error.address = contract.address;
                     error.args = args;
                     error.transaction = tx;
@@ -58613,7 +58969,7 @@ function buildSend(contract, fragment) {
     return function (...args) {
         return __awaiter$7(this, void 0, void 0, function* () {
             if (!contract.signer) {
-                logger$U.throwError("sending a transaction requires a signer", Logger$2.errors.UNSUPPORTED_OPERATION, {
+                logger$U.throwError("sending a transaction requires a signer", Logger$3.errors.UNSUPPORTED_OPERATION, {
                     operation: "sendTransaction"
                 });
             }
@@ -58841,7 +59197,7 @@ class BaseContract {
             }
             catch (error) {
                 // Without a provider, we cannot use ENS names
-                logger$U.throwError("provider is required to use ENS name as contract address", Logger$2.errors.UNSUPPORTED_OPERATION, {
+                logger$U.throwError("provider is required to use ENS name as contract address", Logger$3.errors.UNSUPPORTED_OPERATION, {
                     operation: "new Contract"
                 });
             }
@@ -58944,7 +59300,7 @@ class BaseContract {
                 // Otherwise, poll for our code to be deployed
                 this._deployedPromise = this.provider.getCode(this.address, blockTag).then((code) => {
                     if (code === "0x") {
-                        logger$U.throwError("contract not deployed", Logger$2.errors.UNSUPPORTED_OPERATION, {
+                        logger$U.throwError("contract not deployed", Logger$3.errors.UNSUPPORTED_OPERATION, {
                             contractAddress: this.address,
                             operation: "getDeployed"
                         });
@@ -58961,14 +59317,14 @@ class BaseContract {
     // estimateDeploy(bytecode: string, ...args): Promise<BigNumber>
     fallback(overrides) {
         if (!this.signer) {
-            logger$U.throwError("sending a transactions require a signer", Logger$2.errors.UNSUPPORTED_OPERATION, { operation: "sendTransaction(fallback)" });
+            logger$U.throwError("sending a transactions require a signer", Logger$3.errors.UNSUPPORTED_OPERATION, { operation: "sendTransaction(fallback)" });
         }
         const tx = shallowCopy(overrides || {});
         ["from", "to"].forEach(function (key) {
             if (tx[key] == null) {
                 return;
             }
-            logger$U.throwError("cannot override " + key, Logger$2.errors.UNSUPPORTED_OPERATION, { operation: key });
+            logger$U.throwError("cannot override " + key, Logger$3.errors.UNSUPPORTED_OPERATION, { operation: key });
         });
         tx.to = this.resolvedAddress;
         return this.deployed().then(() => {
@@ -59071,7 +59427,7 @@ class BaseContract {
     }
     _addEventListener(runningEvent, listener, once) {
         if (!this.provider) {
-            logger$U.throwError("events require a provider or a signer with a provider", Logger$2.errors.UNSUPPORTED_OPERATION, { operation: "once" });
+            logger$U.throwError("events require a provider or a signer with a provider", Logger$3.errors.UNSUPPORTED_OPERATION, { operation: "once" });
         }
         runningEvent.addListener(listener, once);
         // Track this running event and its listeners (may already be there; but no hard in updating)
@@ -59250,12 +59606,12 @@ class ContractFactory {
             if (tx[key] == null) {
                 return;
             }
-            logger$U.throwError("cannot override " + key, Logger$2.errors.UNSUPPORTED_OPERATION, { operation: key });
+            logger$U.throwError("cannot override " + key, Logger$3.errors.UNSUPPORTED_OPERATION, { operation: key });
         });
         if (tx.value) {
             const value = BigNumber.from(tx.value);
             if (!value.isZero() && !this.interface.deploy.payable) {
-                logger$U.throwError("non-payable constructor cannot override value", Logger$2.errors.UNSUPPORTED_OPERATION, {
+                logger$U.throwError("non-payable constructor cannot override value", Logger$3.errors.UNSUPPORTED_OPERATION, {
                     operation: "overrides.value",
                     value: tx.value
                 });
@@ -59302,7 +59658,7 @@ class ContractFactory {
     }
     static fromSolidity(compilerOutput, signer) {
         if (compilerOutput == null) {
-            logger$U.throwError("missing compiler output", Logger$2.errors.MISSING_ARGUMENT, { argument: "compilerOutput" });
+            logger$U.throwError("missing compiler output", Logger$3.errors.MISSING_ARGUMENT, { argument: "compilerOutput" });
         }
         if (typeof (compilerOutput) === "string") {
             compilerOutput = JSON.parse(compilerOutput);
@@ -59328,10 +59684,10 @@ class ContractFactory {
     }
 }
 
-const version$14 = "bytes/5.7.0";
+const version$15 = "bytes/5.7.0";
 
 "use strict";
-const logger$V = new Logger$2(version$14);
+const logger$V = new Logger$3(version$15);
 ///////////////////////////////
 function isHexable$i(value) {
     return !!(value.toHexString);
@@ -59737,7 +60093,7 @@ function joinSignature$i(signature) {
     ]));
 }
 
-const version$15 = "properties/5.7.0";
+const version$16 = "properties/5.7.0";
 
 "use strict";
 var __awaiter$8 = (commonjsGlobal && commonjsGlobal.__awaiter) || function (thisArg, _arguments, P, generator) {
@@ -59749,7 +60105,7 @@ var __awaiter$8 = (commonjsGlobal && commonjsGlobal.__awaiter) || function (this
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-const logger$W = new Logger$2(version$15);
+const logger$W = new Logger$3(version$16);
 function defineReadOnly$4(object, name, value) {
     Object.defineProperty(object, name, {
         enumerable: true,
@@ -59979,10 +60335,10 @@ const Base58 = new BaseX("123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuv
 //console.log(Base58.decode("Qmd2V777o5XvJbYMeMb8k2nU5f8d3ciUQ5YpYuWhzv8iDj"))
 //console.log(Base58.encode(Base58.decode("Qmd2V777o5XvJbYMeMb8k2nU5f8d3ciUQ5YpYuWhzv8iDj")))
 
-const version$16 = "bytes/5.7.0";
+const version$17 = "bytes/5.7.0";
 
 "use strict";
-const logger$X = new Logger$2(version$16);
+const logger$X = new Logger$3(version$17);
 ///////////////////////////////
 function isHexable$j(value) {
     return !!(value.toHexString);
@@ -60395,10 +60751,10 @@ var SupportedAlgorithm;
 })(SupportedAlgorithm || (SupportedAlgorithm = {}));
 ;
 
-const version$17 = "sha2/5.7.0";
+const version$18 = "sha2/5.7.0";
 
 "use strict";
-const logger$Y = new Logger$2(version$17);
+const logger$Y = new Logger$3(version$18);
 function ripemd160$1(data) {
     return "0x" + (hash_1.ripemd160().update(arrayify$1(data)).digest("hex"));
 }
@@ -60410,7 +60766,7 @@ function sha512$1(data) {
 }
 function computeHmac(algorithm, key, data) {
     if (!SupportedAlgorithm[algorithm]) {
-        logger$Y.throwError("unsupported algorithm " + algorithm, Logger$2.errors.UNSUPPORTED_OPERATION, {
+        logger$Y.throwError("unsupported algorithm " + algorithm, Logger$3.errors.UNSUPPORTED_OPERATION, {
             operation: "hmac",
             algorithm: algorithm
         });
@@ -67814,10 +68170,10 @@ elliptic.eddsa = /*RicMoo:quais:require(./elliptic/eddsa)*/(null);
 
 var EC$1$1 = elliptic_1$1.ec;
 
-const version$18 = "bytes/5.7.0";
+const version$19 = "bytes/5.7.0";
 
 "use strict";
-const logger$Z = new Logger$2(version$18);
+const logger$Z = new Logger$3(version$19);
 ///////////////////////////////
 function isHexable$k(value) {
     return !!(value.toHexString);
@@ -68223,7 +68579,7 @@ function joinSignature$k(signature) {
     ]));
 }
 
-const version$19 = "properties/5.7.0";
+const version$1a = "properties/5.7.0";
 
 "use strict";
 var __awaiter$9 = (commonjsGlobal && commonjsGlobal.__awaiter) || function (thisArg, _arguments, P, generator) {
@@ -68235,7 +68591,7 @@ var __awaiter$9 = (commonjsGlobal && commonjsGlobal.__awaiter) || function (this
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-const logger$_ = new Logger$2(version$19);
+const logger$_ = new Logger$3(version$1a);
 function defineReadOnly$5(object, name, value) {
     Object.defineProperty(object, name, {
         enumerable: true,
@@ -68349,15 +68705,15 @@ class Description$5 {
     }
 }
 
-const version$1a = "logger/5.7.0";
+const version$1b = "logger/5.7.0";
 
 "use strict";
-let _permanentCensorErrors$n = false;
-let _censorErrors$n = false;
-const LogLevels$n = { debug: 1, "default": 2, info: 2, warning: 3, error: 4, off: 5 };
-let _logLevel$n = LogLevels$n["default"];
-let _globalLogger$n = null;
-function _checkNormalize$n() {
+let _permanentCensorErrors$o = false;
+let _censorErrors$o = false;
+const LogLevels$o = { debug: 1, "default": 2, info: 2, warning: 3, error: 4, off: 5 };
+let _logLevel$o = LogLevels$o["default"];
+let _globalLogger$o = null;
+function _checkNormalize$o() {
     try {
         const missing = [];
         // Make sure all forms of normalization are supported
@@ -68384,16 +68740,16 @@ function _checkNormalize$n() {
     }
     return null;
 }
-const _normalizeError$n = _checkNormalize$n();
-var LogLevel$n;
+const _normalizeError$o = _checkNormalize$o();
+var LogLevel$o;
 (function (LogLevel) {
     LogLevel["DEBUG"] = "DEBUG";
     LogLevel["INFO"] = "INFO";
     LogLevel["WARNING"] = "WARNING";
     LogLevel["ERROR"] = "ERROR";
     LogLevel["OFF"] = "OFF";
-})(LogLevel$n || (LogLevel$n = {}));
-var ErrorCode$n;
+})(LogLevel$o || (LogLevel$o = {}));
+var ErrorCode$o;
 (function (ErrorCode) {
     ///////////////////
     // Generic Errors
@@ -68471,10 +68827,10 @@ var ErrorCode$n;
     // The user rejected the action, such as signing a message or sending
     // a transaction
     ErrorCode["ACTION_REJECTED"] = "ACTION_REJECTED";
-})(ErrorCode$n || (ErrorCode$n = {}));
+})(ErrorCode$o || (ErrorCode$o = {}));
 ;
-const HEX$n = "0123456789abcdef";
-class Logger$n {
+const HEX$o = "0123456789abcdef";
+class Logger$o {
     constructor(version) {
         Object.defineProperty(this, "version", {
             enumerable: true,
@@ -68484,30 +68840,30 @@ class Logger$n {
     }
     _log(logLevel, args) {
         const level = logLevel.toLowerCase();
-        if (LogLevels$n[level] == null) {
+        if (LogLevels$o[level] == null) {
             this.throwArgumentError("invalid log level name", "logLevel", logLevel);
         }
-        if (_logLevel$n > LogLevels$n[level]) {
+        if (_logLevel$o > LogLevels$o[level]) {
             return;
         }
         console.log.apply(console, args);
     }
     debug(...args) {
-        this._log(Logger$n.levels.DEBUG, args);
+        this._log(Logger$o.levels.DEBUG, args);
     }
     info(...args) {
-        this._log(Logger$n.levels.INFO, args);
+        this._log(Logger$o.levels.INFO, args);
     }
     warn(...args) {
-        this._log(Logger$n.levels.WARNING, args);
+        this._log(Logger$o.levels.WARNING, args);
     }
     makeError(message, code, params) {
         // Errors are being censored
-        if (_censorErrors$n) {
+        if (_censorErrors$o) {
             return this.makeError("censored error", code, {});
         }
         if (!code) {
-            code = Logger$n.errors.UNKNOWN_ERROR;
+            code = Logger$o.errors.UNKNOWN_ERROR;
         }
         if (!params) {
             params = {};
@@ -68519,8 +68875,8 @@ class Logger$n {
                 if (value instanceof Uint8Array) {
                     let hex = "";
                     for (let i = 0; i < value.length; i++) {
-                        hex += HEX$n[value[i] >> 4];
-                        hex += HEX$n[value[i] & 0x0f];
+                        hex += HEX$o[value[i] >> 4];
+                        hex += HEX$o[value[i] & 0x0f];
                     }
                     messageDetails.push(key + "=Uint8Array(0x" + hex + ")");
                 }
@@ -68537,7 +68893,7 @@ class Logger$n {
         const reason = message;
         let url = "";
         switch (code) {
-            case ErrorCode$n.NUMERIC_FAULT: {
+            case ErrorCode$o.NUMERIC_FAULT: {
                 url = "NUMERIC_FAULT";
                 const fault = message;
                 switch (fault) {
@@ -68556,13 +68912,13 @@ class Logger$n {
                 }
                 break;
             }
-            case ErrorCode$n.CALL_EXCEPTION:
-            case ErrorCode$n.INSUFFICIENT_FUNDS:
-            case ErrorCode$n.MISSING_NEW:
-            case ErrorCode$n.NONCE_EXPIRED:
-            case ErrorCode$n.REPLACEMENT_UNDERPRICED:
-            case ErrorCode$n.TRANSACTION_REPLACED:
-            case ErrorCode$n.UNPREDICTABLE_GAS_LIMIT:
+            case ErrorCode$o.CALL_EXCEPTION:
+            case ErrorCode$o.INSUFFICIENT_FUNDS:
+            case ErrorCode$o.MISSING_NEW:
+            case ErrorCode$o.NONCE_EXPIRED:
+            case ErrorCode$o.REPLACEMENT_UNDERPRICED:
+            case ErrorCode$o.TRANSACTION_REPLACED:
+            case ErrorCode$o.UNPREDICTABLE_GAS_LIMIT:
                 url = code;
                 break;
         }
@@ -68585,7 +68941,7 @@ class Logger$n {
         throw this.makeError(message, code, params);
     }
     throwArgumentError(message, name, value) {
-        return this.throwError(message, Logger$n.errors.INVALID_ARGUMENT, {
+        return this.throwError(message, Logger$o.errors.INVALID_ARGUMENT, {
             argument: name,
             value: value
         });
@@ -68606,9 +68962,9 @@ class Logger$n {
         if (message == null) {
             message = "platform missing String.prototype.normalize";
         }
-        if (_normalizeError$n) {
-            this.throwError("platform missing String.prototype.normalize", Logger$n.errors.UNSUPPORTED_OPERATION, {
-                operation: "String.prototype.normalize", form: _normalizeError$n
+        if (_normalizeError$o) {
+            this.throwError("platform missing String.prototype.normalize", Logger$o.errors.UNSUPPORTED_OPERATION, {
+                operation: "String.prototype.normalize", form: _normalizeError$o
             });
         }
     }
@@ -68620,14 +68976,14 @@ class Logger$n {
             message = "value not safe";
         }
         if (value < 0 || value >= 0x1fffffffffffff) {
-            this.throwError(message, Logger$n.errors.NUMERIC_FAULT, {
+            this.throwError(message, Logger$o.errors.NUMERIC_FAULT, {
                 operation: "checkSafeInteger",
                 fault: "out-of-safe-range",
                 value: value
             });
         }
         if (value % 1) {
-            this.throwError(message, Logger$n.errors.NUMERIC_FAULT, {
+            this.throwError(message, Logger$o.errors.NUMERIC_FAULT, {
                 operation: "checkSafeInteger",
                 fault: "non-integer",
                 value: value
@@ -68642,13 +68998,13 @@ class Logger$n {
             message = "";
         }
         if (count < expectedCount) {
-            this.throwError("missing argument" + message, Logger$n.errors.MISSING_ARGUMENT, {
+            this.throwError("missing argument" + message, Logger$o.errors.MISSING_ARGUMENT, {
                 count: count,
                 expectedCount: expectedCount
             });
         }
         if (count > expectedCount) {
-            this.throwError("too many arguments" + message, Logger$n.errors.UNEXPECTED_ARGUMENT, {
+            this.throwError("too many arguments" + message, Logger$o.errors.UNEXPECTED_ARGUMENT, {
                 count: count,
                 expectedCount: expectedCount
             });
@@ -68656,59 +69012,59 @@ class Logger$n {
     }
     checkNew(target, kind) {
         if (target === Object || target == null) {
-            this.throwError("missing new", Logger$n.errors.MISSING_NEW, { name: kind.name });
+            this.throwError("missing new", Logger$o.errors.MISSING_NEW, { name: kind.name });
         }
     }
     checkAbstract(target, kind) {
         if (target === kind) {
-            this.throwError("cannot instantiate abstract class " + JSON.stringify(kind.name) + " directly; use a sub-class", Logger$n.errors.UNSUPPORTED_OPERATION, { name: target.name, operation: "new" });
+            this.throwError("cannot instantiate abstract class " + JSON.stringify(kind.name) + " directly; use a sub-class", Logger$o.errors.UNSUPPORTED_OPERATION, { name: target.name, operation: "new" });
         }
         else if (target === Object || target == null) {
-            this.throwError("missing new", Logger$n.errors.MISSING_NEW, { name: kind.name });
+            this.throwError("missing new", Logger$o.errors.MISSING_NEW, { name: kind.name });
         }
     }
     static globalLogger() {
-        if (!_globalLogger$n) {
-            _globalLogger$n = new Logger$n(version$1a);
+        if (!_globalLogger$o) {
+            _globalLogger$o = new Logger$o(version$1b);
         }
-        return _globalLogger$n;
+        return _globalLogger$o;
     }
     static setCensorship(censorship, permanent) {
         if (!censorship && permanent) {
-            this.globalLogger().throwError("cannot permanently disable censorship", Logger$n.errors.UNSUPPORTED_OPERATION, {
+            this.globalLogger().throwError("cannot permanently disable censorship", Logger$o.errors.UNSUPPORTED_OPERATION, {
                 operation: "setCensorship"
             });
         }
-        if (_permanentCensorErrors$n) {
+        if (_permanentCensorErrors$o) {
             if (!censorship) {
                 return;
             }
-            this.globalLogger().throwError("error censorship permanent", Logger$n.errors.UNSUPPORTED_OPERATION, {
+            this.globalLogger().throwError("error censorship permanent", Logger$o.errors.UNSUPPORTED_OPERATION, {
                 operation: "setCensorship"
             });
         }
-        _censorErrors$n = !!censorship;
-        _permanentCensorErrors$n = !!permanent;
+        _censorErrors$o = !!censorship;
+        _permanentCensorErrors$o = !!permanent;
     }
     static setLogLevel(logLevel) {
-        const level = LogLevels$n[logLevel.toLowerCase()];
+        const level = LogLevels$o[logLevel.toLowerCase()];
         if (level == null) {
-            Logger$n.globalLogger().warn("invalid log level - " + logLevel);
+            Logger$o.globalLogger().warn("invalid log level - " + logLevel);
             return;
         }
-        _logLevel$n = level;
+        _logLevel$o = level;
     }
     static from(version) {
-        return new Logger$n(version);
+        return new Logger$o(version);
     }
 }
-Logger$n.errors = ErrorCode$n;
-Logger$n.levels = LogLevel$n;
+Logger$o.errors = ErrorCode$o;
+Logger$o.levels = LogLevel$o;
 
-const version$1b = "signing-key/0.1.0";
+const version$1c = "signing-key/0.1.0";
 
 "use strict";
-const logger$$ = new Logger$n(version$1b);
+const logger$$ = new Logger$o(version$1c);
 let _curve$1 = null;
 function getCurve$1() {
     if (!_curve$1) {
@@ -68784,10 +69140,10 @@ function computePublicKey$1(key, compressed) {
     return logger$$.throwArgumentError("invalid public or private key", "key", "[REDACTED]");
 }
 
-const version$1c = "bytes/5.7.0";
+const version$1d = "bytes/5.7.0";
 
 "use strict";
-const logger$10 = new Logger$2(version$1c);
+const logger$10 = new Logger$3(version$1d);
 ///////////////////////////////
 function isHexable$l(value) {
     return !!(value.toHexString);
@@ -69200,15 +69556,15 @@ var SupportedAlgorithm$1;
 })(SupportedAlgorithm$1 || (SupportedAlgorithm$1 = {}));
 ;
 
-const version$1d = "logger/5.7.0";
+const version$1e = "logger/5.7.0";
 
 "use strict";
-let _permanentCensorErrors$o = false;
-let _censorErrors$o = false;
-const LogLevels$o = { debug: 1, "default": 2, info: 2, warning: 3, error: 4, off: 5 };
-let _logLevel$o = LogLevels$o["default"];
-let _globalLogger$o = null;
-function _checkNormalize$o() {
+let _permanentCensorErrors$p = false;
+let _censorErrors$p = false;
+const LogLevels$p = { debug: 1, "default": 2, info: 2, warning: 3, error: 4, off: 5 };
+let _logLevel$p = LogLevels$p["default"];
+let _globalLogger$p = null;
+function _checkNormalize$p() {
     try {
         const missing = [];
         // Make sure all forms of normalization are supported
@@ -69235,16 +69591,16 @@ function _checkNormalize$o() {
     }
     return null;
 }
-const _normalizeError$o = _checkNormalize$o();
-var LogLevel$o;
+const _normalizeError$p = _checkNormalize$p();
+var LogLevel$p;
 (function (LogLevel) {
     LogLevel["DEBUG"] = "DEBUG";
     LogLevel["INFO"] = "INFO";
     LogLevel["WARNING"] = "WARNING";
     LogLevel["ERROR"] = "ERROR";
     LogLevel["OFF"] = "OFF";
-})(LogLevel$o || (LogLevel$o = {}));
-var ErrorCode$o;
+})(LogLevel$p || (LogLevel$p = {}));
+var ErrorCode$p;
 (function (ErrorCode) {
     ///////////////////
     // Generic Errors
@@ -69322,10 +69678,10 @@ var ErrorCode$o;
     // The user rejected the action, such as signing a message or sending
     // a transaction
     ErrorCode["ACTION_REJECTED"] = "ACTION_REJECTED";
-})(ErrorCode$o || (ErrorCode$o = {}));
+})(ErrorCode$p || (ErrorCode$p = {}));
 ;
-const HEX$o = "0123456789abcdef";
-class Logger$o {
+const HEX$p = "0123456789abcdef";
+class Logger$p {
     constructor(version) {
         Object.defineProperty(this, "version", {
             enumerable: true,
@@ -69335,30 +69691,30 @@ class Logger$o {
     }
     _log(logLevel, args) {
         const level = logLevel.toLowerCase();
-        if (LogLevels$o[level] == null) {
+        if (LogLevels$p[level] == null) {
             this.throwArgumentError("invalid log level name", "logLevel", logLevel);
         }
-        if (_logLevel$o > LogLevels$o[level]) {
+        if (_logLevel$p > LogLevels$p[level]) {
             return;
         }
         console.log.apply(console, args);
     }
     debug(...args) {
-        this._log(Logger$o.levels.DEBUG, args);
+        this._log(Logger$p.levels.DEBUG, args);
     }
     info(...args) {
-        this._log(Logger$o.levels.INFO, args);
+        this._log(Logger$p.levels.INFO, args);
     }
     warn(...args) {
-        this._log(Logger$o.levels.WARNING, args);
+        this._log(Logger$p.levels.WARNING, args);
     }
     makeError(message, code, params) {
         // Errors are being censored
-        if (_censorErrors$o) {
+        if (_censorErrors$p) {
             return this.makeError("censored error", code, {});
         }
         if (!code) {
-            code = Logger$o.errors.UNKNOWN_ERROR;
+            code = Logger$p.errors.UNKNOWN_ERROR;
         }
         if (!params) {
             params = {};
@@ -69370,8 +69726,8 @@ class Logger$o {
                 if (value instanceof Uint8Array) {
                     let hex = "";
                     for (let i = 0; i < value.length; i++) {
-                        hex += HEX$o[value[i] >> 4];
-                        hex += HEX$o[value[i] & 0x0f];
+                        hex += HEX$p[value[i] >> 4];
+                        hex += HEX$p[value[i] & 0x0f];
                     }
                     messageDetails.push(key + "=Uint8Array(0x" + hex + ")");
                 }
@@ -69388,7 +69744,7 @@ class Logger$o {
         const reason = message;
         let url = "";
         switch (code) {
-            case ErrorCode$o.NUMERIC_FAULT: {
+            case ErrorCode$p.NUMERIC_FAULT: {
                 url = "NUMERIC_FAULT";
                 const fault = message;
                 switch (fault) {
@@ -69407,13 +69763,13 @@ class Logger$o {
                 }
                 break;
             }
-            case ErrorCode$o.CALL_EXCEPTION:
-            case ErrorCode$o.INSUFFICIENT_FUNDS:
-            case ErrorCode$o.MISSING_NEW:
-            case ErrorCode$o.NONCE_EXPIRED:
-            case ErrorCode$o.REPLACEMENT_UNDERPRICED:
-            case ErrorCode$o.TRANSACTION_REPLACED:
-            case ErrorCode$o.UNPREDICTABLE_GAS_LIMIT:
+            case ErrorCode$p.CALL_EXCEPTION:
+            case ErrorCode$p.INSUFFICIENT_FUNDS:
+            case ErrorCode$p.MISSING_NEW:
+            case ErrorCode$p.NONCE_EXPIRED:
+            case ErrorCode$p.REPLACEMENT_UNDERPRICED:
+            case ErrorCode$p.TRANSACTION_REPLACED:
+            case ErrorCode$p.UNPREDICTABLE_GAS_LIMIT:
                 url = code;
                 break;
         }
@@ -69436,7 +69792,7 @@ class Logger$o {
         throw this.makeError(message, code, params);
     }
     throwArgumentError(message, name, value) {
-        return this.throwError(message, Logger$o.errors.INVALID_ARGUMENT, {
+        return this.throwError(message, Logger$p.errors.INVALID_ARGUMENT, {
             argument: name,
             value: value
         });
@@ -69457,9 +69813,9 @@ class Logger$o {
         if (message == null) {
             message = "platform missing String.prototype.normalize";
         }
-        if (_normalizeError$o) {
-            this.throwError("platform missing String.prototype.normalize", Logger$o.errors.UNSUPPORTED_OPERATION, {
-                operation: "String.prototype.normalize", form: _normalizeError$o
+        if (_normalizeError$p) {
+            this.throwError("platform missing String.prototype.normalize", Logger$p.errors.UNSUPPORTED_OPERATION, {
+                operation: "String.prototype.normalize", form: _normalizeError$p
             });
         }
     }
@@ -69471,14 +69827,14 @@ class Logger$o {
             message = "value not safe";
         }
         if (value < 0 || value >= 0x1fffffffffffff) {
-            this.throwError(message, Logger$o.errors.NUMERIC_FAULT, {
+            this.throwError(message, Logger$p.errors.NUMERIC_FAULT, {
                 operation: "checkSafeInteger",
                 fault: "out-of-safe-range",
                 value: value
             });
         }
         if (value % 1) {
-            this.throwError(message, Logger$o.errors.NUMERIC_FAULT, {
+            this.throwError(message, Logger$p.errors.NUMERIC_FAULT, {
                 operation: "checkSafeInteger",
                 fault: "non-integer",
                 value: value
@@ -69493,13 +69849,13 @@ class Logger$o {
             message = "";
         }
         if (count < expectedCount) {
-            this.throwError("missing argument" + message, Logger$o.errors.MISSING_ARGUMENT, {
+            this.throwError("missing argument" + message, Logger$p.errors.MISSING_ARGUMENT, {
                 count: count,
                 expectedCount: expectedCount
             });
         }
         if (count > expectedCount) {
-            this.throwError("too many arguments" + message, Logger$o.errors.UNEXPECTED_ARGUMENT, {
+            this.throwError("too many arguments" + message, Logger$p.errors.UNEXPECTED_ARGUMENT, {
                 count: count,
                 expectedCount: expectedCount
             });
@@ -69507,59 +69863,59 @@ class Logger$o {
     }
     checkNew(target, kind) {
         if (target === Object || target == null) {
-            this.throwError("missing new", Logger$o.errors.MISSING_NEW, { name: kind.name });
+            this.throwError("missing new", Logger$p.errors.MISSING_NEW, { name: kind.name });
         }
     }
     checkAbstract(target, kind) {
         if (target === kind) {
-            this.throwError("cannot instantiate abstract class " + JSON.stringify(kind.name) + " directly; use a sub-class", Logger$o.errors.UNSUPPORTED_OPERATION, { name: target.name, operation: "new" });
+            this.throwError("cannot instantiate abstract class " + JSON.stringify(kind.name) + " directly; use a sub-class", Logger$p.errors.UNSUPPORTED_OPERATION, { name: target.name, operation: "new" });
         }
         else if (target === Object || target == null) {
-            this.throwError("missing new", Logger$o.errors.MISSING_NEW, { name: kind.name });
+            this.throwError("missing new", Logger$p.errors.MISSING_NEW, { name: kind.name });
         }
     }
     static globalLogger() {
-        if (!_globalLogger$o) {
-            _globalLogger$o = new Logger$o(version$1d);
+        if (!_globalLogger$p) {
+            _globalLogger$p = new Logger$p(version$1e);
         }
-        return _globalLogger$o;
+        return _globalLogger$p;
     }
     static setCensorship(censorship, permanent) {
         if (!censorship && permanent) {
-            this.globalLogger().throwError("cannot permanently disable censorship", Logger$o.errors.UNSUPPORTED_OPERATION, {
+            this.globalLogger().throwError("cannot permanently disable censorship", Logger$p.errors.UNSUPPORTED_OPERATION, {
                 operation: "setCensorship"
             });
         }
-        if (_permanentCensorErrors$o) {
+        if (_permanentCensorErrors$p) {
             if (!censorship) {
                 return;
             }
-            this.globalLogger().throwError("error censorship permanent", Logger$o.errors.UNSUPPORTED_OPERATION, {
+            this.globalLogger().throwError("error censorship permanent", Logger$p.errors.UNSUPPORTED_OPERATION, {
                 operation: "setCensorship"
             });
         }
-        _censorErrors$o = !!censorship;
-        _permanentCensorErrors$o = !!permanent;
+        _censorErrors$p = !!censorship;
+        _permanentCensorErrors$p = !!permanent;
     }
     static setLogLevel(logLevel) {
-        const level = LogLevels$o[logLevel.toLowerCase()];
+        const level = LogLevels$p[logLevel.toLowerCase()];
         if (level == null) {
-            Logger$o.globalLogger().warn("invalid log level - " + logLevel);
+            Logger$p.globalLogger().warn("invalid log level - " + logLevel);
             return;
         }
-        _logLevel$o = level;
+        _logLevel$p = level;
     }
     static from(version) {
-        return new Logger$o(version);
+        return new Logger$p(version);
     }
 }
-Logger$o.errors = ErrorCode$o;
-Logger$o.levels = LogLevel$o;
+Logger$p.errors = ErrorCode$p;
+Logger$p.levels = LogLevel$p;
 
-const version$1e = "sha2/0.1.0";
+const version$1f = "sha2/0.1.0";
 
 "use strict";
-const logger$11 = new Logger$o(version$1e);
+const logger$11 = new Logger$p(version$1f);
 function ripemd160$3(data) {
     return "0x" + (hash_1.ripemd160().update(arrayify$l(data)).digest("hex"));
 }
@@ -69571,7 +69927,7 @@ function sha512$3(data) {
 }
 function computeHmac$1(algorithm, key, data) {
     if (!SupportedAlgorithm$1[algorithm]) {
-        logger$11.throwError("unsupported algorithm " + algorithm, Logger$o.errors.UNSUPPORTED_OPERATION, {
+        logger$11.throwError("unsupported algorithm " + algorithm, Logger$p.errors.UNSUPPORTED_OPERATION, {
             operation: "hmac",
             algorithm: algorithm
         });
@@ -69583,12 +69939,12 @@ function id$1(text) {
     return keccak256$3(toUtf8Bytes(text));
 }
 
-const version$1f = "hash/5.7.0";
+const version$1g = "hash/5.7.0";
 
-const version$1g = "bytes/5.7.0";
+const version$1h = "bytes/5.7.0";
 
 "use strict";
-const logger$12 = new Logger$2(version$1g);
+const logger$12 = new Logger$3(version$1h);
 ///////////////////////////////
 function isHexable$m(value) {
     return !!(value.toHexString);
@@ -70441,7 +70797,7 @@ function consume_emoji_reversed$1(cps, eaten) {
     return emoji;
 }
 
-const logger$13 = new Logger$2(version$1f);
+const logger$13 = new Logger$3(version$1g);
 const Zeros$1 = new Uint8Array(32);
 Zeros$1.fill(0);
 function checkComponent$1(comp) {
@@ -70528,7 +70884,7 @@ var __awaiter$a = (commonjsGlobal && commonjsGlobal.__awaiter) || function (this
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-const logger$14 = new Logger$2(version$1f);
+const logger$14 = new Logger$3(version$1g);
 const padding$1 = new Uint8Array(32);
 padding$1.fill(0);
 const NegativeOne$c = BigNumber.from(-1);
@@ -70954,7 +71310,7 @@ class TypedDataEncoder$1 {
 
 "use strict";
 
-const version$1h = "properties/5.7.0";
+const version$1i = "properties/5.7.0";
 
 "use strict";
 var __awaiter$b = (commonjsGlobal && commonjsGlobal.__awaiter) || function (thisArg, _arguments, P, generator) {
@@ -70966,7 +71322,7 @@ var __awaiter$b = (commonjsGlobal && commonjsGlobal.__awaiter) || function (this
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-const logger$15 = new Logger$2(version$1h);
+const logger$15 = new Logger$3(version$1i);
 function defineReadOnly$6(object, name, value) {
     Object.defineProperty(object, name, {
         enumerable: true,
@@ -71080,15 +71436,15 @@ class Description$6 {
     }
 }
 
-const version$1i = "logger/5.7.0";
+const version$1j = "logger/5.7.0";
 
 "use strict";
-let _permanentCensorErrors$p = false;
-let _censorErrors$p = false;
-const LogLevels$p = { debug: 1, "default": 2, info: 2, warning: 3, error: 4, off: 5 };
-let _logLevel$p = LogLevels$p["default"];
-let _globalLogger$p = null;
-function _checkNormalize$p() {
+let _permanentCensorErrors$q = false;
+let _censorErrors$q = false;
+const LogLevels$q = { debug: 1, "default": 2, info: 2, warning: 3, error: 4, off: 5 };
+let _logLevel$q = LogLevels$q["default"];
+let _globalLogger$q = null;
+function _checkNormalize$q() {
     try {
         const missing = [];
         // Make sure all forms of normalization are supported
@@ -71115,16 +71471,16 @@ function _checkNormalize$p() {
     }
     return null;
 }
-const _normalizeError$p = _checkNormalize$p();
-var LogLevel$p;
+const _normalizeError$q = _checkNormalize$q();
+var LogLevel$q;
 (function (LogLevel) {
     LogLevel["DEBUG"] = "DEBUG";
     LogLevel["INFO"] = "INFO";
     LogLevel["WARNING"] = "WARNING";
     LogLevel["ERROR"] = "ERROR";
     LogLevel["OFF"] = "OFF";
-})(LogLevel$p || (LogLevel$p = {}));
-var ErrorCode$p;
+})(LogLevel$q || (LogLevel$q = {}));
+var ErrorCode$q;
 (function (ErrorCode) {
     ///////////////////
     // Generic Errors
@@ -71202,10 +71558,10 @@ var ErrorCode$p;
     // The user rejected the action, such as signing a message or sending
     // a transaction
     ErrorCode["ACTION_REJECTED"] = "ACTION_REJECTED";
-})(ErrorCode$p || (ErrorCode$p = {}));
+})(ErrorCode$q || (ErrorCode$q = {}));
 ;
-const HEX$p = "0123456789abcdef";
-class Logger$p {
+const HEX$q = "0123456789abcdef";
+class Logger$q {
     constructor(version) {
         Object.defineProperty(this, "version", {
             enumerable: true,
@@ -71215,30 +71571,30 @@ class Logger$p {
     }
     _log(logLevel, args) {
         const level = logLevel.toLowerCase();
-        if (LogLevels$p[level] == null) {
+        if (LogLevels$q[level] == null) {
             this.throwArgumentError("invalid log level name", "logLevel", logLevel);
         }
-        if (_logLevel$p > LogLevels$p[level]) {
+        if (_logLevel$q > LogLevels$q[level]) {
             return;
         }
         console.log.apply(console, args);
     }
     debug(...args) {
-        this._log(Logger$p.levels.DEBUG, args);
+        this._log(Logger$q.levels.DEBUG, args);
     }
     info(...args) {
-        this._log(Logger$p.levels.INFO, args);
+        this._log(Logger$q.levels.INFO, args);
     }
     warn(...args) {
-        this._log(Logger$p.levels.WARNING, args);
+        this._log(Logger$q.levels.WARNING, args);
     }
     makeError(message, code, params) {
         // Errors are being censored
-        if (_censorErrors$p) {
+        if (_censorErrors$q) {
             return this.makeError("censored error", code, {});
         }
         if (!code) {
-            code = Logger$p.errors.UNKNOWN_ERROR;
+            code = Logger$q.errors.UNKNOWN_ERROR;
         }
         if (!params) {
             params = {};
@@ -71250,8 +71606,8 @@ class Logger$p {
                 if (value instanceof Uint8Array) {
                     let hex = "";
                     for (let i = 0; i < value.length; i++) {
-                        hex += HEX$p[value[i] >> 4];
-                        hex += HEX$p[value[i] & 0x0f];
+                        hex += HEX$q[value[i] >> 4];
+                        hex += HEX$q[value[i] & 0x0f];
                     }
                     messageDetails.push(key + "=Uint8Array(0x" + hex + ")");
                 }
@@ -71268,7 +71624,7 @@ class Logger$p {
         const reason = message;
         let url = "";
         switch (code) {
-            case ErrorCode$p.NUMERIC_FAULT: {
+            case ErrorCode$q.NUMERIC_FAULT: {
                 url = "NUMERIC_FAULT";
                 const fault = message;
                 switch (fault) {
@@ -71287,13 +71643,13 @@ class Logger$p {
                 }
                 break;
             }
-            case ErrorCode$p.CALL_EXCEPTION:
-            case ErrorCode$p.INSUFFICIENT_FUNDS:
-            case ErrorCode$p.MISSING_NEW:
-            case ErrorCode$p.NONCE_EXPIRED:
-            case ErrorCode$p.REPLACEMENT_UNDERPRICED:
-            case ErrorCode$p.TRANSACTION_REPLACED:
-            case ErrorCode$p.UNPREDICTABLE_GAS_LIMIT:
+            case ErrorCode$q.CALL_EXCEPTION:
+            case ErrorCode$q.INSUFFICIENT_FUNDS:
+            case ErrorCode$q.MISSING_NEW:
+            case ErrorCode$q.NONCE_EXPIRED:
+            case ErrorCode$q.REPLACEMENT_UNDERPRICED:
+            case ErrorCode$q.TRANSACTION_REPLACED:
+            case ErrorCode$q.UNPREDICTABLE_GAS_LIMIT:
                 url = code;
                 break;
         }
@@ -71316,7 +71672,7 @@ class Logger$p {
         throw this.makeError(message, code, params);
     }
     throwArgumentError(message, name, value) {
-        return this.throwError(message, Logger$p.errors.INVALID_ARGUMENT, {
+        return this.throwError(message, Logger$q.errors.INVALID_ARGUMENT, {
             argument: name,
             value: value
         });
@@ -71337,9 +71693,9 @@ class Logger$p {
         if (message == null) {
             message = "platform missing String.prototype.normalize";
         }
-        if (_normalizeError$p) {
-            this.throwError("platform missing String.prototype.normalize", Logger$p.errors.UNSUPPORTED_OPERATION, {
-                operation: "String.prototype.normalize", form: _normalizeError$p
+        if (_normalizeError$q) {
+            this.throwError("platform missing String.prototype.normalize", Logger$q.errors.UNSUPPORTED_OPERATION, {
+                operation: "String.prototype.normalize", form: _normalizeError$q
             });
         }
     }
@@ -71351,14 +71707,14 @@ class Logger$p {
             message = "value not safe";
         }
         if (value < 0 || value >= 0x1fffffffffffff) {
-            this.throwError(message, Logger$p.errors.NUMERIC_FAULT, {
+            this.throwError(message, Logger$q.errors.NUMERIC_FAULT, {
                 operation: "checkSafeInteger",
                 fault: "out-of-safe-range",
                 value: value
             });
         }
         if (value % 1) {
-            this.throwError(message, Logger$p.errors.NUMERIC_FAULT, {
+            this.throwError(message, Logger$q.errors.NUMERIC_FAULT, {
                 operation: "checkSafeInteger",
                 fault: "non-integer",
                 value: value
@@ -71373,13 +71729,13 @@ class Logger$p {
             message = "";
         }
         if (count < expectedCount) {
-            this.throwError("missing argument" + message, Logger$p.errors.MISSING_ARGUMENT, {
+            this.throwError("missing argument" + message, Logger$q.errors.MISSING_ARGUMENT, {
                 count: count,
                 expectedCount: expectedCount
             });
         }
         if (count > expectedCount) {
-            this.throwError("too many arguments" + message, Logger$p.errors.UNEXPECTED_ARGUMENT, {
+            this.throwError("too many arguments" + message, Logger$q.errors.UNEXPECTED_ARGUMENT, {
                 count: count,
                 expectedCount: expectedCount
             });
@@ -71387,61 +71743,61 @@ class Logger$p {
     }
     checkNew(target, kind) {
         if (target === Object || target == null) {
-            this.throwError("missing new", Logger$p.errors.MISSING_NEW, { name: kind.name });
+            this.throwError("missing new", Logger$q.errors.MISSING_NEW, { name: kind.name });
         }
     }
     checkAbstract(target, kind) {
         if (target === kind) {
-            this.throwError("cannot instantiate abstract class " + JSON.stringify(kind.name) + " directly; use a sub-class", Logger$p.errors.UNSUPPORTED_OPERATION, { name: target.name, operation: "new" });
+            this.throwError("cannot instantiate abstract class " + JSON.stringify(kind.name) + " directly; use a sub-class", Logger$q.errors.UNSUPPORTED_OPERATION, { name: target.name, operation: "new" });
         }
         else if (target === Object || target == null) {
-            this.throwError("missing new", Logger$p.errors.MISSING_NEW, { name: kind.name });
+            this.throwError("missing new", Logger$q.errors.MISSING_NEW, { name: kind.name });
         }
     }
     static globalLogger() {
-        if (!_globalLogger$p) {
-            _globalLogger$p = new Logger$p(version$1i);
+        if (!_globalLogger$q) {
+            _globalLogger$q = new Logger$q(version$1j);
         }
-        return _globalLogger$p;
+        return _globalLogger$q;
     }
     static setCensorship(censorship, permanent) {
         if (!censorship && permanent) {
-            this.globalLogger().throwError("cannot permanently disable censorship", Logger$p.errors.UNSUPPORTED_OPERATION, {
+            this.globalLogger().throwError("cannot permanently disable censorship", Logger$q.errors.UNSUPPORTED_OPERATION, {
                 operation: "setCensorship"
             });
         }
-        if (_permanentCensorErrors$p) {
+        if (_permanentCensorErrors$q) {
             if (!censorship) {
                 return;
             }
-            this.globalLogger().throwError("error censorship permanent", Logger$p.errors.UNSUPPORTED_OPERATION, {
+            this.globalLogger().throwError("error censorship permanent", Logger$q.errors.UNSUPPORTED_OPERATION, {
                 operation: "setCensorship"
             });
         }
-        _censorErrors$p = !!censorship;
-        _permanentCensorErrors$p = !!permanent;
+        _censorErrors$q = !!censorship;
+        _permanentCensorErrors$q = !!permanent;
     }
     static setLogLevel(logLevel) {
-        const level = LogLevels$p[logLevel.toLowerCase()];
+        const level = LogLevels$q[logLevel.toLowerCase()];
         if (level == null) {
-            Logger$p.globalLogger().warn("invalid log level - " + logLevel);
+            Logger$q.globalLogger().warn("invalid log level - " + logLevel);
             return;
         }
-        _logLevel$p = level;
+        _logLevel$q = level;
     }
     static from(version) {
-        return new Logger$p(version);
+        return new Logger$q(version);
     }
 }
-Logger$p.errors = ErrorCode$p;
-Logger$p.levels = LogLevel$p;
+Logger$q.errors = ErrorCode$q;
+Logger$q.levels = LogLevel$q;
 
-const version$1j = "wordlists/0.1.0";
+const version$1k = "wordlists/0.1.0";
 
 "use strict";
 // This gets overridden by rollup
 const exportWordlist = false;
-const logger$16 = new Logger$p(version$1j);
+const logger$16 = new Logger$q(version$1k);
 class Wordlist {
     constructor(locale) {
         logger$16.checkAbstract(new.target, Wordlist);
@@ -71524,10 +71880,10 @@ const wordlists = {
 
 "use strict";
 
-const version$1k = "hdnode/0.1.0";
+const version$1l = "hdnode/0.1.0";
 
 "use strict";
-const logger$17 = new Logger$2(version$1k);
+const logger$17 = new Logger$3(version$1l);
 const N = BigNumber.from("0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141");
 // "Bitcoin seed"
 const MasterSecret = toUtf8Bytes("Bitcoin seed");
@@ -71844,10 +72200,10 @@ function getAccountPath(index) {
     return `m/44'/60'/${index}'/0/0`;
 }
 
-const version$1l = "random/0.1.0";
+const version$1m = "random/0.1.0";
 
 "use strict";
-const logger$18 = new Logger$2(version$1l);
+const logger$18 = new Logger$3(version$1m);
 // Debugging line for testing browser lib in node
 //const window = { crypto: { getRandomValues: () => { } } };
 // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/globalThis
@@ -71870,7 +72226,7 @@ if (!crypto || !crypto.getRandomValues) {
     logger$18.warn("WARNING: Missing strong random number source");
     crypto = {
         getRandomValues: function (buffer) {
-            return logger$18.throwError("no secure random source avaialble", Logger$2.errors.UNSUPPORTED_OPERATION, {
+            return logger$18.throwError("no secure random source avaialble", Logger$3.errors.UNSUPPORTED_OPERATION, {
                 operation: "crypto.getRandomValues"
             });
         }
@@ -72701,7 +73057,7 @@ var aesJs = createCommonjsModule(function (module, exports) {
 })(commonjsGlobal);
 });
 
-const version$1m = "json-wallets/0.1.0";
+const version$1n = "json-wallets/0.1.0";
 
 "use strict";
 function looseArrayify(hexString) {
@@ -72765,7 +73121,7 @@ function uuidV4(randomBytes) {
 }
 
 "use strict";
-const logger$19 = new Logger$2(version$1m);
+const logger$19 = new Logger$3(version$1n);
 class CrowdsaleAccount extends Description {
     isCrowdsaleAccount(value) {
         return !!(value && value._isCrowdsaleAccount);
@@ -73351,7 +73707,7 @@ var __awaiter$c = (commonjsGlobal && commonjsGlobal.__awaiter) || function (this
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-const logger$1a = new Logger$2(version$1m);
+const logger$1a = new Logger$3(version$1n);
 // Exported Types
 function hasMnemonic(value) {
     return (value != null && value.mnemonic && value.mnemonic.phrase);
@@ -73379,7 +73735,7 @@ function _getAccount(data, key) {
     }
     const privateKey = _decrypt(data, key.slice(0, 16), ciphertext);
     if (!privateKey) {
-        logger$1a.throwError("unsupported cipher", Logger$2.errors.UNSUPPORTED_OPERATION, {
+        logger$1a.throwError("unsupported cipher", Logger$3.errors.UNSUPPORTED_OPERATION, {
             operation: "decrypt"
         });
     }
@@ -73420,7 +73776,7 @@ function _getAccount(data, key) {
             // If we don't have the locale wordlist installed to
             // read this mnemonic, just bail and don't set the
             // mnemonic
-            if (error.code !== Logger$2.errors.INVALID_ARGUMENT || error.argument !== "wordlist") {
+            if (error.code !== Logger$3.errors.INVALID_ARGUMENT || error.argument !== "wordlist") {
                 throw error;
             }
         }
@@ -73671,7 +74027,7 @@ function decryptJsonWalletSync(json, password) {
     throw new Error("invalid JSON wallet");
 }
 
-const version$1n = "wallet/0.1.0";
+const version$1o = "wallet/0.1.0";
 
 "use strict";
 var __awaiter$d = (commonjsGlobal && commonjsGlobal.__awaiter) || function (thisArg, _arguments, P, generator) {
@@ -73683,7 +74039,7 @@ var __awaiter$d = (commonjsGlobal && commonjsGlobal.__awaiter) || function (this
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-const logger$1b = new Logger$2(version$1n);
+const logger$1b = new Logger$3(version$1o);
 function isAccount(value) {
     return (value != null && isHexString$1(value.privateKey, 32) && value.address != null);
 }
@@ -73776,7 +74132,7 @@ class Wallet extends Signer {
             // Populate any ENS names
             const populated = yield TypedDataEncoder.resolveNames(domain, types, value, (name) => {
                 if (this.provider == null) {
-                    logger$1b.throwError("cannot resolve ENS names without a provider", Logger$2.errors.UNSUPPORTED_OPERATION, {
+                    logger$1b.throwError("cannot resolve ENS names without a provider", Logger$3.errors.UNSUPPORTED_OPERATION, {
                         operation: "resolveName",
                         value: name
                     });
@@ -73835,15 +74191,15 @@ function verifyTypedData(domain, types, value, signature) {
     return recoverAddress(TypedDataEncoder.hash(domain, types, value), signature);
 }
 
-const version$1o = "logger/5.7.0";
+const version$1p = "logger/5.7.0";
 
 "use strict";
-let _permanentCensorErrors$q = false;
-let _censorErrors$q = false;
-const LogLevels$q = { debug: 1, "default": 2, info: 2, warning: 3, error: 4, off: 5 };
-let _logLevel$q = LogLevels$q["default"];
-let _globalLogger$q = null;
-function _checkNormalize$q() {
+let _permanentCensorErrors$r = false;
+let _censorErrors$r = false;
+const LogLevels$r = { debug: 1, "default": 2, info: 2, warning: 3, error: 4, off: 5 };
+let _logLevel$r = LogLevels$r["default"];
+let _globalLogger$r = null;
+function _checkNormalize$r() {
     try {
         const missing = [];
         // Make sure all forms of normalization are supported
@@ -73870,16 +74226,16 @@ function _checkNormalize$q() {
     }
     return null;
 }
-const _normalizeError$q = _checkNormalize$q();
-var LogLevel$q;
+const _normalizeError$r = _checkNormalize$r();
+var LogLevel$r;
 (function (LogLevel) {
     LogLevel["DEBUG"] = "DEBUG";
     LogLevel["INFO"] = "INFO";
     LogLevel["WARNING"] = "WARNING";
     LogLevel["ERROR"] = "ERROR";
     LogLevel["OFF"] = "OFF";
-})(LogLevel$q || (LogLevel$q = {}));
-var ErrorCode$q;
+})(LogLevel$r || (LogLevel$r = {}));
+var ErrorCode$r;
 (function (ErrorCode) {
     ///////////////////
     // Generic Errors
@@ -73957,10 +74313,10 @@ var ErrorCode$q;
     // The user rejected the action, such as signing a message or sending
     // a transaction
     ErrorCode["ACTION_REJECTED"] = "ACTION_REJECTED";
-})(ErrorCode$q || (ErrorCode$q = {}));
+})(ErrorCode$r || (ErrorCode$r = {}));
 ;
-const HEX$q = "0123456789abcdef";
-class Logger$q {
+const HEX$r = "0123456789abcdef";
+class Logger$r {
     constructor(version) {
         Object.defineProperty(this, "version", {
             enumerable: true,
@@ -73970,30 +74326,30 @@ class Logger$q {
     }
     _log(logLevel, args) {
         const level = logLevel.toLowerCase();
-        if (LogLevels$q[level] == null) {
+        if (LogLevels$r[level] == null) {
             this.throwArgumentError("invalid log level name", "logLevel", logLevel);
         }
-        if (_logLevel$q > LogLevels$q[level]) {
+        if (_logLevel$r > LogLevels$r[level]) {
             return;
         }
         console.log.apply(console, args);
     }
     debug(...args) {
-        this._log(Logger$q.levels.DEBUG, args);
+        this._log(Logger$r.levels.DEBUG, args);
     }
     info(...args) {
-        this._log(Logger$q.levels.INFO, args);
+        this._log(Logger$r.levels.INFO, args);
     }
     warn(...args) {
-        this._log(Logger$q.levels.WARNING, args);
+        this._log(Logger$r.levels.WARNING, args);
     }
     makeError(message, code, params) {
         // Errors are being censored
-        if (_censorErrors$q) {
+        if (_censorErrors$r) {
             return this.makeError("censored error", code, {});
         }
         if (!code) {
-            code = Logger$q.errors.UNKNOWN_ERROR;
+            code = Logger$r.errors.UNKNOWN_ERROR;
         }
         if (!params) {
             params = {};
@@ -74005,8 +74361,8 @@ class Logger$q {
                 if (value instanceof Uint8Array) {
                     let hex = "";
                     for (let i = 0; i < value.length; i++) {
-                        hex += HEX$q[value[i] >> 4];
-                        hex += HEX$q[value[i] & 0x0f];
+                        hex += HEX$r[value[i] >> 4];
+                        hex += HEX$r[value[i] & 0x0f];
                     }
                     messageDetails.push(key + "=Uint8Array(0x" + hex + ")");
                 }
@@ -74023,7 +74379,7 @@ class Logger$q {
         const reason = message;
         let url = "";
         switch (code) {
-            case ErrorCode$q.NUMERIC_FAULT: {
+            case ErrorCode$r.NUMERIC_FAULT: {
                 url = "NUMERIC_FAULT";
                 const fault = message;
                 switch (fault) {
@@ -74042,13 +74398,13 @@ class Logger$q {
                 }
                 break;
             }
-            case ErrorCode$q.CALL_EXCEPTION:
-            case ErrorCode$q.INSUFFICIENT_FUNDS:
-            case ErrorCode$q.MISSING_NEW:
-            case ErrorCode$q.NONCE_EXPIRED:
-            case ErrorCode$q.REPLACEMENT_UNDERPRICED:
-            case ErrorCode$q.TRANSACTION_REPLACED:
-            case ErrorCode$q.UNPREDICTABLE_GAS_LIMIT:
+            case ErrorCode$r.CALL_EXCEPTION:
+            case ErrorCode$r.INSUFFICIENT_FUNDS:
+            case ErrorCode$r.MISSING_NEW:
+            case ErrorCode$r.NONCE_EXPIRED:
+            case ErrorCode$r.REPLACEMENT_UNDERPRICED:
+            case ErrorCode$r.TRANSACTION_REPLACED:
+            case ErrorCode$r.UNPREDICTABLE_GAS_LIMIT:
                 url = code;
                 break;
         }
@@ -74071,7 +74427,7 @@ class Logger$q {
         throw this.makeError(message, code, params);
     }
     throwArgumentError(message, name, value) {
-        return this.throwError(message, Logger$q.errors.INVALID_ARGUMENT, {
+        return this.throwError(message, Logger$r.errors.INVALID_ARGUMENT, {
             argument: name,
             value: value
         });
@@ -74092,9 +74448,9 @@ class Logger$q {
         if (message == null) {
             message = "platform missing String.prototype.normalize";
         }
-        if (_normalizeError$q) {
-            this.throwError("platform missing String.prototype.normalize", Logger$q.errors.UNSUPPORTED_OPERATION, {
-                operation: "String.prototype.normalize", form: _normalizeError$q
+        if (_normalizeError$r) {
+            this.throwError("platform missing String.prototype.normalize", Logger$r.errors.UNSUPPORTED_OPERATION, {
+                operation: "String.prototype.normalize", form: _normalizeError$r
             });
         }
     }
@@ -74106,14 +74462,14 @@ class Logger$q {
             message = "value not safe";
         }
         if (value < 0 || value >= 0x1fffffffffffff) {
-            this.throwError(message, Logger$q.errors.NUMERIC_FAULT, {
+            this.throwError(message, Logger$r.errors.NUMERIC_FAULT, {
                 operation: "checkSafeInteger",
                 fault: "out-of-safe-range",
                 value: value
             });
         }
         if (value % 1) {
-            this.throwError(message, Logger$q.errors.NUMERIC_FAULT, {
+            this.throwError(message, Logger$r.errors.NUMERIC_FAULT, {
                 operation: "checkSafeInteger",
                 fault: "non-integer",
                 value: value
@@ -74128,13 +74484,13 @@ class Logger$q {
             message = "";
         }
         if (count < expectedCount) {
-            this.throwError("missing argument" + message, Logger$q.errors.MISSING_ARGUMENT, {
+            this.throwError("missing argument" + message, Logger$r.errors.MISSING_ARGUMENT, {
                 count: count,
                 expectedCount: expectedCount
             });
         }
         if (count > expectedCount) {
-            this.throwError("too many arguments" + message, Logger$q.errors.UNEXPECTED_ARGUMENT, {
+            this.throwError("too many arguments" + message, Logger$r.errors.UNEXPECTED_ARGUMENT, {
                 count: count,
                 expectedCount: expectedCount
             });
@@ -74142,59 +74498,59 @@ class Logger$q {
     }
     checkNew(target, kind) {
         if (target === Object || target == null) {
-            this.throwError("missing new", Logger$q.errors.MISSING_NEW, { name: kind.name });
+            this.throwError("missing new", Logger$r.errors.MISSING_NEW, { name: kind.name });
         }
     }
     checkAbstract(target, kind) {
         if (target === kind) {
-            this.throwError("cannot instantiate abstract class " + JSON.stringify(kind.name) + " directly; use a sub-class", Logger$q.errors.UNSUPPORTED_OPERATION, { name: target.name, operation: "new" });
+            this.throwError("cannot instantiate abstract class " + JSON.stringify(kind.name) + " directly; use a sub-class", Logger$r.errors.UNSUPPORTED_OPERATION, { name: target.name, operation: "new" });
         }
         else if (target === Object || target == null) {
-            this.throwError("missing new", Logger$q.errors.MISSING_NEW, { name: kind.name });
+            this.throwError("missing new", Logger$r.errors.MISSING_NEW, { name: kind.name });
         }
     }
     static globalLogger() {
-        if (!_globalLogger$q) {
-            _globalLogger$q = new Logger$q(version$1o);
+        if (!_globalLogger$r) {
+            _globalLogger$r = new Logger$r(version$1p);
         }
-        return _globalLogger$q;
+        return _globalLogger$r;
     }
     static setCensorship(censorship, permanent) {
         if (!censorship && permanent) {
-            this.globalLogger().throwError("cannot permanently disable censorship", Logger$q.errors.UNSUPPORTED_OPERATION, {
+            this.globalLogger().throwError("cannot permanently disable censorship", Logger$r.errors.UNSUPPORTED_OPERATION, {
                 operation: "setCensorship"
             });
         }
-        if (_permanentCensorErrors$q) {
+        if (_permanentCensorErrors$r) {
             if (!censorship) {
                 return;
             }
-            this.globalLogger().throwError("error censorship permanent", Logger$q.errors.UNSUPPORTED_OPERATION, {
+            this.globalLogger().throwError("error censorship permanent", Logger$r.errors.UNSUPPORTED_OPERATION, {
                 operation: "setCensorship"
             });
         }
-        _censorErrors$q = !!censorship;
-        _permanentCensorErrors$q = !!permanent;
+        _censorErrors$r = !!censorship;
+        _permanentCensorErrors$r = !!permanent;
     }
     static setLogLevel(logLevel) {
-        const level = LogLevels$q[logLevel.toLowerCase()];
+        const level = LogLevels$r[logLevel.toLowerCase()];
         if (level == null) {
-            Logger$q.globalLogger().warn("invalid log level - " + logLevel);
+            Logger$r.globalLogger().warn("invalid log level - " + logLevel);
             return;
         }
-        _logLevel$q = level;
+        _logLevel$r = level;
     }
     static from(version) {
-        return new Logger$q(version);
+        return new Logger$r(version);
     }
 }
-Logger$q.errors = ErrorCode$q;
-Logger$q.levels = LogLevel$q;
+Logger$r.errors = ErrorCode$r;
+Logger$r.levels = LogLevel$r;
 
-const version$1p = "networks/0.1.0";
+const version$1q = "networks/0.1.0";
 
 "use strict";
-const logger$1c = new Logger$q(version$1p);
+const logger$1c = new Logger$r(version$1q);
 ;
 function isRenetworkable(value) {
     return (value && typeof (value.renetwork) === "function");
@@ -74459,10 +74815,10 @@ function encode$6(data) {
 
 "use strict";
 
-const version$1q = "bytes/5.7.0";
+const version$1r = "bytes/5.7.0";
 
 "use strict";
-const logger$1d = new Logger$2(version$1q);
+const logger$1d = new Logger$3(version$1r);
 ///////////////////////////////
 function isHexable$n(value) {
     return !!(value.toHexString);
@@ -74868,7 +75224,7 @@ function joinSignature$n(signature) {
     ]));
 }
 
-const version$1r = "properties/5.7.0";
+const version$1s = "properties/5.7.0";
 
 "use strict";
 var __awaiter$e = (commonjsGlobal && commonjsGlobal.__awaiter) || function (thisArg, _arguments, P, generator) {
@@ -74880,7 +75236,7 @@ var __awaiter$e = (commonjsGlobal && commonjsGlobal.__awaiter) || function (this
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-const logger$1e = new Logger$2(version$1r);
+const logger$1e = new Logger$3(version$1s);
 function defineReadOnly$7(object, name, value) {
     Object.defineProperty(object, name, {
         enumerable: true,
@@ -74994,10 +75350,10 @@ class Description$7 {
     }
 }
 
-const version$1s = "strings/5.7.0";
+const version$1t = "strings/5.7.0";
 
 "use strict";
-const logger$1f = new Logger$2(version$1s);
+const logger$1f = new Logger$3(version$1t);
 ///////////////////////////////
 var UnicodeNormalizationForm$2;
 (function (UnicodeNormalizationForm) {
@@ -75455,15 +75811,15 @@ function nameprep$2(value) {
 
 "use strict";
 
-const version$1t = "logger/5.7.0";
+const version$1u = "logger/5.7.0";
 
 "use strict";
-let _permanentCensorErrors$r = false;
-let _censorErrors$r = false;
-const LogLevels$r = { debug: 1, "default": 2, info: 2, warning: 3, error: 4, off: 5 };
-let _logLevel$r = LogLevels$r["default"];
-let _globalLogger$r = null;
-function _checkNormalize$r() {
+let _permanentCensorErrors$s = false;
+let _censorErrors$s = false;
+const LogLevels$s = { debug: 1, "default": 2, info: 2, warning: 3, error: 4, off: 5 };
+let _logLevel$s = LogLevels$s["default"];
+let _globalLogger$s = null;
+function _checkNormalize$s() {
     try {
         const missing = [];
         // Make sure all forms of normalization are supported
@@ -75490,16 +75846,16 @@ function _checkNormalize$r() {
     }
     return null;
 }
-const _normalizeError$r = _checkNormalize$r();
-var LogLevel$r;
+const _normalizeError$s = _checkNormalize$s();
+var LogLevel$s;
 (function (LogLevel) {
     LogLevel["DEBUG"] = "DEBUG";
     LogLevel["INFO"] = "INFO";
     LogLevel["WARNING"] = "WARNING";
     LogLevel["ERROR"] = "ERROR";
     LogLevel["OFF"] = "OFF";
-})(LogLevel$r || (LogLevel$r = {}));
-var ErrorCode$r;
+})(LogLevel$s || (LogLevel$s = {}));
+var ErrorCode$s;
 (function (ErrorCode) {
     ///////////////////
     // Generic Errors
@@ -75577,10 +75933,10 @@ var ErrorCode$r;
     // The user rejected the action, such as signing a message or sending
     // a transaction
     ErrorCode["ACTION_REJECTED"] = "ACTION_REJECTED";
-})(ErrorCode$r || (ErrorCode$r = {}));
+})(ErrorCode$s || (ErrorCode$s = {}));
 ;
-const HEX$r = "0123456789abcdef";
-class Logger$r {
+const HEX$s = "0123456789abcdef";
+class Logger$s {
     constructor(version) {
         Object.defineProperty(this, "version", {
             enumerable: true,
@@ -75590,30 +75946,30 @@ class Logger$r {
     }
     _log(logLevel, args) {
         const level = logLevel.toLowerCase();
-        if (LogLevels$r[level] == null) {
+        if (LogLevels$s[level] == null) {
             this.throwArgumentError("invalid log level name", "logLevel", logLevel);
         }
-        if (_logLevel$r > LogLevels$r[level]) {
+        if (_logLevel$s > LogLevels$s[level]) {
             return;
         }
         console.log.apply(console, args);
     }
     debug(...args) {
-        this._log(Logger$r.levels.DEBUG, args);
+        this._log(Logger$s.levels.DEBUG, args);
     }
     info(...args) {
-        this._log(Logger$r.levels.INFO, args);
+        this._log(Logger$s.levels.INFO, args);
     }
     warn(...args) {
-        this._log(Logger$r.levels.WARNING, args);
+        this._log(Logger$s.levels.WARNING, args);
     }
     makeError(message, code, params) {
         // Errors are being censored
-        if (_censorErrors$r) {
+        if (_censorErrors$s) {
             return this.makeError("censored error", code, {});
         }
         if (!code) {
-            code = Logger$r.errors.UNKNOWN_ERROR;
+            code = Logger$s.errors.UNKNOWN_ERROR;
         }
         if (!params) {
             params = {};
@@ -75625,8 +75981,8 @@ class Logger$r {
                 if (value instanceof Uint8Array) {
                     let hex = "";
                     for (let i = 0; i < value.length; i++) {
-                        hex += HEX$r[value[i] >> 4];
-                        hex += HEX$r[value[i] & 0x0f];
+                        hex += HEX$s[value[i] >> 4];
+                        hex += HEX$s[value[i] & 0x0f];
                     }
                     messageDetails.push(key + "=Uint8Array(0x" + hex + ")");
                 }
@@ -75643,7 +75999,7 @@ class Logger$r {
         const reason = message;
         let url = "";
         switch (code) {
-            case ErrorCode$r.NUMERIC_FAULT: {
+            case ErrorCode$s.NUMERIC_FAULT: {
                 url = "NUMERIC_FAULT";
                 const fault = message;
                 switch (fault) {
@@ -75662,13 +76018,13 @@ class Logger$r {
                 }
                 break;
             }
-            case ErrorCode$r.CALL_EXCEPTION:
-            case ErrorCode$r.INSUFFICIENT_FUNDS:
-            case ErrorCode$r.MISSING_NEW:
-            case ErrorCode$r.NONCE_EXPIRED:
-            case ErrorCode$r.REPLACEMENT_UNDERPRICED:
-            case ErrorCode$r.TRANSACTION_REPLACED:
-            case ErrorCode$r.UNPREDICTABLE_GAS_LIMIT:
+            case ErrorCode$s.CALL_EXCEPTION:
+            case ErrorCode$s.INSUFFICIENT_FUNDS:
+            case ErrorCode$s.MISSING_NEW:
+            case ErrorCode$s.NONCE_EXPIRED:
+            case ErrorCode$s.REPLACEMENT_UNDERPRICED:
+            case ErrorCode$s.TRANSACTION_REPLACED:
+            case ErrorCode$s.UNPREDICTABLE_GAS_LIMIT:
                 url = code;
                 break;
         }
@@ -75691,7 +76047,7 @@ class Logger$r {
         throw this.makeError(message, code, params);
     }
     throwArgumentError(message, name, value) {
-        return this.throwError(message, Logger$r.errors.INVALID_ARGUMENT, {
+        return this.throwError(message, Logger$s.errors.INVALID_ARGUMENT, {
             argument: name,
             value: value
         });
@@ -75712,9 +76068,9 @@ class Logger$r {
         if (message == null) {
             message = "platform missing String.prototype.normalize";
         }
-        if (_normalizeError$r) {
-            this.throwError("platform missing String.prototype.normalize", Logger$r.errors.UNSUPPORTED_OPERATION, {
-                operation: "String.prototype.normalize", form: _normalizeError$r
+        if (_normalizeError$s) {
+            this.throwError("platform missing String.prototype.normalize", Logger$s.errors.UNSUPPORTED_OPERATION, {
+                operation: "String.prototype.normalize", form: _normalizeError$s
             });
         }
     }
@@ -75726,14 +76082,14 @@ class Logger$r {
             message = "value not safe";
         }
         if (value < 0 || value >= 0x1fffffffffffff) {
-            this.throwError(message, Logger$r.errors.NUMERIC_FAULT, {
+            this.throwError(message, Logger$s.errors.NUMERIC_FAULT, {
                 operation: "checkSafeInteger",
                 fault: "out-of-safe-range",
                 value: value
             });
         }
         if (value % 1) {
-            this.throwError(message, Logger$r.errors.NUMERIC_FAULT, {
+            this.throwError(message, Logger$s.errors.NUMERIC_FAULT, {
                 operation: "checkSafeInteger",
                 fault: "non-integer",
                 value: value
@@ -75748,13 +76104,13 @@ class Logger$r {
             message = "";
         }
         if (count < expectedCount) {
-            this.throwError("missing argument" + message, Logger$r.errors.MISSING_ARGUMENT, {
+            this.throwError("missing argument" + message, Logger$s.errors.MISSING_ARGUMENT, {
                 count: count,
                 expectedCount: expectedCount
             });
         }
         if (count > expectedCount) {
-            this.throwError("too many arguments" + message, Logger$r.errors.UNEXPECTED_ARGUMENT, {
+            this.throwError("too many arguments" + message, Logger$s.errors.UNEXPECTED_ARGUMENT, {
                 count: count,
                 expectedCount: expectedCount
             });
@@ -75762,56 +76118,56 @@ class Logger$r {
     }
     checkNew(target, kind) {
         if (target === Object || target == null) {
-            this.throwError("missing new", Logger$r.errors.MISSING_NEW, { name: kind.name });
+            this.throwError("missing new", Logger$s.errors.MISSING_NEW, { name: kind.name });
         }
     }
     checkAbstract(target, kind) {
         if (target === kind) {
-            this.throwError("cannot instantiate abstract class " + JSON.stringify(kind.name) + " directly; use a sub-class", Logger$r.errors.UNSUPPORTED_OPERATION, { name: target.name, operation: "new" });
+            this.throwError("cannot instantiate abstract class " + JSON.stringify(kind.name) + " directly; use a sub-class", Logger$s.errors.UNSUPPORTED_OPERATION, { name: target.name, operation: "new" });
         }
         else if (target === Object || target == null) {
-            this.throwError("missing new", Logger$r.errors.MISSING_NEW, { name: kind.name });
+            this.throwError("missing new", Logger$s.errors.MISSING_NEW, { name: kind.name });
         }
     }
     static globalLogger() {
-        if (!_globalLogger$r) {
-            _globalLogger$r = new Logger$r(version$1t);
+        if (!_globalLogger$s) {
+            _globalLogger$s = new Logger$s(version$1u);
         }
-        return _globalLogger$r;
+        return _globalLogger$s;
     }
     static setCensorship(censorship, permanent) {
         if (!censorship && permanent) {
-            this.globalLogger().throwError("cannot permanently disable censorship", Logger$r.errors.UNSUPPORTED_OPERATION, {
+            this.globalLogger().throwError("cannot permanently disable censorship", Logger$s.errors.UNSUPPORTED_OPERATION, {
                 operation: "setCensorship"
             });
         }
-        if (_permanentCensorErrors$r) {
+        if (_permanentCensorErrors$s) {
             if (!censorship) {
                 return;
             }
-            this.globalLogger().throwError("error censorship permanent", Logger$r.errors.UNSUPPORTED_OPERATION, {
+            this.globalLogger().throwError("error censorship permanent", Logger$s.errors.UNSUPPORTED_OPERATION, {
                 operation: "setCensorship"
             });
         }
-        _censorErrors$r = !!censorship;
-        _permanentCensorErrors$r = !!permanent;
+        _censorErrors$s = !!censorship;
+        _permanentCensorErrors$s = !!permanent;
     }
     static setLogLevel(logLevel) {
-        const level = LogLevels$r[logLevel.toLowerCase()];
+        const level = LogLevels$s[logLevel.toLowerCase()];
         if (level == null) {
-            Logger$r.globalLogger().warn("invalid log level - " + logLevel);
+            Logger$s.globalLogger().warn("invalid log level - " + logLevel);
             return;
         }
-        _logLevel$r = level;
+        _logLevel$s = level;
     }
     static from(version) {
-        return new Logger$r(version);
+        return new Logger$s(version);
     }
 }
-Logger$r.errors = ErrorCode$r;
-Logger$r.levels = LogLevel$r;
+Logger$s.errors = ErrorCode$s;
+Logger$s.levels = LogLevel$s;
 
-const version$1u = "web/0.1.0";
+const version$1v = "web/0.1.0";
 
 "use strict";
 var __awaiter$f = (commonjsGlobal && commonjsGlobal.__awaiter) || function (thisArg, _arguments, P, generator) {
@@ -75891,7 +76247,7 @@ var __awaiter$g = (commonjsGlobal && commonjsGlobal.__awaiter) || function (this
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-const logger$1g = new Logger$r(version$1u);
+const logger$1g = new Logger$s(version$1v);
 function staller(duration) {
     return new Promise((resolve) => {
         setTimeout(resolve, duration);
@@ -75965,7 +76321,7 @@ function _fetchData(connection, body, processFunc) {
         options.allowGzip = !!connection.allowGzip;
         if (connection.user != null && connection.password != null) {
             if (url.substring(0, 6) !== "https:" && connection.allowInsecureAuthentication !== true) {
-                logger$1g.throwError("basic authentication requires a secure https url", Logger$r.errors.INVALID_ARGUMENT, { argument: "url", url: url, user: connection.user, password: "[REDACTED]" });
+                logger$1g.throwError("basic authentication requires a secure https url", Logger$s.errors.INVALID_ARGUMENT, { argument: "url", url: url, user: connection.user, password: "[REDACTED]" });
             }
             const authorization = connection.user + ":" + connection.password;
             headers["authorization"] = {
@@ -75997,7 +76353,7 @@ function _fetchData(connection, body, processFunc) {
             return Promise.resolve(result);
         }
         catch (error) {
-            logger$1g.throwError("processing response error", Logger$r.errors.SERVER_ERROR, {
+            logger$1g.throwError("processing response error", Logger$s.errors.SERVER_ERROR, {
                 body: bodyify(dataMatch[1], dataMatch[2]),
                 error: error,
                 requestBody: null,
@@ -76031,7 +76387,7 @@ function _fetchData(connection, body, processFunc) {
                         return;
                     }
                     timer = null;
-                    reject(logger$1g.makeError("timeout", Logger$r.errors.TIMEOUT, {
+                    reject(logger$1g.makeError("timeout", Logger$s.errors.TIMEOUT, {
                         requestBody: bodyify(options.body, flatHeaders["content-type"]),
                         requestMethod: options.method,
                         timeout: timeout,
@@ -76090,7 +76446,7 @@ function _fetchData(connection, body, processFunc) {
                     response = error.response;
                     if (response == null) {
                         runningTimeout.cancel();
-                        logger$1g.throwError("missing response", Logger$r.errors.SERVER_ERROR, {
+                        logger$1g.throwError("missing response", Logger$s.errors.SERVER_ERROR, {
                             requestBody: bodyify(options.body, flatHeaders["content-type"]),
                             requestMethod: options.method,
                             serverError: error,
@@ -76104,7 +76460,7 @@ function _fetchData(connection, body, processFunc) {
                 }
                 else if (!errorPassThrough && (response.statusCode < 200 || response.statusCode >= 300)) {
                     runningTimeout.cancel();
-                    logger$1g.throwError("bad response", Logger$r.errors.SERVER_ERROR, {
+                    logger$1g.throwError("bad response", Logger$s.errors.SERVER_ERROR, {
                         status: response.statusCode,
                         headers: response.headers,
                         body: bodyify(body, ((response.headers) ? response.headers["content-type"] : null)),
@@ -76134,7 +76490,7 @@ function _fetchData(connection, body, processFunc) {
                             }
                         }
                         runningTimeout.cancel();
-                        logger$1g.throwError("processing response error", Logger$r.errors.SERVER_ERROR, {
+                        logger$1g.throwError("processing response error", Logger$s.errors.SERVER_ERROR, {
                             body: bodyify(body, ((response.headers) ? response.headers["content-type"] : null)),
                             error: error,
                             requestBody: bodyify(options.body, flatHeaders["content-type"]),
@@ -76148,7 +76504,7 @@ function _fetchData(connection, body, processFunc) {
                 // The "body" is now a Uint8Array.
                 return body;
             }
-            return logger$1g.throwError("failed response", Logger$r.errors.SERVER_ERROR, {
+            return logger$1g.throwError("failed response", Logger$s.errors.SERVER_ERROR, {
                 requestBody: bodyify(options.body, flatHeaders["content-type"]),
                 requestMethod: options.method,
                 url: url
@@ -76165,7 +76521,7 @@ function fetchJson(connection, json, processFunc) {
                 result = JSON.parse(toUtf8String$2(value));
             }
             catch (error) {
-                logger$1g.throwError("invalid JSON", Logger$r.errors.SERVER_ERROR, {
+                logger$1g.throwError("invalid JSON", Logger$s.errors.SERVER_ERROR, {
                     body: value,
                     error: error
                 });
@@ -76278,10 +76634,10 @@ function poll(func, options) {
     });
 }
 
-const version$1v = "providers/0.1.0";
+const version$1w = "providers/0.1.0";
 
 "use strict";
-const logger$1h = new Logger$2(version$1v);
+const logger$1h = new Logger$3(version$1w);
 const HIERARCHY_DEPTH = 3;
 class Formatter {
     constructor() {
@@ -76792,7 +77148,7 @@ var __awaiter$h = (commonjsGlobal && commonjsGlobal.__awaiter) || function (this
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-const logger$1i = new Logger$2(version$1v);
+const logger$1i = new Logger$3(version$1w);
 const MAX_CCIP_REDIRECTS = 10;
 //////////////////////////////
 // Event Serializeing
@@ -77042,7 +77398,7 @@ class Resolver {
             }).then((result) => {
                 return BigNumber.from(result).eq(1);
             }).catch((error) => {
-                if (error.code === Logger$2.errors.CALL_EXCEPTION) {
+                if (error.code === Logger$3.errors.CALL_EXCEPTION) {
                     return false;
                 }
                 // Rethrow the error: link is down, etc. Let future attempts retry.
@@ -77070,7 +77426,7 @@ class Resolver {
             try {
                 let result = yield this.provider.call(tx);
                 if ((arrayify$1(result).length % 32) === 4) {
-                    logger$1i.throwError("resolver threw error", Logger$2.errors.CALL_EXCEPTION, {
+                    logger$1i.throwError("resolver threw error", Logger$3.errors.CALL_EXCEPTION, {
                         transaction: tx, data: result
                     });
                 }
@@ -77080,7 +77436,7 @@ class Resolver {
                 return result;
             }
             catch (error) {
-                if (error.code === Logger$2.errors.CALL_EXCEPTION) {
+                if (error.code === Logger$3.errors.CALL_EXCEPTION) {
                     return null;
                 }
                 throw error;
@@ -77099,7 +77455,7 @@ class Resolver {
     _getAddress(coinType, hexBytes) {
         const coinInfo = coinInfos[String(coinType)];
         if (coinInfo == null) {
-            logger$1i.throwError(`unsupported coin type: ${coinType}`, Logger$2.errors.UNSUPPORTED_OPERATION, {
+            logger$1i.throwError(`unsupported coin type: ${coinType}`, Logger$3.errors.UNSUPPORTED_OPERATION, {
                 operation: `getAddress(${coinType})`
             });
         }
@@ -77160,7 +77516,7 @@ class Resolver {
                     return this.provider.formatter.callAddress(result);
                 }
                 catch (error) {
-                    if (error.code === Logger$2.errors.CALL_EXCEPTION) {
+                    if (error.code === Logger$3.errors.CALL_EXCEPTION) {
                         return null;
                     }
                     throw error;
@@ -77175,7 +77531,7 @@ class Resolver {
             // Compute the address
             const address = this._getAddress(coinType, hexBytes);
             if (address == null) {
-                logger$1i.throwError(`invalid or unsupported coin data`, Logger$2.errors.UNSUPPORTED_OPERATION, {
+                logger$1i.throwError(`invalid or unsupported coin data`, Logger$3.errors.UNSUPPORTED_OPERATION, {
                     operation: `getAddress(${coinType})`,
                     coinType: coinType,
                     data: hexBytes
@@ -77337,7 +77693,7 @@ class Resolver {
                     return "sia:/\/" + hash;
                 }
             }
-            return logger$1i.throwError(`invalid or unsupported content hash data`, Logger$2.errors.UNSUPPORTED_OPERATION, {
+            return logger$1i.throwError(`invalid or unsupported content hash data`, Logger$3.errors.UNSUPPORTED_OPERATION, {
                 operation: "getContentHash()",
                 data: hexBytes
             });
@@ -77428,7 +77784,7 @@ class BaseProvider extends Provider {
                 // This should never happen; every Provider sub-class should have
                 // suggested a network by here (or have thrown).
                 if (!network) {
-                    logger$1i.throwError("no network detected", Logger$2.errors.UNKNOWN_ERROR, {});
+                    logger$1i.throwError("no network detected", Logger$3.errors.UNKNOWN_ERROR, {});
                 }
                 // Possible this call stacked so do not call defineReadOnly again
                 if (this._network == null) {
@@ -77453,7 +77809,7 @@ class BaseProvider extends Provider {
                 return network;
             }, (error) => {
                 // If the network isn't running yet, we will wait
-                if (error.code === Logger$2.errors.NETWORK_ERROR && error.event === "noNetwork") {
+                if (error.code === Logger$3.errors.NETWORK_ERROR && error.event === "noNetwork") {
                     return undefined;
                 }
                 throw error;
@@ -77495,12 +77851,12 @@ class BaseProvider extends Provider {
                 const errorMessage = (result.message || "unknown error");
                 // 4xx indicates the result is not present; stop
                 if (result.status >= 400 && result.status < 500) {
-                    return logger$1i.throwError(`response not found during CCIP fetch: ${errorMessage}`, Logger$2.errors.SERVER_ERROR, { url, errorMessage });
+                    return logger$1i.throwError(`response not found during CCIP fetch: ${errorMessage}`, Logger$3.errors.SERVER_ERROR, { url, errorMessage });
                 }
                 // 5xx indicates server issue; try the next url
                 errorMessages.push(errorMessage);
             }
-            return logger$1i.throwError(`error encountered during CCIP fetch: ${errorMessages.map((m) => JSON.stringify(m)).join(", ")}`, Logger$2.errors.SERVER_ERROR, {
+            return logger$1i.throwError(`error encountered during CCIP fetch: ${errorMessages.map((m) => JSON.stringify(m)).join(", ")}`, Logger$3.errors.SERVER_ERROR, {
                 urls, errorMessages
             });
         });
@@ -77595,7 +77951,7 @@ class BaseProvider extends Provider {
             }
             if (Math.abs((this._emitted.block) - blockNumber) > 1000) {
                 logger$1i.warn(`network block skew detected; skipping block events (emitted=${this._emitted.block} blockNumber${blockNumber})`);
-                this.emit("error", logger$1i.makeError("network block skew detected", Logger$2.errors.NETWORK_ERROR, {
+                this.emit("error", logger$1i.makeError("network block skew detected", Logger$3.errors.NETWORK_ERROR, {
                     blockNumber: blockNumber,
                     event: "blockSkew",
                     previousBlockNumber: this._emitted.block
@@ -77726,7 +78082,7 @@ class BaseProvider extends Provider {
     // can change, such as when connected to a JSON-RPC backend
     detectNetwork() {
         return __awaiter$h(this, void 0, void 0, function* () {
-            return logger$1i.throwError("provider does not support network detection", Logger$2.errors.UNSUPPORTED_OPERATION, {
+            return logger$1i.throwError("provider does not support network detection", Logger$3.errors.UNSUPPORTED_OPERATION, {
                 operation: "provider.detectNetwork"
             });
         });
@@ -77758,7 +78114,7 @@ class BaseProvider extends Provider {
                     yield stall(0);
                     return this._network;
                 }
-                const error = logger$1i.makeError("underlying network changed", Logger$2.errors.NETWORK_ERROR, {
+                const error = logger$1i.makeError("underlying network changed", Logger$3.errors.NETWORK_ERROR, {
                     event: "changed",
                     network: network,
                     detectedNetwork: currentNetwork
@@ -77945,7 +78301,7 @@ class BaseProvider extends Provider {
                                                 reason = "cancelled";
                                             }
                                             // Explain why we were replaced
-                                            reject(logger$1i.makeError("transaction was replaced", Logger$2.errors.TRANSACTION_REPLACED, {
+                                            reject(logger$1i.makeError("transaction was replaced", Logger$3.errors.TRANSACTION_REPLACED, {
                                                 cancelled: (reason === "replaced" || reason === "cancelled"),
                                                 reason,
                                                 replacement: this._wrapTransaction(tx),
@@ -77982,7 +78338,7 @@ class BaseProvider extends Provider {
                         if (alreadyDone()) {
                             return;
                         }
-                        reject(logger$1i.makeError("timeout exceeded", Logger$2.errors.TIMEOUT, { timeout: timeout }));
+                        reject(logger$1i.makeError("timeout exceeded", Logger$3.errors.TIMEOUT, { timeout: timeout }));
                     }, timeout);
                     if (timer.unref) {
                         timer.unref();
@@ -78005,7 +78361,7 @@ class BaseProvider extends Provider {
                 return BigNumber.from(result);
             }
             catch (error) {
-                return logger$1i.throwError("bad result from backend", Logger$2.errors.SERVER_ERROR, {
+                return logger$1i.throwError("bad result from backend", Logger$3.errors.SERVER_ERROR, {
                     method: "getGasPrice",
                     result, error
                 });
@@ -78020,7 +78376,7 @@ class BaseProvider extends Provider {
                 return BigNumber.from(result);
             }
             catch (error) {
-                return logger$1i.throwError("bad result from backend", Logger$2.errors.SERVER_ERROR, {
+                return logger$1i.throwError("bad result from backend", Logger$3.errors.SERVER_ERROR, {
                     method: "getMaxPriorityFeePerGas",
                     result, error
                 });
@@ -78039,7 +78395,7 @@ class BaseProvider extends Provider {
                 return BigNumber.from(result);
             }
             catch (error) {
-                return logger$1i.throwError("bad result from backend", Logger$2.errors.SERVER_ERROR, {
+                return logger$1i.throwError("bad result from backend", Logger$3.errors.SERVER_ERROR, {
                     method: "getBalance",
                     params, result, error
                 });
@@ -78058,7 +78414,7 @@ class BaseProvider extends Provider {
                 return BigNumber.from(result).toNumber();
             }
             catch (error) {
-                return logger$1i.throwError("bad result from backend", Logger$2.errors.SERVER_ERROR, {
+                return logger$1i.throwError("bad result from backend", Logger$3.errors.SERVER_ERROR, {
                     method: "getTransactionCount",
                     params, result, error
                 });
@@ -78077,7 +78433,7 @@ class BaseProvider extends Provider {
                 return hexlify$1(result);
             }
             catch (error) {
-                return logger$1i.throwError("bad result from backend", Logger$2.errors.SERVER_ERROR, {
+                return logger$1i.throwError("bad result from backend", Logger$3.errors.SERVER_ERROR, {
                     method: "getCode",
                     params, result, error
                 });
@@ -78097,7 +78453,7 @@ class BaseProvider extends Provider {
                 return hexlify$1(result);
             }
             catch (error) {
-                return logger$1i.throwError("bad result from backend", Logger$2.errors.SERVER_ERROR, {
+                return logger$1i.throwError("bad result from backend", Logger$3.errors.SERVER_ERROR, {
                     method: "getStorageAt",
                     params, result, error
                 });
@@ -78112,7 +78468,7 @@ class BaseProvider extends Provider {
         const result = tx;
         // Check the hash we expect is the same as the hash the server reported
         if (hash != null && tx.hash !== hash) {
-            logger$1i.throwError("Transaction hash mismatch from Provider.sendTransaction.", Logger$2.errors.UNKNOWN_ERROR, { expectedHash: tx.hash, returnedHash: hash });
+            logger$1i.throwError("Transaction hash mismatch from Provider.sendTransaction.", Logger$3.errors.UNKNOWN_ERROR, { expectedHash: tx.hash, returnedHash: hash });
         }
         result.wait = (confirms, timeout) => __awaiter$h(this, void 0, void 0, function* () {
             if (confirms == null) {
@@ -78140,7 +78496,7 @@ class BaseProvider extends Provider {
             // No longer pending, allow the polling loop to garbage collect this
             this._emitted["t:" + tx.hash] = receipt.blockNumber;
             if (receipt.status === 0) {
-                logger$1i.throwError("transaction failed", Logger$2.errors.CALL_EXCEPTION, {
+                logger$1i.throwError("transaction failed", Logger$3.errors.CALL_EXCEPTION, {
                     transactionHash: tx.hash,
                     transaction: tx,
                     receipt: receipt
@@ -78229,7 +78585,7 @@ class BaseProvider extends Provider {
     _call(transaction, blockTag, attempt) {
         return __awaiter$h(this, void 0, void 0, function* () {
             if (attempt >= MAX_CCIP_REDIRECTS) {
-                logger$1i.throwError("CCIP read exceeded maximum redirections", Logger$2.errors.SERVER_ERROR, {
+                logger$1i.throwError("CCIP read exceeded maximum redirections", Logger$3.errors.SERVER_ERROR, {
                     redirects: attempt, transaction
                 });
             }
@@ -78242,7 +78598,7 @@ class BaseProvider extends Provider {
                     // Check the sender of the OffchainLookup matches the transaction
                     const sender = hexDataSlice$1(data, 0, 32);
                     if (!BigNumber.from(sender).eq(txSender)) {
-                        logger$1i.throwError("CCIP Read sender did not match", Logger$2.errors.CALL_EXCEPTION, {
+                        logger$1i.throwError("CCIP Read sender did not match", Logger$3.errors.CALL_EXCEPTION, {
                             name: "OffchainLookup",
                             signature: "OffchainLookup(address,string[],bytes,bytes4,bytes)",
                             transaction, data: result
@@ -78256,7 +78612,7 @@ class BaseProvider extends Provider {
                     for (let u = 0; u < urlsLength; u++) {
                         const url = _parseString(urlsData, u * 32);
                         if (url == null) {
-                            logger$1i.throwError("CCIP Read contained corrupt URL string", Logger$2.errors.CALL_EXCEPTION, {
+                            logger$1i.throwError("CCIP Read contained corrupt URL string", Logger$3.errors.CALL_EXCEPTION, {
                                 name: "OffchainLookup",
                                 signature: "OffchainLookup(address,string[],bytes,bytes4,bytes)",
                                 transaction, data: result
@@ -78268,7 +78624,7 @@ class BaseProvider extends Provider {
                     const calldata = _parseBytes(data, 64);
                     // Get the callbackSelector (bytes4)
                     if (!BigNumber.from(hexDataSlice$1(data, 100, 128)).isZero()) {
-                        logger$1i.throwError("CCIP Read callback selector included junk", Logger$2.errors.CALL_EXCEPTION, {
+                        logger$1i.throwError("CCIP Read callback selector included junk", Logger$3.errors.CALL_EXCEPTION, {
                             name: "OffchainLookup",
                             signature: "OffchainLookup(address,string[],bytes,bytes4,bytes)",
                             transaction, data: result
@@ -78279,7 +78635,7 @@ class BaseProvider extends Provider {
                     const extraData = _parseBytes(data, 128);
                     const ccipResult = yield this.ccipReadFetch(transaction, calldata, urls);
                     if (ccipResult == null) {
-                        logger$1i.throwError("CCIP Read disabled or provided no URLs", Logger$2.errors.CALL_EXCEPTION, {
+                        logger$1i.throwError("CCIP Read disabled or provided no URLs", Logger$3.errors.CALL_EXCEPTION, {
                             name: "OffchainLookup",
                             signature: "OffchainLookup(address,string[],bytes,bytes4,bytes)",
                             transaction, data: result
@@ -78292,7 +78648,7 @@ class BaseProvider extends Provider {
                     return this._call(tx, blockTag, attempt + 1);
                 }
                 catch (error) {
-                    if (error.code === Logger$2.errors.SERVER_ERROR) {
+                    if (error.code === Logger$3.errors.SERVER_ERROR) {
                         throw error;
                     }
                 }
@@ -78301,7 +78657,7 @@ class BaseProvider extends Provider {
                 return hexlify$1(result);
             }
             catch (error) {
-                return logger$1i.throwError("bad result from backend", Logger$2.errors.SERVER_ERROR, {
+                return logger$1i.throwError("bad result from backend", Logger$3.errors.SERVER_ERROR, {
                     method: "call",
                     params: { transaction, blockTag }, result, error
                 });
@@ -78330,7 +78686,7 @@ class BaseProvider extends Provider {
                 return BigNumber.from(result);
             }
             catch (error) {
-                return logger$1i.throwError("bad result from backend", Logger$2.errors.SERVER_ERROR, {
+                return logger$1i.throwError("bad result from backend", Logger$3.errors.SERVER_ERROR, {
                     method: "estimateGas",
                     params, result, error
                 });
@@ -78345,7 +78701,7 @@ class BaseProvider extends Provider {
             }
             const address = yield this.resolveName(addressOrName);
             if (address == null) {
-                logger$1i.throwError("ENS name not configured", Logger$2.errors.UNSUPPORTED_OPERATION, {
+                logger$1i.throwError("ENS name not configured", Logger$3.errors.UNSUPPORTED_OPERATION, {
                     operation: `resolveName(${JSON.stringify(addressOrName)})`
                 });
             }
@@ -78566,7 +78922,7 @@ class BaseProvider extends Provider {
             const network = yield this.getNetwork();
             // No ENS...
             if (!network.ensAddress) {
-                logger$1i.throwError("network does not support ENS", Logger$2.errors.UNSUPPORTED_OPERATION, { operation, network: network.name });
+                logger$1i.throwError("network does not support ENS", Logger$3.errors.UNSUPPORTED_OPERATION, { operation, network: network.name });
             }
             try {
                 // keccak256("resolver(bytes32)")
@@ -78647,7 +79003,7 @@ class BaseProvider extends Provider {
                     }
                 }
                 catch (error) {
-                    if (error.code !== Logger$2.errors.CALL_EXCEPTION) {
+                    if (error.code !== Logger$3.errors.CALL_EXCEPTION) {
                         throw error;
                     }
                 }
@@ -78661,7 +79017,7 @@ class BaseProvider extends Provider {
                     resolver = yield this.getResolver(name);
                 }
                 catch (error) {
-                    if (error.code !== Logger$2.errors.CALL_EXCEPTION) {
+                    if (error.code !== Logger$3.errors.CALL_EXCEPTION) {
                         throw error;
                     }
                     return null;
@@ -78682,7 +79038,7 @@ class BaseProvider extends Provider {
         });
     }
     perform(method, params) {
-        return logger$1i.throwError(method + " not implemented", Logger$2.errors.NOT_IMPLEMENTED, { operation: method });
+        return logger$1i.throwError(method + " not implemented", Logger$3.errors.NOT_IMPLEMENTED, { operation: method });
     }
     _startEvent(event) {
         this.polling = (this._events.filter((e) => e.pollable()).length > 0);
@@ -78793,7 +79149,7 @@ var __awaiter$i = (commonjsGlobal && commonjsGlobal.__awaiter) || function (this
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-const logger$1j = new Logger$2(version$1v);
+const logger$1j = new Logger$3(version$1w);
 const errorGas = ["call", "estimateGas"];
 function spelunk(value, requireData) {
     if (value == null) {
@@ -78835,7 +79191,7 @@ function checkError(method, error, params) {
             return result.data;
         }
         // Nothing descriptive..
-        logger$1j.throwError("missing revert data in call exception; Transaction reverted without a reason string", Logger$2.errors.CALL_EXCEPTION, {
+        logger$1j.throwError("missing revert data in call exception; Transaction reverted without a reason string", Logger$3.errors.CALL_EXCEPTION, {
             data: "0x", transaction, error
         });
     }
@@ -78847,14 +79203,14 @@ function checkError(method, error, params) {
         }
         // Found "reverted", this is a CALL_EXCEPTION
         if (result) {
-            logger$1j.throwError("json-rpc-provider: cannot estimate gas; transaction may fail or may require manual gas limit", Logger$2.errors.UNPREDICTABLE_GAS_LIMIT, {
+            logger$1j.throwError("json-rpc-provider: cannot estimate gas; transaction may fail or may require manual gas limit", Logger$3.errors.UNPREDICTABLE_GAS_LIMIT, {
                 reason: result.message, method, transaction, error
             });
         }
     }
     // @TODO: Should we spelunk for message too?
     let message = error.message;
-    if (error.code === Logger$2.errors.SERVER_ERROR && error.error && typeof (error.error.message) === "string") {
+    if (error.code === Logger$3.errors.SERVER_ERROR && error.error && typeof (error.error.message) === "string") {
         message = error.error.message;
     }
     else if (typeof (error.body) === "string") {
@@ -78866,30 +79222,30 @@ function checkError(method, error, params) {
     message = (message || "").toLowerCase();
     // "insufficient funds for gas * price + value + cost(data)"
     if (message.match(/insufficient funds|base fee exceeds gas limit|InsufficientFunds/i)) {
-        logger$1j.throwError("insufficient funds for intrinsic transaction cost", Logger$2.errors.INSUFFICIENT_FUNDS, {
+        logger$1j.throwError("insufficient funds for intrinsic transaction cost", Logger$3.errors.INSUFFICIENT_FUNDS, {
             error, method, transaction
         });
     }
     // "nonce too low"
     if (message.match(/nonce (is )?too low/i)) {
-        logger$1j.throwError("nonce has already been used", Logger$2.errors.NONCE_EXPIRED, {
+        logger$1j.throwError("nonce has already been used", Logger$3.errors.NONCE_EXPIRED, {
             error, method, transaction
         });
     }
     // "replacement transaction underpriced"
     if (message.match(/replacement transaction underpriced|transaction gas price.*too low/i)) {
-        logger$1j.throwError("replacement fee too low", Logger$2.errors.REPLACEMENT_UNDERPRICED, {
+        logger$1j.throwError("replacement fee too low", Logger$3.errors.REPLACEMENT_UNDERPRICED, {
             error, method, transaction
         });
     }
     // "replacement transaction underpriced"
     if (message.match(/only replay-protected/i)) {
-        logger$1j.throwError("legacy pre-eip-155 transactions not supported", Logger$2.errors.UNSUPPORTED_OPERATION, {
+        logger$1j.throwError("legacy pre-eip-155 transactions not supported", Logger$3.errors.UNSUPPORTED_OPERATION, {
             error, method, transaction
         });
     }
     if (errorGas.indexOf(method) >= 0 && message.match(/gas required exceeds allowance|always failing transaction|execution reverted|revert/)) {
-        logger$1j.throwError("cannot estimate gas; transaction may fail or may require manual gas limit", Logger$2.errors.UNPREDICTABLE_GAS_LIMIT, {
+        logger$1j.throwError("cannot estimate gas; transaction may fail or may require manual gas limit", Logger$3.errors.UNPREDICTABLE_GAS_LIMIT, {
             error, method, transaction
         });
     }
@@ -78940,7 +79296,7 @@ class JsonRpcSigner extends Signer {
         }
     }
     connect(provider) {
-        return logger$1j.throwError("cannot alter JSON-RPC Signer connection", Logger$2.errors.UNSUPPORTED_OPERATION, {
+        return logger$1j.throwError("cannot alter JSON-RPC Signer connection", Logger$3.errors.UNSUPPORTED_OPERATION, {
             operation: "connect"
         });
     }
@@ -78953,7 +79309,7 @@ class JsonRpcSigner extends Signer {
         }
         return this.provider.send("quai_accounts", []).then((accounts) => {
             if (accounts.length <= this._index) {
-                logger$1j.throwError("unknown account #" + this._index, Logger$2.errors.UNSUPPORTED_OPERATION, {
+                logger$1j.throwError("unknown account #" + this._index, Logger$3.errors.UNSUPPORTED_OPERATION, {
                     operation: "getAddress"
                 });
             }
@@ -79005,7 +79361,7 @@ class JsonRpcSigner extends Signer {
                 return hash;
             }, (error) => {
                 if (typeof (error.message) === "string" && error.message.match(/user denied/i)) {
-                    logger$1j.throwError("user rejected transaction", Logger$2.errors.ACTION_REJECTED, {
+                    logger$1j.throwError("user rejected transaction", Logger$3.errors.ACTION_REJECTED, {
                         action: "sendTransaction",
                         transaction: tx
                     });
@@ -79015,7 +79371,7 @@ class JsonRpcSigner extends Signer {
         });
     }
     signTransaction(transaction) {
-        return logger$1j.throwError("signing transactions is unsupported", Logger$2.errors.UNSUPPORTED_OPERATION, {
+        return logger$1j.throwError("signing transactions is unsupported", Logger$3.errors.UNSUPPORTED_OPERATION, {
             operation: "signTransaction"
         });
     }
@@ -79052,7 +79408,7 @@ class JsonRpcSigner extends Signer {
             }
             catch (error) {
                 if (typeof (error.message) === "string" && error.message.match(/user denied/i)) {
-                    logger$1j.throwError("user rejected signing", Logger$2.errors.ACTION_REJECTED, {
+                    logger$1j.throwError("user rejected signing", Logger$3.errors.ACTION_REJECTED, {
                         action: "signMessage",
                         from: address,
                         messageData: message
@@ -79072,7 +79428,7 @@ class JsonRpcSigner extends Signer {
             }
             catch (error) {
                 if (typeof (error.message) === "string" && error.message.match(/user denied/i)) {
-                    logger$1j.throwError("user rejected signing", Logger$2.errors.ACTION_REJECTED, {
+                    logger$1j.throwError("user rejected signing", Logger$3.errors.ACTION_REJECTED, {
                         action: "_legacySignMessage",
                         from: address,
                         messageData: message
@@ -79097,7 +79453,7 @@ class JsonRpcSigner extends Signer {
             }
             catch (error) {
                 if (typeof (error.message) === "string" && error.message.match(/user denied/i)) {
-                    logger$1j.throwError("user rejected signing", Logger$2.errors.ACTION_REJECTED, {
+                    logger$1j.throwError("user rejected signing", Logger$3.errors.ACTION_REJECTED, {
                         action: "_signTypedData",
                         from: address,
                         messageData: { domain: populated.domain, types, value: populated.value }
@@ -79216,14 +79572,14 @@ class JsonRpcProvider extends BaseProvider {
                     return getNetwork(BigNumber.from(chainId).toNumber());
                 }
                 catch (error) {
-                    return logger$1j.throwError("could not detect network", Logger$2.errors.NETWORK_ERROR, {
+                    return logger$1j.throwError("could not detect network", Logger$3.errors.NETWORK_ERROR, {
                         chainId: chainId,
                         event: "invalidNetwork",
                         serverError: error
                     });
                 }
             }
-            return logger$1j.throwError("could not detect network", Logger$2.errors.NETWORK_ERROR, {
+            return logger$1j.throwError("could not detect network", Logger$3.errors.NETWORK_ERROR, {
                 event: "noNetwork"
             });
         });
@@ -79241,7 +79597,7 @@ class JsonRpcProvider extends BaseProvider {
                 this._context = location.length;
                 return this._context;
             }
-            return logger$1j.throwError("could not detect context", Logger$2.errors.NETWORK_ERROR, {
+            return logger$1j.throwError("could not detect context", Logger$3.errors.NETWORK_ERROR, {
                 event: "noNetwork"
             });
         });
@@ -79370,7 +79726,7 @@ class JsonRpcProvider extends BaseProvider {
             }
             const args = this.prepareRequest(method, params);
             if (args == null) {
-                logger$1j.throwError(method + " not implemented", Logger$2.errors.NOT_IMPLEMENTED, { operation: method });
+                logger$1j.throwError(method + " not implemented", Logger$3.errors.NOT_IMPLEMENTED, { operation: method });
             }
             try {
                 return yield this.send(args[0], args[1]);
@@ -79486,9 +79842,9 @@ try {
     }
 }
 catch (error) {
-    const logger = new Logger$2(version$1v);
+    const logger = new Logger$3(version$1w);
     WS = function () {
-        logger.throwError("WebSockets not supported in this environment", Logger$2.errors.UNSUPPORTED_OPERATION, {
+        logger.throwError("WebSockets not supported in this environment", Logger$3.errors.UNSUPPORTED_OPERATION, {
             operation: "new WebSocket()"
         });
     };
@@ -79504,7 +79860,7 @@ var __awaiter$j = (commonjsGlobal && commonjsGlobal.__awaiter) || function (this
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-const logger$1k = new Logger$2(version$1v);
+const logger$1k = new Logger$3(version$1w);
 /**
  *  Notes:
  *
@@ -79526,7 +79882,7 @@ class WebSocketProvider extends JsonRpcProvider {
     constructor(url, network) {
         // This will be added in the future; please open an issue to expedite
         if (network === "any") {
-            logger$1k.throwError("WebSocketProvider does not support 'any' network yet", Logger$2.errors.UNSUPPORTED_OPERATION, {
+            logger$1k.throwError("WebSocketProvider does not support 'any' network yet", Logger$3.errors.UNSUPPORTED_OPERATION, {
                 operation: "network:any"
             });
         }
@@ -79622,12 +79978,12 @@ class WebSocketProvider extends JsonRpcProvider {
         return 0;
     }
     resetEventsBlock(blockNumber) {
-        logger$1k.throwError("cannot reset events block on WebSocketProvider", Logger$2.errors.UNSUPPORTED_OPERATION, {
+        logger$1k.throwError("cannot reset events block on WebSocketProvider", Logger$3.errors.UNSUPPORTED_OPERATION, {
             operation: "resetEventBlock"
         });
     }
     set pollingInterval(value) {
-        logger$1k.throwError("cannot set polling interval on WebSocketProvider", Logger$2.errors.UNSUPPORTED_OPERATION, {
+        logger$1k.throwError("cannot set polling interval on WebSocketProvider", Logger$3.errors.UNSUPPORTED_OPERATION, {
             operation: "setPollingInterval"
         });
     }
@@ -79640,7 +79996,7 @@ class WebSocketProvider extends JsonRpcProvider {
         if (!value) {
             return;
         }
-        logger$1k.throwError("cannot set polling on WebSocketProvider", Logger$2.errors.UNSUPPORTED_OPERATION, {
+        logger$1k.throwError("cannot set polling on WebSocketProvider", Logger$3.errors.UNSUPPORTED_OPERATION, {
             operation: "setPolling"
         });
     }
@@ -79797,7 +80153,7 @@ var __awaiter$k = (commonjsGlobal && commonjsGlobal.__awaiter) || function (this
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-const logger$1l = new Logger$2(version$1v);
+const logger$1l = new Logger$3(version$1w);
 // A StaticJsonRpcProvider is useful when you *know* for certain that
 // the backend will never change, as it never calls eth_chainId to
 // verify its backend. However, if the backend does change, the effects
@@ -79819,7 +80175,7 @@ class StaticJsonRpcProvider extends JsonRpcProvider {
             if (network == null) {
                 network = yield _super.detectNetwork.call(this);
                 if (!network) {
-                    logger$1l.throwError("no network detected", Logger$2.errors.UNKNOWN_ERROR, {});
+                    logger$1l.throwError("no network detected", Logger$3.errors.UNKNOWN_ERROR, {});
                 }
                 // If still not set, set it
                 if (this._network == null) {
@@ -79856,7 +80212,7 @@ class UrlJsonRpcProvider extends StaticJsonRpcProvider {
         return false;
     }
     getSigner(address) {
-        return logger$1l.throwError("API provider does not support signing", Logger$2.errors.UNSUPPORTED_OPERATION, { operation: "getSigner" });
+        return logger$1l.throwError("API provider does not support signing", Logger$3.errors.UNSUPPORTED_OPERATION, { operation: "getSigner" });
     }
     listAccounts() {
         return Promise.resolve([]);
@@ -79869,14 +80225,14 @@ class UrlJsonRpcProvider extends StaticJsonRpcProvider {
     // API key will have been sanitized by the getApiKey first, so any validation
     // or transformations can be done there.
     static getUrl(network, apiKey) {
-        return logger$1l.throwError("not implemented; sub-classes must override getUrl", Logger$2.errors.NOT_IMPLEMENTED, {
+        return logger$1l.throwError("not implemented; sub-classes must override getUrl", Logger$3.errors.NOT_IMPLEMENTED, {
             operation: "getUrl"
         });
     }
 }
 
 "use strict";
-const logger$1m = new Logger$2(version$1v);
+const logger$1m = new Logger$3(version$1w);
 // This key was provided to quais.js by Alchemy to be used by the
 // default provider, but it is recommended that for your own
 // production environments, that you acquire your own API key at:
@@ -79953,7 +80309,7 @@ class AlchemyProvider extends UrlJsonRpcProvider {
     }
 }
 
-const logger$1n = new Logger$2(version$1v);
+const logger$1n = new Logger$3(version$1w);
 const defaultApiKey$1 = "9f7d929b018cdffb338517efa06f58359e86ff1ffd350bc889738523659e7972";
 function getHost(name) {
     switch (name) {
@@ -80014,7 +80370,7 @@ var __awaiter$l = (commonjsGlobal && commonjsGlobal.__awaiter) || function (this
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-const logger$1o = new Logger$2(version$1v);
+const logger$1o = new Logger$3(version$1w);
 class CloudflareProvider extends UrlJsonRpcProvider {
     static getApiKey(apiKey) {
         if (apiKey != null) {
@@ -80059,7 +80415,7 @@ var __awaiter$m = (commonjsGlobal && commonjsGlobal.__awaiter) || function (this
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-const logger$1p = new Logger$2(version$1v);
+const logger$1p = new Logger$3(version$1w);
 // The transaction has already been sanitized by the calls in Provider
 function getTransactionPostData(transaction) {
     const result = {};
@@ -80142,7 +80498,7 @@ function checkLogTag(blockTag) {
 function checkError$1(method, error, transaction) {
     // Undo the "convenience" some nodes are attempting to prevent backwards
     // incompatibility; maybe for v6 consider forwarding reverts as errors
-    if (method === "call" && error.code === Logger$2.errors.SERVER_ERROR) {
+    if (method === "call" && error.code === Logger$3.errors.SERVER_ERROR) {
         const e = error.error;
         // Etherscan keeps changing their string
         if (e && (e.message.match(/reverted/i) || e.message.match(/VM execution error/i))) {
@@ -80154,14 +80510,14 @@ function checkError$1(method, error, transaction) {
             if (isHexString$1(data)) {
                 return data;
             }
-            logger$1p.throwError("missing revert data in call exception", Logger$2.errors.CALL_EXCEPTION, {
+            logger$1p.throwError("missing revert data in call exception", Logger$3.errors.CALL_EXCEPTION, {
                 error, data: "0x"
             });
         }
     }
     // Get the message from any nested error structure
     let message = error.message;
-    if (error.code === Logger$2.errors.SERVER_ERROR) {
+    if (error.code === Logger$3.errors.SERVER_ERROR) {
         if (error.error && typeof (error.error.message) === "string") {
             message = error.error.message;
         }
@@ -80175,24 +80531,24 @@ function checkError$1(method, error, transaction) {
     message = (message || "").toLowerCase();
     // "Insufficient funds. The account you tried to send transaction from does not have enough funds. Required 21464000000000 and got: 0"
     if (message.match(/insufficient funds/)) {
-        logger$1p.throwError("insufficient funds for intrinsic transaction cost", Logger$2.errors.INSUFFICIENT_FUNDS, {
+        logger$1p.throwError("insufficient funds for intrinsic transaction cost", Logger$3.errors.INSUFFICIENT_FUNDS, {
             error, method, transaction
         });
     }
     // "Transaction with the same hash was already imported."
     if (message.match(/same hash was already imported|transaction nonce is too low|nonce too low/)) {
-        logger$1p.throwError("nonce has already been used", Logger$2.errors.NONCE_EXPIRED, {
+        logger$1p.throwError("nonce has already been used", Logger$3.errors.NONCE_EXPIRED, {
             error, method, transaction
         });
     }
     // "Transaction gas price is too low. There is another transaction with same nonce in the queue. Try increasing the gas price or incrementing the nonce."
     if (message.match(/another transaction with same nonce/)) {
-        logger$1p.throwError("replacement fee too low", Logger$2.errors.REPLACEMENT_UNDERPRICED, {
+        logger$1p.throwError("replacement fee too low", Logger$3.errors.REPLACEMENT_UNDERPRICED, {
             error, method, transaction
         });
     }
     if (message.match(/execution failed due to an exception|execution reverted/)) {
-        logger$1p.throwError("cannot estimate gas; transaction may fail or may require manual gas limit", Logger$2.errors.UNPREDICTABLE_GAS_LIMIT, {
+        logger$1p.throwError("cannot estimate gas; transaction may fail or may require manual gas limit", Logger$3.errors.UNPREDICTABLE_GAS_LIMIT, {
             error, method, transaction
         });
     }
@@ -80390,12 +80746,12 @@ class EtherscanProvider extends BaseProvider {
                     // @TODO: We can handle slightly more complicated logs using the logs API
                     if (params.filter.topics && params.filter.topics.length > 0) {
                         if (params.filter.topics.length > 1) {
-                            logger$1p.throwError("unsupported topic count", Logger$2.errors.UNSUPPORTED_OPERATION, { topics: params.filter.topics });
+                            logger$1p.throwError("unsupported topic count", Logger$3.errors.UNSUPPORTED_OPERATION, { topics: params.filter.topics });
                         }
                         if (params.filter.topics.length === 1) {
                             const topic0 = params.filter.topics[0];
                             if (typeof (topic0) !== "string" || topic0.length !== 66) {
-                                logger$1p.throwError("unsupported topic format", Logger$2.errors.UNSUPPORTED_OPERATION, { topic0: topic0 });
+                                logger$1p.throwError("unsupported topic format", Logger$3.errors.UNSUPPORTED_OPERATION, { topic0: topic0 });
                             }
                             args.topic0 = topic0;
                         }
@@ -80476,7 +80832,7 @@ var __awaiter$n = (commonjsGlobal && commonjsGlobal.__awaiter) || function (this
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-const logger$1q = new Logger$2(version$1v);
+const logger$1q = new Logger$3(version$1w);
 function now() { return (new Date()).getTime(); }
 // Returns to network as long as all agree, or null if any is null.
 // Throws an error if any two networks do not match.
@@ -80573,11 +80929,11 @@ function stall$1(duration) {
     return { cancel, getPromise, wait };
 }
 const ForwardErrors = [
-    Logger$2.errors.CALL_EXCEPTION,
-    Logger$2.errors.INSUFFICIENT_FUNDS,
-    Logger$2.errors.NONCE_EXPIRED,
-    Logger$2.errors.REPLACEMENT_UNDERPRICED,
-    Logger$2.errors.UNPREDICTABLE_GAS_LIMIT
+    Logger$3.errors.CALL_EXCEPTION,
+    Logger$3.errors.INSUFFICIENT_FUNDS,
+    Logger$3.errors.NONCE_EXPIRED,
+    Logger$3.errors.REPLACEMENT_UNDERPRICED,
+    Logger$3.errors.UNPREDICTABLE_GAS_LIMIT
 ];
 const ForwardProperties = [
     "address",
@@ -80802,7 +81158,7 @@ function getRunner(config, currentBlockNumber, method, params) {
                 return provider.getLogs(filter);
             }
         }
-        return logger$1q.throwError("unknown method error", Logger$2.errors.UNKNOWN_ERROR, {
+        return logger$1q.throwError("unknown method error", Logger$3.errors.UNKNOWN_ERROR, {
             method: method,
             params: params
         });
@@ -81028,7 +81384,7 @@ class FallbackProvider extends BaseProvider {
                 }
                 c.cancelled = true;
             });
-            return logger$1q.throwError("failed to meet quorum", Logger$2.errors.SERVER_ERROR, {
+            return logger$1q.throwError("failed to meet quorum", Logger$3.errors.SERVER_ERROR, {
                 method: method,
                 params: params,
                 //results: configs.map((c) => c.result),
@@ -81044,14 +81400,14 @@ class FallbackProvider extends BaseProvider {
 const IpcProvider = null;
 
 "use strict";
-const logger$1r = new Logger$2(version$1v);
+const logger$1r = new Logger$3(version$1w);
 const defaultProjectId = "84842078b09946638c03157f83405213";
 class InfuraWebSocketProvider extends WebSocketProvider {
     constructor(network, apiKey) {
         const provider = new InfuraProvider(network, apiKey);
         const connection = provider.connection;
         if (connection.password) {
-            logger$1r.throwError("INFURA WebSocket project secrets unsupported", Logger$2.errors.UNSUPPORTED_OPERATION, {
+            logger$1r.throwError("INFURA WebSocket project secrets unsupported", Logger$3.errors.UNSUPPORTED_OPERATION, {
                 operation: "InfuraProvider.getWebSocketProvider()"
             });
         }
@@ -81124,7 +81480,7 @@ class InfuraProvider extends UrlJsonRpcProvider {
                 host = "arbitrum-goerli.infura.io";
                 break;
             default:
-                logger$1r.throwError("unsupported network", Logger$2.errors.INVALID_ARGUMENT, {
+                logger$1r.throwError("unsupported network", Logger$3.errors.INVALID_ARGUMENT, {
                     argument: "network",
                     value: network
                 });
@@ -81223,7 +81579,7 @@ class JsonRpcBatchProvider extends JsonRpcProvider {
 
 /* istanbul ignore file */
 "use strict";
-const logger$1s = new Logger$2(version$1v);
+const logger$1s = new Logger$3(version$1w);
 // Special API key provided by Nodesmith for quais.js
 const defaultApiKey$2 = "ETHERS_JS_SHARED";
 class NodesmithProvider extends UrlJsonRpcProvider {
@@ -81260,7 +81616,7 @@ class NodesmithProvider extends UrlJsonRpcProvider {
 }
 
 "use strict";
-const logger$1t = new Logger$2(version$1v);
+const logger$1t = new Logger$3(version$1w);
 const defaultApplicationId = "62e1ad51b37b8e00394bda3b";
 class PocketProvider extends UrlJsonRpcProvider {
     static getApiKey(apiKey) {
@@ -81313,7 +81669,7 @@ class PocketProvider extends UrlJsonRpcProvider {
                 host = "eth-ropsten.gateway.pokt.network";
                 break;
             default:
-                logger$1t.throwError("unsupported network", Logger$2.errors.INVALID_ARGUMENT, {
+                logger$1t.throwError("unsupported network", Logger$3.errors.INVALID_ARGUMENT, {
                     argument: "network",
                     value: network
                 });
@@ -81332,7 +81688,7 @@ class PocketProvider extends UrlJsonRpcProvider {
 }
 
 "use strict";
-const logger$1u = new Logger$2(version$1v);
+const logger$1u = new Logger$3(version$1w);
 let _nextId = 1;
 function buildWeb3LegacyFetcher(provider, sendFunc) {
     const fetcher = "Web3LegacyFetcher";
@@ -81459,7 +81815,7 @@ class Web3Provider extends JsonRpcProvider {
 }
 
 "use strict";
-const logger$1v = new Logger$2(version$1v);
+const logger$1v = new Logger$3(version$1w);
 ////////////////////////
 // Helper Functions
 function getDefaultProvider(network, options) {
@@ -81486,7 +81842,7 @@ function getDefaultProvider(network, options) {
     }
     const n = getNetwork(network);
     if (!n || !n._defaultProvider) {
-        logger$1v.throwError("unsupported getDefaultProvider network", Logger$2.errors.NETWORK_ERROR, {
+        logger$1v.throwError("unsupported getDefaultProvider network", Logger$3.errors.NETWORK_ERROR, {
             operation: "getDefaultProvider",
             network: network
         });
@@ -81537,14 +81893,14 @@ var index$3 = /*#__PURE__*/Object.freeze({
 	Formatter: Formatter
 });
 
-const version$1w = "solidity/0.1.0";
+const version$1x = "solidity/0.1.0";
 
 "use strict";
 const regexBytes = new RegExp("^bytes([0-9]+)$");
 const regexNumber = new RegExp("^(u?int)([0-9]*)$");
 const regexArray = new RegExp("^(.*)\\[([0-9]*)\\]$");
 const Zeros$2 = "0000000000000000000000000000000000000000000000000000000000000000";
-const logger$1w = new Logger$2(version$1w);
+const logger$1w = new Logger$3(version$1x);
 function _pack(type, value, isArray) {
     switch (type) {
         case "address":
@@ -81623,10 +81979,10 @@ function sha256$4(types, values) {
     return sha256$3(pack$1(types, values));
 }
 
-const version$1x = "units/0.1.0";
+const version$1y = "units/0.1.0";
 
 "use strict";
-const logger$1x = new Logger$2(version$1x);
+const logger$1x = new Logger$3(version$1y);
 const names = [
     "wei",
     "kwei",
@@ -81720,7 +82076,7 @@ var utils$2 = /*#__PURE__*/Object.freeze({
 	ParamType: ParamType,
 	FormatTypes: FormatTypes,
 	checkResultErrors: checkResultErrors,
-	Logger: Logger$2,
+	Logger: Logger$3,
 	RLP: index$1,
 	_fetchData: _fetchData,
 	fetchJson: fetchJson,
@@ -81811,10 +82167,10 @@ var utils$2 = /*#__PURE__*/Object.freeze({
 	Indexed: Indexed
 });
 
-const version$1y = "quais/0.1.0";
+const version$1z = "quais/0.1.0";
 
 "use strict";
-const logger$1y = new Logger$2(version$1y);
+const logger$1y = new Logger$3(version$1z);
 
 var quais = /*#__PURE__*/Object.freeze({
 	__proto__: null,
@@ -81829,11 +82185,11 @@ var quais = /*#__PURE__*/Object.freeze({
 	BigNumber: BigNumber,
 	FixedNumber: FixedNumber,
 	constants: index,
-	get errors () { return ErrorCode$2; },
+	get errors () { return ErrorCode$3; },
 	logger: logger$1y,
 	utils: utils$2,
 	wordlists: wordlists,
-	version: version$1y,
+	version: version$1z,
 	Wordlist: Wordlist
 });
 
@@ -81846,5 +82202,5 @@ try {
 }
 catch (error) { }
 
-export { BaseContract, BigNumber, Contract, ContractFactory, FixedNumber, Signer, VoidSigner, Wallet, Wordlist, index as constants, ErrorCode$2 as errors, getDefaultProvider, logger$1y as logger, index$3 as providers, quais, utils$2 as utils, version$1y as version, wordlists };
+export { BaseContract, BigNumber, Contract, ContractFactory, FixedNumber, Signer, VoidSigner, Wallet, Wordlist, index as constants, ErrorCode$3 as errors, getDefaultProvider, logger$1y as logger, index$3 as providers, quais, utils$2 as utils, version$1z as version, wordlists };
 //# sourceMappingURL=quais.esm.js.map
