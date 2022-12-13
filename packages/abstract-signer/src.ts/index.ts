@@ -226,6 +226,7 @@ export abstract class Signer {
             // We need to get fee data to determine things
             const feeData = await this.getFeeData();
 
+            console.log("FEE DATA:", feeData)
             if (tx.type == null) {
                 // We need to auto-detect the intended type of this transaction...
 

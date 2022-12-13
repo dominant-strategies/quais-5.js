@@ -52,7 +52,6 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Provider = exports.TransactionOrderForkEvent = exports.TransactionForkEvent = exports.BlockForkEvent = exports.ForkEvent = void 0;
-var bignumber_1 = require("@quais/bignumber");
 var bytes_1 = require("@quais/bytes");
 var properties_1 = require("@quais/properties");
 var logger_1 = require("@quais/logger");
@@ -142,27 +141,34 @@ var Provider = /** @class */ (function () {
     }
     Provider.prototype.getFeeData = function () {
         return __awaiter(this, void 0, void 0, function () {
-            var _a, block, gasPrice, lastBaseFeePerGas, maxFeePerGas, maxPriorityFeePerGas;
+            var _a, block, gasPrice, maxFeePerGas, maxPriorityFeePerGas, lastBaseFeePerGas;
             return __generator(this, function (_b) {
                 switch (_b.label) {
                     case 0: return [4 /*yield*/, (0, properties_1.resolveProperties)({
                             block: this.getBlock("latest"),
                             gasPrice: this.getGasPrice().catch(function (error) {
-                                // @TODO: Why is this now failing on Calaveras?
-                                //console.log(error);
+                                console.log(error);
                                 return null;
-                            })
+                            }),
+                            maxFeePerGas: this.getGasPrice().catch(function (error) {
+                                console.log(error);
+                                return null;
+                            }),
+                            maxPriorityFeePerGas: this.getMaxPriorityFeePerGas().catch(function (error) {
+                                console.log(error);
+                                return null;
+                            }),
                         })];
                     case 1:
-                        _a = _b.sent(), block = _a.block, gasPrice = _a.gasPrice;
-                        lastBaseFeePerGas = null, maxFeePerGas = null, maxPriorityFeePerGas = null;
+                        _a = _b.sent(), block = _a.block, gasPrice = _a.gasPrice, maxFeePerGas = _a.maxFeePerGas, maxPriorityFeePerGas = _a.maxPriorityFeePerGas;
+                        lastBaseFeePerGas = null;
                         if (block && block.baseFeePerGas) {
                             // We may want to compute this more accurately in the future,
                             // using the formula "check if the base fee is correct".
                             // See: https://eips.ethereum.org/EIPS/eip-1559
-                            lastBaseFeePerGas = block.baseFeePerGas;
-                            maxPriorityFeePerGas = bignumber_1.BigNumber.from("1500000000");
-                            maxFeePerGas = block.baseFeePerGas.mul(2).add(maxPriorityFeePerGas);
+                            // lastBaseFeePerGas = block.baseFeePerGas;
+                            // maxPriorityFeePerGas = BigNumber.from("1500000000");
+                            // maxFeePerGas = block.baseFeePerGas.mul(2).add(maxPriorityFeePerGas);
                         }
                         return [2 /*return*/, { lastBaseFeePerGas: lastBaseFeePerGas, maxFeePerGas: maxFeePerGas, maxPriorityFeePerGas: maxPriorityFeePerGas, gasPrice: gasPrice }];
                 }
