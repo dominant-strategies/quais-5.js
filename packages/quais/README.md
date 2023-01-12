@@ -14,10 +14,10 @@ IMPORTANT: These features are in beta and may not be 1:1 compatible with Quai Ne
 - Import and export BIP 39 **mnemonic phrases** (12 word backup phrases) and **HD Wallets** (English as well as Czech, French, Italian, Japanese, Korean, Simplified Chinese, Spanish, Traditional Chinese)
 - Meta-classes create JavaScript objects from any contract ABI, including **ABIv2** and **Human-Readable ABI**
 - Connect to Ethereum nodes over [JSON-RPC](https://github.com/ethereum/wiki/wiki/JSON-RPC), [INFURA](https://infura.io), [Etherscan](https://etherscan.io), [Alchemy](https://alchemyapi.io), [Ankr](https://ankr.com) or [MetaMask](https://metamask.io)
-- **ENS names** are first-class citizens; they can be used anywhere an Ethereum addresses can be used
+- **QNS names** are first-class citizens; they can be used anywhere an Quai addresses can be used. QNS names are in progress.
 - **Tiny** (~104kb compressed; 322kb uncompressed)
 - **Modular** packages; include only what you need
-- **Complete** functionality for all your Ethereum desires
+- **Complete** functionality for all your Quai desires
 - Extensive [documentation](https://docs.ethers.io/v5/)
 - Large collection of **test cases** which are maintained and added to
 - Fully **TypeScript** ready, with definition files and full TypeScript source
@@ -32,7 +32,7 @@ For the latest news and advisories, please follow the
 non-marketing, important information only) as well as watch this GitHub project.
 
 For the latest changes, see the
-[CHANGELOG](https://github.com/ethers-io/quais.js/blob/master/CHANGELOG.md).
+[CHANGELOG](https://github.com/dominant-strategies/quais.js/blob/master/CHANGELOG.md).
 
 
 Installing
@@ -41,13 +41,13 @@ Installing
 **node.js**
 
 ```
-/home/ricmoo/some_project> npm install --save ethers
+/home/ricmoo/some_project> npm install --save quais
 ```
 
 **browser (UMD)**
 
 ```
-<script src="https://cdn.quais.io/lib/ethers-5.6.umd.min.js" type="text/javascript">
+<script src="https://cdn.quais.io/lib/quais-1.0.4.umd.min.js" type="text/javascript">
 </script>
 ```
 
@@ -55,7 +55,7 @@ Installing
 
 ```
 <script type="module">
-    import { ethers } from "https://cdn.quais.io/lib/ethers-5.6.esm.min.js";
+    import { quais } from "https://cdn.quais.io/lib/quais-1.0.4.esm.min.js";
 </script>
 ```
 
@@ -68,36 +68,6 @@ Browse the [documentation](https://docs.ethers.io/v5/) online:
 - [Getting Started](https://docs.ethers.io/v5/getting-started/)
 - [Full API Documentation](https://docs.ethers.io/v5/api/)
 - [Various Ethereum Articles](https://blog.ricmoo.com/)
-
-
-Providers
----------
-
-Ethers works closely with an ever-growing list of third-party providers
-to ensure getting started is quick and easy, by providing default keys
-to each service.
-
-These built-in keys mean you can use `quais.getDefaultProvider()` and
-start developing right away.
-
-However, the API keys provided to ethers are also shared and are
-intentionally throttled to encourage developers to eventually get
-their own keys, which unlock many other features, such as faster
-responses, more capacity, analytics and other features like archival
-data.
-
-When you are ready to sign up and start using for your own keys, please
-check out the [Provider API Keys](https://docs.ethers.io/v5/api-keys/) in
-the documentation.
-
-A special thanks to these services for providing community resources:
-
-- [Ankr](https://www.ankr.com/)
-- [Etherscan](https://etherscan.io/)
-- [INFURA](https://infura.io/)
-- [Alchemy](https://dashboard.alchemyapi.io/signup?referral=55a35117-028e-4b7c-9e47-e275ad0acc6d)
-- [Pocket](https://pokt.network/pocket-gateway-ethereum-mainnet/)
-
 
 Ancillary Packages
 ------------------
@@ -119,3 +89,4 @@ License
 -------
 
 MIT License (including **all** dependencies).
+
