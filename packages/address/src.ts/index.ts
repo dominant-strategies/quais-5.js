@@ -2,11 +2,15 @@
 
 import { arrayify, BytesLike, concat, hexDataLength, hexDataSlice, isHexString, stripZeros } from "@quais/bytes";
 import { BigNumber, BigNumberish, _base16To36, _base36To16 } from "@quais/bignumber";
+import { formatBytes32String } from "@quais/strings";
 import { keccak256 } from "@quais/keccak256";
+import { randomBytes } from "@quais/random";
 import { encode } from "@quais/rlp";
 
 import { Logger } from "@quais/logger";
 import { version } from "./_version";
+import { ShardData } from "@quais/constants";
+
 const logger = new Logger(version);
 
 function getChecksumAddress(address: string): string {
@@ -148,4 +152,81 @@ export function getCreate2Address(from: string, salt: BytesLike, initCodeHash: B
         logger.throwArgumentError("initCodeHash must be 32 bytes", "initCodeHash", initCodeHash);
     }
     return getAddress(hexDataSlice(keccak256(concat([ "0xff", getAddress(from), salt, initCodeHash ])), 12))
+}
+
+//convert bytes to hex string
+function toHexString(byteArray: any) {
+    return Array.from(byteArray, function(byte: any) {
+        return ('0' + (byte & 0xFF).toString(16)).slice(-2);
+    }).join('')
+}
+
+// convert hex string to bytes
+function toByteArray(hexString: any) {
+    var result = [] as any;
+    while (hexString.length >= 2) {
+        result.push(parseInt(hexString.substring(0, 2), 16));
+        hexString = hexString.substring(2, hexString.length);
+    }
+    return result;
+}
+
+
+export async function grindContractAddress(nonce: number, matchShard: string, sendAddress: string, bytecode: string){
+    if (nonce == undefined) {
+        logger.throwArgumentError("missing nonce", "nonce", nonce);
+    }
+    if (matchShard == undefined || !validShard(matchShard)) {
+        logger.throwArgumentError("missing matchShard", "matchShard", matchShard);
+    }
+    
+    var salt;
+    var contractBytes;
+    const nonceBytes = formatBytes32String(nonce.toString());
+    var found = false;
+    
+    while(!found) {
+        // replace last two bytes of bytecode with salt
+        salt = randomBytes(1);
+        var initCode = bytecode.substring(0, bytecode.length-2).concat(toHexString(salt));
+
+        contractBytes = toByteArray(initCode);
+
+        var addressAndNonce = concat([sendAddress, nonceBytes])
+        var createInput = concat([addressAndNonce, contractBytes]);
+        var preComputedAddress = getAddress(hexDataSlice(keccak256(createInput), 12))
+
+        var shard = getShardFromAddress(preComputedAddress)
+        if(shard == undefined) {
+            continue 
+        }
+        if (shard == matchShard) {
+            found = true
+        }
+    }
+
+    return toHexString(contractBytes);
+}
+
+export function validShard(shard: string) {
+    let shardData = ShardData.filter((obj:any) => {
+        return obj.shard == shard
+    })
+    if (shardData.length === 0) {
+        return false
+    }
+    return true
+}
+
+export function getShardFromAddress(address: string) {
+    let shardData = ShardData.filter((obj:any) => {
+        const num = Number(address.substring(0, 4))
+        const start = Number("0x" + obj.byte[0])
+        const end = Number("0x" + obj.byte[1])
+        return num >= start && num <= end
+    })
+    if (shardData.length === 0) {
+        return null
+    }
+    return shardData[0].shard
 }
