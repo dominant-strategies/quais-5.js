@@ -8,7 +8,7 @@ export declare function getContractAddress(transaction: {
     nonce: BigNumberish;
 }): string;
 export declare function getCreate2Address(from: string, salt: BytesLike, initCodeHash: BytesLike): string;
-export declare function grindContractAddress(nonce: number, matchShard: string, sendAddress: string, bytecode: string): Promise<string>;
+export declare function grindContractAddress(nonce: number, matchShard: string, sendAddress: string, bytecode: string): Promise<any>;
 export declare function validShard(shard: string): boolean;
 export declare function getShardFromAddress(address: string): string;
 //# sourceMappingURL=index.d.ts.map

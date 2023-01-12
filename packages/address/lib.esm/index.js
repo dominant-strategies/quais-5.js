@@ -10,7 +10,6 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 import { arrayify, concat, hexDataLength, hexDataSlice, isHexString, stripZeros } from "@quais/bytes";
 import { BigNumber, _base16To36, _base36To16 } from "@quais/bignumber";
-import { formatBytes32String } from "@quais/strings";
 import { keccak256 } from "@quais/keccak256";
 import { randomBytes } from "@quais/random";
 import { encode } from "@quais/rlp";
@@ -158,6 +157,26 @@ function toByteArray(hexString) {
     }
     return result;
 }
+function bitLength(number) {
+    return Math.floor(Math.log2(number)) + 1;
+}
+function byteLength(number) {
+    return Math.ceil(bitLength(number) / 8);
+}
+function toBytes(number) {
+    if (!Number.isSafeInteger(number)) {
+        throw new Error("Number is out of range");
+    }
+    const size = number === 0 ? 0 : byteLength(number);
+    const bytes = new Uint8ClampedArray(size);
+    let x = number;
+    for (let i = (size - 1); i >= 0; i--) {
+        const rightByte = x & 0xff;
+        bytes[i] = rightByte;
+        x = Math.floor(x / 0x100);
+    }
+    return bytes;
+}
 export function grindContractAddress(nonce, matchShard, sendAddress, bytecode) {
     return __awaiter(this, void 0, void 0, function* () {
         if (nonce == undefined) {
@@ -168,7 +187,7 @@ export function grindContractAddress(nonce, matchShard, sendAddress, bytecode) {
         }
         var salt;
         var contractBytes;
-        const nonceBytes = formatBytes32String(nonce.toString());
+        const nonceBytes = toBytes(nonce);
         var found = false;
         while (!found) {
             // replace last two bytes of bytecode with salt
@@ -176,8 +195,20 @@ export function grindContractAddress(nonce, matchShard, sendAddress, bytecode) {
             var initCode = bytecode.substring(0, bytecode.length - 2).concat(toHexString(salt));
             contractBytes = toByteArray(initCode);
             var addressAndNonce = concat([sendAddress, nonceBytes]);
-            var createInput = concat([addressAndNonce, contractBytes]);
+            var createInput = new Uint8Array(addressAndNonce.length + contractBytes.length);
+            createInput.set(addressAndNonce);
+            createInput.set(contractBytes, addressAndNonce.length);
+            console.log("senderAddr", sendAddress);
+            console.log("nonce", nonce);
+            console.log("data", contractBytes);
+            console.log("data len", contractBytes.length);
+            console.log("nonce bytes", nonceBytes);
+            console.log("nonce to strong", nonce.toString());
+            console.log("CreateInput", createInput);
+            console.log("CreateInput len", createInput.length);
+            // process.stdout.write("CreateInput", toHexString(createInput));
             var preComputedAddress = getAddress(hexDataSlice(keccak256(createInput), 12));
+            console.log("preComputedAddress", preComputedAddress);
             var shard = getShardFromAddress(preComputedAddress);
             if (shard == undefined) {
                 continue;
@@ -186,7 +217,7 @@ export function grindContractAddress(nonce, matchShard, sendAddress, bytecode) {
                 found = true;
             }
         }
-        return toHexString(contractBytes);
+        return contractBytes;
     });
 }
 export function validShard(shard) {

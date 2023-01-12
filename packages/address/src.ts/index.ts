@@ -1,8 +1,7 @@
 "use strict";
 
-import { arrayify, BytesLike, concat, hexDataLength, hexDataSlice, isHexString, stripZeros } from "@quais/bytes";
+import { arrayify, BytesLike, concat, hexDataLength, hexDataSlice, isHexString, stripZeros, hexZeroPad, hexlify } from "@quais/bytes";
 import { BigNumber, BigNumberish, _base16To36, _base36To16 } from "@quais/bignumber";
-import { formatBytes32String } from "@quais/strings";
 import { keccak256 } from "@quais/keccak256";
 import { randomBytes } from "@quais/random";
 import { encode } from "@quais/rlp";
@@ -154,25 +153,7 @@ export function getCreate2Address(from: string, salt: BytesLike, initCodeHash: B
     return getAddress(hexDataSlice(keccak256(concat([ "0xff", getAddress(from), salt, initCodeHash ])), 12))
 }
 
-//convert bytes to hex string
-function toHexString(byteArray: any) {
-    return Array.from(byteArray, function(byte: any) {
-        return ('0' + (byte & 0xFF).toString(16)).slice(-2);
-    }).join('')
-}
-
-// convert hex string to bytes
-function toByteArray(hexString: any) {
-    var result = [] as any;
-    while (hexString.length >= 2) {
-        result.push(parseInt(hexString.substring(0, 2), 16));
-        hexString = hexString.substring(2, hexString.length);
-    }
-    return result;
-}
-
-
-export async function grindContractAddress(nonce: number, matchShard: string, sendAddress: string, bytecode: string){
+export async function grindContractAddress(nonce: number, matchShard: string, sendAddress: string, contract: any){
     if (nonce == undefined) {
         logger.throwArgumentError("missing nonce", "nonce", nonce);
     }
@@ -182,20 +163,35 @@ export async function grindContractAddress(nonce: number, matchShard: string, se
     
     var salt;
     var contractBytes;
-    const nonceBytes = formatBytes32String(nonce.toString());
+    const nonceBytes = hexZeroPad(BigNumber.from(nonce).toHexString(), 8);
     var found = false;
     
+    var bytecode = contract.bytecode;
+    var args;
+    if(contract.interface?.deploy?.inputs?.length > 0){
+        args = contract.interface.encodeDeploy(contract.interface.deploy.inputs)
+    }
+
     while(!found) {
         // replace last two bytes of bytecode with salt
         salt = randomBytes(1);
-        var initCode = bytecode.substring(0, bytecode.length-2).concat(toHexString(salt));
-
-        contractBytes = toByteArray(initCode);
-
+        console.log("BYTE", bytecode)
+        var initCode = bytecode.substring(0, bytecode.length-2).concat(BigNumber.from(salt).toHexString().substring(2));
+        contractBytes = arrayify(initCode);
+        var txData;
+        if(args?.length > 0){
+            console.log("Attempting to concat args", args)
+            txData = concat([contractBytes, args]);
+        } else {
+            txData = contractBytes;
+        }
         var addressAndNonce = concat([sendAddress, nonceBytes])
-        var createInput = concat([addressAndNonce, contractBytes]);
+        var createInput = new Uint8Array(addressAndNonce.length + txData.length);
+        createInput.set(addressAndNonce);
+        createInput.set(txData, addressAndNonce.length);
+        // process.stdout.write("CreateInput", toHexString(createInput));
         var preComputedAddress = getAddress(hexDataSlice(keccak256(createInput), 12))
-
+        console.log("preComputedAddress", preComputedAddress)
         var shard = getShardFromAddress(preComputedAddress)
         if(shard == undefined) {
             continue 
@@ -204,8 +200,8 @@ export async function grindContractAddress(nonce: number, matchShard: string, se
             found = true
         }
     }
-
-    return toHexString(contractBytes);
+    console.log("HEXLIFIED", hexlify(contractBytes))
+    return contractBytes;
 }
 
 export function validShard(shard: string) {
