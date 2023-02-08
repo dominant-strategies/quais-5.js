@@ -223,7 +223,7 @@ var Formatter = /** @class */ (function () {
         return (address === constants_1.AddressZero) ? null : address;
     };
     Formatter.prototype.contractAddress = function (value) {
-        return (0, address_1.getContractAddress)(value);
+        return (0, address_1.getContractAddress)(value.from, value.nonce, value.data);
     };
     // Strict! Used on input.
     Formatter.prototype.blockTag = function (blockTag) {

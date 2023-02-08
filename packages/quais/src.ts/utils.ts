@@ -1,7 +1,7 @@
 "use strict";
 
 import { AbiCoder, checkResultErrors, ConstructorFragment, defaultAbiCoder, ErrorFragment, EventFragment, FormatTypes, Fragment, FunctionFragment, Indexed, Interface, LogDescription, ParamType, Result, TransactionDescription }from "@quais/abi";
-import { getAddress, getCreate2Address, getContractAddress, getIcapAddress, isAddress, grindContractAddress, getShardFromAddress } from "@quais/address";
+import { getAddress, getCreate2Address, getContractAddress, getIcapAddress, isAddress, getShardFromAddress } from "@quais/address";
 import * as base64 from "@quais/base64";
 import { Base58 as base58 } from "@quais/basex";
 import { arrayify, concat, hexConcat, hexDataSlice, hexDataLength, hexlify, hexStripZeros, hexValue, hexZeroPad, isBytes, isBytesLike, isHexString, joinSignature, zeroPad, splitSignature, stripZeros } from "@quais/bytes";
@@ -127,7 +127,6 @@ export {
     getContractAddress,
     getCreate2Address,
     isAddress,
-    grindContractAddress, 
     getShardFromAddress,
 
     formatEther,

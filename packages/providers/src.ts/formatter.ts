@@ -271,7 +271,7 @@ export class Formatter {
     }
 
     contractAddress(value: any): string {
-        return getContractAddress(value);
+        return getContractAddress(value.from, value.nonce, value.data);
     }
 
     // Strict! Used on input.

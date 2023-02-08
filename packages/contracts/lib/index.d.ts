@@ -108,6 +108,7 @@ export declare class BaseContract {
     static getContractAddress(transaction: {
         from: string;
         nonce: BigNumberish;
+        data: BytesLike;
     }): string;
     static getInterface(contractInterface: ContractInterface): Interface;
     deployed(): Promise<Contract>;
@@ -147,11 +148,9 @@ export declare class ContractFactory {
     connect(signer: Signer): ContractFactory;
     static fromSolidity(compilerOutput: any, signer?: Signer): ContractFactory;
     static getInterface(contractInterface: ContractInterface): Interface;
-    static getContractAddress(tx: {
-        from: string;
-        nonce: BytesLike | BigNumber | number;
-    }): string;
+    static getContractAddress(transaction: TransactionResponse): string;
     static getContract(address: string, contractInterface: ContractInterface, signer?: Signer): Contract;
+    grindContractAddress(tx: TransactionRequest): Promise<TransactionRequest>;
 }
 export {};
 //# sourceMappingURL=index.d.ts.map

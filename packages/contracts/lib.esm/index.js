@@ -8,31 +8,39 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-import { checkResultErrors, Indexed, Interface } from "@quais/abi";
-import { Provider } from "@quais/abstract-provider";
+import { checkResultErrors, Indexed, Interface, } from "@quais/abi";
+import { Provider, } from "@quais/abstract-provider";
 import { Signer, VoidSigner } from "@quais/abstract-signer";
-import { getAddress, getContractAddress } from "@quais/address";
+import { getAddress, getContractAddress, getShardFromAddress, } from "@quais/address";
 import { BigNumber } from "@quais/bignumber";
-import { arrayify, concat, hexlify, isBytes, isHexString } from "@quais/bytes";
-import { defineReadOnly, deepCopy, getStatic, resolveProperties, shallowCopy } from "@quais/properties";
+import { arrayify, concat, hexlify, isBytes, isHexString, } from "@quais/bytes";
+import { defineReadOnly, deepCopy, getStatic, resolveProperties, shallowCopy, } from "@quais/properties";
 import { accessListify } from "@quais/transactions";
 import { Logger } from "@quais/logger";
 import { version } from "./_version";
+import { randomBytes } from "crypto";
 const logger = new Logger(version);
-;
-;
 ///////////////////////////////
 const allowedTransactionKeys = {
-    chainId: true, data: true, from: true, gasLimit: true, gasPrice: true, nonce: true, to: true, value: true,
-    type: true, accessList: true,
-    maxFeePerGas: true, maxPriorityFeePerGas: true,
+    chainId: true,
+    data: true,
+    from: true,
+    gasLimit: true,
+    gasPrice: true,
+    nonce: true,
+    to: true,
+    value: true,
+    type: true,
+    accessList: true,
+    maxFeePerGas: true,
+    maxPriorityFeePerGas: true,
     customData: true,
-    ccipReadEnabled: true
+    ccipReadEnabled: true,
 };
 function resolveName(resolver, nameOrPromise) {
     return __awaiter(this, void 0, void 0, function* () {
         const name = yield nameOrPromise;
-        if (typeof (name) !== "string") {
+        if (typeof name !== "string") {
             logger.throwArgumentError("invalid address or ENS name", "name", name);
         }
         // If it is already an address, just use it (after adding checksum)
@@ -42,7 +50,7 @@ function resolveName(resolver, nameOrPromise) {
         catch (error) { }
         if (!resolver) {
             logger.throwError("a provider or signer is needed to resolve ENS names", Logger.errors.UNSUPPORTED_OPERATION, {
-                operation: "resolveName"
+                operation: "resolveName",
             });
         }
         const address = yield resolver.resolveName(name);
@@ -57,7 +65,7 @@ function resolveAddresses(resolver, value, paramType) {
     return __awaiter(this, void 0, void 0, function* () {
         if (Array.isArray(paramType)) {
             return yield Promise.all(paramType.map((paramType, index) => {
-                return resolveAddresses(resolver, ((Array.isArray(value)) ? value[index] : value[paramType.name]), paramType);
+                return resolveAddresses(resolver, Array.isArray(value) ? value[index] : value[paramType.name], paramType);
             }));
         }
         if (paramType.type === "address") {
@@ -70,7 +78,7 @@ function resolveAddresses(resolver, value, paramType) {
             if (!Array.isArray(value)) {
                 return Promise.reject(logger.makeError("invalid value for array", Logger.errors.INVALID_ARGUMENT, {
                     argument: "value",
-                    value
+                    value,
                 }));
             }
             return yield Promise.all(value.map((v) => resolveAddresses(resolver, v, paramType.arrayChildren)));
@@ -82,7 +90,8 @@ function populateTransaction(contract, fragment, args) {
     return __awaiter(this, void 0, void 0, function* () {
         // If an extra argument is given, it is overrides
         let overrides = {};
-        if (args.length === fragment.inputs.length + 1 && typeof (args[args.length - 1]) === "object") {
+        if (args.length === fragment.inputs.length + 1 &&
+            typeof args[args.length - 1] === "object") {
             overrides = shallowCopy(args.pop());
         }
         // Make sure the parameter count matches
@@ -94,11 +103,11 @@ function populateTransaction(contract, fragment, args) {
                 // but we allow overriding "from" if it matches the signer
                 overrides.from = resolveProperties({
                     override: resolveName(contract.signer, overrides.from),
-                    signer: contract.signer.getAddress()
+                    signer: contract.signer.getAddress(),
                 }).then((check) => __awaiter(this, void 0, void 0, function* () {
                     if (getAddress(check.signer) !== check.override) {
                         logger.throwError("Contract with a Signer cannot override from", Logger.errors.UNSUPPORTED_OPERATION, {
-                            operation: "overrides.from"
+                            operation: "overrides.from",
                         });
                     }
                     return check.override;
@@ -119,13 +128,13 @@ function populateTransaction(contract, fragment, args) {
         const resolved = yield resolveProperties({
             args: resolveAddresses(contract.signer || contract.provider, args, fragment.inputs),
             address: contract.resolvedAddress,
-            overrides: (resolveProperties(overrides) || {})
+            overrides: resolveProperties(overrides) || {},
         });
         // The ABI coded transaction
         const data = contract.interface.encodeFunctionData(fragment, resolved.args);
         const tx = {
             data: data,
-            to: resolved.address
+            to: resolved.address,
         };
         // Resolved Overrides
         const ro = resolved.overrides;
@@ -177,7 +186,7 @@ function populateTransaction(contract, fragment, args) {
             if (!roValue.isZero() && !fragment.payable) {
                 logger.throwError("non-payable method cannot override value", Logger.errors.UNSUPPORTED_OPERATION, {
                     operation: "overrides.value",
-                    value: overrides.value
+                    value: overrides.value,
                 });
             }
             tx.value = roValue;
@@ -202,11 +211,11 @@ function populateTransaction(contract, fragment, args) {
         delete overrides.ccipReadEnabled;
         // Make sure there are no stray overrides, which may indicate a
         // typo or using an unsupported key.
-        const leftovers = Object.keys(overrides).filter((key) => (overrides[key] != null));
+        const leftovers = Object.keys(overrides).filter((key) => overrides[key] != null);
         if (leftovers.length) {
             logger.throwError(`cannot override ${leftovers.map((l) => JSON.stringify(l)).join(",")}`, Logger.errors.UNSUPPORTED_OPERATION, {
                 operation: "overrides",
-                overrides: leftovers
+                overrides: leftovers,
             });
         }
         return tx;
@@ -218,12 +227,12 @@ function buildPopulate(contract, fragment) {
     };
 }
 function buildEstimate(contract, fragment) {
-    const signerOrProvider = (contract.signer || contract.provider);
+    const signerOrProvider = contract.signer || contract.provider;
     return function (...args) {
         return __awaiter(this, void 0, void 0, function* () {
             if (!signerOrProvider) {
                 logger.throwError("estimate require a provider or signer", Logger.errors.UNSUPPORTED_OPERATION, {
-                    operation: "estimateGas"
+                    operation: "estimateGas",
                 });
             }
             const tx = yield populateTransaction(contract, fragment, args);
@@ -252,7 +261,9 @@ function addContractWait(contract, tx) {
                     event.eventSignature = parsed.signature;
                 }
                 // Useful operations
-                event.removeListener = () => { return contract.provider; };
+                event.removeListener = () => {
+                    return contract.provider;
+                };
                 event.getBlock = () => {
                     return contract.provider.getBlock(receipt.blockHash);
                 };
@@ -269,12 +280,13 @@ function addContractWait(contract, tx) {
     };
 }
 function buildCall(contract, fragment, collapseSimple) {
-    const signerOrProvider = (contract.signer || contract.provider);
+    const signerOrProvider = contract.signer || contract.provider;
     return function (...args) {
         return __awaiter(this, void 0, void 0, function* () {
             // Extract the "blockTag" override if present
             let blockTag = undefined;
-            if (args.length === fragment.inputs.length + 1 && typeof (args[args.length - 1]) === "object") {
+            if (args.length === fragment.inputs.length + 1 &&
+                typeof args[args.length - 1] === "object") {
                 const overrides = shallowCopy(args.pop());
                 if (overrides.blockTag != null) {
                     blockTag = yield overrides.blockTag;
@@ -312,7 +324,7 @@ function buildSend(contract, fragment) {
         return __awaiter(this, void 0, void 0, function* () {
             if (!contract.signer) {
                 logger.throwError("sending a transaction requires a signer", Logger.errors.UNSUPPORTED_OPERATION, {
-                    operation: "sendTransaction"
+                    operation: "sendTransaction",
                 });
             }
             // If the contract was just deployed, wait until it is mined
@@ -337,12 +349,18 @@ function getEventTag(filter) {
     if (filter.address && (filter.topics == null || filter.topics.length === 0)) {
         return "*";
     }
-    return (filter.address || "*") + "@" + (filter.topics ? filter.topics.map((topic) => {
-        if (Array.isArray(topic)) {
-            return topic.join("|");
-        }
-        return topic;
-    }).join(":") : "");
+    return ((filter.address || "*") +
+        "@" +
+        (filter.topics
+            ? filter.topics
+                .map((topic) => {
+                if (Array.isArray(topic)) {
+                    return topic.join("|");
+                }
+                return topic;
+            })
+                .join(":")
+            : ""));
 }
 class RunningEvent {
     constructor(tag, filter) {
@@ -381,12 +399,11 @@ class RunningEvent {
                 item.listener.apply(this, argsCopy);
             }, 0);
             // Reschedule it if it not "once"
-            return !(item.once);
+            return !item.once;
         });
         return listenerCount;
     }
-    prepareEvent(event) {
-    }
+    prepareEvent(event) { }
     // Returns the array that will be applied to an emit
     getEmit(event) {
         return [event];
@@ -405,7 +422,7 @@ class ErrorRunningEvent extends RunningEvent {
 class FragmentRunningEvent extends RunningEvent {
     constructor(address, contractInterface, fragment, topics) {
         const filter = {
-            address: address
+            address: address,
         };
         let topic = contractInterface.getEventTopic(fragment);
         if (topics) {
@@ -506,7 +523,7 @@ export class BaseContract {
                 defineReadOnly(this.filters, eventSignature, (...args) => {
                     return {
                         address: this.address,
-                        topics: this.interface.encodeFilterTopics(event, args)
+                        topics: this.interface.encodeFilterTopics(event, args),
                     };
                 });
                 if (!uniqueFilters[event.name]) {
@@ -540,7 +557,7 @@ export class BaseContract {
             catch (error) {
                 // Without a provider, we cannot use ENS names
                 logger.throwError("provider is required to use ENS name as contract address", Logger.errors.UNSUPPORTED_OPERATION, {
-                    operation: "new Contract"
+                    operation: "new Contract",
                 });
             }
         }
@@ -616,7 +633,7 @@ export class BaseContract {
         });
     }
     static getContractAddress(transaction) {
-        return getContractAddress(transaction);
+        return getContractAddress(transaction.from, transaction.nonce, transaction.data);
     }
     static getInterface(contractInterface) {
         if (Interface.isInterface(contractInterface)) {
@@ -640,11 +657,13 @@ export class BaseContract {
                 // @TODO: Once we allow a timeout to be passed in, we will wait
                 // up to that many blocks for getCode
                 // Otherwise, poll for our code to be deployed
-                this._deployedPromise = this.provider.getCode(this.address, blockTag).then((code) => {
+                this._deployedPromise = this.provider
+                    .getCode(this.address, blockTag)
+                    .then((code) => {
                     if (code === "0x") {
                         logger.throwError("contract not deployed", Logger.errors.UNSUPPORTED_OPERATION, {
                             contractAddress: this.address,
-                            operation: "getDeployed"
+                            operation: "getDeployed",
                         });
                     }
                     return this;
@@ -675,10 +694,10 @@ export class BaseContract {
     }
     // Reconnect to a different signer or provider
     connect(signerOrProvider) {
-        if (typeof (signerOrProvider) === "string") {
+        if (typeof signerOrProvider === "string") {
             signerOrProvider = new VoidSigner(signerOrProvider, this.provider);
         }
-        const contract = new (this.constructor)(this.address, this.interface, signerOrProvider);
+        const contract = new this.constructor(this.address, this.interface, signerOrProvider);
         if (this.deployTransaction) {
             defineReadOnly(contract, "deployTransaction", this.deployTransaction);
         }
@@ -686,7 +705,7 @@ export class BaseContract {
     }
     // Re-attach to a different on-chain instance of this contract
     attach(addressOrName) {
-        return new (this.constructor)(addressOrName, this.interface, this.signer || this.provider);
+        return new this.constructor(addressOrName, this.interface, this.signer || this.provider);
     }
     static isIndexed(value) {
         return Indexed.isIndexed(value);
@@ -699,7 +718,7 @@ export class BaseContract {
         return runningEvent;
     }
     _getRunningEvent(eventName) {
-        if (typeof (eventName) === "string") {
+        if (typeof eventName === "string") {
             // Listen for "error" events (if your contract has an error event, include
             // the full signature to bypass this special event keyword)
             if (eventName === "error") {
@@ -722,7 +741,7 @@ export class BaseContract {
             // Is it a known topichash? (throws if no matching topichash)
             try {
                 const topic = eventName.topics[0];
-                if (typeof (topic) !== "string") {
+                if (typeof topic !== "string") {
                     throw new Error("invalid topic"); // @TODO: May happen for anonymous events
                 }
                 const fragment = this.interface.getEvent(topic);
@@ -732,7 +751,7 @@ export class BaseContract {
             // Filter by the unknown topichash
             const filter = {
                 address: this.address,
-                topics: eventName.topics
+                topics: eventName.topics,
             };
             return this._normalizeRunningEvent(new RunningEvent(getEventTag(filter), filter));
         }
@@ -760,9 +779,15 @@ export class BaseContract {
             runningEvent.removeListener(listener);
             this._checkRunningEvents(runningEvent);
         };
-        event.getBlock = () => { return this.provider.getBlock(log.blockHash); };
-        event.getTransaction = () => { return this.provider.getTransaction(log.transactionHash); };
-        event.getTransactionReceipt = () => { return this.provider.getTransactionReceipt(log.transactionHash); };
+        event.getBlock = () => {
+            return this.provider.getBlock(log.blockHash);
+        };
+        event.getTransaction = () => {
+            return this.provider.getTransaction(log.transactionHash);
+        };
+        event.getTransactionReceipt = () => {
+            return this.provider.getTransactionReceipt(log.transactionHash);
+        };
         // This may throw if the topics and data mismatch the signature
         runningEvent.prepareEvent(event);
         return event;
@@ -807,15 +832,17 @@ export class BaseContract {
     queryFilter(event, fromBlockOrBlockhash, toBlock) {
         const runningEvent = this._getRunningEvent(event);
         const filter = shallowCopy(runningEvent.filter);
-        if (typeof (fromBlockOrBlockhash) === "string" && isHexString(fromBlockOrBlockhash, 32)) {
+        if (typeof fromBlockOrBlockhash === "string" &&
+            isHexString(fromBlockOrBlockhash, 32)) {
             if (toBlock != null) {
                 logger.throwArgumentError("cannot specify toBlock with blockhash", "toBlock", toBlock);
             }
             filter.blockHash = fromBlockOrBlockhash;
         }
         else {
-            filter.fromBlock = ((fromBlockOrBlockhash != null) ? fromBlockOrBlockhash : 0);
-            filter.toBlock = ((toBlock != null) ? toBlock : "latest");
+            filter.fromBlock =
+                fromBlockOrBlockhash != null ? fromBlockOrBlockhash : 0;
+            filter.toBlock = toBlock != null ? toBlock : "latest";
         }
         return this.provider.getLogs(filter).then((logs) => {
             return logs.map((log) => this._wrapEvent(runningEvent, log, null));
@@ -834,7 +861,7 @@ export class BaseContract {
             return false;
         }
         const runningEvent = this._getRunningEvent(eventName);
-        const result = (runningEvent.run(args) > 0);
+        const result = runningEvent.run(args) > 0;
         // May have drained all the "once" events; check for living events
         this._checkRunningEvents(runningEvent);
         return result;
@@ -901,13 +928,13 @@ export class Contract extends BaseContract {
 export class ContractFactory {
     constructor(contractInterface, bytecode, signer) {
         let bytecodeHex = null;
-        if (typeof (bytecode) === "string") {
+        if (typeof bytecode === "string") {
             bytecodeHex = bytecode;
         }
         else if (isBytes(bytecode)) {
             bytecodeHex = hexlify(bytecode);
         }
-        else if (bytecode && typeof (bytecode.object) === "string") {
+        else if (bytecode && typeof bytecode.object === "string") {
             // Allow the bytecode object from the Solidity compiler
             bytecodeHex = bytecode.object;
         }
@@ -920,7 +947,7 @@ export class ContractFactory {
             bytecodeHex = "0x" + bytecodeHex;
         }
         // Make sure the final result is valid bytecode
-        if (!isHexString(bytecodeHex) || (bytecodeHex.length % 2)) {
+        if (!isHexString(bytecodeHex) || bytecodeHex.length % 2) {
             logger.throwArgumentError("invalid bytecode", "bytecode", bytecode);
         }
         // If we have a signer, make sure it is valid
@@ -935,7 +962,8 @@ export class ContractFactory {
     getDeployTransaction(...args) {
         let tx = {};
         // If we have 1 additional argument, we allow transaction overrides
-        if (args.length === this.interface.deploy.inputs.length + 1 && typeof (args[args.length - 1]) === "object") {
+        if (args.length === this.interface.deploy.inputs.length + 1 &&
+            typeof args[args.length - 1] === "object") {
             tx = shallowCopy(args.pop());
             for (const key in tx) {
                 if (!allowedTransactionKeys[key]) {
@@ -955,17 +983,14 @@ export class ContractFactory {
             if (!value.isZero() && !this.interface.deploy.payable) {
                 logger.throwError("non-payable constructor cannot override value", Logger.errors.UNSUPPORTED_OPERATION, {
                     operation: "overrides.value",
-                    value: tx.value
+                    value: tx.value,
                 });
             }
         }
         // Make sure the call matches the constructor signature
         logger.checkArgumentCount(args.length, this.interface.deploy.inputs.length, " in Contract constructor");
         // Set the data to the bytecode + the encoded constructor arguments
-        tx.data = hexlify(concat([
-            this.bytecode,
-            this.interface.encodeDeploy(args)
-        ]));
+        tx.data = hexlify(concat([this.bytecode, this.interface.encodeDeploy(args)]));
         return tx;
     }
     deploy(...args) {
@@ -982,8 +1007,9 @@ export class ContractFactory {
             params.push(overrides);
             // Get the deployment transaction (with optional overrides)
             const unsignedTx = this.getDeployTransaction(...params);
+            const grindedTx = yield this.grindContractAddress(unsignedTx);
             // Send the deployment transaction
-            const tx = yield this.signer.sendTransaction(unsignedTx);
+            const tx = yield this.signer.sendTransaction(grindedTx);
             const address = getStatic(this.constructor, "getContractAddress")(tx);
             const contract = getStatic(this.constructor, "getContract")(address, this.interface, this.signer);
             // Add the modified wait that wraps events
@@ -993,16 +1019,16 @@ export class ContractFactory {
         });
     }
     attach(address) {
-        return (this.constructor).getContract(address, this.interface, this.signer);
+        return this.constructor.getContract(address, this.interface, this.signer);
     }
     connect(signer) {
-        return new (this.constructor)(this.interface, this.bytecode, signer);
+        return new this.constructor(this.interface, this.bytecode, signer);
     }
     static fromSolidity(compilerOutput, signer) {
         if (compilerOutput == null) {
             logger.throwError("missing compiler output", Logger.errors.MISSING_ARGUMENT, { argument: "compilerOutput" });
         }
-        if (typeof (compilerOutput) === "string") {
+        if (typeof compilerOutput === "string") {
             compilerOutput = JSON.parse(compilerOutput);
         }
         const abi = compilerOutput.abi;
@@ -1018,11 +1044,34 @@ export class ContractFactory {
     static getInterface(contractInterface) {
         return Contract.getInterface(contractInterface);
     }
-    static getContractAddress(tx) {
-        return getContractAddress(tx);
+    static getContractAddress(transaction) {
+        return getContractAddress(transaction.from, transaction.nonce, transaction.data);
     }
     static getContract(address, contractInterface, signer) {
         return new Contract(address, contractInterface, signer);
+    }
+    grindContractAddress(tx) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (tx.nonce == null) {
+                tx.nonce = yield this.signer.getTransactionCount("pending");
+            }
+            const sender = yield this.signer.getAddress();
+            const toShard = getShardFromAddress(sender);
+            var i = 0;
+            var startingData = tx.data;
+            while (i < 10000) {
+                var contractAddress = getContractAddress(sender, tx.nonce, tx.data);
+                var contractShard = getShardFromAddress(contractAddress);
+                if (contractShard === toShard) {
+                    return tx;
+                }
+                var salt = randomBytes(32);
+                tx.data = hexlify(concat([startingData, salt]));
+                i++;
+            }
+            logger.throwError("unable to find salt for contract deployment", Logger.errors.TIMEOUT);
+            return tx;
+        });
     }
 }
 //# sourceMappingURL=index.js.map

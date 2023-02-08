@@ -1,10 +1,8 @@
 "use strict";
 
-import { arrayify, BytesLike, concat, hexDataLength, hexDataSlice, isHexString, stripZeros, hexZeroPad, hexlify } from "@quais/bytes";
+import { arrayify, BytesLike, concat, hexDataLength, hexDataSlice, isHexString, hexStripZeros, hexZeroPad } from "@quais/bytes";
 import { BigNumber, BigNumberish, _base16To36, _base36To16 } from "@quais/bignumber";
 import { keccak256 } from "@quais/keccak256";
-import { randomBytes } from "@quais/random";
-import { encode } from "@quais/rlp";
 
 import { Logger } from "@quais/logger";
 import { version } from "./_version";
@@ -129,18 +127,9 @@ export function getIcapAddress(address: string): string {
     return "XE" + ibanChecksum("XE00" + base36) + base36;
 }
 
-// http://ethereum.stackexchange.com/questions/760/how-is-the-address-of-an-ethereum-contract-computed
-export function getContractAddress(transaction: { from: string, nonce: BigNumberish }) {
-    let from: string = null;
-    try {
-        from = getAddress(transaction.from);
-    } catch (error) {
-        logger.throwArgumentError("missing from address", "transaction", transaction);
-    }
-
-    const nonce = stripZeros(arrayify(BigNumber.from(transaction.nonce).toHexString()));
-
-    return getAddress(hexDataSlice(keccak256(encode([ from, nonce ])), 12));
+export function getContractAddress(from: string, nonce: BigNumberish, data: BytesLike): string {
+    const nonceBytes = hexZeroPad(BigNumber.from(nonce).toHexString(), 8);
+    return getAddress(hexDataSlice(keccak256(concat([getAddress(from), nonceBytes, hexStripZeros(data) ])), 12))
 }
 
 export function getCreate2Address(from: string, salt: BytesLike, initCodeHash: BytesLike): string {
@@ -151,57 +140,6 @@ export function getCreate2Address(from: string, salt: BytesLike, initCodeHash: B
         logger.throwArgumentError("initCodeHash must be 32 bytes", "initCodeHash", initCodeHash);
     }
     return getAddress(hexDataSlice(keccak256(concat([ "0xff", getAddress(from), salt, initCodeHash ])), 12))
-}
-
-export async function grindContractAddress(nonce: number, matchShard: string, sendAddress: string, contract: any){
-    if (nonce == undefined) {
-        logger.throwArgumentError("missing nonce", "nonce", nonce);
-    }
-    if (matchShard == undefined || !validShard(matchShard)) {
-        logger.throwArgumentError("missing matchShard", "matchShard", matchShard);
-    }
-    
-    var salt;
-    var contractBytes;
-    const nonceBytes = hexZeroPad(BigNumber.from(nonce).toHexString(), 8);
-    var found = false;
-    
-    var bytecode = contract.bytecode;
-    var args;
-    if(contract.interface?.deploy?.inputs?.length > 0){
-        args = contract.interface.encodeDeploy(contract.interface.deploy.inputs)
-    }
-
-    while(!found) {
-        // replace last two bytes of bytecode with salt
-        salt = randomBytes(1);
-        console.log("BYTE", bytecode)
-        var initCode = bytecode.substring(0, bytecode.length-2).concat(BigNumber.from(salt).toHexString().substring(2));
-        contractBytes = arrayify(initCode);
-        var txData;
-        if(args?.length > 0){
-            console.log("Attempting to concat args", args)
-            txData = concat([contractBytes, args]);
-        } else {
-            txData = contractBytes;
-        }
-        var addressAndNonce = concat([sendAddress, nonceBytes])
-        var createInput = new Uint8Array(addressAndNonce.length + txData.length);
-        createInput.set(addressAndNonce);
-        createInput.set(txData, addressAndNonce.length);
-        // process.stdout.write("CreateInput", toHexString(createInput));
-        var preComputedAddress = getAddress(hexDataSlice(keccak256(createInput), 12))
-        console.log("preComputedAddress", preComputedAddress)
-        var shard = getShardFromAddress(preComputedAddress)
-        if(shard == undefined) {
-            continue 
-        }
-        if (shard == matchShard) {
-            found = true
-        }
-    }
-    console.log("HEXLIFIED", hexlify(contractBytes))
-    return contractBytes;
 }
 
 export function validShard(shard: string) {

@@ -37,6 +37,7 @@ describe('Test Contract Address Generation', function () {
             tx: {
                 from: '0xb2682160c482eb985ec9f3e364eec0a904c44c23',
                 nonce: 10,
+                data: '0x',
             }
         },
         {
@@ -45,6 +46,7 @@ describe('Test Contract Address Generation', function () {
             tx: {
                 from: '0xb2682160c482eb985ec9f3e364eec0a904c44c23',
                 nonce: "0xa",
+                data: '0x',
             }
         },
         {
@@ -53,6 +55,7 @@ describe('Test Contract Address Generation', function () {
             tx: {
                 from: '0xb2682160c482eb985ec9f3e364eec0a904c44c23',
                 nonce: "0x0a",
+                data: '0x',
             }
         },
         // Ropsten: https://etherscan.io/tx/0x78d17f8ab31fb6ad688340634a9a29d8726feb6d588338a9b9b21a44159bc916
@@ -62,6 +65,7 @@ describe('Test Contract Address Generation', function () {
             tx: {
                 from: '0x8ba1f109551bd432803012645ac136ddd64dba72',
                 nonce: "0x200",
+                data: '0x',
             }
         },
         {
@@ -70,6 +74,7 @@ describe('Test Contract Address Generation', function () {
             tx: {
                 from: '0x8ba1f109551bd432803012645ac136ddd64dba72',
                 nonce: "0x0200",
+                data: '0x',
             }
         },
         // https://ropsten.etherscan.io/tx/0x444ea8ae9890ac0ee5fd249512726abf9d23f44a378d5f45f727b65dc1b899c2
@@ -79,6 +84,7 @@ describe('Test Contract Address Generation', function () {
             tx: {
                 from: '0x8ba1f109551bd432803012645ac136ddd64dba72',
                 nonce: "0x1d",
+                data: '0x',
             }
         },
         {
@@ -87,6 +93,7 @@ describe('Test Contract Address Generation', function () {
             tx: {
                 from: '0x8ba1f109551bd432803012645ac136ddd64dba72',
                 nonce: "0x001d",
+                data: '0x',
             }
         },
         {
@@ -95,6 +102,7 @@ describe('Test Contract Address Generation', function () {
             tx: {
                 from: '0x8ba1f109551bd432803012645ac136ddd64dba72',
                 nonce: 29,
+                data: '0x',
             }
         },
         // Ropsten: 0x5bdfd14fcc917abc2f02a30721d152a6f147f09e8cbaad4e0d5405d646c5c3e1
@@ -103,14 +111,15 @@ describe('Test Contract Address Generation', function () {
             name: 'zero-nonce',
             tx: {
                 from: '0xc6af6e1a78a6752c7f8cd63877eb789a2adb776c',
-                nonce: 0
+                nonce: 0,
+                data: '0x',
             }
         },
     ];
     Tests.forEach(function (test) {
         it(('Computes the transaction address - ' + test.name), function () {
             this.timeout(120000);
-            assert.equal(getContractAddress(test.tx), test.address, 'computes the transaction address');
+            assert.equal(getContractAddress(test.tx.from, test.tx.nonce, test.tx.data), test.address, 'computes the transaction address');
         });
     });
 });

@@ -219,7 +219,7 @@ export class Formatter {
         return (address === AddressZero) ? null : address;
     }
     contractAddress(value) {
-        return getContractAddress(value);
+        return getContractAddress(value.from, value.nonce, value.data);
     }
     // Strict! Used on input.
     blockTag(blockTag) {

@@ -1,18 +1,7 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
-import { arrayify, concat, hexDataLength, hexDataSlice, isHexString, stripZeros } from "@quais/bytes";
+import { arrayify, concat, hexDataLength, hexDataSlice, isHexString, hexStripZeros, hexZeroPad } from "@quais/bytes";
 import { BigNumber, _base16To36, _base36To16 } from "@quais/bignumber";
 import { keccak256 } from "@quais/keccak256";
-import { randomBytes } from "@quais/random";
-import { encode } from "@quais/rlp";
 import { Logger } from "@quais/logger";
 import { version } from "./_version";
 import { ShardData } from "@quais/constants";
@@ -121,17 +110,9 @@ export function getIcapAddress(address) {
     }
     return "XE" + ibanChecksum("XE00" + base36) + base36;
 }
-// http://ethereum.stackexchange.com/questions/760/how-is-the-address-of-an-ethereum-contract-computed
-export function getContractAddress(transaction) {
-    let from = null;
-    try {
-        from = getAddress(transaction.from);
-    }
-    catch (error) {
-        logger.throwArgumentError("missing from address", "transaction", transaction);
-    }
-    const nonce = stripZeros(arrayify(BigNumber.from(transaction.nonce).toHexString()));
-    return getAddress(hexDataSlice(keccak256(encode([from, nonce])), 12));
+export function getContractAddress(from, nonce, data) {
+    const nonceBytes = hexZeroPad(BigNumber.from(nonce).toHexString(), 8);
+    return getAddress(hexDataSlice(keccak256(concat([getAddress(from), nonceBytes, hexStripZeros(data)])), 12));
 }
 export function getCreate2Address(from, salt, initCodeHash) {
     if (hexDataLength(salt) !== 32) {
@@ -141,84 +122,6 @@ export function getCreate2Address(from, salt, initCodeHash) {
         logger.throwArgumentError("initCodeHash must be 32 bytes", "initCodeHash", initCodeHash);
     }
     return getAddress(hexDataSlice(keccak256(concat(["0xff", getAddress(from), salt, initCodeHash])), 12));
-}
-//convert bytes to hex string
-function toHexString(byteArray) {
-    return Array.from(byteArray, function (byte) {
-        return ('0' + (byte & 0xFF).toString(16)).slice(-2);
-    }).join('');
-}
-// convert hex string to bytes
-function toByteArray(hexString) {
-    var result = [];
-    while (hexString.length >= 2) {
-        result.push(parseInt(hexString.substring(0, 2), 16));
-        hexString = hexString.substring(2, hexString.length);
-    }
-    return result;
-}
-function bitLength(number) {
-    return Math.floor(Math.log2(number)) + 1;
-}
-function byteLength(number) {
-    return Math.ceil(bitLength(number) / 8);
-}
-function toBytes(number) {
-    if (!Number.isSafeInteger(number)) {
-        throw new Error("Number is out of range");
-    }
-    const size = number === 0 ? 0 : byteLength(number);
-    const bytes = new Uint8ClampedArray(size);
-    let x = number;
-    for (let i = (size - 1); i >= 0; i--) {
-        const rightByte = x & 0xff;
-        bytes[i] = rightByte;
-        x = Math.floor(x / 0x100);
-    }
-    return bytes;
-}
-export function grindContractAddress(nonce, matchShard, sendAddress, bytecode) {
-    return __awaiter(this, void 0, void 0, function* () {
-        if (nonce == undefined) {
-            logger.throwArgumentError("missing nonce", "nonce", nonce);
-        }
-        if (matchShard == undefined || !validShard(matchShard)) {
-            logger.throwArgumentError("missing matchShard", "matchShard", matchShard);
-        }
-        var salt;
-        var contractBytes;
-        const nonceBytes = toBytes(nonce);
-        var found = false;
-        while (!found) {
-            // replace last two bytes of bytecode with salt
-            salt = randomBytes(1);
-            var initCode = bytecode.substring(0, bytecode.length - 2).concat(toHexString(salt));
-            contractBytes = toByteArray(initCode);
-            var addressAndNonce = concat([sendAddress, nonceBytes]);
-            var createInput = new Uint8Array(addressAndNonce.length + contractBytes.length);
-            createInput.set(addressAndNonce);
-            createInput.set(contractBytes, addressAndNonce.length);
-            console.log("senderAddr", sendAddress);
-            console.log("nonce", nonce);
-            console.log("data", contractBytes);
-            console.log("data len", contractBytes.length);
-            console.log("nonce bytes", nonceBytes);
-            console.log("nonce to strong", nonce.toString());
-            console.log("CreateInput", createInput);
-            console.log("CreateInput len", createInput.length);
-            // process.stdout.write("CreateInput", toHexString(createInput));
-            var preComputedAddress = getAddress(hexDataSlice(keccak256(createInput), 12));
-            console.log("preComputedAddress", preComputedAddress);
-            var shard = getShardFromAddress(preComputedAddress);
-            if (shard == undefined) {
-                continue;
-            }
-            if (shard == matchShard) {
-                found = true;
-            }
-        }
-        return contractBytes;
-    });
 }
 export function validShard(shard) {
     let shardData = ShardData.filter((obj) => {

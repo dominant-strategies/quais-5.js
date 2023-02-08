@@ -36,6 +36,7 @@ describe('Test Contract Address Generation', function() {
             tx: {
                 from: '0xb2682160c482eb985ec9f3e364eec0a904c44c23',
                 nonce: 10,
+                data: '0x',
             }
         },
 
@@ -45,6 +46,7 @@ describe('Test Contract Address Generation', function() {
             tx: {
                 from: '0xb2682160c482eb985ec9f3e364eec0a904c44c23',
                 nonce: "0xa",
+                data: '0x',
             }
         },
 
@@ -54,6 +56,7 @@ describe('Test Contract Address Generation', function() {
             tx: {
                 from: '0xb2682160c482eb985ec9f3e364eec0a904c44c23',
                 nonce: "0x0a",
+                data: '0x',
             }
         },
 
@@ -64,6 +67,7 @@ describe('Test Contract Address Generation', function() {
             tx: {
                 from: '0x8ba1f109551bd432803012645ac136ddd64dba72',
                 nonce: "0x200",
+                data: '0x',
             }
         },
 
@@ -73,6 +77,7 @@ describe('Test Contract Address Generation', function() {
             tx: {
                 from: '0x8ba1f109551bd432803012645ac136ddd64dba72',
                 nonce: "0x0200",
+                data: '0x',
             }
         },
 
@@ -83,6 +88,7 @@ describe('Test Contract Address Generation', function() {
             tx: {
                 from: '0x8ba1f109551bd432803012645ac136ddd64dba72',
                 nonce: "0x1d",
+                data: '0x',
             }
         },
 
@@ -92,6 +98,7 @@ describe('Test Contract Address Generation', function() {
             tx: {
                 from: '0x8ba1f109551bd432803012645ac136ddd64dba72',
                 nonce: "0x001d",
+                data: '0x',
             }
         },
 
@@ -101,6 +108,7 @@ describe('Test Contract Address Generation', function() {
             tx: {
                 from: '0x8ba1f109551bd432803012645ac136ddd64dba72',
                 nonce: 29,
+                data: '0x',
             }
         },
 
@@ -110,7 +118,9 @@ describe('Test Contract Address Generation', function() {
             name: 'zero-nonce',
             tx: {
                 from: '0xc6af6e1a78a6752c7f8cd63877eb789a2adb776c',
-                nonce: 0
+                nonce: 0,
+                data: '0x',
+
             }
         },
     ]
@@ -118,7 +128,7 @@ describe('Test Contract Address Generation', function() {
     Tests.forEach(function(test) {
         it(('Computes the transaction address - ' + test.name), function() {
             this.timeout(120000);
-            assert.equal(getContractAddress(test.tx), test.address, 'computes the transaction address');
+            assert.equal(getContractAddress(test.tx.from, test.tx.nonce as any, test.tx.data), test.address, 'computes the transaction address');
         });
     });
 });
