@@ -11,7 +11,7 @@
     "@quais/bignumber": "0.1.0",
     "@quais/bytes": "0.1.0",
     "@quais/constants": "0.1.1",
-    "@quais/contracts": "0.1.2",
+    "@quais/contracts": "file:../contracts",
     "@quais/hash": "0.1.0",
     "@quais/hdnode": "0.1.0",
     "@quais/json-wallets": "0.1.0",

@@ -1180,8 +1180,6 @@ var ContractFactory = /** @class */ (function () {
                         return [4 /*yield*/, this.grindContractAddress(unsignedTx)];
                     case 2:
                         grindedTx = _a.sent();
-                        // Send the deployment transaction
-                        console.log("Deploying contract with address: " + grindedTx);
                         return [4 /*yield*/, this.signer.sendTransaction(grindedTx)];
                     case 3:
                         tx = _a.sent();
@@ -1249,7 +1247,6 @@ var ContractFactory = /** @class */ (function () {
                             contractAddress = (0, address_1.getContractAddress)(sender, tx.nonce, tx.data);
                             contractShard = (0, address_1.getShardFromAddress)(contractAddress);
                             if (contractShard === toShard) {
-                                console.log("Found address", contractAddress, "on shard", contractShard, "for shard", toShard);
                                 return [2 /*return*/, tx];
                             }
                             salt = (0, crypto_1.randomBytes)(32);
