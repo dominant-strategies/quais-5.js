@@ -111,11 +111,8 @@ var Formatter = /** @class */ (function () {
             gasUsed: bigNumber,
             miner: Formatter.allowNull(address),
             extraData: data,
-            stateRoot: Formatter.allowNull(hash),
-            transactionsRoot: Formatter.allowNull(hash),
-            receiptsRoot: Formatter.allowNull(hash),
-            transactions: Formatter.allowNull(hash),
-            baseFeePerGas: bigNumber
+            transactions: Formatter.allowNull(Formatter.arrayOf(hash)),
+            baseFeePerGas: Formatter.allowNull(bigNumber)
         };
         formats.blockWithTransactions = (0, properties_1.shallowCopy)(formats.block);
         formats.blockWithTransactions.transactions = Formatter.allowNull(Formatter.arrayOf(this.transactionResponse.bind(this)));
@@ -303,15 +300,15 @@ var Formatter = /** @class */ (function () {
             parentHash: value.parentHash[context],
             timestamp: value.timestamp,
             nonce: value.nonce,
-            difficulty: value.difficulty[context],
-            _difficulty: value._difficulty[context],
-            gasLimit: value.gasLimit[context],
-            gasUsed: value.gasUsed[context],
-            miner: value.miner[context],
+            difficulty: value.difficulty,
+            _difficulty: value._difficulty,
+            gasLimit: value.gasLimit,
+            gasUsed: value.gasUsed,
+            miner: value.miner,
             extraData: value.data,
-            transactionsRoot: value.transactionsRoot[context],
-            stateRoot: value.stateRoot[context],
-            receiptsRoot: value.receiptsRoot[context]
+            transactionsRoot: value.transactionsRoot,
+            stateRoot: value.stateRoot,
+            receiptsRoot: value.receiptsRoot
         };
         return contextBlock;
     };
