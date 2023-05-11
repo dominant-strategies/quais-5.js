@@ -16,7 +16,6 @@ export class Formatter {
     getDefaultFormats() {
         const formats = ({});
         const address = this.address.bind(this);
-        const addressArray = this.addressArray.bind(this);
         const bigNumber = this.bigNumber.bind(this);
         const bigNumberArray = this.bigNumberArray.bind(this);
         const blockTag = this.blockTag.bind(this);
@@ -104,16 +103,16 @@ export class Formatter {
             number: bigNumberArray,
             timestamp: number,
             nonce: Formatter.allowNull(hex),
-            difficulty: bigNumberArray,
-            gasLimit: bigNumberArray,
-            gasUsed: bigNumberArray,
-            miner: addressArray,
+            difficulty: bigNumber,
+            gasLimit: bigNumber,
+            gasUsed: bigNumber,
+            miner: Formatter.allowNull(address),
             extraData: data,
-            stateRoot: hashArray,
-            transactionsRoot: hashArray,
-            receiptsRoot: hashArray,
-            transactions: Formatter.allowNull(Formatter.arrayOf(hash)),
-            baseFeePerGas: bigNumberArray
+            stateRoot: Formatter.allowNull(hash),
+            transactionsRoot: Formatter.allowNull(hash),
+            receiptsRoot: Formatter.allowNull(hash),
+            transactions: Formatter.allowNull(hash),
+            baseFeePerGas: bigNumber
         };
         formats.blockWithTransactions = shallowCopy(formats.block);
         formats.blockWithTransactions.transactions = Formatter.allowNull(Formatter.arrayOf(this.transactionResponse.bind(this)));
@@ -200,16 +199,6 @@ export class Formatter {
     // Strict! Used on input.
     address(value) {
         return getAddress(value);
-    }
-    addressArray(value) {
-        if (value.length != HIERARCHY_DEPTH) {
-            return logger.throwArgumentError("invalid address array", "value", value);
-        }
-        let results = [];
-        for (const addr of value) {
-            results.push(getAddress(addr));
-        }
-        return results;
     }
     callAddress(value) {
         if (!isHexString(value, 32)) {

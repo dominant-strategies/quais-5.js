@@ -19,7 +19,6 @@ var Formatter = /** @class */ (function () {
         var _this = this;
         var formats = ({});
         var address = this.address.bind(this);
-        var addressArray = this.addressArray.bind(this);
         var bigNumber = this.bigNumber.bind(this);
         var bigNumberArray = this.bigNumberArray.bind(this);
         var blockTag = this.blockTag.bind(this);
@@ -107,16 +106,16 @@ var Formatter = /** @class */ (function () {
             number: bigNumberArray,
             timestamp: number,
             nonce: Formatter.allowNull(hex),
-            difficulty: bigNumberArray,
-            gasLimit: bigNumberArray,
-            gasUsed: bigNumberArray,
-            miner: addressArray,
+            difficulty: bigNumber,
+            gasLimit: bigNumber,
+            gasUsed: bigNumber,
+            miner: Formatter.allowNull(address),
             extraData: data,
-            stateRoot: hashArray,
-            transactionsRoot: hashArray,
-            receiptsRoot: hashArray,
-            transactions: Formatter.allowNull(Formatter.arrayOf(hash)),
-            baseFeePerGas: bigNumberArray
+            stateRoot: Formatter.allowNull(hash),
+            transactionsRoot: Formatter.allowNull(hash),
+            receiptsRoot: Formatter.allowNull(hash),
+            transactions: Formatter.allowNull(hash),
+            baseFeePerGas: bigNumber
         };
         formats.blockWithTransactions = (0, properties_1.shallowCopy)(formats.block);
         formats.blockWithTransactions.transactions = Formatter.allowNull(Formatter.arrayOf(this.transactionResponse.bind(this)));
@@ -204,17 +203,6 @@ var Formatter = /** @class */ (function () {
     Formatter.prototype.address = function (value) {
         return (0, address_1.getAddress)(value);
     };
-    Formatter.prototype.addressArray = function (value) {
-        if (value.length != HIERARCHY_DEPTH) {
-            return logger.throwArgumentError("invalid address array", "value", value);
-        }
-        var results = [];
-        for (var _i = 0, value_1 = value; _i < value_1.length; _i++) {
-            var addr = value_1[_i];
-            results.push((0, address_1.getAddress)(addr));
-        }
-        return results;
-    };
     Formatter.prototype.callAddress = function (value) {
         if (!(0, bytes_1.isHexString)(value, 32)) {
             return null;
@@ -260,8 +248,8 @@ var Formatter = /** @class */ (function () {
             return logger.throwArgumentError("invalid hash array", "value", value);
         }
         var results = [];
-        for (var _i = 0, value_2 = value; _i < value_2.length; _i++) {
-            var hash = value_2[_i];
+        for (var _i = 0, value_1 = value; _i < value_1.length; _i++) {
+            var hash = value_1[_i];
             var result = this.hex(hash, strict);
             if ((0, bytes_1.hexDataLength)(result) !== 32) {
                 return logger.throwArgumentError("invalid hash", "value", value);
@@ -399,13 +387,13 @@ var Formatter = /** @class */ (function () {
         if (result.root != null) {
             if (result.root.length <= 4) {
                 // Could be 0x00, 0x0, 0x01 or 0x1
-                var value_3 = bignumber_1.BigNumber.from(result.root).toNumber();
-                if (value_3 === 0 || value_3 === 1) {
+                var value_2 = bignumber_1.BigNumber.from(result.root).toNumber();
+                if (value_2 === 0 || value_2 === 1) {
                     // Make sure if both are specified, they match
-                    if (result.status != null && (result.status !== value_3)) {
+                    if (result.status != null && (result.status !== value_2)) {
                         logger.throwArgumentError("alt-root-status/status mismatch", "value", { root: result.root, status: result.status });
                     }
-                    result.status = value_3;
+                    result.status = value_2;
                     delete result.root;
                 }
                 else {

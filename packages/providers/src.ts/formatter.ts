@@ -40,7 +40,6 @@ export class Formatter {
         const formats: Formats = <Formats>({ });
 
         const address = this.address.bind(this);
-        const addressArray = this.addressArray.bind(this);
         const bigNumber = this.bigNumber.bind(this);
         const bigNumberArray = this.bigNumberArray.bind(this);
         const blockTag = this.blockTag.bind(this);
@@ -144,20 +143,20 @@ export class Formatter {
 
             timestamp: number,
             nonce: Formatter.allowNull(hex),
-            difficulty: bigNumberArray,
+            difficulty: bigNumber,
 
-            gasLimit: bigNumberArray,
-            gasUsed: bigNumberArray,
+            gasLimit: bigNumber,
+            gasUsed: bigNumber,
 
-            miner: addressArray,
+            miner: Formatter.allowNull(address),
             extraData: data,
 
-            stateRoot: hashArray,
-            transactionsRoot: hashArray,
-            receiptsRoot: hashArray,
-            transactions: Formatter.allowNull(Formatter.arrayOf(hash)),
+            stateRoot: Formatter.allowNull(hash),
+            transactionsRoot: Formatter.allowNull(hash),
+            receiptsRoot: Formatter.allowNull(hash),
+            transactions: Formatter.allowNull(hash),
 
-            baseFeePerGas: bigNumberArray
+            baseFeePerGas: bigNumber
         };
 
         formats.blockWithTransactions = shallowCopy(formats.block);
@@ -250,19 +249,6 @@ export class Formatter {
     address(value: any): string {
         return getAddress(value);
     }
-
-    addressArray(value: any): string[] {
-        if (value.length != HIERARCHY_DEPTH) {
-            return logger.throwArgumentError("invalid address array", "value", value);
-        }
-        let results: string[] = [];
-        
-        for (const addr of value) {
-            results.push(getAddress(addr))
-        }
-        return results;
-    }
-    
 
     callAddress(value: any): string {
         if (!isHexString(value, 32)) { return null; }

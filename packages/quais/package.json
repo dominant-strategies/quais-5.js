@@ -20,7 +20,7 @@
     "@quais/networks": "0.1.0",
     "@quais/pbkdf2": "0.1.0",
     "@quais/properties": "0.1.0",
-    "@quais/providers": "0.1.0",
+    "@quais/providers": "file:/Users/alan/code/quais.js/packages/providers",
     "@quais/random": "0.1.0",
     "@quais/rlp": "0.1.0",
     "@quais/sha2": "0.1.0",
