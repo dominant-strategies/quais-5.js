@@ -42,5 +42,5 @@ export declare function entropyToMnemonic(entropy: BytesLike, wordlist?: string 
 export declare function isValidMnemonic(mnemonic: string, wordlist?: Wordlist): boolean;
 export declare function getAccountPath(index: number): string;
 export declare function getShardAddressChildNode(hdnode: HDNode, path: string, startingIndex: number, shard: string): HDNode;
-export declare function getAllShardsAddressChildNode(hdnode: HDNode): HDNode[];
+export declare function getAllShardsAddressChildNode(hdnode: HDNode, accountPath: string): HDNode[];
 //# sourceMappingURL=index.d.ts.map

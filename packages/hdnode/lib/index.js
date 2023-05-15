@@ -362,12 +362,12 @@ function getShardAddressChildNode(hdnode, path, startingIndex, shard) {
     return childNode;
 }
 exports.getShardAddressChildNode = getShardAddressChildNode;
-function getAllShardsAddressChildNode(hdnode) {
+function getAllShardsAddressChildNode(hdnode, accountPath) {
     var childNodes = [];
     var shards = constants_1.ShardData.map(function (shard) { return shard.shard; });
     for (var _i = 0, shards_1 = shards; _i < shards_1.length; _i++) {
         var shard = shards_1[_i];
-        var childNode = getShardAddressChildNode(hdnode, exports.defaultPath, 0, shard);
+        var childNode = getShardAddressChildNode(hdnode, accountPath, 0, shard);
         childNodes.push(childNode);
     }
     return childNodes;

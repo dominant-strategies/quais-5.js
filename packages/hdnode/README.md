@@ -25,6 +25,8 @@ const {
     mnemonicToEntropy,
     entropyToMnemonic,
     isValidMnemonic,
+    getShardAddressChildNode,
+    getAllShardsAddressChildNode
 
     // Types
 

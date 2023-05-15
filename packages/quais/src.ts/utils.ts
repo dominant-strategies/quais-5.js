@@ -6,7 +6,7 @@ import * as base64 from "@quais/base64";
 import { Base58 as base58 } from "@quais/basex";
 import { arrayify, concat, hexConcat, hexDataSlice, hexDataLength, hexlify, hexStripZeros, hexValue, hexZeroPad, isBytes, isBytesLike, isHexString, joinSignature, zeroPad, splitSignature, stripZeros } from "@quais/bytes";
 import { _TypedDataEncoder, dnsEncode, hashMessage, id, isValidName, namehash } from "@quais/hash";
-import { defaultPath, entropyToMnemonic, getAccountPath, HDNode, isValidMnemonic, mnemonicToEntropy, mnemonicToSeed } from "@quais/hdnode";
+import { defaultPath, entropyToMnemonic, getAccountPath, HDNode, isValidMnemonic, mnemonicToEntropy, mnemonicToSeed, getShardAddressChildNode, getAllShardsAddressChildNode } from "@quais/hdnode";
 import { getJsonWalletAddress } from "@quais/json-wallets";
 import { keccak256 } from "@quais/keccak256";
 import { Logger } from "@quais/logger";
@@ -174,6 +174,8 @@ export {
     entropyToMnemonic,
     isValidMnemonic,
     mnemonicToSeed,
+    getShardAddressChildNode,
+    getAllShardsAddressChildNode,
 
 
     ////////////////////////

@@ -348,11 +348,11 @@ export function getShardAddressChildNode(hdnode, path, startingIndex, shard) {
     }
     return childNode;
 }
-export function getAllShardsAddressChildNode(hdnode) {
+export function getAllShardsAddressChildNode(hdnode, accountPath) {
     const childNodes = [];
     let shards = ShardData.map((shard) => shard.shard);
     for (const shard of shards) {
-        const childNode = getShardAddressChildNode(hdnode, defaultPath, 0, shard);
+        const childNode = getShardAddressChildNode(hdnode, accountPath, 0, shard);
         childNodes.push(childNode);
     }
     return childNodes;
