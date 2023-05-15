@@ -15,6 +15,8 @@ import { SigningKey } from "@quais/signing-key";
 import { computeHmac, ripemd160, sha256, SupportedAlgorithm } from "@quais/sha2";
 import { computeAddress } from "@quais/transactions";
 import { Wordlist, wordlists } from "@quais/wordlists";
+import { getShardFromAddress } from "@quais/address";
+import { ShardData } from "@quais/constants";
 
 import { Logger } from "@quais/logger";
 import { version } from "./_version";
@@ -64,7 +66,8 @@ function getWordlist(wordlist: string | Wordlist): Wordlist {
 
 const _constructorGuard: any = {};
 
-export const defaultPath = "m/44'/60'/0'/0/0";
+export const defaultPath = "m/44'/994'/0'/0/0";
+export const defaultAccountPath = "m/44'/994'/0'/0/";
 
 export interface Mnemonic {
     readonly phrase: string;
@@ -408,3 +411,36 @@ export function getAccountPath(index: number): string {
     }
     return `m/44'/60'/${ index }'/0/0`;
 }
+
+
+export function getShardAddressChildNode(hdnode: HDNode, path: string, startingIndex: number, shard: string) {
+    let found = false;
+    let childNode;
+    while (!found) {
+        childNode = hdnode.derivePath(path + "/" + startingIndex.toString());
+        const addrShard = getShardFromAddress(childNode.address);
+        // Check if address is in a shard
+        if (addrShard !== undefined) {
+            // Check if address is in correct shard
+            if (addrShard === shard) {
+                found = true;
+                break;
+            }
+        }
+        startingIndex++;
+    }
+    return childNode;
+}
+  
+export function getAllShardsAddressChildNode(hdnode: HDNode) {
+    const childNodes = [];
+    let shards = ShardData.map((shard) => shard.shard);
+
+    for (const shard of shards) {
+        const childNode = getShardAddressChildNode(hdnode, defaultPath, 0, shard);
+        childNodes.push(childNode);
+    }
+
+    return childNodes;
+}
+  
