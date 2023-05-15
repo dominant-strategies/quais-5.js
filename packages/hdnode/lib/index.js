@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getAccountPath = exports.isValidMnemonic = exports.entropyToMnemonic = exports.mnemonicToEntropy = exports.mnemonicToSeed = exports.HDNode = exports.defaultPath = void 0;
+exports.getAllShardsAddressChildNode = exports.getShardAddressChildNode = exports.getAccountPath = exports.isValidMnemonic = exports.entropyToMnemonic = exports.mnemonicToEntropy = exports.mnemonicToSeed = exports.HDNode = exports.defaultAccountPath = exports.defaultPath = void 0;
 var basex_1 = require("@quais/basex");
 var bytes_1 = require("@quais/bytes");
 var bignumber_1 = require("@quais/bignumber");
@@ -11,6 +11,8 @@ var signing_key_1 = require("@quais/signing-key");
 var sha2_1 = require("@quais/sha2");
 var transactions_1 = require("@quais/transactions");
 var wordlists_1 = require("@quais/wordlists");
+var address_1 = require("@quais/address");
+var constants_1 = require("@quais/constants");
 var logger_1 = require("@quais/logger");
 var _version_1 = require("./_version");
 var logger = new logger_1.Logger(_version_1.version);
@@ -46,7 +48,8 @@ function getWordlist(wordlist) {
     return wordlist;
 }
 var _constructorGuard = {};
-exports.defaultPath = "m/44'/60'/0'/0/0";
+exports.defaultPath = "m/44'/994'/0'/0/0";
+exports.defaultAccountPath = "m/44'/994'/0'/0/";
 ;
 var HDNode = /** @class */ (function () {
     /**
@@ -340,4 +343,34 @@ function getAccountPath(index) {
     return "m/44'/60'/" + index + "'/0/0";
 }
 exports.getAccountPath = getAccountPath;
+function getShardAddressChildNode(hdnode, path, startingIndex, shard) {
+    var found = false;
+    var childNode;
+    while (!found) {
+        childNode = hdnode.derivePath(path + "/" + startingIndex.toString());
+        var addrShard = (0, address_1.getShardFromAddress)(childNode.address);
+        // Check if address is in a shard
+        if (addrShard !== undefined) {
+            // Check if address is in correct shard
+            if (addrShard === shard) {
+                found = true;
+                break;
+            }
+        }
+        startingIndex++;
+    }
+    return childNode;
+}
+exports.getShardAddressChildNode = getShardAddressChildNode;
+function getAllShardsAddressChildNode(hdnode) {
+    var childNodes = [];
+    var shards = constants_1.ShardData.map(function (shard) { return shard.shard; });
+    for (var _i = 0, shards_1 = shards; _i < shards_1.length; _i++) {
+        var shard = shards_1[_i];
+        var childNode = getShardAddressChildNode(hdnode, exports.defaultPath, 0, shard);
+        childNodes.push(childNode);
+    }
+    return childNodes;
+}
+exports.getAllShardsAddressChildNode = getAllShardsAddressChildNode;
 //# sourceMappingURL=index.js.map

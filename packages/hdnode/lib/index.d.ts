@@ -1,7 +1,8 @@
 import { ExternallyOwnedAccount } from "@quais/abstract-signer";
 import { BytesLike } from "@quais/bytes";
 import { Wordlist } from "@quais/wordlists";
-export declare const defaultPath = "m/44'/60'/0'/0/0";
+export declare const defaultPath = "m/44'/994'/0'/0/0";
+export declare const defaultAccountPath = "m/44'/994'/0'/0/";
 export interface Mnemonic {
     readonly phrase: string;
     readonly path: string;
@@ -40,4 +41,6 @@ export declare function mnemonicToEntropy(mnemonic: string, wordlist?: string | 
 export declare function entropyToMnemonic(entropy: BytesLike, wordlist?: string | Wordlist): string;
 export declare function isValidMnemonic(mnemonic: string, wordlist?: Wordlist): boolean;
 export declare function getAccountPath(index: number): string;
+export declare function getShardAddressChildNode(hdnode: HDNode, path: string, startingIndex: number, shard: string): HDNode;
+export declare function getAllShardsAddressChildNode(hdnode: HDNode): HDNode[];
 //# sourceMappingURL=index.d.ts.map

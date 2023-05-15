@@ -3,82 +3,58 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.ShardData = void 0;
 exports.ShardData = [
     {
-        name: "Prime",
-        shard: "prime",
-        context: 0,
-        byte: ["00", "09"]
-    },
-    {
-        name: "Cyprus",
-        shard: "region-0",
-        context: 1,
-        byte: ["0a", "13"]
-    },
-    {
         name: "Cyprus One",
         shard: "zone-0-0",
         context: 2,
-        byte: ["14", "1d"]
+        byte: ["00", "1d"]
     },
     {
         name: "Cyprus Two",
         shard: "zone-0-1",
         context: 2,
-        byte: ["1e", "27"]
+        byte: ["1e", "3a"]
     },
     {
         name: "Cyprus Three",
         shard: "zone-0-2",
         context: 2,
-        byte: ["28", "31"]
-    },
-    {
-        name: "Paxos",
-        shard: "region-1",
-        context: 1,
-        byte: ["32", "3b"]
+        byte: ["3b", "57"]
     },
     {
         name: "Paxos One",
         shard: "zone-1-0",
         context: 2,
-        byte: ["3c", "45"]
+        byte: ["58", "73"]
     },
     {
         name: "Paxos Two",
         shard: "zone-1-1",
         context: 2,
-        byte: ["46", "4f"]
+        byte: ["74", "8f"]
     },
     {
         name: "Paxos Three",
         shard: "zone-1-2",
         context: 2,
-        byte: ["50", "59"]
-    },
-    {
-        name: "Hydra",
-        shard: "region-2",
-        context: 1,
-        byte: ["5a", "63"]
+        byte: ["90", "AB"]
     },
     {
         name: "Hydra One",
         shard: "zone-2-0",
         context: 2,
-        byte: ["64", "6d"]
+        byte: ["AC", "C7"]
     },
     {
         name: "Hydra Two",
         shard: "zone-2-1",
         context: 2,
-        byte: ["6e", "77"]
+        byte: ["C8", "E3"]
     },
     {
         name: "Hydra Three",
         shard: "zone-2-2",
         context: 2,
-        byte: ["78", "81"]
+        byte: ["E4", "FF"]
     }
 ];
 //# sourceMappingURL=quai-contexts.js.map
