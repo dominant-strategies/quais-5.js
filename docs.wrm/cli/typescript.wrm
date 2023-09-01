@@ -5,7 +5,7 @@ _subsection: Help
 _code: @lang<text>
 
 Usage:
-   ethers-ts FILENAME [ ... ] [ OPTIONS ]
+   quais-ts FILENAME [ ... ] [ OPTIONS ]
 
 OPTIONS
   --output FILENAME           Write the output to FILENAME (default: stdout)

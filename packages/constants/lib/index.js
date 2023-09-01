@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.EtherSymbol = exports.HashZero = exports.MaxInt256 = exports.MinInt256 = exports.MaxUint256 = exports.WeiPerEther = exports.Two = exports.One = exports.Zero = exports.NegativeOne = exports.AddressZero = void 0;
+exports.ShardData = exports.EtherSymbol = exports.HashZero = exports.MaxInt256 = exports.MinInt256 = exports.MaxUint256 = exports.WeiPerEther = exports.Two = exports.One = exports.Zero = exports.NegativeOne = exports.AddressZero = void 0;
 var addresses_1 = require("./addresses");
 Object.defineProperty(exports, "AddressZero", { enumerable: true, get: function () { return addresses_1.AddressZero; } });
 var bignumbers_1 = require("./bignumbers");
@@ -16,4 +16,6 @@ var hashes_1 = require("./hashes");
 Object.defineProperty(exports, "HashZero", { enumerable: true, get: function () { return hashes_1.HashZero; } });
 var strings_1 = require("./strings");
 Object.defineProperty(exports, "EtherSymbol", { enumerable: true, get: function () { return strings_1.EtherSymbol; } });
+var quai_contexts_1 = require("./quai-contexts");
+Object.defineProperty(exports, "ShardData", { enumerable: true, get: function () { return quai_contexts_1.ShardData; } });
 //# sourceMappingURL=index.js.map

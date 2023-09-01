@@ -1,8 +1,8 @@
 {
-  "_ethers.alias": {
+  "_quais.alias": {
     "ledger-transport.js": "browser-ledger-transport.js"
   },
-  "author": "Richard Moore <me@ricmoo.com>",
+  "author": "",
   "browser": {
     "./lib/ledger-transport.js": "./lib/browser-ledger-transport.js"
   },
@@ -10,10 +10,10 @@
     "@ledgerhq/hw-app-eth": "5.27.2",
     "@ledgerhq/hw-transport": "5.26.0",
     "@ledgerhq/hw-transport-u2f": "5.26.0",
-    "ethers": "^5.7.0"
+    "quais": "^0.1.0"
   },
-  "description": "Hardware Wallet support for ethers.",
-  "ethereum": "donations.ethers.eth",
+  "description": "Hardware Wallet support for quais.",
+  "ethereum": "donations.quais.eth",
   "funding": [
     {
       "type": "individual",
@@ -32,7 +32,7 @@
   "license": "MIT",
   "main": "./lib/index.js",
   "module": "./lib.esm/index.js",
-  "name": "@ethersproject/hardware-wallets",
+  "name": "@quais/hardware-wallets",
   "optionalDependencies": {
     "@ledgerhq/hw-transport-node-hid": "5.26.0"
   },
@@ -42,7 +42,7 @@
   "repository": {
     "directory": "packages/hardware-wallets",
     "type": "git",
-    "url": "git://github.com/ethers-io/ethers.js.git"
+    "url": "git://github.com:dominant-strategies/quais.js.git"
   },
   "scripts": {
     "test": "exit 1"
@@ -50,5 +50,5 @@
   "sideEffects": false,
   "tarballHash": "0x3ffa694c4f0f9a9fff800af931833de5a6dcd1c6bc7c3bd0763011dff4bb9b2b",
   "types": "./lib/index.d.ts",
-  "version": "5.7.0"
+  "version": "0.1.0"
 }

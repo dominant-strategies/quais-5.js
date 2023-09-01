@@ -41,9 +41,9 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 var assert_1 = __importDefault(require("assert"));
 //import Web3HttpProvider from "web3-providers-http";
-var ethers_1 = require("ethers");
+var quais_1 = require("quais");
 var utils_1 = require("./utils");
-var bnify = ethers_1.ethers.BigNumber.from;
+var bnify = quais_1.quais.BigNumber.from;
 var blockchainData = {
     homestead: {
         addresses: [
@@ -249,8 +249,8 @@ function equals(name, actual, expected) {
         if (actual == null) {
             assert_1.default.ok(false, name + " - actual big number null");
         }
-        expected = ethers_1.ethers.BigNumber.from(expected);
-        actual = ethers_1.ethers.BigNumber.from(actual);
+        expected = quais_1.quais.BigNumber.from(expected);
+        actual = quais_1.quais.BigNumber.from(actual);
         assert_1.default.ok(expected.eq(actual), name + " matches");
     }
     else if (Array.isArray(expected)) {
@@ -304,7 +304,7 @@ function getApiKeys(network) {
     if (network === "default" || network == null) {
         network = "homestead";
     }
-    var apiKeys = ethers_1.ethers.utils.shallowCopy(_ApiKeys);
+    var apiKeys = quais_1.quais.utils.shallowCopy(_ApiKeys);
     //apiKeys.pocket = _ApiKeysPocket[network];
     return apiKeys;
 }
@@ -314,9 +314,9 @@ var providerFunctions = [
         networks: allNetworks,
         create: function (network) {
             if (network == "default") {
-                return ethers_1.ethers.getDefaultProvider(null, getApiKeys(network));
+                return quais_1.quais.getDefaultProvider(null, getApiKeys(network));
             }
-            return ethers_1.ethers.getDefaultProvider(network, getApiKeys(network));
+            return quais_1.quais.getDefaultProvider(network, getApiKeys(network));
         }
     },
     {
@@ -324,9 +324,9 @@ var providerFunctions = [
         networks: allNetworks,
         create: function (network) {
             if (network == "default") {
-                return new ethers_1.ethers.providers.AlchemyProvider(null, getApiKeys(network).alchemy);
+                return new quais_1.quais.providers.AlchemyProvider(null, getApiKeys(network).alchemy);
             }
-            return new ethers_1.ethers.providers.AlchemyProvider(network, getApiKeys(network).alchemy);
+            return new quais_1.quais.providers.AlchemyProvider(network, getApiKeys(network).alchemy);
         }
     },
     {
@@ -334,9 +334,9 @@ var providerFunctions = [
         networks: ["default", "homestead"],
         create: function (network) {
             if (network == "default") {
-                return new ethers_1.ethers.providers.AnkrProvider(null);
+                return new quais_1.quais.providers.AnkrProvider(null);
             }
-            return new ethers_1.ethers.providers.AnkrProvider(network);
+            return new quais_1.quais.providers.AnkrProvider(network);
         }
     },
     /*
@@ -344,7 +344,7 @@ var providerFunctions = [
         name: "CloudflareProvider",
         networks: [ "default", "homestead" ],
         create: (network: string) => {
-            return new ethers.providers.CloudflareProvider(network);
+            return new quais.providers.CloudflareProvider(network);
         }
     },
     */
@@ -353,9 +353,9 @@ var providerFunctions = [
         networks: allNetworks,
         create: function (network) {
             if (network == "default") {
-                return new ethers_1.ethers.providers.InfuraProvider(null, getApiKeys(network).infura);
+                return new quais_1.quais.providers.InfuraProvider(null, getApiKeys(network).infura);
             }
-            return new ethers_1.ethers.providers.InfuraProvider(network, getApiKeys(network).infura);
+            return new quais_1.quais.providers.InfuraProvider(network, getApiKeys(network).infura);
         }
     },
     {
@@ -363,9 +363,9 @@ var providerFunctions = [
         networks: allNetworks,
         create: function (network) {
             if (network == "default") {
-                return new ethers_1.ethers.providers.EtherscanProvider(null, getApiKeys(network).etherscan);
+                return new quais_1.quais.providers.EtherscanProvider(null, getApiKeys(network).etherscan);
             }
-            return new ethers_1.ethers.providers.EtherscanProvider(network, getApiKeys(network).etherscan);
+            return new quais_1.quais.providers.EtherscanProvider(network, getApiKeys(network).etherscan);
         }
     },
     {
@@ -380,12 +380,12 @@ var providerFunctions = [
         networks: ["default", "homestead", "goerli"],
         create: function (network) {
             if (network == "default") {
-                return new ethers_1.ethers.providers.PocketProvider(null, {
+                return new quais_1.quais.providers.PocketProvider(null, {
                     applicationId: getApiKeys(network).pocket,
                     loadBalancer: true
                 });
             }
-            return new ethers_1.ethers.providers.PocketProvider(network, {
+            return new quais_1.quais.providers.PocketProvider(network, {
                 applicationId: getApiKeys(network).pocket,
                 loadBalancer: true
             });
@@ -400,7 +400,7 @@ var providerFunctions = [
     }
 ];
 // This wallet can be funded and used for various test cases
-var fundWallet = ethers_1.ethers.Wallet.createRandom();
+var fundWallet = quais_1.quais.Wallet.createRandom();
 var testFunctions = [];
 Object.keys(blockchainData).forEach(function (network) {
     function addSimpleTest(name, func, expected) {
@@ -570,17 +570,17 @@ Object.keys(blockchainData).forEach(function (network) {
     }
     /*
     @TODO: Use this for testing pre-EIP-155 transactions on specific networks
-    addErrorTest(ethers.utils.Logger.errors.NONCE_EXPIRED, async (provider: ethers.providers.Provider) => {
+    addErrorTest(quais.utils.Logger.errors.NONCE_EXPIRED, async (provider: quais.providers.Provider) => {
         return provider.sendTransaction("0xf86480850218711a0082520894000000000000000000000000000000000000000002801ba038aaddcaaae7d3fa066dfd6f196c8348e1bb210f2c121d36cb2c24ef20cea1fba008ae378075d3cd75aae99ab75a70da82161dffb2c8263dabc5d8adecfa9447fa");
     });
     */
     // Wallet(id("foobar1234"))
-    addErrorTest(ethers_1.ethers.utils.Logger.errors.NONCE_EXPIRED, function (provider) { return __awaiter(_this, void 0, void 0, function () {
+    addErrorTest(quais_1.quais.utils.Logger.errors.NONCE_EXPIRED, function (provider) { return __awaiter(_this, void 0, void 0, function () {
         return __generator(this, function (_a) {
             return [2 /*return*/, provider.sendTransaction("0x02f86e05808459682f008459682f14830186a09475544911a6f2e69ceea374f3f7e5ea9c987ece098304cb2f80c001a0d9585a780dde9e7d8c855aacec0564054b49114931fd7e320e4e983009d864f7a050bee916f2770ef17367256d8bccfbc49885467a6ba27cf5cc57e8553c73a191")];
         });
     }); });
-    addErrorTest(ethers_1.ethers.utils.Logger.errors.INSUFFICIENT_FUNDS, function (provider) { return __awaiter(_this, void 0, void 0, function () {
+    addErrorTest(quais_1.quais.utils.Logger.errors.INSUFFICIENT_FUNDS, function (provider) { return __awaiter(_this, void 0, void 0, function () {
         var txProps, wallet, tx;
         return __generator(this, function (_a) {
             switch (_a.label) {
@@ -592,7 +592,7 @@ Object.keys(blockchainData).forEach(function (network) {
                         chainId: 5,
                         value: 1,
                     };
-                    wallet = ethers_1.ethers.Wallet.createRandom();
+                    wallet = quais_1.quais.Wallet.createRandom();
                     return [4 /*yield*/, wallet.signTransaction(txProps)];
                 case 1:
                     tx = _a.sent();
@@ -600,7 +600,7 @@ Object.keys(blockchainData).forEach(function (network) {
             }
         });
     }); });
-    addErrorTest(ethers_1.ethers.utils.Logger.errors.INSUFFICIENT_FUNDS, function (provider) { return __awaiter(_this, void 0, void 0, function () {
+    addErrorTest(quais_1.quais.utils.Logger.errors.INSUFFICIENT_FUNDS, function (provider) { return __awaiter(_this, void 0, void 0, function () {
         var txProps, wallet;
         return __generator(this, function (_a) {
             txProps = {
@@ -609,11 +609,11 @@ Object.keys(blockchainData).forEach(function (network) {
                 gasLimit: 21000,
                 value: 1,
             };
-            wallet = ethers_1.ethers.Wallet.createRandom().connect(provider);
+            wallet = quais_1.quais.Wallet.createRandom().connect(provider);
             return [2 /*return*/, wallet.sendTransaction(txProps)];
         });
     }); });
-    addErrorTest(ethers_1.ethers.utils.Logger.errors.UNPREDICTABLE_GAS_LIMIT, function (provider) { return __awaiter(_this, void 0, void 0, function () {
+    addErrorTest(quais_1.quais.utils.Logger.errors.UNPREDICTABLE_GAS_LIMIT, function (provider) { return __awaiter(_this, void 0, void 0, function () {
         return __generator(this, function (_a) {
             return [2 /*return*/, provider.estimateGas({
                     to: "0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e" // ENS contract
@@ -631,7 +631,7 @@ testFunctions.push({
         // This isn't working right now on Ankr
         return (provider === "AnkrProvider");
     },
-    execute: async (provider: ethers.providers.Provider) => {
+    execute: async (provider: quais.providers.Provider) => {
         const gasPrice = (await provider.getGasPrice()).mul(10);
 
         const wallet = fundWallet.connect(provider);
@@ -641,7 +641,7 @@ testFunctions.push({
         await waiter(3000);
 
         const b0 = await provider.getBalance(wallet.address);
-        assert.ok(b0.gt(ethers.constants.Zero), "balance is non-zero");
+        assert.ok(b0.gt(quais.constants.Zero), "balance is non-zero");
 
         const tx = await wallet.sendTransaction({
             type: 0,
@@ -683,7 +683,7 @@ testFunctions.push({
                     return [4 /*yield*/, provider.getBalance(wallet.address)];
                 case 3:
                     b0 = _a.sent();
-                    assert_1.default.ok(b0.gt(ethers_1.ethers.constants.Zero), "balance is non-zero");
+                    assert_1.default.ok(b0.gt(quais_1.quais.constants.Zero), "balance is non-zero");
                     return [4 /*yield*/, wallet.sendTransaction({
                             type: 1,
                             //chainId: (await provider.getNetwork()).chainId,
@@ -737,7 +737,7 @@ testFunctions.push({
                     return [4 /*yield*/, provider.getBalance(wallet.address)];
                 case 2:
                     b0 = _a.sent();
-                    assert_1.default.ok(b0.gt(ethers_1.ethers.constants.Zero), "balance is non-zero");
+                    assert_1.default.ok(b0.gt(quais_1.quais.constants.Zero), "balance is non-zero");
                     return [4 /*yield*/, wallet.sendTransaction({
                             type: 2,
                             accessList: {
@@ -773,7 +773,7 @@ describe("Test Provider Methods", function () {
             return __generator(this, function (_a) {
                 this.timeout(300000);
                 // Get some ether from the faucet
-                //const funder = await ethers.utils.fetchJson(`https:/\/api.ethers.io/api/v1/?action=fundAccount&address=${ fundWallet.address.toLowerCase() }`);
+                //const funder = await quais.utils.fetchJson(`https:/\/api.quais.io/api/v1/?action=fundAccount&address=${ fundWallet.address.toLowerCase() }`);
                 fundReceipt = (0, utils_1.fundAddress)(fundWallet.address).then(function (hash) {
                     console.log("*** Funded: " + fundWallet.address);
                     return hash;
@@ -892,7 +892,7 @@ describe("Extra tests", function () {
                         return [4 /*yield*/, waiter(2000)];
                     case 1:
                         _a.sent();
-                        provider = new ethers_1.ethers.providers.EtherscanProvider(null, getApiKeys(null).etherscan);
+                        provider = new quais_1.quais.providers.EtherscanProvider(null, getApiKeys(null).etherscan);
                         return [4 /*yield*/, provider.call({
                                 to: "0xbf320b8336b131e0270295c15478d91741f9fc11",
                                 data: "0x3ad206cc000000000000000000000000f6e914d07d12636759868a61e52973d17ed7111b0000000000000000000000000000000000000000000000000000000000000040000000000000000000000000000000000000000000000000000000000000006400000000000000000000000022b3faaa8df978f6bafe18aade18dc2e3dfa0e0c000000000000000000000000998b3b82bc9dba173990be7afb772788b5acb8bd000000000000000000000000ba11d00c5f74255f56a5e366f4f77f5a186d7f55000000000000000000000000c7579bb99af590ec71c316e1ac4436c5350395940000000000000000000000002a05d22db079bc40c2f77a1d1ff703a56e631cc10000000000000000000000000d8775f648430679a709e98d2b0cb6250d2887ef0000000000000000000000009a0242b7a33dacbe40edb927834f96eb39f8fbcb000000000000000000000000c78593c17482ea5de44fdd84896ffd903972878e000000000000000000000000e7d3e4413e29ae35b0893140f4500965c74365e500000000000000000000000037d40510a2f5bc98aa7a0f7bf4b3453bcfb90ac10000000000000000000000004a6058666cf1057eac3cd3a5a614620547559fc900000000000000000000000035a69642857083ba2f30bfab735dacc7f0bac96900000000000000000000000084f7c44b6fed1080f647e354d552595be2cc602f0000000000000000000000001500205f50bf3fd976466d0662905c9ff254fc9c000000000000000000000000660b612ec57754d949ac1a09d0c2937a010dee05000000000000000000000000acfa209fb73bf3dd5bbfb1101b9bc999c49062a5000000000000000000000000865d176351f287fe1b0010805b110d08699c200a000000000000000000000000633a8f8e557702039463f9f2eb20b7936fff8c050000000000000000000000001961b3331969ed52770751fc718ef530838b6dee0000000000000000000000002fb12bccf6f5dd338b76be784a93ade0724256900000000000000000000000004d8fc1453a0f359e99c9675954e656d80d996fbf0000000000000000000000006aeb95f06cda84ca345c2de0f3b7f96923a44f4c0000000000000000000000008aa33a7899fcc8ea5fbe6a608a109c3893a1b8b200000000000000000000000014c926f2290044b647e1bf2072e67b495eff1905000000000000000000000000763186eb8d4856d536ed4478302971214febc6a90000000000000000000000008a1e3930fde1f151471c368fdbb39f3f63a65b55000000000000000000000000a8daa52ded91f7c82b4bb02b4b87c6a841db1fd500000000000000000000000033803edf44a71b9579f54cd429b53b06c0eeab83000000000000000000000000026e62dded1a6ad07d93d39f96b9eabd59665e0d00000000000000000000000047da42696a866cdc61a4c809a515500a242909c100000000000000000000000008b4c866ae9d1be56a06e0c302054b4ffe067b43000000000000000000000000420335d3deef2d5b87524ff9d0fb441f71ea621f000000000000000000000000983f7cc12d0b5d512b0f91f51a4aa478ac4def46000000000000000000000000b2bfeb70b903f1baac7f2ba2c62934c7e5b974c40000000000000000000000009b11b1b271a224a271619f3419b1b080fdec5b4a0000000000000000000000007b1309c1522afd4e66c31e1e6d0ec1319e1eba5e000000000000000000000000959529102cfde07b1196bd27adedc196d75f84f6000000000000000000000000107c4504cd79c5d2696ea0030a8dd4e92601b82e000000000000000000000000539efe69bcdd21a83efd9122571a64cc25e0282b000000000000000000000000e5a7c12972f3bbfe70ed29521c8949b8af6a0970000000000000000000000000f8ad7dfe656188a23e89da09506adf7ad9290d5d0000000000000000000000005732046a883704404f284ce41ffadd5b007fd668000000000000000000000000df6ef343350780bf8c3410bf062e0c015b1dd671000000000000000000000000f028adee51533b1b47beaa890feb54a457f51e89000000000000000000000000dd6bf56ca2ada24c683fac50e37783e55b57af9f000000000000000000000000ef51c9377feb29856e61625caf9390bd0b67ea18000000000000000000000000c80c5e40220172b36adee2c951f26f2a577810c50000000000000000000000001f573d6fb3f13d689ff844b4ce37794d79a7ff1c000000000000000000000000d2d6158683aee4cc838067727209a0aaf4359de30000000000000000000000007cdec53fe4770729dac314756c10e2f37b8d2b2f000000000000000000000000cc34366e3842ca1bd36c1f324d15257960fcc8010000000000000000000000006b01c3170ae1efebee1a3159172cb3f7a5ecf9e5000000000000000000000000139d9397274bb9e2c29a9aa8aa0b5874d30d62e300000000000000000000000063f584fa56e60e4d0fe8802b27c7e6e3b33e007f000000000000000000000000780116d91e5592e58a3b3c76a351571b39abcec60000000000000000000000000e511aa1a137aad267dfe3a6bfca0b856c1a3682000000000000000000000000327682779bab2bf4d1337e8974ab9de8275a7ca80000000000000000000000001b80eeeadcc590f305945bcc258cfa770bbe18900000000000000000000000005af2be193a6abca9c8817001f45744777db307560000000000000000000000009e77d5a1251b6f7d456722a6eac6d2d5980bd891000000000000000000000000e25f0974fea47682f6a7386e4217da70512ec997000000000000000000000000558ec3152e2eb2174905cd19aea4e34a23de9ad6000000000000000000000000b736ba66aad83adb2322d1f199bfa32b3962f13c000000000000000000000000509a38b7a1cc0dcd83aa9d06214663d9ec7c7f4a0000000000000000000000000327112423f3a68efdf1fcf402f6c5cb9f7c33fd0000000000000000000000005acd19b9c91e596b1f062f18e3d02da7ed8d1e5000000000000000000000000003df4c372a29376d2c8df33a1b5f001cd8d68b0e0000000000000000000000006aac8cb9861e42bf8259f5abdc6ae3ae89909e11000000000000000000000000d96b9fd7586d9ea24c950d24399be4fb65372fdd00000000000000000000000073dd069c299a5d691e9836243bcaec9c8c1d87340000000000000000000000005ecd84482176db90bb741ddc8c2f9ccc290e29ce000000000000000000000000fa456cf55250a839088b27ee32a424d7dacb54ff000000000000000000000000b683d83a532e2cb7dfa5275eed3698436371cc9f000000000000000000000000ccbf21ba6ef00802ab06637896b799f7101f54a20000000000000000000000007b123f53421b1bf8533339bfbdc7c98aa94163db0000000000000000000000006ecccf7ebc3497a9334f4fe957a7d5fa933c5bcc0000000000000000000000004fabb145d64652a948d72533023f6e7a623c7c53000000000000000000000000e1aee98495365fc179699c1bb3e761fa716bee6200000000000000000000000056d811088235f11c8920698a204a5010a788f4b300000000000000000000000026e75307fc0c021472feb8f727839531f112f3170000000000000000000000007d4b8cce0591c9044a22ee543533b72e976e36c30000000000000000000000003c6a7ab47b5f058be0e7c7fe1a4b7925b8aca40e0000000000000000000000001d462414fe14cf489c7a21cac78509f4bf8cd7c000000000000000000000000043044f861ec040db59a7e324c40507addb67314200000000000000000000000004f2e7221fdb1b52a68169b25793e51478ff0329000000000000000000000000954b890704693af242613edef1b603825afcd708000000000000000000000000a8f93faee440644f89059a2c88bdc9bf3be5e2ea0000000000000000000000001234567461d3f8db7496581774bd869c83d51c9300000000000000000000000056ba2ee7890461f463f7be02aac3099f6d5811a80000000000000000000000006c8c6b02e7b2be14d4fa6022dfd6d75921d90e4e000000000000000000000000f444cd92e09cc8b2a23cd2eecb3c1e4cc8da6958000000000000000000000000cf8f9555d55ce45a3a33a81d6ef99a2a2e71dee2000000000000000000000000076c97e1c869072ee22f8c91978c99b4bcb0259100000000000000000000000017b26400621695c2d8c2d8869f6259e82d7544c4000000000000000000000000679badc551626e01b23ceecefbc9b877ea18fc46000000000000000000000000336f646f87d9f6bc6ed42dd46e8b3fd9dbd15c220000000000000000000000005d3a536e4d6dbd6114cc1ead35777bab948e3643000000000000000000000000f5dce57282a584d2746faf1593d3121fcac444dc0000000000000000000000001d9e20e581a5468644fe74ccb6a46278ef377f9e000000000000000000000000177d39ac676ed1c67a2b268ad7f1e58826e5b0af"
@@ -930,7 +930,7 @@ describe("Test Basic Authentication", function () {
     function test(name, url) {
         it("tests " + name, function () {
             this.timeout(60000);
-            return ethers_1.ethers.utils.fetchJson(url).then(function (data) {
+            return quais_1.quais.utils.fetchJson(url).then(function (data) {
                 assert_1.default.equal(data.authenticated, true, "authenticates user");
             });
         });
@@ -956,7 +956,7 @@ describe("Test Basic Authentication", function () {
     it("tests insecure connections fail", function () {
         this.timeout(60000);
         assert_1.default.throws(function () {
-            return ethers_1.ethers.utils.fetchJson(insecure);
+            return quais_1.quais.utils.fetchJson(insecure);
         }, function (error) {
             return (error.reason === "basic authentication requires a secure https url");
         }, "throws an exception for insecure connections");
@@ -967,19 +967,19 @@ describe("Test API Key Formatting", function () {
         var projectId = "someProjectId";
         var projectSecret = "someSecretKey";
         // Test simple projectId
-        var apiKeyString = ethers_1.ethers.providers.InfuraProvider.getApiKey(projectId);
+        var apiKeyString = quais_1.quais.providers.InfuraProvider.getApiKey(projectId);
         assert_1.default.equal(apiKeyString.apiKey, projectId);
         assert_1.default.equal(apiKeyString.projectId, projectId);
         assert_1.default.ok(apiKeyString.secretKey == null);
         // Test complex API key with projectId
-        var apiKeyObject = ethers_1.ethers.providers.InfuraProvider.getApiKey({
+        var apiKeyObject = quais_1.quais.providers.InfuraProvider.getApiKey({
             projectId: projectId
         });
         assert_1.default.equal(apiKeyObject.apiKey, projectId);
         assert_1.default.equal(apiKeyObject.projectId, projectId);
         assert_1.default.ok(apiKeyObject.projectSecret == null);
         // Test complex API key with projectId and projectSecret
-        var apiKeyObject2 = ethers_1.ethers.providers.InfuraProvider.getApiKey({
+        var apiKeyObject2 = quais_1.quais.providers.InfuraProvider.getApiKey({
             projectId: projectId,
             projectSecret: projectSecret
         });
@@ -988,7 +988,7 @@ describe("Test API Key Formatting", function () {
         assert_1.default.equal(apiKeyObject2.projectSecret, projectSecret);
         // Fails on invalid projectId type
         assert_1.default.throws(function () {
-            var apiKey = ethers_1.ethers.providers.InfuraProvider.getApiKey({
+            var apiKey = quais_1.quais.providers.InfuraProvider.getApiKey({
                 projectId: 1234,
                 projectSecret: projectSecret
             });
@@ -998,7 +998,7 @@ describe("Test API Key Formatting", function () {
         });
         // Fails on invalid projectSecret type
         assert_1.default.throws(function () {
-            var apiKey = ethers_1.ethers.providers.InfuraProvider.getApiKey({
+            var apiKey = quais_1.quais.providers.InfuraProvider.getApiKey({
                 projectId: projectId,
                 projectSecret: 1234
             });
@@ -1007,7 +1007,7 @@ describe("Test API Key Formatting", function () {
             return (error.argument === "projectSecret" && error.reason === "invalid projectSecret");
         });
         {
-            var provider = new ethers_1.ethers.providers.InfuraProvider("homestead", {
+            var provider = new quais_1.quais.providers.InfuraProvider("homestead", {
                 projectId: projectId,
                 projectSecret: projectSecret
             });
@@ -1018,7 +1018,7 @@ describe("Test API Key Formatting", function () {
         }
         // Attempt an unsupported network
         assert_1.default.throws(function () {
-            var provider = new ethers_1.ethers.providers.InfuraProvider("imaginary");
+            var provider = new quais_1.quais.providers.InfuraProvider("imaginary");
             console.log(provider);
         }, function (error) {
             return (error.argument === "network" && error.reason === "unsupported network");
@@ -1028,17 +1028,17 @@ describe("Test API Key Formatting", function () {
         var applicationId = "someApplicationId";
         var applicationSecretKey = "someApplicationSecret";
         // Test simple applicationId
-        var apiKeyString = ethers_1.ethers.providers.PocketProvider.getApiKey(applicationId);
+        var apiKeyString = quais_1.quais.providers.PocketProvider.getApiKey(applicationId);
         assert_1.default.equal(apiKeyString.applicationId, applicationId);
         assert_1.default.ok(apiKeyString.applicationSecretKey == null);
         // Test complex API key with applicationId
-        var apiKeyObject = ethers_1.ethers.providers.PocketProvider.getApiKey({
+        var apiKeyObject = quais_1.quais.providers.PocketProvider.getApiKey({
             applicationId: applicationId
         });
         assert_1.default.equal(apiKeyObject.applicationId, applicationId);
         assert_1.default.ok(apiKeyObject.applicationSecretKey == null);
         // Test complex API key with applicationId and applicationSecretKey
-        var apiKeyObject2 = ethers_1.ethers.providers.PocketProvider.getApiKey({
+        var apiKeyObject2 = quais_1.quais.providers.PocketProvider.getApiKey({
             applicationId: applicationId,
             applicationSecretKey: applicationSecretKey
         });
@@ -1047,14 +1047,14 @@ describe("Test API Key Formatting", function () {
         // Test complex API key with loadBalancer
         {
             var loadBalancer = true;
-            var apiKeyObject_1 = ethers_1.ethers.providers.PocketProvider.getApiKey({
+            var apiKeyObject_1 = quais_1.quais.providers.PocketProvider.getApiKey({
                 applicationId: applicationId,
                 loadBalancer: loadBalancer
             });
             assert_1.default.equal(apiKeyObject_1.applicationId, applicationId);
             assert_1.default.equal(apiKeyObject_1.loadBalancer, loadBalancer);
             assert_1.default.ok(apiKeyObject_1.applicationSecretKey == null);
-            var apiKeyObject2_1 = ethers_1.ethers.providers.PocketProvider.getApiKey({
+            var apiKeyObject2_1 = quais_1.quais.providers.PocketProvider.getApiKey({
                 applicationId: applicationId,
                 applicationSecretKey: applicationSecretKey,
                 loadBalancer: loadBalancer
@@ -1064,7 +1064,7 @@ describe("Test API Key Formatting", function () {
             assert_1.default.equal(apiKeyObject2_1.loadBalancer, loadBalancer);
         }
         {
-            var provider = new ethers_1.ethers.providers.PocketProvider("homestead", {
+            var provider = new quais_1.quais.providers.PocketProvider("homestead", {
                 applicationId: applicationId,
                 applicationSecretKey: applicationSecretKey
             });
@@ -1074,7 +1074,7 @@ describe("Test API Key Formatting", function () {
         }
         // Attempt an unsupported network
         assert_1.default.throws(function () {
-            var provider = new ethers_1.ethers.providers.PocketProvider("imaginary");
+            var provider = new quais_1.quais.providers.PocketProvider("imaginary");
             console.log(provider);
         }, function (error) {
             return (error.argument === "network" && error.reason === "unsupported network");
@@ -1101,7 +1101,7 @@ describe("Test WebSocketProvider", function () {
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
-                        provider = ethers_1.ethers.providers.InfuraProvider.getWebSocketProvider();
+                        provider = quais_1.quais.providers.InfuraProvider.getWebSocketProvider();
                         return [4 /*yield*/, testWebSocketProvider(provider)];
                     case 1:
                         _a.sent();
@@ -1143,7 +1143,7 @@ describe("Test Events", function () {
                 switch (_a.label) {
                     case 0:
                         this.timeout(60000);
-                        provider = new ethers_1.ethers.providers.InfuraProvider("goerli");
+                        provider = new quais_1.quais.providers.InfuraProvider("goerli");
                         return [4 /*yield*/, testBlockEvent(provider)];
                     case 1:
                         _a.sent();
@@ -1162,7 +1162,7 @@ describe("Bad ENS resolution", function () {
                 switch (_a.label) {
                     case 0:
                         this.timeout(300000);
-                        wallet = new ethers_1.ethers.Wallet(ethers_1.ethers.utils.id("random-wallet"), provider);
+                        wallet = new quais_1.quais.Wallet(quais_1.quais.utils.id("random-wallet"), provider);
                         _a.label = 1;
                     case 1:
                         _a.trys.push([1, 3, , 4]);
@@ -1206,9 +1206,9 @@ describe("Bad ENS resolution", function () {
 });
 describe("Resolve ENS avatar", function () {
     [
-        { title: "data", name: "data-avatar.tests.ethers.eth", value: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAMAAACeL25MAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAyVpVFh0WE1MOmNvbS5hZG9iZS54bXAAAAAAADw/eHBhY2tldCBiZWdpbj0i77u/IiBpZD0iVzVNME1wQ2VoaUh6cmVTek5UY3prYzlkIj8+IDx4OnhtcG1ldGEgeG1sbnM6eD0iYWRvYmU6bnM6bWV0YS8iIHg6eG1wdGs9IkFkb2JlIFhNUCBDb3JlIDYuMC1jMDAyIDc5LjE2NDQ4OCwgMjAyMC8wNy8xMC0yMjowNjo1MyAgICAgICAgIj4gPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4gPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIgeG1sbnM6eG1wPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvIiB4bWxuczp4bXBNTT0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wL21tLyIgeG1sbnM6c3RSZWY9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9zVHlwZS9SZXNvdXJjZVJlZiMiIHhtcDpDcmVhdG9yVG9vbD0iQWRvYmUgUGhvdG9zaG9wIDIyLjAgKE1hY2ludG9zaCkiIHhtcE1NOkluc3RhbmNlSUQ9InhtcC5paWQ6NUQ4NTEyNUIyOEIwMTFFQzg0NTBDNTU2RDk1NTA5NzgiIHhtcE1NOkRvY3VtZW50SUQ9InhtcC5kaWQ6NUQ4NTEyNUMyOEIwMTFFQzg0NTBDNTU2RDk1NTA5NzgiPiA8eG1wTU06RGVyaXZlZEZyb20gc3RSZWY6aW5zdGFuY2VJRD0ieG1wLmlpZDo1RDg1MTI1OTI4QjAxMUVDODQ1MEM1NTZEOTU1MDk3OCIgc3RSZWY6ZG9jdW1lbnRJRD0ieG1wLmRpZDo1RDg1MTI1QTI4QjAxMUVDODQ1MEM1NTZEOTU1MDk3OCIvPiA8L3JkZjpEZXNjcmlwdGlvbj4gPC9yZGY6UkRGPiA8L3g6eG1wbWV0YT4gPD94cGFja2V0IGVuZD0iciI/PkbM0uMAAAAGUExURQAA/wAAAHtivz4AAAAOSURBVHjaYmDABAABBgAAFAABaEkyYwAAAABJRU5ErkJggg==" },
-        { title: "ipfs", name: "ipfs-avatar.tests.ethers.eth", value: "https:/\/gateway.ipfs.io/ipfs/QmQsQgpda6JAYkFoeVcj5iPbwV3xRcvaiXv3bhp1VuYUqw" },
-        { title: "url", name: "url-avatar.tests.ethers.eth", value: "https:/\/ethers.org/static/logo.png" },
+        { title: "data", name: "data-avatar.tests.quais.eth", value: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAMAAACeL25MAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAyVpVFh0WE1MOmNvbS5hZG9iZS54bXAAAAAAADw/eHBhY2tldCBiZWdpbj0i77u/IiBpZD0iVzVNME1wQ2VoaUh6cmVTek5UY3prYzlkIj8+IDx4OnhtcG1ldGEgeG1sbnM6eD0iYWRvYmU6bnM6bWV0YS8iIHg6eG1wdGs9IkFkb2JlIFhNUCBDb3JlIDYuMC1jMDAyIDc5LjE2NDQ4OCwgMjAyMC8wNy8xMC0yMjowNjo1MyAgICAgICAgIj4gPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4gPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIgeG1sbnM6eG1wPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvIiB4bWxuczp4bXBNTT0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wL21tLyIgeG1sbnM6c3RSZWY9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9zVHlwZS9SZXNvdXJjZVJlZiMiIHhtcDpDcmVhdG9yVG9vbD0iQWRvYmUgUGhvdG9zaG9wIDIyLjAgKE1hY2ludG9zaCkiIHhtcE1NOkluc3RhbmNlSUQ9InhtcC5paWQ6NUQ4NTEyNUIyOEIwMTFFQzg0NTBDNTU2RDk1NTA5NzgiIHhtcE1NOkRvY3VtZW50SUQ9InhtcC5kaWQ6NUQ4NTEyNUMyOEIwMTFFQzg0NTBDNTU2RDk1NTA5NzgiPiA8eG1wTU06RGVyaXZlZEZyb20gc3RSZWY6aW5zdGFuY2VJRD0ieG1wLmlpZDo1RDg1MTI1OTI4QjAxMUVDODQ1MEM1NTZEOTU1MDk3OCIgc3RSZWY6ZG9jdW1lbnRJRD0ieG1wLmRpZDo1RDg1MTI1QTI4QjAxMUVDODQ1MEM1NTZEOTU1MDk3OCIvPiA8L3JkZjpEZXNjcmlwdGlvbj4gPC9yZGY6UkRGPiA8L3g6eG1wbWV0YT4gPD94cGFja2V0IGVuZD0iciI/PkbM0uMAAAAGUExURQAA/wAAAHtivz4AAAAOSURBVHjaYmDABAABBgAAFAABaEkyYwAAAABJRU5ErkJggg==" },
+        { title: "ipfs", name: "ipfs-avatar.tests.quais.eth", value: "https:/\/gateway.ipfs.io/ipfs/QmQsQgpda6JAYkFoeVcj5iPbwV3xRcvaiXv3bhp1VuYUqw" },
+        { title: "url", name: "url-avatar.tests.quais.eth", value: "https:/\/quais.org/static/logo.png" },
     ].forEach(function (test) {
         it("Resolves avatar for " + test.title, function () {
             return __awaiter(this, void 0, void 0, function () {
@@ -1217,7 +1217,7 @@ describe("Resolve ENS avatar", function () {
                     switch (_a.label) {
                         case 0:
                             this.timeout(60000);
-                            provider = ethers_1.ethers.getDefaultProvider("goerli", getApiKeys("goerli"));
+                            provider = quais_1.quais.getDefaultProvider("goerli", getApiKeys("goerli"));
                             return [4 /*yield*/, provider.getAvatar(test.name)];
                         case 1:
                             avatar = _a.sent();
@@ -1239,7 +1239,7 @@ describe("Resolve ENS avatar", function () {
                     switch (_a.label) {
                         case 0:
                             this.timeout(60000);
-                            provider = ethers_1.ethers.getDefaultProvider("homestead", getApiKeys("homestead"));
+                            provider = quais_1.quais.getDefaultProvider("homestead", getApiKeys("homestead"));
                             return [4 /*yield*/, provider.getAvatar(test.name)];
                         case 1:
                             avatar = _a.sent();
@@ -1264,7 +1264,7 @@ describe("Resolve ENS content hash", function () {
                     switch (_a.label) {
                         case 0:
                             this.timeout(60000);
-                            provider = ethers_1.ethers.getDefaultProvider("homestead", getApiKeys("homestead"));
+                            provider = quais_1.quais.getDefaultProvider("homestead", getApiKeys("homestead"));
                             return [4 /*yield*/, provider.getResolver(test.name)];
                         case 1:
                             resolver = _a.sent();
@@ -1321,17 +1321,17 @@ describe("Test CCIP execution", function () {
         'function verifyTest(bytes result, bytes extraData) pure returns (bytes32)'
     ];
     var provider = providerFunctions[0].create("goerli");
-    var contract = new ethers_1.ethers.Contract(address, ABI, provider);
+    var contract = new quais_1.quais.Contract(address, ABI, provider);
     // This matches the verify method in the Solidity contract against the
     // processed data from the endpoint
     var verify = function (sender, data, result) {
-        var check = ethers_1.ethers.utils.concat([
-            ethers_1.ethers.utils.arrayify(ethers_1.ethers.utils.arrayify(sender).length),
+        var check = quais_1.quais.utils.concat([
+            quais_1.quais.utils.arrayify(quais_1.quais.utils.arrayify(sender).length),
             sender,
-            ethers_1.ethers.utils.arrayify(ethers_1.ethers.utils.arrayify(data).length),
+            quais_1.quais.utils.arrayify(quais_1.quais.utils.arrayify(data).length),
             data
         ]);
-        assert_1.default.equal(result, ethers_1.ethers.utils.keccak256(check), "response is equal");
+        assert_1.default.equal(result, quais_1.quais.utils.keccak256(check), "response is equal");
     };
     it("testGet passes under normal operation", function () {
         return __awaiter(this, void 0, void 0, function () {
@@ -1391,7 +1391,7 @@ describe("Test CCIP execution", function () {
                         this.timeout(60000);
                         provider = providerFunctions[0].create("goerli");
                         provider.disableCcipRead = true;
-                        contract = new ethers_1.ethers.Contract(address, ABI, provider);
+                        contract = new quais_1.quais.Contract(address, ABI, provider);
                         _a.label = 1;
                     case 1:
                         _a.trys.push([1, 3, , 4]);

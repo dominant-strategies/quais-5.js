@@ -9,7 +9,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const crypto_1 = require("crypto");
 const index_1 = require("../../lib/index");
-const ethers_1 = require("../../../ethers");
+const quais_1 = require("../../../quais");
 const TestCase = __importStar(require("../../lib/testcases"));
 exports.TestCase = TestCase;
 function sha256(value) {
@@ -55,7 +55,7 @@ class AbstractTest {
         while (true) {
             const address = this.randomHexString(20);
             if (address.match(/[a-f]/i)) {
-                return ethers_1.ethers.utils.getAddress(address);
+                return quais_1.quais.utils.getAddress(address);
             }
         }
     }

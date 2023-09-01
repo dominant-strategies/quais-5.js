@@ -4,19 +4,21 @@
 // See: https://github.com/bitcoin/bips/blob/master/bip-0039.mediawiki
 
 
-import { ExternallyOwnedAccount } from "@ethersproject/abstract-signer";
-import { Base58 } from "@ethersproject/basex";
-import { arrayify, BytesLike, concat, hexDataSlice, hexZeroPad, hexlify } from "@ethersproject/bytes";
-import { BigNumber } from "@ethersproject/bignumber";
-import { toUtf8Bytes, UnicodeNormalizationForm } from "@ethersproject/strings";
-import { pbkdf2 } from "@ethersproject/pbkdf2";
-import { defineReadOnly } from "@ethersproject/properties";
-import { SigningKey } from "@ethersproject/signing-key";
-import { computeHmac, ripemd160, sha256, SupportedAlgorithm } from "@ethersproject/sha2";
-import { computeAddress } from "@ethersproject/transactions";
-import { Wordlist, wordlists } from "@ethersproject/wordlists";
+import { ExternallyOwnedAccount } from "@quais/abstract-signer";
+import { Base58 } from "@quais/basex";
+import { arrayify, BytesLike, concat, hexDataSlice, hexZeroPad, hexlify } from "@quais/bytes";
+import { BigNumber } from "@quais/bignumber";
+import { toUtf8Bytes, UnicodeNormalizationForm } from "@quais/strings";
+import { pbkdf2 } from "@quais/pbkdf2";
+import { defineReadOnly } from "@quais/properties";
+import { SigningKey } from "@quais/signing-key";
+import { computeHmac, ripemd160, sha256, SupportedAlgorithm } from "@quais/sha2";
+import { computeAddress } from "@quais/transactions";
+import { Wordlist, wordlists } from "@quais/wordlists";
+import { getShardFromAddress } from "@quais/address";
+import { ShardData } from "@quais/constants";
 
-import { Logger } from "@ethersproject/logger";
+import { Logger } from "@quais/logger";
 import { version } from "./_version";
 const logger = new Logger(version);
 
@@ -64,7 +66,8 @@ function getWordlist(wordlist: string | Wordlist): Wordlist {
 
 const _constructorGuard: any = {};
 
-export const defaultPath = "m/44'/60'/0'/0/0";
+export const defaultPath = "m/44'/994'/0'/0/0";
+export const defaultAccountPath = "m/44'/994'/0'/0/";
 
 export interface Mnemonic {
     readonly phrase: string;
@@ -408,3 +411,36 @@ export function getAccountPath(index: number): string {
     }
     return `m/44'/60'/${ index }'/0/0`;
 }
+
+
+export function getShardAddressChildNode(hdnode: HDNode, path: string, startingIndex: number, shard: string) {
+    let found = false;
+    let childNode;
+    while (!found) {
+        childNode = hdnode.derivePath(path + "/" + startingIndex.toString());
+        const addrShard = getShardFromAddress(childNode.address);
+        // Check if address is in a shard
+        if (addrShard !== undefined) {
+            // Check if address is in correct shard
+            if (addrShard === shard) {
+                found = true;
+                break;
+            }
+        }
+        startingIndex++;
+    }
+    return childNode;
+}
+  
+export function getAllShardsAddressChildNode(hdnode: HDNode, accountPath: string) {
+    const childNodes = [];
+    let shards = ShardData.map((shard: any) => shard.shard);
+
+    for (const shard of shards) {
+        const childNode = getShardAddressChildNode(hdnode, accountPath, 0, shard);
+        childNodes.push(childNode);
+    }
+
+    return childNodes;
+}
+  

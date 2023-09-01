@@ -6,9 +6,9 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.computeHmac = exports.sha512 = exports.sha256 = exports.ripemd160 = void 0;
 var crypto_1 = require("crypto");
 var hash_js_1 = __importDefault(require("hash.js"));
-var bytes_1 = require("@ethersproject/bytes");
+var bytes_1 = require("@quais/bytes");
 var types_1 = require("./types");
-var logger_1 = require("@ethersproject/logger");
+var logger_1 = require("@quais/logger");
 var _version_1 = require("./_version");
 var logger = new logger_1.Logger(_version_1.version);
 function ripemd160(data) {

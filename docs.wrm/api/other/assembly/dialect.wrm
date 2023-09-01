@@ -1,7 +1,7 @@
 _section: Ethers ASM Dialect @<asm-dialect>
 
 This provides a quick, high-level overview of the **Ethers ASM Dialect**
-for EVM, which is defined by the [Ethers ASM Dialect Grammar](link-ethers-asm-grammar)
+for EVM, which is defined by the [Ethers ASM Dialect Grammar](link-quais-asm-grammar)
 
 Once a program is compiled by a higher level language into ASM (assembly),
 or hand-coded directly in ASM, it needs to be assembled into bytecode.

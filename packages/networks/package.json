@@ -1,35 +1,24 @@
 {
-  "author": "Richard Moore <me@ricmoo.com>",
+  "author": "",
   "dependencies": {
-    "@ethersproject/logger": "^5.7.0"
+    "@quais/logger": "^0.1.0"
   },
-  "description": "Network definitions for ethers.",
-  "ethereum": "donations.ethers.eth",
-  "funding": [
-    {
-      "type": "individual",
-      "url": "https://gitcoin.co/grants/13/ethersjs-complete-simple-and-tiny-2"
-    },
-    {
-      "type": "individual",
-      "url": "https://www.buymeacoffee.com/ricmoo"
-    }
-  ],
+  "description": "Network definitions for quais.",
   "keywords": [
-    "Ethereum",
-    "ethers"
+    "Quai",
+    "quais"
   ],
   "license": "MIT",
   "main": "./lib/index.js",
   "module": "./lib.esm/index.js",
-  "name": "@ethersproject/networks",
+  "name": "@quais/networks",
   "publishConfig": {
     "access": "public"
   },
   "repository": {
     "directory": "packages/networks",
     "type": "git",
-    "url": "git://github.com/ethers-io/ethers.js.git"
+    "url": "git://github.com:dominant-strategies/quais.js.git"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -37,5 +26,5 @@
   "sideEffects": false,
   "tarballHash": "0x7d5f9d59cb0cbfaba26d9dc4d43610a2d647ee7ce211f07b180a8c5e347f5724",
   "types": "./lib/index.d.ts",
-  "version": "5.7.1"
+  "version": "0.1.0"
 }

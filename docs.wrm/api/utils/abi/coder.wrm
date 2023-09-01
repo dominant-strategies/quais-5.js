@@ -18,7 +18,7 @@ be used universally.
 This is likely only needed by those with specific needs to override
 how values are coerced after they are decoded from their binary format.
 
-_property: new ethers.utils.AbiCoder([coerceFunc]) @SRC<abi:constructor.AbiCoder>
+_property: new quais.utils.AbiCoder([coerceFunc]) @SRC<abi:constructor.AbiCoder>
 
 Create a new AbiCoder instance, which will call the //coerceFunc// on every
 decode, where the result of the call will be used in the Result.
@@ -30,7 +30,7 @@ Coder.
 If the callback throws, the Result will contain a property that when accessed will
 throw, allowing for higher level libraries to recover from data errors.
 
-_property: ethers.utils.defaultAbiCoder => [[AbiCoder]]
+_property: quais.utils.defaultAbiCoder => [[AbiCoder]]
 
 An [[AbiCoder]] created when the library is imported which is used by
 the [[Interface]].

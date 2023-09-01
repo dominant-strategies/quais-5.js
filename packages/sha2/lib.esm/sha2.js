@@ -1,9 +1,9 @@
 "use strict";
 import hash from "hash.js";
 //const _ripemd160 = _hash.ripemd160;
-import { arrayify } from "@ethersproject/bytes";
+import { arrayify } from "@quais/bytes";
 import { SupportedAlgorithm } from "./types";
-import { Logger } from "@ethersproject/logger";
+import { Logger } from "@quais/logger";
 import { version } from "./_version";
 const logger = new Logger(version);
 export function ripemd160(data) {

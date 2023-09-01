@@ -2,7 +2,7 @@
 import assert from "assert";
 import { resolve } from "path";
 import fs from "fs";
-import { solc } from "@ethersproject/cli";
+import { solc } from "@quais/cli";
 describe('Test solc', function () {
     it('compiles contracts with imported library', function () {
         this.timeout(1200000);

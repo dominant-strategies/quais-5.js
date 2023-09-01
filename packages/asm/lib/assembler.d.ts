@@ -1,4 +1,4 @@
-import { ethers } from "ethers";
+import { quais } from "quais";
 import { Opcode } from "./opcodes";
 export declare type Location = {
     offset: number;
@@ -24,7 +24,7 @@ export declare abstract class ValueNode extends Node {
     constructor(guard: any, location: Location, options: {
         [key: string]: any;
     });
-    getPushLiteral(value: ethers.utils.BytesLike | ethers.utils.Hexable | number): string;
+    getPushLiteral(value: quais.utils.BytesLike | quais.utils.Hexable | number): string;
 }
 export declare class LiteralNode extends ValueNode {
     readonly value: string;

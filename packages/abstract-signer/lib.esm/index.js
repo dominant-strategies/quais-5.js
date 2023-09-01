@@ -8,12 +8,12 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-import { defineReadOnly, resolveProperties, shallowCopy } from "@ethersproject/properties";
-import { Logger } from "@ethersproject/logger";
+import { defineReadOnly, resolveProperties, shallowCopy } from "@quais/properties";
+import { Logger } from "@quais/logger";
 import { version } from "./_version";
 const logger = new Logger(version);
 const allowedTransactionKeys = [
-    "accessList", "ccipReadEnabled", "chainId", "customData", "data", "from", "gasLimit", "gasPrice", "maxFeePerGas", "maxPriorityFeePerGas", "nonce", "to", "type", "value"
+    "accessList", "ccipReadEnabled", "chainId", "customData", "data", "from", "gasLimit", "gasPrice", "maxFeePerGas", "maxPriorityFeePerGas", "nonce", "to", "type", "value", "externalGasLimit", "externalGasPrice", "externalGasTip", "externalAccessList", "externalData"
 ];
 const forwardErrors = [
     Logger.errors.INSUFFICIENT_FUNDS,
@@ -79,6 +79,12 @@ export class Signer {
         return __awaiter(this, void 0, void 0, function* () {
             this._checkProvider("getGasPrice");
             return yield this.provider.getGasPrice();
+        });
+    }
+    getMaxPriorityFeePerGas() {
+        return __awaiter(this, void 0, void 0, function* () {
+            this._checkProvider("getMaxPriorityFeePerGas");
+            return yield this.provider.getMaxPriorityFeePerGas();
         });
     }
     getFeeData() {
@@ -150,82 +156,52 @@ export class Signer {
                 // Prevent this error from causing an UnhandledPromiseException
                 tx.to.catch((error) => { });
             }
-            // Do not allow mixing pre-eip-1559 and eip-1559 properties
-            const hasEip1559 = (tx.maxFeePerGas != null || tx.maxPriorityFeePerGas != null);
-            if (tx.gasPrice != null && (tx.type === 2 || hasEip1559)) {
-                logger.throwArgumentError("eip-1559 transaction do not support gasPrice", "transaction", transaction);
-            }
-            else if ((tx.type === 0 || tx.type === 1) && hasEip1559) {
-                logger.throwArgumentError("pre-eip-1559 transaction do not support maxFeePerGas/maxPriorityFeePerGas", "transaction", transaction);
-            }
-            if ((tx.type === 2 || tx.type == null) && (tx.maxFeePerGas != null && tx.maxPriorityFeePerGas != null)) {
-                // Fully-formed EIP-1559 transaction (skip getFeeData)
-                tx.type = 2;
-            }
-            else if (tx.type === 0 || tx.type === 1) {
-                // Explicit Legacy or EIP-2930 transaction
-                // Populate missing gasPrice
-                if (tx.gasPrice == null) {
-                    tx.gasPrice = this.getGasPrice();
-                }
+            const hasExternal = (tx.externalGasLimit != null || tx.externalGasPrice != null || tx.externalGasTip != null || tx.externalData != null || tx.externalAccessList != null);
+            if ((tx.type === 0 || tx.type == null) && (tx.maxFeePerGas != null && tx.maxPriorityFeePerGas != null) && !hasExternal) {
+                // Fully-formed standard transaction (skip getFeeData), no external data.
+                tx.type = 0;
             }
             else {
                 // We need to get fee data to determine things
                 const feeData = yield this.getFeeData();
+                console.log("FEE DATA:", feeData);
                 if (tx.type == null) {
                     // We need to auto-detect the intended type of this transaction...
                     if (feeData.maxFeePerGas != null && feeData.maxPriorityFeePerGas != null) {
                         // The network supports EIP-1559!
-                        // Upgrade transaction from null to eip-1559
-                        tx.type = 2;
-                        if (tx.gasPrice != null) {
-                            // Using legacy gasPrice property on an eip-1559 network,
-                            // so use gasPrice as both fee properties
-                            const gasPrice = tx.gasPrice;
-                            delete tx.gasPrice;
-                            tx.maxFeePerGas = gasPrice;
-                            tx.maxPriorityFeePerGas = gasPrice;
+                        // Upgrade transaction from null to standard
+                        if (!hasExternal) {
+                            tx.type = 0;
                         }
                         else {
-                            // Populate missing fee data
-                            if (tx.maxFeePerGas == null) {
-                                tx.maxFeePerGas = feeData.maxFeePerGas;
+                            tx.type = 2;
+                            // Populate missing fee data, assume the receiving context is operating in similar 
+                            if (tx.externalGasLimit == null || tx.externalGasPrice == null || tx.externalGasTip == null) {
+                                // Missing external fields
+                                logger.throwError("attempting to send an external transaction without all necessary data fields", Logger.errors.UNSUPPORTED_OPERATION, {
+                                    operation: "populateTransaction"
+                                });
                             }
-                            if (tx.maxPriorityFeePerGas == null) {
-                                tx.maxPriorityFeePerGas = feeData.maxPriorityFeePerGas;
-                            }
+                        }
+                        // Populate missing fee data
+                        if (tx.maxFeePerGas == null) {
+                            tx.maxFeePerGas = feeData.maxFeePerGas;
+                        }
+                        if (tx.maxPriorityFeePerGas == null) {
+                            tx.maxPriorityFeePerGas = feeData.maxPriorityFeePerGas;
                         }
                     }
                     else if (feeData.gasPrice != null) {
                         // Network doesn't support EIP-1559...
-                        // ...but they are trying to use EIP-1559 properties
-                        if (hasEip1559) {
-                            logger.throwError("network does not support EIP-1559", Logger.errors.UNSUPPORTED_OPERATION, {
-                                operation: "populateTransaction"
-                            });
-                        }
-                        // Populate missing fee data
-                        if (tx.gasPrice == null) {
-                            tx.gasPrice = feeData.gasPrice;
-                        }
-                        // Explicitly set untyped transaction to legacy
-                        tx.type = 0;
+                        logger.throwError("network does not support EIP-1559", Logger.errors.UNSUPPORTED_OPERATION, {
+                            operation: "populateTransaction"
+                        });
                     }
                     else {
                         // getFeeData has failed us.
                         logger.throwError("failed to get consistent fee data", Logger.errors.UNSUPPORTED_OPERATION, {
                             operation: "signer.getFeeData"
                         });
-                    }
-                }
-                else if (tx.type === 2) {
-                    // Explicitly using EIP-1559
-                    // Populate missing fee data
-                    if (tx.maxFeePerGas == null) {
-                        tx.maxFeePerGas = feeData.maxFeePerGas;
-                    }
-                    if (tx.maxPriorityFeePerGas == null) {
-                        tx.maxPriorityFeePerGas = feeData.maxPriorityFeePerGas;
                     }
                 }
             }
@@ -237,7 +213,7 @@ export class Signer {
                     if (forwardErrors.indexOf(error.code) >= 0) {
                         throw error;
                     }
-                    return logger.throwError("cannot estimate gas; transaction may fail or may require manual gas limit", Logger.errors.UNPREDICTABLE_GAS_LIMIT, {
+                    return logger.throwError("abstract-signer: cannot estimate gas; transaction may fail or may require manual gas limit", Logger.errors.UNPREDICTABLE_GAS_LIMIT, {
                         error: error,
                         tx: tx
                     });

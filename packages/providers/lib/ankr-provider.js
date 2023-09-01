@@ -18,7 +18,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.AnkrProvider = void 0;
 var formatter_1 = require("./formatter");
 var url_json_rpc_provider_1 = require("./url-json-rpc-provider");
-var logger_1 = require("@ethersproject/logger");
+var logger_1 = require("@quais/logger");
 var _version_1 = require("./_version");
 var logger = new logger_1.Logger(_version_1.version);
 var defaultApiKey = "9f7d929b018cdffb338517efa06f58359e86ff1ffd350bc889738523659e7972";

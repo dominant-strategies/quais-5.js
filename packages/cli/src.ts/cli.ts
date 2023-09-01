@@ -5,14 +5,14 @@
 import fs from "fs";
 import { basename } from "path";
 
-import { ethers } from "ethers";
+import { quais } from "quais";
 import * as scrypt from "scrypt-js";
 
 import { getChoice, getPassword, getProgressBar } from "./prompt";
 
 import { version } from "./_version";
 
-const logger = new ethers.utils.Logger(version);
+const logger = new quais.utils.Logger(version);
 
 class UsageError extends Error { }
 
@@ -24,8 +24,8 @@ class UsageError extends Error { }
 const signerStates = new WeakMap();
 
 class SignerState {
-    signerFunc: () => Promise<ethers.Signer>;
-    signer: ethers.Signer;
+    signerFunc: () => Promise<quais.Signer>;
+    signer: quais.Signer;
     alwaysAllow: boolean;
 
     static get(wrapper: WrappedSigner): SignerState {
@@ -39,9 +39,9 @@ const alwaysAllow = new WeakMap();
 
 // Gets a signer or lazily request it if needed, possibly asking for a password
 // to decrypt a JSON wallet
-async function getSigner(wrapper: WrappedSigner): Promise<ethers.Signer> {
+async function getSigner(wrapper: WrappedSigner): Promise<quais.Signer> {
     if (!signers.has(wrapper)) {
-        let signerFunc: () => Promise<ethers.Signer> = signerFuncs.get(wrapper);
+        let signerFunc: () => Promise<quais.Signer> = signerFuncs.get(wrapper);
         let signer = await signerFunc();
         signers.set(wrapper, signer);
     }
@@ -105,20 +105,20 @@ export function dump(header: string, info: any): void {
 // This wraps our signers to prevent the private keys and mnemonics from being exposed.
 // It is also in charge of user-interaction, requesting permission before signing or
 // sending.
-class WrappedSigner extends ethers.Signer {
+class WrappedSigner extends quais.Signer {
     readonly addressPromise: Promise<string>;
-    readonly provider: ethers.providers.Provider;
+    readonly provider: quais.providers.Provider;
     readonly plugin: Plugin;
 
-    constructor(addressPromise: Promise<string>, signerFunc: () => Promise<ethers.Signer>, plugin: Plugin) {
+    constructor(addressPromise: Promise<string>, signerFunc: () => Promise<quais.Signer>, plugin: Plugin) {
         super();
         signerFuncs.set(this, signerFunc);
-        ethers.utils.defineReadOnly(this, "addressPromise", addressPromise);
-        ethers.utils.defineReadOnly(this, "provider", plugin.provider);
-        ethers.utils.defineReadOnly(this, "plugin", plugin);
+        quais.utils.defineReadOnly(this, "addressPromise", addressPromise);
+        quais.utils.defineReadOnly(this, "provider", plugin.provider);
+        quais.utils.defineReadOnly(this, "plugin", plugin);
     }
 
-    connect(provider?: ethers.providers.Provider): ethers.Signer {
+    connect(provider?: quais.providers.Provider): quais.Signer {
         throw new Error("unsupported for now...");
         //return new WrappedSigner(this.addressPromise, () => getSigner(this).then((s) => s.connect(provider)), provider);
     }
@@ -127,15 +127,15 @@ class WrappedSigner extends ethers.Signer {
         return this.addressPromise;
     }
 
-    async signMessage(message: string | ethers.utils.Bytes): Promise<string> {
+    async signMessage(message: string | quais.utils.Bytes): Promise<string> {
         let signer = await getSigner(this);
 
         let info: any = { };
         if (typeof(message) === "string") {
             info["Message"] = JSON.stringify(message);
-            info["Message (hex)"] = ethers.utils.hexlify(ethers.utils.toUtf8Bytes(message));
+            info["Message (hex)"] = quais.utils.hexlify(quais.utils.toUtf8Bytes(message));
         } else {
-            let bytes = ethers.utils.arrayify(message);
+            let bytes = quais.utils.arrayify(message);
             for (let i = 0; i < bytes.length; i++) {
                 let c = bytes[i];
                 if (c < 32 || c > 126) {
@@ -144,9 +144,9 @@ class WrappedSigner extends ethers.Signer {
                 }
             }
             if (bytes) {
-                info["Message"] = ethers.utils.toUtf8String(bytes);
+                info["Message"] = quais.utils.toUtf8String(bytes);
             }
-            info["Message (hex)"] = ethers.utils.hexlify(message);
+            info["Message (hex)"] = quais.utils.hexlify(message);
         }
 
         dump("Message:", info);
@@ -155,7 +155,7 @@ class WrappedSigner extends ethers.Signer {
 
         let result = await signer.signMessage(message)
 
-        let signature = ethers.utils.splitSignature(result);
+        let signature = quais.utils.splitSignature(result);
         dump("Signature", {
             Flat: result,
             r: signature.r,
@@ -168,8 +168,8 @@ class WrappedSigner extends ethers.Signer {
         return result;
     }
 
-    async populateTransaction(transactionRequest: ethers.providers.TransactionRequest): Promise<ethers.providers.TransactionRequest> {
-        transactionRequest = ethers.utils.shallowCopy(transactionRequest);
+    async populateTransaction(transactionRequest: quais.providers.TransactionRequest): Promise<quais.providers.TransactionRequest> {
+        transactionRequest = quais.utils.shallowCopy(transactionRequest);
 
         if (this.plugin.gasPrice != null) {
             transactionRequest.gasPrice = this.plugin.gasPrice;
@@ -187,21 +187,21 @@ class WrappedSigner extends ethers.Signer {
         return signer.populateTransaction(transactionRequest);
     }
 
-    async signTransaction(transactionRequest: ethers.providers.TransactionRequest): Promise<string> {
+    async signTransaction(transactionRequest: quais.providers.TransactionRequest): Promise<string> {
         let signer = await getSigner(this);
 
         let network = await this.provider.getNetwork();
 
-        let tx = await ethers.utils.resolveProperties(transactionRequest);
+        let tx = await quais.utils.resolveProperties(transactionRequest);
 
         let info: any = { };
         if (tx.to != null) { info["To"] = tx.to; }
         if (tx.from != null) { info["From"] = tx.from; }
-        info["Value"] = (ethers.utils.formatEther(tx.value || 0) + " ether");
+        info["Value"] = (quais.utils.formatEther(tx.value || 0) + " ether");
         if (tx.nonce != null) { info["Nonce"] = tx.nonce; }
         info["Data"] = tx.data;
-        info["Gas Limit"] = ethers.BigNumber.from(tx.gasLimit || 0).toString();
-        info["Gas Price"] = (ethers.utils.formatUnits(tx.gasPrice || 0, "gwei") + " gwei"),
+        info["Gas Limit"] = quais.BigNumber.from(tx.gasLimit || 0).toString();
+        info["Gas Price"] = (quais.utils.formatUnits(tx.gasPrice || 0, "gwei") + " gwei"),
         info["Chain ID"] = (tx.chainId || 0);
         info["Network"] = network.name;
 
@@ -211,7 +211,7 @@ class WrappedSigner extends ethers.Signer {
 
         let result = await signer.signTransaction(transactionRequest);
 
-        let signature = ethers.utils.splitSignature(result);
+        let signature = quais.utils.splitSignature(result);
         dump("Signature:", {
             Signature: result,
             r: signature.r,
@@ -224,22 +224,22 @@ class WrappedSigner extends ethers.Signer {
         return result;
     }
 
-    async sendTransaction(transactionRequest: ethers.providers.TransactionRequest): Promise<ethers.providers.TransactionResponse> {
+    async sendTransaction(transactionRequest: quais.providers.TransactionRequest): Promise<quais.providers.TransactionResponse> {
         let signer = await getSigner(this);
 
         let network = await this.provider.getNetwork();
 
         let tx: any = await this.populateTransaction(transactionRequest);
-        tx = await ethers.utils.resolveProperties(tx);
+        tx = await quais.utils.resolveProperties(tx);
 
         let info: any = { };
         if (tx.to != null) { info["To"] = tx.to; }
         if (tx.from != null) { info["From"] = tx.from; }
-        info["Value"] = (ethers.utils.formatEther(tx.value || 0) + " ether");
+        info["Value"] = (quais.utils.formatEther(tx.value || 0) + " ether");
         if (tx.nonce != null) { info["Nonce"] = tx.nonce; }
         info["Data"] = tx.data;
-        info["Gas Limit"] = ethers.BigNumber.from(tx.gasLimit || 0).toString();
-        info["Gas Price"] = (ethers.utils.formatUnits(tx.gasPrice || 0, "gwei") + " gwei"),
+        info["Gas Limit"] = quais.BigNumber.from(tx.gasLimit || 0).toString();
+        info["Gas Price"] = (quais.utils.formatUnits(tx.gasPrice || 0, "gwei") + " gwei"),
         info["Chain ID"] = (tx.chainId || 0);
         info["Network"] = network.name;
 
@@ -259,8 +259,8 @@ class WrappedSigner extends ethers.Signer {
                 dump("Success:", {
                     "Block Number": receipt.blockNumber,
                     "Block Hash": receipt.blockHash,
-                    "Gas Used": ethers.utils.commify(receipt.gasUsed.toString()),
-                    "Fee": (ethers.utils.formatEther(receipt.gasUsed.mul(tx.gasPrice)) + " ether")
+                    "Gas Used": quais.utils.commify(receipt.gasUsed.toString()),
+                    "Fee": (quais.utils.formatEther(receipt.gasUsed.mul(tx.gasPrice)) + " ether")
                 });
             } catch (error) {
                 dump("Failed:", {
@@ -277,12 +277,12 @@ class WrappedSigner extends ethers.Signer {
     }
 }
 
-class OfflineProvider extends ethers.providers.BaseProvider {
+class OfflineProvider extends quais.providers.BaseProvider {
     perform(method: string, params: any): Promise<any> {
         if (method === "sendTransaction") {
             console.log("Signed Transaction:");
             console.log(params.signedTransaction);
-            return Promise.resolve(ethers.utils.keccak256(params.signedTransaction));
+            return Promise.resolve(quais.utils.keccak256(params.signedTransaction));
         }
         return super.perform(method, params);
     }
@@ -296,8 +296,8 @@ export class ArgParser {
     readonly _consumed: Array<boolean>
 
     constructor(args: Array<string>) {
-        ethers.utils.defineReadOnly(this, "_args", args);
-        ethers.utils.defineReadOnly(this, "_consumed", args.map((a) => false));
+        quais.utils.defineReadOnly(this, "_args", args);
+        quais.utils.defineReadOnly(this, "_consumed", args.map((a) => false));
     }
 
     _finalizeArgs(): Array<string> {
@@ -402,36 +402,36 @@ async function loadAccount(arg: string, plugin: Plugin, preventFile?: boolean): 
     }
 
     // Raw private key
-    if (ethers.utils.isHexString(arg, 32)) {
-         const signer = new ethers.Wallet(arg, plugin.provider);
+    if (quais.utils.isHexString(arg, 32)) {
+         const signer = new quais.Wallet(arg, plugin.provider);
          return Promise.resolve(new WrappedSigner(signer.getAddress(), () => Promise.resolve(signer), plugin));
     }
 
     // Mnemonic
-    if (ethers.utils.isValidMnemonic(arg)) {
+    if (quais.utils.isValidMnemonic(arg)) {
         const mnemonic = arg;
-        let signerPromise: Promise<ethers.Wallet> = null;
+        let signerPromise: Promise<quais.Wallet> = null;
         if (plugin.mnemonicPassword) {
             signerPromise = getPassword("Password (mnemonic): ").then((password) => {
-                let node = ethers.utils.HDNode.fromMnemonic(mnemonic, password).derivePath(plugin.mnemonicPath);
-                return new ethers.Wallet(node.privateKey, plugin.provider);
+                let node = quais.utils.HDNode.fromMnemonic(mnemonic, password).derivePath(plugin.mnemonicPath);
+                return new quais.Wallet(node.privateKey, plugin.provider);
             });
 
         } else if (plugin._xxxMnemonicPasswordHard) {
             signerPromise = getPassword("Password (mnemonic; experimental - hard): ").then((password) => {
-                let passwordBytes = ethers.utils.toUtf8Bytes(password, ethers.utils.UnicodeNormalizationForm.NFKC);
-                let saltBytes = ethers.utils.arrayify(ethers.utils.HDNode.fromMnemonic(mnemonic).privateKey);
+                let passwordBytes = quais.utils.toUtf8Bytes(password, quais.utils.UnicodeNormalizationForm.NFKC);
+                let saltBytes = quais.utils.arrayify(quais.utils.HDNode.fromMnemonic(mnemonic).privateKey);
 
                 let progressBar = getProgressBar("Decrypting");
                 return scrypt.scrypt(passwordBytes, saltBytes, (1 << 20), 8, 1, 32, progressBar).then((key) => {
-                    const derivedPassword = ethers.utils.hexlify(key).substring(2);
-                    const node = ethers.utils.HDNode.fromMnemonic(mnemonic, derivedPassword).derivePath(plugin.mnemonicPath);
-                    return new ethers.Wallet(node.privateKey, plugin.provider);
+                    const derivedPassword = quais.utils.hexlify(key).substring(2);
+                    const node = quais.utils.HDNode.fromMnemonic(mnemonic, derivedPassword).derivePath(plugin.mnemonicPath);
+                    return new quais.Wallet(node.privateKey, plugin.provider);
                 });
             });
 
         } else {
-            signerPromise = Promise.resolve(ethers.Wallet.fromMnemonic(arg).connect(plugin.provider));
+            signerPromise = Promise.resolve(quais.Wallet.fromMnemonic(arg).connect(plugin.provider));
         }
 
         return Promise.resolve(new WrappedSigner(
@@ -445,15 +445,15 @@ async function loadAccount(arg: string, plugin: Plugin, preventFile?: boolean): 
     try {
         let content = fs.readFileSync(arg).toString();
 
-        let address = ethers.utils.getJsonWalletAddress(content);
+        let address = quais.utils.getJsonWalletAddress(content);
         if (address) {
             return Promise.resolve(new WrappedSigner(
                 Promise.resolve(address),
-                async (): Promise<ethers.Signer> => {
+                async (): Promise<quais.Signer> => {
                     let password = await getPassword(`Password (${arg}): `);
 
                     let progressBar = getProgressBar("Decrypting");
-                    return ethers.Wallet.fromEncryptedJson(content, password, progressBar).then((wallet) => {
+                    return quais.Wallet.fromEncryptedJson(content, password, progressBar).then((wallet) => {
                         return wallet.connect(plugin.provider);
                     });
                 },
@@ -490,16 +490,16 @@ export interface PluginType {
 }
 
 export abstract class Plugin {
-    network: ethers.providers.Network;
-    provider: ethers.providers.Provider;
+    network: quais.providers.Network;
+    provider: quais.providers.Provider;
 
     accounts: ReadonlyArray<WrappedSigner>;
     mnemonicPassword: boolean;
     mnemonicPath: string;
     _xxxMnemonicPasswordHard: boolean;
 
-    gasLimit: ethers.BigNumber;
-    gasPrice: ethers.BigNumber;
+    gasLimit: quais.BigNumber;
+    gasPrice: quais.BigNumber;
     nonce: number;
     yes: boolean;
     wait: boolean;
@@ -525,29 +525,29 @@ export abstract class Plugin {
         // Provider
 
         let network = (argParser.consumeOption("network") || "homestead");
-        let providers: Array<ethers.providers.BaseProvider> = [ ];
+        let providers: Array<quais.providers.BaseProvider> = [ ];
 
-        let rpc: Array<ethers.providers.JsonRpcProvider> = [ ];
+        let rpc: Array<quais.providers.JsonRpcProvider> = [ ];
         argParser.consumeOptions("rpc").forEach((url) => {
-            let provider = new ethers.providers.JsonRpcProvider(url)
+            let provider = new quais.providers.JsonRpcProvider(url)
             providers.push(provider);
             rpc.push(provider);
         });
 
         if (argParser.consumeFlag("alchemy")) {
-            providers.push(new ethers.providers.AlchemyProvider(network));
+            providers.push(new quais.providers.AlchemyProvider(network));
         }
 
         if (argParser.consumeFlag("etherscan")) {
-            providers.push(new ethers.providers.EtherscanProvider(network));
+            providers.push(new quais.providers.EtherscanProvider(network));
         }
 
         if (argParser.consumeFlag("infura")) {
-            providers.push(new ethers.providers.InfuraProvider(network));
+            providers.push(new quais.providers.InfuraProvider(network));
         }
 
         if (argParser.consumeFlag("nodesmith")) {
-            providers.push(new ethers.providers.NodesmithProvider(network));
+            providers.push(new quais.providers.NodesmithProvider(network));
         }
 
         if (argParser.consumeFlag("offline")) {
@@ -555,20 +555,20 @@ export abstract class Plugin {
         }
 
         if (providers.length === 1) {
-            ethers.utils.defineReadOnly(this, "provider", providers[0]);
+            quais.utils.defineReadOnly(this, "provider", providers[0]);
         } else if (providers.length) {
-            ethers.utils.defineReadOnly(this, "provider", new ethers.providers.FallbackProvider(providers));
+            quais.utils.defineReadOnly(this, "provider", new quais.providers.FallbackProvider(providers));
         } else {
-            ethers.utils.defineReadOnly(this, "provider", ethers.getDefaultProvider(network));
+            quais.utils.defineReadOnly(this, "provider", quais.getDefaultProvider(network));
         }
 
 
         /////////////////////
         // Accounts
 
-        ethers.utils.defineReadOnly(this, "mnemonicPassword", argParser.consumeFlag("mnemonic-password"));
+        quais.utils.defineReadOnly(this, "mnemonicPassword", argParser.consumeFlag("mnemonic-password"));
 
-        ethers.utils.defineReadOnly(this, "mnemonicPath", (function() {
+        quais.utils.defineReadOnly(this, "mnemonicPath", (function() {
             let mnemonicPath = argParser.consumeOption("mnemonic-path");
             if (mnemonicPath) {
                 if (mnemonicPath.match(/^[0-9]+$/)) {
@@ -576,10 +576,10 @@ export abstract class Plugin {
                 }
                 return mnemonicPath;
             }
-            return ethers.utils.defaultPath;
+            return quais.utils.defaultPath;
         })());
 
-        ethers.utils.defineReadOnly(this, "_xxxMnemonicPasswordHard", argParser.consumeFlag("xxx-mnemonic-password"));
+        quais.utils.defineReadOnly(this, "_xxxMnemonicPasswordHard", argParser.consumeFlag("xxx-mnemonic-password"));
 
         let accounts: Array<WrappedSigner> = [ ];
 
@@ -600,11 +600,11 @@ export abstract class Plugin {
                     }
 
                     try {
-                        let signer: ethers.providers.JsonRpcSigner = null;
+                        let signer: quais.providers.JsonRpcSigner = null;
                         if (account.value.match(/^[0-9]+$/)) {
                             signer = rpc[0].getSigner(parseInt(account.value));
                         } else {
-                            signer = rpc[0].getSigner(ethers.utils.getAddress(account.value));
+                            signer = rpc[0].getSigner(quais.utils.getAddress(account.value));
                         }
                         accounts.push(new WrappedSigner(signer.getAddress(), () => Promise.resolve(signer), this));
                     } catch (error) {
@@ -615,7 +615,7 @@ export abstract class Plugin {
                 case "account-void": {
                     let addressPromise = this.provider.resolveName(account.value);
                     let signerPromise = addressPromise.then((addr) => {
-                        return new ethers.VoidSigner(addr, this.provider);
+                        return new quais.VoidSigner(addr, this.provider);
                     });
                     accounts.push(new WrappedSigner(addressPromise, () => signerPromise, this));
                     break;
@@ -623,7 +623,7 @@ export abstract class Plugin {
             }
         }
 
-        ethers.utils.defineReadOnly(this, "accounts", Object.freeze(accounts));
+        quais.utils.defineReadOnly(this, "accounts", Object.freeze(accounts));
 
 
         /////////////////////
@@ -631,30 +631,30 @@ export abstract class Plugin {
 
         const gasPrice = argParser.consumeOption("gas-price");
         if (gasPrice) {
-            ethers.utils.defineReadOnly(this, "gasPrice", ethers.utils.parseUnits(gasPrice, "gwei"));
+            quais.utils.defineReadOnly(this, "gasPrice", quais.utils.parseUnits(gasPrice, "gwei"));
         } else {
-            ethers.utils.defineReadOnly(this, "gasPrice", null);
+            quais.utils.defineReadOnly(this, "gasPrice", null);
         }
 
         const gasLimit = argParser.consumeOption("gas-limit");
         if (gasLimit) {
-            ethers.utils.defineReadOnly(this, "gasLimit", ethers.BigNumber.from(gasLimit));
+            quais.utils.defineReadOnly(this, "gasLimit", quais.BigNumber.from(gasLimit));
         } else {
-            ethers.utils.defineReadOnly(this, "gasLimit", null);
+            quais.utils.defineReadOnly(this, "gasLimit", null);
         }
 
         const nonce = argParser.consumeOption("nonce");
         if (nonce) {
-            this.nonce = ethers.BigNumber.from(nonce).toNumber();
+            this.nonce = quais.BigNumber.from(nonce).toNumber();
         }
 
 
         // Now wait for all asynchronous options to load
 
         runners.push(this.provider.getNetwork().then((network) => {
-            ethers.utils.defineReadOnly(this, "network", Object.freeze(network));
+            quais.utils.defineReadOnly(this, "network", Object.freeze(network));
         }, (error) => {
-            ethers.utils.defineReadOnly(this, "network", Object.freeze({
+            quais.utils.defineReadOnly(this, "network", Object.freeze({
                 chainId: 0,
                 name: "no-network"
             }));
@@ -677,7 +677,7 @@ export abstract class Plugin {
 
     getAddress(addressOrName: string, message?: string, allowZero?: boolean): Promise<string> {
         try {
-            return Promise.resolve(ethers.utils.getAddress(addressOrName));
+            return Promise.resolve(quais.utils.getAddress(addressOrName));
         } catch (error) { }
 
         return this.provider.resolveName(addressOrName).then((address) => {
@@ -685,7 +685,7 @@ export abstract class Plugin {
                 this.throwError("ENS name not configured - " + addressOrName);
             }
 
-            if (address === ethers.constants.AddressZero && !allowZero) {
+            if (address === quais.constants.AddressZero && !allowZero) {
                 this.throwError(message || "cannot use the zero address");
             }
 
@@ -734,7 +734,7 @@ export class CLI {
     readonly options: Options;
 
     constructor(defaultCommand?: string, options?: Options) {
-        ethers.utils.defineReadOnly(this, "options", {
+        quais.utils.defineReadOnly(this, "options", {
             account: true,
             provider: true,
             transaction: true,
@@ -754,45 +754,45 @@ export class CLI {
         }
         Object.freeze(this.options);
 
-        ethers.utils.defineReadOnly(this, "defaultCommand", defaultCommand || null);
-        ethers.utils.defineReadOnly(this, "plugins", { });
+        quais.utils.defineReadOnly(this, "defaultCommand", defaultCommand || null);
+        quais.utils.defineReadOnly(this, "plugins", { });
     }
 
     static getAppName(): string {
         try {
             return basename(process.mainModule.filename).split(".")[0];
         } catch (error) { }
-        return "ethers";
+        return "quais";
     }
 
     // @TODO: Better way to specify default; i.e. may not have args
 
     addPlugin(command: string, plugin: PluginType) {
         if (this.standAlone) {
-            logger.throwError("only setPlugin or addPlugin may be used at once", ethers.errors.UNSUPPORTED_OPERATION, {
+            logger.throwError("only setPlugin or addPlugin may be used at once", quais.errors.UNSUPPORTED_OPERATION, {
                 operation: "addPlugin"
             });
         } else if (this.plugins[command]) {
-            logger.throwError("command already exists", ethers.errors.UNSUPPORTED_OPERATION, {
+            logger.throwError("command already exists", quais.errors.UNSUPPORTED_OPERATION, {
                 operation: "addPlugin",
                 command: command
             });
         }
-        ethers.utils.defineReadOnly(this.plugins, command, plugin);
+        quais.utils.defineReadOnly(this.plugins, command, plugin);
     }
 
     setPlugin(plugin: PluginType) {
         if (Object.keys(this.plugins).length !== 0) {
-            logger.throwError("only setPlugin or addPlugin may be used at once", ethers.errors.UNSUPPORTED_OPERATION, {
+            logger.throwError("only setPlugin or addPlugin may be used at once", quais.errors.UNSUPPORTED_OPERATION, {
                 operation: "setPlugin"
             });
         }
         if (this.standAlone) {
-            logger.throwError("cannot setPlugin more than once", ethers.errors.UNSUPPORTED_OPERATION, {
+            logger.throwError("cannot setPlugin more than once", quais.errors.UNSUPPORTED_OPERATION, {
                 operation: "setPlugin"
             });
         }
-        ethers.utils.defineReadOnly(this, "standAlone", plugin);
+        quais.utils.defineReadOnly(this, "standAlone", plugin);
     }
 
     showUsage(message?: string, status?: number): never {
@@ -800,12 +800,12 @@ export class CLI {
         console.log("Usage:");
 
         if (this.standAlone) {
-            let help = ethers.utils.getStatic<() => Help>(this.standAlone, "getHelp")();
+            let help = quais.utils.getStatic<() => Help>(this.standAlone, "getHelp")();
             console.log(`   ${ CLI.getAppName() } ${ help.name } [ OPTIONS ]`);
             console.log("");
 
             let lines: Array<string> = [];
-            let optionHelp = ethers.utils.getStatic<() => Array<Help>>(this.standAlone, "getOptionHelp")();
+            let optionHelp = quais.utils.getStatic<() => Array<Help>>(this.standAlone, "getOptionHelp")();
             optionHelp.forEach((help) => {
                 lines.push("  " + help.name + repeat(" ", 28 - help.name.length) + help.help);
             });
@@ -830,7 +830,7 @@ export class CLI {
             let lines: Array<string> = [];
             for (let cmd in this.plugins) {
                 let plugin = this.plugins[cmd];
-                let help = ethers.utils.getStatic<() => Help>(plugin, "getHelp")();
+                let help = quais.utils.getStatic<() => Help>(plugin, "getHelp")();
                 if (help == null) { continue; }
                 let helpLine = "   " + help.name;
                 if (helpLine.length > 28) {
@@ -841,7 +841,7 @@ export class CLI {
                     lines.push(helpLine + help.help);
                 }
 
-                let optionHelp = ethers.utils.getStatic<() => Array<Help>>(plugin, "getOptionHelp")();
+                let optionHelp = quais.utils.getStatic<() => Array<Help>>(plugin, "getOptionHelp")();
                 optionHelp.forEach((help) => {
                     lines.push("      " + help.name + repeat(" ", 27 - help.name.length) + help.help);
                 });

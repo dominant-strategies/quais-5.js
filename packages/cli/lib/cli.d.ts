@@ -1,16 +1,16 @@
-import { ethers } from "ethers";
+import { quais } from "quais";
 export declare function dump(header: string, info: any): void;
-declare class WrappedSigner extends ethers.Signer {
+declare class WrappedSigner extends quais.Signer {
     readonly addressPromise: Promise<string>;
-    readonly provider: ethers.providers.Provider;
+    readonly provider: quais.providers.Provider;
     readonly plugin: Plugin;
-    constructor(addressPromise: Promise<string>, signerFunc: () => Promise<ethers.Signer>, plugin: Plugin);
-    connect(provider?: ethers.providers.Provider): ethers.Signer;
+    constructor(addressPromise: Promise<string>, signerFunc: () => Promise<quais.Signer>, plugin: Plugin);
+    connect(provider?: quais.providers.Provider): quais.Signer;
     getAddress(): Promise<string>;
-    signMessage(message: string | ethers.utils.Bytes): Promise<string>;
-    populateTransaction(transactionRequest: ethers.providers.TransactionRequest): Promise<ethers.providers.TransactionRequest>;
-    signTransaction(transactionRequest: ethers.providers.TransactionRequest): Promise<string>;
-    sendTransaction(transactionRequest: ethers.providers.TransactionRequest): Promise<ethers.providers.TransactionResponse>;
+    signMessage(message: string | quais.utils.Bytes): Promise<string>;
+    populateTransaction(transactionRequest: quais.providers.TransactionRequest): Promise<quais.providers.TransactionRequest>;
+    signTransaction(transactionRequest: quais.providers.TransactionRequest): Promise<string>;
+    sendTransaction(transactionRequest: quais.providers.TransactionRequest): Promise<quais.providers.TransactionResponse>;
     unlock(): Promise<void>;
 }
 export declare class ArgParser {
@@ -37,14 +37,14 @@ export interface PluginType {
     getOptionHelp?: () => Array<Help>;
 }
 export declare abstract class Plugin {
-    network: ethers.providers.Network;
-    provider: ethers.providers.Provider;
+    network: quais.providers.Network;
+    provider: quais.providers.Provider;
     accounts: ReadonlyArray<WrappedSigner>;
     mnemonicPassword: boolean;
     mnemonicPath: string;
     _xxxMnemonicPasswordHard: boolean;
-    gasLimit: ethers.BigNumber;
-    gasPrice: ethers.BigNumber;
+    gasLimit: quais.BigNumber;
+    gasPrice: quais.BigNumber;
     nonce: number;
     yes: boolean;
     wait: boolean;

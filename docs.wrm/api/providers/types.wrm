@@ -224,7 +224,7 @@ The amount (in wei) this transaction is sending.
 _property: transactionRequest.gasLimit => [[BigNumber]] | Promise<[[BigNumber]]>
 The maximum amount of gas this transaction is permitted to use.
 
-If left unspecified, ethers will use ``estimateGas`` to determine the value
+If left unspecified, quais will use ``estimateGas`` to determine the value
 to use. For transactions with unpredicatable gas estimates, this may be required
 to specify explicitly.
 
@@ -239,7 +239,7 @@ The maximum price (in wei) per unit of gas this transaction will pay for the
 combined [[link-eip-1559]] block's base fee and this transaction's priority fee.
 
 Most developers should leave this unspecified and use the default value that
-ethers determines from the network.
+quais determines from the network.
 
 This may not be specified for transactions with ``type`` set to ``0`` or if ``gasPrice``
 is specified..
@@ -251,7 +251,7 @@ priority. This is **included in** the ``maxFeePerGas``, so this will **not affec
 the total maximum cost set with ``maxFeePerGas``.
 
 Most developers should leave this unspecified and use the default value that
-ethers determines from the network.
+quais determines from the network.
 
 This may not be specified for transactions with ``type`` set to ``0`` or if ``gasPrice``
 is specified.

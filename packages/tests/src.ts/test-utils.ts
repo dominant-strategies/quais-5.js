@@ -2,8 +2,8 @@
 
 import assert from 'assert';
 
-import { ethers } from "ethers";
-import { loadTests, TestCase } from "@ethersproject/testcases";
+import { quais } from "quais";
+import { loadTests, TestCase } from "@quais/testcases";
 
 import * as utils from './utils';
 
@@ -26,7 +26,7 @@ describe('Test Contract Address Generation', function() {
 
     // @TODO: Mine a large collection of these from the blockchain
 
-    let getContractAddress = ethers.utils.getContractAddress;
+    let getContractAddress = quais.utils.getContractAddress;
 
     let Tests = [
         // Transaction: 0x939aa17985bc2a52a0c1cba9497ef09e092355a805a8150e30e24b753bac6864
@@ -36,6 +36,7 @@ describe('Test Contract Address Generation', function() {
             tx: {
                 from: '0xb2682160c482eb985ec9f3e364eec0a904c44c23',
                 nonce: 10,
+                data: '0x',
             }
         },
 
@@ -45,6 +46,7 @@ describe('Test Contract Address Generation', function() {
             tx: {
                 from: '0xb2682160c482eb985ec9f3e364eec0a904c44c23',
                 nonce: "0xa",
+                data: '0x',
             }
         },
 
@@ -54,6 +56,7 @@ describe('Test Contract Address Generation', function() {
             tx: {
                 from: '0xb2682160c482eb985ec9f3e364eec0a904c44c23',
                 nonce: "0x0a",
+                data: '0x',
             }
         },
 
@@ -64,6 +67,7 @@ describe('Test Contract Address Generation', function() {
             tx: {
                 from: '0x8ba1f109551bd432803012645ac136ddd64dba72',
                 nonce: "0x200",
+                data: '0x',
             }
         },
 
@@ -73,6 +77,7 @@ describe('Test Contract Address Generation', function() {
             tx: {
                 from: '0x8ba1f109551bd432803012645ac136ddd64dba72',
                 nonce: "0x0200",
+                data: '0x',
             }
         },
 
@@ -83,6 +88,7 @@ describe('Test Contract Address Generation', function() {
             tx: {
                 from: '0x8ba1f109551bd432803012645ac136ddd64dba72',
                 nonce: "0x1d",
+                data: '0x',
             }
         },
 
@@ -92,6 +98,7 @@ describe('Test Contract Address Generation', function() {
             tx: {
                 from: '0x8ba1f109551bd432803012645ac136ddd64dba72',
                 nonce: "0x001d",
+                data: '0x',
             }
         },
 
@@ -101,6 +108,7 @@ describe('Test Contract Address Generation', function() {
             tx: {
                 from: '0x8ba1f109551bd432803012645ac136ddd64dba72',
                 nonce: 29,
+                data: '0x',
             }
         },
 
@@ -110,7 +118,9 @@ describe('Test Contract Address Generation', function() {
             name: 'zero-nonce',
             tx: {
                 from: '0xc6af6e1a78a6752c7f8cd63877eb789a2adb776c',
-                nonce: 0
+                nonce: 0,
+                data: '0x',
+
             }
         },
     ]
@@ -118,7 +128,7 @@ describe('Test Contract Address Generation', function() {
     Tests.forEach(function(test) {
         it(('Computes the transaction address - ' + test.name), function() {
             this.timeout(120000);
-            assert.equal(getContractAddress(test.tx), test.address, 'computes the transaction address');
+            assert.equal(getContractAddress(test.tx.from, test.tx.nonce as any, test.tx.data), test.address, 'computes the transaction address');
         });
     });
 });
@@ -136,14 +146,14 @@ describe('Test RLP Coder', function() {
     tests.forEach(function(test) {
         it(('RLP coder encoded - ' + test.name), function() {
             this.timeout(120000);
-            assert.equal(ethers.utils.RLP.encode(test.decoded), test.encoded, 'RLP encoded - ' + test.name);
+            assert.equal(quais.utils.RLP.encode(test.decoded), test.encoded, 'RLP encoded - ' + test.name);
         });
     });
 
     tests.forEach((test: TestCase) => {
         it(('RLP coder decoded - ' + test.name), function() {
             this.timeout(120000);
-            assert.ok(equals(ethers.utils.RLP.decode(test.encoded), test.decoded),
+            assert.ok(equals(quais.utils.RLP.decode(test.encoded), test.decoded),
                 'RLP decoded - ' + test.name);
         });
     });
@@ -154,22 +164,22 @@ describe('Test Unit Conversion', function () {
     const tests: Array<TestCase.Unit> = loadTests('units');
 
     tests.forEach((test) => {
-        let wei = ethers.BigNumber.from(test.wei);
+        let wei = quais.BigNumber.from(test.wei);
 
         it (('parses ' + test.ether + ' ether'), function() {
-            assert.ok(ethers.utils.parseEther(test.ether.replace(/,/g, '')).eq(wei),
+            assert.ok(quais.utils.parseEther(test.ether.replace(/,/g, '')).eq(wei),
                 'parsing ether failed - ' + test.name);
         });
 
         it (('formats ' + wei.toString() + ' wei to ether'), function() {
-            let actual = ethers.utils.formatEther(wei);
+            let actual = quais.utils.formatEther(wei);
             assert.equal(actual, test.ether_format,
                    'formatting wei failed - ' + test.name);
         });
     });
 
     tests.forEach((test) => {
-        let wei = ethers.BigNumber.from(test.wei);
+        let wei = quais.BigNumber.from(test.wei);
 
         type UnitName = 'kwei' | 'mwei' | 'gwei' | 'szabo' | 'finney' | 'satoshi'
         type UnitNameFormat = 'kwei_format' | 'mwei_format' | 'gwei_format' | 'szabo_format' | 'finney_format' | 'satoshi_format'
@@ -182,7 +192,7 @@ describe('Test Unit Conversion', function () {
             if (test[name]) {
                 it(('parses ' + test[name] + ' ' + name), function() {
                     this.timeout(120000);
-                    assert.ok(ethers.utils.parseUnits(test[name].replace(/,/g, ''), unitName).eq(wei),
+                    assert.ok(quais.utils.parseUnits(test[name].replace(/,/g, ''), unitName).eq(wei),
                         ('parsing ' + name + ' failed - ' + test.name));
                 });
             }
@@ -190,7 +200,7 @@ describe('Test Unit Conversion', function () {
             let expectedKey: UnitNameFormat = (<UnitNameFormat>(name + '_format'));
             if (test[expectedKey]) {
                 it (('formats ' + wei.toString() + ' wei to ' + name + ')'), function() {
-                    let actual = ethers.utils.formatUnits(wei, unitName);
+                    let actual = quais.utils.formatUnits(wei, unitName);
                     let expected = test[expectedKey];
                     assert.equal(actual, expected,
                         ('formats ' + name + ' - ' + test.name));
@@ -220,25 +230,25 @@ describe('Test Unit Conversion', function () {
         };
 
         Object.keys(tests).forEach((test) => {
-            assert.equal(ethers.utils.commify(test), tests[test]);
+            assert.equal(quais.utils.commify(test), tests[test]);
         });
     });
 
     // See #2016; @TODO: Add more tests along these lines
     it("checks extra tests", function() {
-        assert.ok(ethers.utils.parseUnits("2", 0).eq(2), "folds trailing zeros without decimal: 2");
-        assert.ok(ethers.utils.parseUnits("2.", 0).eq(2), "folds trailing zeros without decimal: 2.");
-        assert.ok(ethers.utils.parseUnits("2.0", 0).eq(2), "folds trailing zeros without decimal: 2.0");
-        assert.ok(ethers.utils.parseUnits("2.00", 0).eq(2), "folds trailing zeros without decimal: 2.00");
+        assert.ok(quais.utils.parseUnits("2", 0).eq(2), "folds trailing zeros without decimal: 2");
+        assert.ok(quais.utils.parseUnits("2.", 0).eq(2), "folds trailing zeros without decimal: 2.");
+        assert.ok(quais.utils.parseUnits("2.0", 0).eq(2), "folds trailing zeros without decimal: 2.0");
+        assert.ok(quais.utils.parseUnits("2.00", 0).eq(2), "folds trailing zeros without decimal: 2.00");
 
-        assert.ok(ethers.utils.parseUnits("2", 1).eq(20), "folds trailing zeros: 2");
-        assert.ok(ethers.utils.parseUnits("2.", 1).eq(20), "folds trailing zeros: 2.");
-        assert.ok(ethers.utils.parseUnits("2.0", 1).eq(20), "folds trailing zeros: 2.0");
-        assert.ok(ethers.utils.parseUnits("2.00", 1).eq(20), "folds trailing zeros: 2.00");
+        assert.ok(quais.utils.parseUnits("2", 1).eq(20), "folds trailing zeros: 2");
+        assert.ok(quais.utils.parseUnits("2.", 1).eq(20), "folds trailing zeros: 2.");
+        assert.ok(quais.utils.parseUnits("2.0", 1).eq(20), "folds trailing zeros: 2.0");
+        assert.ok(quais.utils.parseUnits("2.00", 1).eq(20), "folds trailing zeros: 2.00");
 
-        assert.ok(ethers.utils.parseUnits("2.5", 1).eq(25), "folds trailing zeros: 2.5");
-        assert.ok(ethers.utils.parseUnits("2.50", 1).eq(25), "folds trailing zeros: 2.50");
-        assert.ok(ethers.utils.parseUnits("2.500", 1).eq(25), "folds trailing zeros: 2.500");
+        assert.ok(quais.utils.parseUnits("2.5", 1).eq(25), "folds trailing zeros: 2.5");
+        assert.ok(quais.utils.parseUnits("2.50", 1).eq(25), "folds trailing zeros: 2.50");
+        assert.ok(quais.utils.parseUnits("2.500", 1).eq(25), "folds trailing zeros: 2.500");
     });
 });
 
@@ -254,7 +264,7 @@ describe('Test Namehash', function() {
     tests.forEach((test: TestCase) => {
         it(('computes namehash - "' + test.name + '"'), function() {
             this.timeout(120000);
-            assert.equal(ethers.utils.namehash(test.name), test.expected,
+            assert.equal(quais.utils.namehash(test.name), test.expected,
                 'computes namehash(' + test.name + ')');
         });
     });
@@ -277,21 +287,21 @@ describe('Test Namehash', function() {
     // The empty string is not a valid name, but has the zero hash
     // as its namehash, which may be used for recursive purposes
     it("empty ENS name", function() {
-        assert.ok(!ethers.utils.isValidName(""));
+        assert.ok(!quais.utils.isValidName(""));
     });
 
     goodNames.forEach((name) => {
         it(`ENS namehash ok - ${ name }`, function() {
-            assert.ok(ethers.utils.isValidName(name));
-            ethers.utils.namehash(name);
+            assert.ok(quais.utils.isValidName(name));
+            quais.utils.namehash(name);
         });
     });
 
     badNames.forEach((name) => {
         it(`ENS namehash fails - ${ name }`, function() {
-            assert.ok(!ethers.utils.isValidName(name));
+            assert.ok(!quais.utils.isValidName(name));
             assert.throws(() => {
-                const namehash = ethers.utils.namehash(name);
+                const namehash = quais.utils.namehash(name);
                 console.log(name, namehash);
             }, (error: Error) => {
                 return !!error.message.match(/invalid ENS name; empty component/);
@@ -318,7 +328,7 @@ describe('Test ID Hash Functions', function () {
     tests.forEach((test: TestCase) => {
         it(('computes id - ' + test.name), function() {
             this.timeout(120000);
-            let actual = ethers.utils.id(test.text);
+            let actual = quais.utils.id(test.text);
             assert.equal(actual, test.expected,
                 'computes id(' + test.text + ')');
         });
@@ -341,7 +351,7 @@ describe('Test Solidity Hash Functions', function() {
             this.timeout(120000);
 
             tests.forEach((test, index) => {
-                let actual = (<any>(ethers.utils))['solidity' + funcName](test.types, test.values);
+                let actual = (<any>(quais.utils))['solidity' + funcName](test.types, test.values);
                 let expected = test[testKey];
                 assert.equal(actual, expected,
                     ('computes solidity-' + funcName + '(' + JSON.stringify(test.values) + ') - ' + test.types));
@@ -366,7 +376,7 @@ describe('Test Solidity Hash Functions', function() {
     testsInvalid.forEach((type) => {
         it(`disallows invalid type "${ type }"`, function() {
             assert.throws(() => {
-                ethers.utils.solidityPack([ type ], [ "0x12" ]);
+                quais.utils.solidityPack([ type ], [ "0x12" ]);
             }, (error: Error) => {
                 const message = error.message;
                 return (message.match(/invalid([a-z ]*) type/) && message.indexOf(type) >= 0);
@@ -382,21 +392,21 @@ describe('Test Hash Functions', function() {
     it('computes keccak256 correctly', function() {
         this.timeout(120000);
         tests.forEach(function(test) {
-            assert.equal(ethers.utils.keccak256(test.data), test.keccak256, ('Keccak256 - ' + test.data));
+            assert.equal(quais.utils.keccak256(test.data), test.keccak256, ('Keccak256 - ' + test.data));
         });
     });
 
     it('computes sha2-256 correctly', function() {
         this.timeout(120000);
         tests.forEach(function(test) {
-            assert.equal(ethers.utils.sha256(test.data), test.sha256, ('SHA256 - ' + test.data));
+            assert.equal(quais.utils.sha256(test.data), test.sha256, ('SHA256 - ' + test.data));
         });
     });
 
     it('computes sha2-512 correctly', function() {
         this.timeout(120000);
         tests.forEach(function(test) {
-            assert.equal(ethers.utils.sha512(test.data), test.sha512, ('SHA512 - ' + test.data));
+            assert.equal(quais.utils.sha512(test.data), test.sha512, ('SHA512 - ' + test.data));
         });
     });
 });
@@ -408,8 +418,8 @@ describe('Test Solidity splitSignature', function() {
         let r = '0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef';
         let s = '0xcafe1a7ecafe1a7ecafe1a7ecafe1a7ecafe1a7ecafe1a7ecafe1a7ecafe1a7e';
         for (let v = 27; v <= 28; v++) {
-            let signature = ethers.utils.concat([ r, s, [ v ] ]);
-            let sig = ethers.utils.splitSignature(signature);
+            let signature = quais.utils.concat([ r, s, [ v ] ]);
+            let sig = quais.utils.splitSignature(signature);
             assert.equal(sig.r, r, 'split r correctly');
             assert.equal(sig.s, s, 'split s correctly');
             assert.equal(sig.v, v, 'split v correctly');
@@ -421,8 +431,8 @@ describe('Test Solidity splitSignature', function() {
         let r = '0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef';
         let s = '0xcafe1a7ecafe1a7ecafe1a7ecafe1a7ecafe1a7ecafe1a7ecafe1a7ecafe1a7e';
         for (let v = 27; v <= 28; v++) {
-            let signature = ethers.utils.concat([ r, s, [ v - 27 ] ]);
-            let sig = ethers.utils.splitSignature(signature);
+            let signature = quais.utils.concat([ r, s, [ v - 27 ] ]);
+            let sig = quais.utils.splitSignature(signature);
             assert.equal(sig.r, r, 'split r correctly');
             assert.equal(sig.s, s, 'split s correctly');
             assert.equal(sig.v, v, 'split v correctly');
@@ -436,20 +446,20 @@ describe('Test Base64 coder', function() {
     it('encodes and decodes the example from wikipedia', function() {
         this.timeout(120000);
         let decodedText = 'Man is distinguished, not only by his reason, but by this singular passion from other animals, which is a lust of the mind, that by a perseverance of delight in the continued and indefatigable generation of knowledge, exceeds the short vehemence of any carnal pleasure.';
-        let decoded = ethers.utils.toUtf8Bytes(decodedText);
+        let decoded = quais.utils.toUtf8Bytes(decodedText);
         let encoded = 'TWFuIGlzIGRpc3Rpbmd1aXNoZWQsIG5vdCBvbmx5IGJ5IGhpcyByZWFzb24sIGJ1dCBieSB0aGlzIHNpbmd1bGFyIHBhc3Npb24gZnJvbSBvdGhlciBhbmltYWxzLCB3aGljaCBpcyBhIGx1c3Qgb2YgdGhlIG1pbmQsIHRoYXQgYnkgYSBwZXJzZXZlcmFuY2Ugb2YgZGVsaWdodCBpbiB0aGUgY29udGludWVkIGFuZCBpbmRlZmF0aWdhYmxlIGdlbmVyYXRpb24gb2Yga25vd2xlZGdlLCBleGNlZWRzIHRoZSBzaG9ydCB2ZWhlbWVuY2Ugb2YgYW55IGNhcm5hbCBwbGVhc3VyZS4=';
-        assert.equal(ethers.utils.base64.encode(decoded), encoded, 'encodes to base64 string');
-        assert.equal(ethers.utils.toUtf8String(ethers.utils.base64.decode(encoded)), decodedText, 'decodes from base64 string');
+        assert.equal(quais.utils.base64.encode(decoded), encoded, 'encodes to base64 string');
+        assert.equal(quais.utils.toUtf8String(quais.utils.base64.decode(encoded)), decodedText, 'decodes from base64 string');
     });
 });
 
 describe('Test UTF-8 coder', function() {
-    const overlong = ethers.utils.Utf8ErrorReason.OVERLONG;
-    const utf16Surrogate = ethers.utils.Utf8ErrorReason.UTF16_SURROGATE;
-    const overrun = ethers.utils.Utf8ErrorReason.OVERRUN;
-    const missingContinue = ethers.utils.Utf8ErrorReason.MISSING_CONTINUE;
-    const unexpectedContinue = ethers.utils.Utf8ErrorReason.UNEXPECTED_CONTINUE;
-    const outOfRange = ethers.utils.Utf8ErrorReason.OUT_OF_RANGE;
+    const overlong = quais.utils.Utf8ErrorReason.OVERLONG;
+    const utf16Surrogate = quais.utils.Utf8ErrorReason.UTF16_SURROGATE;
+    const overrun = quais.utils.Utf8ErrorReason.OVERRUN;
+    const missingContinue = quais.utils.Utf8ErrorReason.MISSING_CONTINUE;
+    const unexpectedContinue = quais.utils.Utf8ErrorReason.UNEXPECTED_CONTINUE;
+    const outOfRange = quais.utils.Utf8ErrorReason.OUT_OF_RANGE;
 
     let BadUTF = [
         // See: https://en.wikipedia.org/wiki/UTF-8#Overlong_encodings
@@ -480,16 +490,16 @@ describe('Test UTF-8 coder', function() {
     BadUTF.forEach(function(test) {
         it('toUtf8String - ' + test.name, function() {
             // Check the string using the ignoreErrors conversion
-            const ignored = ethers.utils.toUtf8String(test.bytes, ethers.utils.Utf8ErrorFuncs.ignore);
+            const ignored = quais.utils.toUtf8String(test.bytes, quais.utils.Utf8ErrorFuncs.ignore);
             assert.equal(ignored, test.ignored, "ignoring errors matches");
 
             // Check the string using the replaceErrors conversion
-            const replaced = ethers.utils.toUtf8String(test.bytes, ethers.utils.Utf8ErrorFuncs.replace);
+            const replaced = quais.utils.toUtf8String(test.bytes, quais.utils.Utf8ErrorFuncs.replace);
             assert.equal(replaced, test.replaced, "replaced errors matches");
 
             // Check the string throws the correct error during conversion
             assert.throws(function() {
-                let result = ethers.utils.toUtf8String(test.bytes);
+                let result = quais.utils.toUtf8String(test.bytes);
                 console.log('Result', result);
             }, function(error: Error) {
                 return (error.message.split(";").pop().split("(")[0].trim() === test.reason)
@@ -530,9 +540,9 @@ describe('Test UTF-8 coder', function() {
             let seed = 'test-' + String(i);
             let str = randomString(seed);
 
-            let bytes = ethers.utils.toUtf8Bytes(str)
-            let str2 = ethers.utils.toUtf8String(bytes);
-            let escaped = JSON.parse(ethers.utils._toEscapedUtf8String(bytes));
+            let bytes = quais.utils.toUtf8Bytes(str)
+            let str2 = quais.utils.toUtf8String(bytes);
+            let escaped = JSON.parse(quais.utils._toEscapedUtf8String(bytes));
 
 //            assert.ok(Buffer.from(str).equals(Buffer.from(bytes)), 'bytes not generated correctly - ' + bytes)
             assert.equal(str2, str, 'conversion not reflexive - ' + bytes);
@@ -545,8 +555,8 @@ describe('Test Bytes32String coder', function() {
     // @TODO: a LOT more test cases; generated from Solidity
     it("encodes an ens name", function() {
         let str = "ricmoo.firefly.eth";
-        let bytes32 = ethers.utils.formatBytes32String(str);
-        let str2 = ethers.utils.parseBytes32String(bytes32);
+        let bytes32 = quais.utils.formatBytes32String(str);
+        let str2 = quais.utils.parseBytes32String(bytes32);
         assert.equal(bytes32, '0x7269636d6f6f2e66697265666c792e6574680000000000000000000000000000', 'formatted correctly');
         assert.equal(str2, str, "parsed correctly");
     });
@@ -554,7 +564,7 @@ describe('Test Bytes32String coder', function() {
 
 
 function getHex(value: string): string {
-    return ethers.utils.hexlify(ethers.utils.toUtf8Bytes(value));
+    return quais.utils.hexlify(quais.utils.toUtf8Bytes(value));
 }
 
 describe("Test nameprep", function() {
@@ -574,16 +584,16 @@ describe("Test nameprep", function() {
         }
 
         it(test.comment, function() {
-            let input = ethers.utils.toUtf8String(test.input);
+            let input = quais.utils.toUtf8String(test.input);
             if (test.output) {
-                let expected = ethers.utils.toUtf8String(test.output)
-                let actual = ethers.utils.nameprep(input);
+                let expected = quais.utils.toUtf8String(test.output)
+                let actual = quais.utils.nameprep(input);
                 assert.equal(actual, expected, `actual("${ getHex(actual) }") !== expected("${ getHex(expected) }")`);
             } else {
                 let ok = true;
                 let reason = "";
                 try {
-                    let actual = ethers.utils.nameprep(input);
+                    let actual = quais.utils.nameprep(input);
                     console.log(actual);
                     reason = `should has thrown ${ test.rc } - actual("${ getHex(actual) }")`;
                     ok = false;
@@ -599,28 +609,28 @@ describe("Test Signature Manipulation", function() {
     const tests: Array<TestCase.SignedTransaction> = loadTests("transactions");
     tests.forEach((test) => {
         it("autofills partial signatures - " + test.name, function() {
-            const address = ethers.utils.getAddress(test.accountAddress);
-            const hash = ethers.utils.keccak256(test.unsignedTransaction);
-            const data = ethers.utils.RLP.decode(test.signedTransaction);
+            const address = quais.utils.getAddress(test.accountAddress);
+            const hash = quais.utils.keccak256(test.unsignedTransaction);
+            const data = quais.utils.RLP.decode(test.signedTransaction);
             const s = data.pop(), r = data.pop(), v = parseInt(data.pop().substring(2), 16);
-            const sig = ethers.utils.splitSignature({ r: r, s: s, v: v });
+            const sig = quais.utils.splitSignature({ r: r, s: s, v: v });
 
             {
-                const addr = ethers.utils.recoverAddress(hash, {
+                const addr = quais.utils.recoverAddress(hash, {
                     r: r, s: s, v: v
                 });
                 assert.equal(addr, address, "Using r, s and v");
             }
 
             {
-                const addr = ethers.utils.recoverAddress(hash, {
+                const addr = quais.utils.recoverAddress(hash, {
                     r: sig.r, _vs: sig._vs
                 });
                 assert.equal(addr, address, "Using r, _vs");
             }
 
             {
-                const addr = ethers.utils.recoverAddress(hash, {
+                const addr = quais.utils.recoverAddress(hash, {
                     r: sig.r, s: sig.s, recoveryParam: sig.recoveryParam
                 });
                 assert.equal(addr, address, "Using r, s and recoveryParam");
@@ -633,12 +643,12 @@ describe("Test Typed Transactions", function() {
     const tests: Array<TestCase.TypedTransaction> = loadTests("typed-transactions");
 
     function equalsData(name: string, a: any, b: any, ifNull?: any): boolean {
-        assert.equal(ethers.utils.hexlify(a), ethers.utils.hexlify((b == null) ? ifNull: b), name);
+        assert.equal(quais.utils.hexlify(a), quais.utils.hexlify((b == null) ? ifNull: b), name);
         return true;
     }
 
     function equalsNumber(name: string, a: any, b: any, ifNull?: any): boolean {
-        assert.ok(ethers.BigNumber.from(a).eq((b == null) ? ifNull: b), name);
+        assert.ok(quais.BigNumber.from(a).eq((b == null) ? ifNull: b), name);
         return true;
     }
 
@@ -706,20 +716,20 @@ describe("Test Typed Transactions", function() {
     tests.forEach((test, index) => {
         it(test.name, async function() {
             {
-                const wallet = new ethers.Wallet(test.key);
+                const wallet = new quais.Wallet(test.key);
                 const signed = await wallet.signTransaction(test.tx);
                 assert.equal(signed, test.signed, "signed transactions match");
             }
 
-            assert.equal(ethers.utils.serializeTransaction(test.tx), test.unsigned, "unsigned transactions match");
+            assert.equal(quais.utils.serializeTransaction(test.tx), test.unsigned, "unsigned transactions match");
 
             {
-                const tx = ethers.utils.parseTransaction(test.unsigned);
+                const tx = quais.utils.parseTransaction(test.unsigned);
                 assert.ok(equalsTransaction("transaction", tx, test.tx), "all unsigned keys match");
             }
 
             {
-                const tx = ethers.utils.parseTransaction(test.signed);
+                const tx = quais.utils.parseTransaction(test.signed);
                 assert.ok(equalsTransaction("transaction", tx, test.tx), "all signed keys match");
                 assert.equal(tx.from.toLowerCase(), test.address, "sender matches");
             }
@@ -733,7 +743,7 @@ describe("BigNumber", function() {
         if (test.expectedValue == null) {
             it(test.testcase, function() {
                 assert.throws(() => {
-                    const value = ethers.BigNumber.from(test.value);
+                    const value = quais.BigNumber.from(test.value);
                     console.log("ERROR", value);
                 }, (error: Error) => {
                     return true;
@@ -741,10 +751,10 @@ describe("BigNumber", function() {
             });
         } else {
             it(test.testcase, function() {
-                const value = ethers.BigNumber.from(test.value);
+                const value = quais.BigNumber.from(test.value);
                 assert.equal(value.toHexString(), test.expectedValue);
 
-                const value2 = ethers.BigNumber.from(value)
+                const value2 = quais.BigNumber.from(value)
                 assert.equal(value2.toHexString(), test.expectedValue);
             });
         }
@@ -761,8 +771,8 @@ describe("BigNumber", function() {
         { value: "-0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", expected: "0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff" },
     ].forEach((test) => {
         it(`absolute value (${ test.value })`, function() {
-            const value = ethers.BigNumber.from(test.value);
-            const expected = ethers.BigNumber.from(test.expected);
+            const value = quais.BigNumber.from(test.value);
+            const expected = quais.BigNumber.from(test.expected);
             assert.ok(value.abs().eq(expected));
         });
     });
@@ -771,7 +781,7 @@ describe("BigNumber", function() {
     it("Fails on junk with a length property", function() {
         const junk: any = { negative: 0, words: [ 1000 ], length: 1, red: null };
         assert.throws(() => {
-            const value = ethers.BigNumber.from("100").add(junk);
+            const value = quais.BigNumber.from("100").add(junk);
             console.log("ERROR", value);
         }, (error: Error) => {
             return true;
@@ -802,7 +812,7 @@ describe("FixedNumber", function() {
 
         Tests.forEach((test) => {
             it (`Create from=${ test.value }`, function() {
-                const value = ethers.FixedNumber.from(test.value);
+                const value = quais.FixedNumber.from(test.value);
                 assert.equal(value.toString(), test.expected);
             });
         });
@@ -830,7 +840,7 @@ describe("FixedNumber", function() {
 
         Tests.forEach((test) => {
             it (`Rounding value=${ test.value }, decimals=${ test.round }`, function() {
-                const value = ethers.FixedNumber.from(test.value).round(test.round);
+                const value = quais.FixedNumber.from(test.value).round(test.round);
                 assert.equal(value.toString(), test.expected);
             });
         });
@@ -848,7 +858,7 @@ describe("FixedNumber", function() {
 
         Tests.forEach((test) => {
             it (`Clamping value=${ test.value }`, function() {
-                const value = ethers.FixedNumber.from(test.value);
+                const value = quais.FixedNumber.from(test.value);
                 assert.equal(value.floor().toString(), test.floor);
                 assert.equal(value.ceiling().toString(), test.ceiling);
             });
@@ -857,17 +867,17 @@ describe("FixedNumber", function() {
 });
 
 describe("Logger", function() {
-    const logger = new ethers.utils.Logger("testing/0.0");
+    const logger = new quais.utils.Logger("testing/0.0");
 
     it ("setLogLevel", function() {
-        ethers.utils.Logger.setLogLevel(ethers.utils.Logger.levels.DEBUG);
-        ethers.utils.Logger.setLogLevel(ethers.utils.Logger.levels.INFO);
-        ethers.utils.Logger.setLogLevel(ethers.utils.Logger.levels.WARNING);
-        ethers.utils.Logger.setLogLevel(ethers.utils.Logger.levels.ERROR);
-        ethers.utils.Logger.setLogLevel(ethers.utils.Logger.levels.OFF);
+        quais.utils.Logger.setLogLevel(quais.utils.Logger.levels.DEBUG);
+        quais.utils.Logger.setLogLevel(quais.utils.Logger.levels.INFO);
+        quais.utils.Logger.setLogLevel(quais.utils.Logger.levels.WARNING);
+        quais.utils.Logger.setLogLevel(quais.utils.Logger.levels.ERROR);
+        quais.utils.Logger.setLogLevel(quais.utils.Logger.levels.OFF);
 
         // Reset back to INFO when done tests
-        ethers.utils.Logger.setLogLevel(ethers.utils.Logger.levels.INFO);
+        quais.utils.Logger.setLogLevel(quais.utils.Logger.levels.INFO);
     });
 
     it("checkArgumentCount", function() {
@@ -878,7 +888,7 @@ describe("Logger", function() {
         assert.throws(() => {
             logger.checkArgumentCount(1, 3);
         }, (error: any) => {
-            return error.code === ethers.utils.Logger.errors.MISSING_ARGUMENT;
+            return error.code === quais.utils.Logger.errors.MISSING_ARGUMENT;
         });
     });
 
@@ -886,18 +896,18 @@ describe("Logger", function() {
         assert.throws(() => {
             logger.checkArgumentCount(3, 1);
         }, (error: any) => {
-            return error.code === ethers.utils.Logger.errors.UNEXPECTED_ARGUMENT;
+            return error.code === quais.utils.Logger.errors.UNEXPECTED_ARGUMENT;
         });
     });
 });
 
 describe("Base58 Coder", function() {
     it("decodes", function() {
-        assert.equal(ethers.utils.toUtf8String(ethers.utils.base58.decode("JxF12TrwUP45BMd")), "Hello World");
+        assert.equal(quais.utils.toUtf8String(quais.utils.base58.decode("JxF12TrwUP45BMd")), "Hello World");
     });
 
     it("encodes", function() {
-        assert.equal(ethers.utils.base58.encode(ethers.utils.toUtf8Bytes("Hello World")), "JxF12TrwUP45BMd");
+        assert.equal(quais.utils.base58.encode(quais.utils.toUtf8Bytes("Hello World")), "JxF12TrwUP45BMd");
     });
 });
 
@@ -905,7 +915,7 @@ describe("Base58 Coder", function() {
 describe("Web Fetch", function() {
     it("fetches JSON", async function() {
         const url = "https:/\/api.etherscan.io/api?module=stats&action=ethprice&apikey=9D13ZE7XSBTJ94N9BNJ2MA33VMAY2YPIRB";
-        const getData = ethers.utils.fetchJson(url)
+        const getData = quais.utils.fetchJson(url)
     });
 });
 */
@@ -915,20 +925,20 @@ describe("EIP-712", function() {
 
     tests.forEach((test) => {
         it(`encoding ${ test.name }`, function() {
-            const encoder = ethers.utils._TypedDataEncoder.from(test.types);
+            const encoder = quais.utils._TypedDataEncoder.from(test.types);
             assert.equal(encoder.primaryType, test.primaryType, "instance.primaryType");
             assert.equal(encoder.encode(test.data), test.encoded, "instance.encode()");
 
             //console.log(test);
-            assert.equal(ethers.utils._TypedDataEncoder.getPrimaryType(test.types), test.primaryType, "getPrimaryType");
-            assert.equal(ethers.utils._TypedDataEncoder.hash(test.domain, test.types, test.data), test.digest, "digest");
+            assert.equal(quais.utils._TypedDataEncoder.getPrimaryType(test.types), test.primaryType, "getPrimaryType");
+            assert.equal(quais.utils._TypedDataEncoder.hash(test.domain, test.types, test.data), test.digest, "digest");
         });
     });
 
     tests.forEach((test) => {
         if (!test.privateKey) { return; }
         it(`signing ${ test.name }`, async function() {
-            const wallet = new ethers.Wallet(test.privateKey);
+            const wallet = new quais.Wallet(test.privateKey);
             const signature = await wallet._signTypedData(test.domain, test.types, test.data);
             assert.equal(signature, test.signature, "signature");
         });
@@ -996,10 +1006,10 @@ describe("EIP-2930", function() {
                 type: 1,
                 chainId: 3,
                 nonce: 13,
-                gasPrice: ethers.BigNumber.from("0x65cf89a0"),
-                gasLimit: ethers.BigNumber.from("0x5b68"),
+                gasPrice: quais.BigNumber.from("0x65cf89a0"),
+                gasLimit: quais.BigNumber.from("0x5b68"),
                 to: "0x32162F3581E88a5f62e8A61892B42C46E2c18f7b",
-                value: ethers.BigNumber.from("0"),
+                value: quais.BigNumber.from("0"),
                 data: "0x",
                 accessList: [
                     {
@@ -1022,10 +1032,10 @@ describe("EIP-2930", function() {
                 type: 1,
                 chainId: 3,
                 nonce: 14,
-                gasPrice: ethers.BigNumber.from("0x65cf89a0"),
-                gasLimit: ethers.BigNumber.from("0x71ac"),
+                gasPrice: quais.BigNumber.from("0x65cf89a0"),
+                gasLimit: quais.BigNumber.from("0x71ac"),
                 to: "0x32162F3581E88a5f62e8A61892B42C46E2c18f7b",
-                value: ethers.BigNumber.from("0"),
+                value: quais.BigNumber.from("0"),
                 data: "0x",
                 accessList: [
                     {
@@ -1047,15 +1057,15 @@ describe("EIP-2930", function() {
 
     Tests.forEach((test) => {
         it(`tx:${ test.hash }`, function() {
-            const tx = ethers.utils.parseTransaction(test.data);
+            const tx = quais.utils.parseTransaction(test.data);
             assert.equal(tx.hash, test.hash);
             const reason = deepEquals(tx, test.tx);
             assert.ok(reason == null, reason);
 
-            const preimageData = ethers.utils.serializeTransaction(<any>(test.tx));
+            const preimageData = quais.utils.serializeTransaction(<any>(test.tx));
             assert.equal(preimageData, test.preimage);
 
-            const data = ethers.utils.serializeTransaction(<any>(test.tx), test.tx);
+            const data = quais.utils.serializeTransaction(<any>(test.tx), test.tx);
             assert.equal(data, test.data);
         });
     });

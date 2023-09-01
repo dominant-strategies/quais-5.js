@@ -44,9 +44,9 @@ var http_1 = __importDefault(require("http"));
 var https_1 = __importDefault(require("https"));
 var zlib_1 = require("zlib");
 var url_1 = require("url");
-var bytes_1 = require("@ethersproject/bytes");
-var properties_1 = require("@ethersproject/properties");
-var logger_1 = require("@ethersproject/logger");
+var bytes_1 = require("@quais/bytes");
+var properties_1 = require("@quais/properties");
+var logger_1 = require("@quais/logger");
 var _version_1 = require("./_version");
 var logger = new logger_1.Logger(_version_1.version);
 function getResponse(request) {

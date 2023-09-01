@@ -16,7 +16,7 @@ var __extends = (this && this.__extends) || (function () {
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ArrayCoder = exports.unpack = exports.pack = void 0;
-var logger_1 = require("@ethersproject/logger");
+var logger_1 = require("@quais/logger");
 var _version_1 = require("../_version");
 var logger = new logger_1.Logger(_version_1.version);
 var abstract_coder_1 = require("./abstract-coder");

@@ -2,7 +2,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.generate = exports.header = void 0;
-var ethers_1 = require("ethers");
+var quais_1 = require("quais");
 function getType(param, flexible) {
     if (param.type === "address" || param.type === "string") {
         return "string";
@@ -12,19 +12,19 @@ function getType(param, flexible) {
     }
     if (param.type.substring(0, 5) === "bytes") {
         if (flexible) {
-            return "string | ethers.utils.BytesLike";
+            return "string | quais.utils.BytesLike";
         }
         return "string";
     }
     var match = param.type.match(/^(u?int)([0-9]+)$/);
     if (match) {
         if (flexible) {
-            return "ethers.BigNumberish";
+            return "quais.BigNumberish";
         }
         if (parseInt(match[2]) < 53) {
             return 'number';
         }
-        return 'ethers.BigNumber';
+        return 'quais.BigNumber';
     }
     if (param.type === "array") {
         return "Array<" + getType(param.arrayChildren) + ">";
@@ -36,16 +36,16 @@ function getType(param, flexible) {
     throw new Error("unknown type");
     return null;
 }
-exports.header = "import { ethers } from \"ethers\";\n\n";
+exports.header = "import { quais } from \"quais\";\n\n";
 function generate(contract, bytecode) {
     var lines = [];
-    lines.push("export class " + contract.name + " extends ethers.Contract {");
+    lines.push("export class " + contract.name + " extends quais.Contract {");
     lines.push("");
-    lines.push("    constructor(addressOrName: string, providerOrSigner: ethers.Signer | ethers.providers.Provider) {");
+    lines.push("    constructor(addressOrName: string, providerOrSigner: quais.Signer | quais.providers.Provider) {");
     lines.push("        super(addressOrName, new.target.ABI(), providerOrSigner)");
     lines.push("    }");
     lines.push("");
-    lines.push("    connect(providerOrSigner: ethers.Signer | ethers.providers.Provider): " + contract.name + " {");
+    lines.push("    connect(providerOrSigner: quais.Signer | quais.providers.Provider): " + contract.name + " {");
     lines.push("        return new (<{ new(...args: any[]): " + contract.name + " }>(this.constructor))(this.address, providerOrSigner)");
     lines.push("    }");
     lines.push("");
@@ -58,14 +58,14 @@ function generate(contract, bytecode) {
         }
         var fragment = contract.interface.functions[signature];
         console.log(fragment);
-        var output_1 = "Promise<ethers.providers.TransactionResponse>";
-        var overrides = "ethers.CallOverrides";
+        var output_1 = "Promise<quais.providers.TransactionResponse>";
+        var overrides = "quais.CallOverrides";
         if (fragment.constant == false) {
             if (fragment.payable) {
-                overrides = "ethers.PayableOverrides";
+                overrides = "quais.PayableOverrides";
             }
             else {
-                overrides = "ethers.Overrides";
+                overrides = "quais.Overrides";
             }
         }
         else if (fragment.outputs.length > 0) {
@@ -104,13 +104,13 @@ function generate(contract, bytecode) {
         _loop_1(signature);
     }
     lines.push("");
-    lines.push("    static factory(signer?: ethers.Signer): ethers.ContractFactory {");
-    lines.push("        return new ethers.ContractFactory(" + contract.name + ".ABI(), " + contract.name + ".bytecode(), signer);");
+    lines.push("    static factory(signer?: quais.Signer): quais.ContractFactory {");
+    lines.push("        return new quais.ContractFactory(" + contract.name + ".ABI(), " + contract.name + ".bytecode(), signer);");
     lines.push("    }");
     lines.push("");
     lines.push("    static bytecode(): string {");
     if (bytecode == null) {
-        lines.push('        return ethers.errors.throwError("no bytecode provided during generation", ethers.errors.UNSUPPORTED_OPERATION, { operation: "contract.bytecode" });');
+        lines.push('        return quais.errors.throwError("no bytecode provided during generation", quais.errors.UNSUPPORTED_OPERATION, { operation: "contract.bytecode" });');
     }
     else {
         lines.push('        return "' + bytecode + '";');
@@ -120,7 +120,7 @@ function generate(contract, bytecode) {
     lines.push("    static ABI(): Array<string> {");
     lines.push("        return [");
     contract.interface.fragments.forEach(function (fragment) {
-        lines.push("            \"" + fragment.format(ethers_1.ethers.utils.FormatTypes.full) + "\",");
+        lines.push("            \"" + fragment.format(quais_1.quais.utils.FormatTypes.full) + "\",");
     });
     lines.push("        ];");
     lines.push("    }");

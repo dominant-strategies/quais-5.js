@@ -9,9 +9,9 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 import assert from "assert";
-import { ethers } from "ethers";
-import { loadTests } from "@ethersproject/testcases";
-const bnify = ethers.BigNumber.from;
+import { quais } from "quais";
+import { loadTests } from "@quais/testcases";
+const bnify = quais.BigNumber.from;
 function equals(actual, expected) {
     // Array (treat recursively)
     if (Array.isArray(actual)) {
@@ -50,10 +50,10 @@ function equals(actual, expected) {
     }
     // Uint8Array
     if (expected.buffer) {
-        if (!ethers.utils.isHexString(actual)) {
+        if (!quais.utils.isHexString(actual)) {
             return false;
         }
-        actual = ethers.utils.arrayify(actual);
+        actual = quais.utils.arrayify(actual);
         if (!actual.buffer || actual.length !== expected.length) {
             return false;
         }
@@ -66,8 +66,8 @@ function equals(actual, expected) {
     }
     // Maybe address?
     try {
-        let actualAddress = ethers.utils.getAddress(actual);
-        let expectedAddress = ethers.utils.getAddress(expected);
+        let actualAddress = quais.utils.getAddress(actual);
+        let expectedAddress = quais.utils.getAddress(expected);
         return (actualAddress === expectedAddress);
     }
     catch (error) { }
@@ -89,7 +89,7 @@ function getValues(object, named) {
         case 'string':
             return object.value;
         case 'buffer':
-            return ethers.utils.arrayify(object.value);
+            return quais.utils.arrayify(object.value);
         case 'tuple':
             let result = getValues(object.value, named);
             if (named) {
@@ -105,7 +105,7 @@ function getValues(object, named) {
     }
 }
 describe('ABI Coder Encoding', function () {
-    let coder = ethers.utils.defaultAbiCoder;
+    let coder = quais.utils.defaultAbiCoder;
     let tests = loadTests('contract-interface');
     tests.forEach((test) => {
         let values = getValues(JSON.parse(test.normalizedValues));
@@ -120,7 +120,7 @@ describe('ABI Coder Encoding', function () {
     });
 });
 describe('ABI Coder Decoding', function () {
-    let coder = ethers.utils.defaultAbiCoder;
+    let coder = quais.utils.defaultAbiCoder;
     let tests = loadTests('contract-interface');
     tests.forEach((test) => {
         let values = getValues(JSON.parse(test.normalizedValues));
@@ -135,7 +135,7 @@ describe('ABI Coder Decoding', function () {
     });
 });
 describe('ABI Coder ABIv2 Encoding', function () {
-    let coder = ethers.utils.defaultAbiCoder;
+    let coder = quais.utils.defaultAbiCoder;
     let tests = loadTests('contract-interface-abi2');
     tests.forEach((test) => {
         let values = getValues(JSON.parse(test.values));
@@ -153,7 +153,7 @@ describe('ABI Coder ABIv2 Encoding', function () {
     });
 });
 describe('ABI Coder ABIv2 Decoding', function () {
-    let coder = ethers.utils.defaultAbiCoder;
+    let coder = quais.utils.defaultAbiCoder;
     let tests = loadTests('contract-interface-abi2');
     tests.forEach((test) => {
         let values = getValues(JSON.parse(test.values));
@@ -172,7 +172,7 @@ describe('Test Contract Events', function () {
     tests.forEach((test, index) => {
         it(('decodes event parameters - ' + test.name + ' - ' + test.types), function () {
             this.timeout(120000);
-            let iface = new ethers.utils.Interface(test.interface);
+            let iface = new quais.utils.Interface(test.interface);
             let parsed = iface.decodeEventLog(iface.getEvent("testEvent"), test.data, test.topics);
             test.normalizedValues.forEach((expected, index) => {
                 if (test.hashed[index]) {
@@ -187,11 +187,11 @@ describe('Test Contract Events', function () {
     tests.forEach((test, index) => {
         it(('decodes event data - ' + test.name + ' - ' + test.types), function () {
             this.timeout(120000);
-            let iface = new ethers.utils.Interface(test.interface);
+            let iface = new quais.utils.Interface(test.interface);
             let parsed = iface.decodeEventLog(iface.getEvent("testEvent"), test.data);
             test.normalizedValues.forEach((expected, index) => {
                 if (test.indexed[index]) {
-                    assert.ok((ethers.Contract.isIndexed(parsed[index]) && parsed[index].hash == null), 'parsed event data has empty Indexed - ' + index);
+                    assert.ok((quais.Contract.isIndexed(parsed[index]) && parsed[index].hash == null), 'parsed event data has empty Indexed - ' + index);
                 }
                 else {
                     assert.ok(equals(parsed[index], expected), 'parsed event data matches - ' + index);
@@ -204,14 +204,14 @@ describe('Test Interface Signatures', function () {
     let tests = loadTests('contract-signatures');
     tests.forEach((test) => {
         it('derives the correct signature - ' + test.name, function () {
-            let iface = new ethers.utils.Interface(test.abi);
+            let iface = new quais.utils.Interface(test.abi);
             this.timeout(120000);
             assert.equal(iface.getFunction("testSig").format(), test.signature, 'derived the correct signature');
             assert.equal(iface.getSighash(iface.getFunction("testSig")), test.sigHash, 'derived the correct signature hash');
         });
     });
     it('derives correct description for human-readable ABI', function () {
-        let iface = new ethers.utils.Interface(["function transfer(address from, uint amount)"]);
+        let iface = new quais.utils.Interface(["function transfer(address from, uint amount)"]);
         [
             "transfer",
             "transfer(address,uint256)"
@@ -222,12 +222,12 @@ describe('Test Interface Signatures', function () {
             assert.equal(iface.getSighash(descr), "0xa9059cbb", "incorrect sighash key - " + key);
         });
     });
-    // See: https://github.com/ethers-io/ethers.js/issues/370
+    // See: https://github.com/quais-io/quais.js/issues/370
     it('parses transaction function', function () {
-        let iface = new ethers.utils.Interface(["function transfer(address from, uint amount)"]);
+        let iface = new quais.utils.Interface(["function transfer(address from, uint amount)"]);
         // Transaction: 0x820cc57bc77be44d8f4f024a18e18f64a8b6e62a82a3d7897db5970dbe181ba1
         let rawTx = "0xf8aa028502540be4008316e36094334eec1482109bd802d9e72a447848de3bcc106380b844a9059cbb000000000000000000000000851b9167b7cbf772d38efaf89705b35022880a070000000000000000000000000000000000000000000000000de0b6b3a764000026a03200bf26e5f10f7eda59c0aad9adc2334dda79e785b9b004342524d97a66fca9a0450b07a4dc450bb472e08f8370350fa365fcef6db1a95309ae4c06c9d0748092";
-        let tx = ethers.utils.parseTransaction(rawTx);
+        let tx = quais.utils.parseTransaction(rawTx);
         let descr = iface.parseTransaction(tx);
         assert.equal(descr.args[0], '0x851b9167B7cbf772D38eFaf89705b35022880A07', 'parsed tx - args[0]');
         assert.equal(descr.args[1].toString(), '1000000000000000000', 'parsed tx - args[1]');
@@ -238,7 +238,7 @@ describe('Test Interface Signatures', function () {
     });
 });
 describe('Test Number Coder', function () {
-    let coder = ethers.utils.defaultAbiCoder;
+    let coder = quais.utils.defaultAbiCoder;
     it('null input failed', function () {
         this.timeout(120000);
         assert.throws(() => {
@@ -267,7 +267,7 @@ describe('Test Number Coder', function () {
             { n: 'hex zero', v: '0x0' },
             { n: 'hex leading even length', v: '0x0000' },
             { n: 'hex leading odd length', v: '0x00000' },
-            { n: 'BigNumber', v: ethers.constants.Zero }
+            { n: 'BigNumber', v: quais.constants.Zero }
         ];
         let expected = zeroHex;
         ['uint8', 'uint256', 'int8', 'int256'].forEach(function (type) {
@@ -283,7 +283,7 @@ describe('Test Number Coder', function () {
             { n: 'hex', v: '0x1' },
             { n: 'hex leading even length', v: '0x0001' },
             { n: 'hex leading odd length', v: '0x00001' },
-            { n: 'BigNumber', v: ethers.constants.One }
+            { n: 'BigNumber', v: quais.constants.One }
         ];
         let expected = oneHex;
         ['uint8', 'uint256', 'int8', 'int256'].forEach(function (type) {
@@ -299,7 +299,7 @@ describe('Test Number Coder', function () {
             { n: 'hex', v: '-0x1' },
             { n: 'hex leading even length', v: '-0x0001' },
             { n: 'hex leading odd length', v: '-0x00001' },
-            { n: 'BigNumber', v: ethers.constants.NegativeOne }
+            { n: 'BigNumber', v: quais.constants.NegativeOne }
         ];
         let expected = maxHex;
         ['int8', 'int256'].forEach(function (type) {
@@ -312,7 +312,7 @@ describe('Test Number Coder', function () {
     it('encodes full uint8 range', function () {
         for (let i = 0; i < 256; i++) {
             let expected = '0x00000000000000000000000000000000000000000000000000000000000000';
-            expected += ethers.utils.hexlify(i).substring(2);
+            expected += quais.utils.hexlify(i).substring(2);
             let result = coder.encode(['uint8'], [i]);
             assert.equal(result, expected, 'int8 ' + i);
         }
@@ -325,11 +325,11 @@ describe('Test Number Coder', function () {
             }
             else if (i < 0) {
                 expected = '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff';
-                expected += ethers.utils.hexlify(256 + i).substring(2);
+                expected += quais.utils.hexlify(256 + i).substring(2);
             }
             else {
                 expected = '0x00000000000000000000000000000000000000000000000000000000000000';
-                expected += ethers.utils.hexlify(i).substring(2);
+                expected += quais.utils.hexlify(i).substring(2);
             }
             let result = coder.encode(['int8'], [i]);
             assert.equal(result, expected, 'int8 ' + i);
@@ -391,7 +391,7 @@ describe('Test Number Coder', function () {
     });
 });
 describe('Test Fixed Bytes Coder', function () {
-    let coder = ethers.utils.defaultAbiCoder;
+    let coder = quais.utils.defaultAbiCoder;
     let zeroHex = '0x0000000000000000000000000000000000000000000000000000000000000000';
     it('fails to encode out-of-range bytes4', function () {
         ['0x', '0x00000', '0x000', zeroHex, '0x12345', '0x123456', '0x123', '0x12'].forEach(function (value, index) {
@@ -430,7 +430,7 @@ describe('Test Filters', function () {
     // @TODO: Add a LOT more tests here
     function doTest(test) {
         it(test.name, function () {
-            let iface = new ethers.utils.Interface([test.signature]);
+            let iface = new quais.utils.Interface([test.signature]);
             let eventDescription = iface.getEvent(test.event);
             let filter = iface.encodeFilterTopics(eventDescription, test.args);
             assert.equal(filter.length, test.expected.length, 'filter length matches - ' + test.name);
@@ -441,7 +441,7 @@ describe('Test Filters', function () {
     }
     let Tests = [
         // Skips null in non-indexed fields
-        // See: https://github.com/ethers-io/ethers.js/issues/305
+        // See: https://github.com/quais-io/quais.js/issues/305
         {
             name: "creates correct filters for null non-indexed fields",
             args: [null, 2, null, null],
@@ -509,7 +509,7 @@ describe("Test ParamType Parser", function () {
     ];
     Tests.forEach((test) => {
         it(`allows correct modifiers ${JSON.stringify(test.type)}`, function () {
-            const paramType = ethers.utils.ParamType.from(test.type);
+            const paramType = quais.utils.ParamType.from(test.type);
             //console.log(test, paramType.format("full"));
             assert.equal(paramType.format("full"), test.format);
         });
@@ -519,8 +519,8 @@ describe('Test EIP-838 Error Codes', function () {
     const addr = "0x9FC52a97e59aeea064D9c24a383B70e8475b3e0B";
     it("testError1", function () {
         return __awaiter(this, void 0, void 0, function* () {
-            const provider = new ethers.providers.InfuraProvider("goerli", "49a0efa3aaee4fd99797bfa94d8ce2f1");
-            const contract = new ethers.Contract(addr, [
+            const provider = new quais.providers.InfuraProvider("goerli", "49a0efa3aaee4fd99797bfa94d8ce2f1");
+            const contract = new quais.Contract(addr, [
                 "function testError1(bool pass, address addr, uint256 value) pure returns (bool)",
                 "function testError2(bool pass, bytes data) pure returns (bool)",
                 "error TestError1(address addr, uint256 value)",
@@ -532,7 +532,7 @@ describe('Test EIP-838 Error Codes', function () {
                 assert.ok(false, "did not throw ");
             }
             catch (error) {
-                assert.equal(error.code, ethers.utils.Logger.errors.CALL_EXCEPTION, "error.code");
+                assert.equal(error.code, quais.utils.Logger.errors.CALL_EXCEPTION, "error.code");
                 assert.equal(error.errorSignature, "TestError1(address,uint256)", "error.errorSignature");
                 assert.equal(error.errorName, "TestError1", "error.errorName");
                 assert.equal(error.errorArgs[0], addr, "error.errorArgs[0]");
@@ -546,7 +546,7 @@ describe('Test EIP-838 Error Codes', function () {
 describe("Additional test cases", function () {
     // See: #1906
     it("allows addresses without the 0x", function () {
-        const iface = new ethers.utils.Interface([
+        const iface = new quais.utils.Interface([
             "function test(address foo) view returns (bool)"
         ]);
         //const tx = 

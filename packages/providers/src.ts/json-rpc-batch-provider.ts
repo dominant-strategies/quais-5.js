@@ -1,6 +1,6 @@
 
-import { deepCopy } from "@ethersproject/properties";
-import { fetchJson } from "@ethersproject/web";
+import { deepCopy } from "@quais/properties";
+import { fetchJson } from "@quais/web";
 
 import { JsonRpcProvider } from "./json-rpc-provider";
 

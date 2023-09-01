@@ -5,8 +5,8 @@ to be included in the base library. The API should not be considered
 stable and does not follow [[link-semver]] versioning, so applications
 requiring it should specify the //exact version// needed.
 
-These features are not available in the core ethers package, so to use them
-you must install the ``@ethersproject/experimental`` package and import them
+These features are not available in the core quais package, so to use them
+you must install the ``@quais/experimental`` package and import them
 from that.
 
 _subsection: BrainWallet @<experimental-brainwallet> @INHERIT<[[Wallet]]>
@@ -21,15 +21,15 @@ Generates a brain wallet, with a slightly improved experience, in which
 the generated wallet has a mnemonic.
 
 _property: BrainWallet.generateLegacy(username, password [ , progressCallback ]) => [[experimental-brainwallet]]
-Generate a brain wallet which is compatible with the ethers v3 and earlier.
+Generate a brain wallet which is compatible with the quais v3 and earlier.
 
 _code: Importing @lang<script>
 
 // Node
-const { BrainWallet } = require("@ethersproject/experimental");
+const { BrainWallet } = require("@quais/experimental");
 
 // ESM/TypeScript
-import { BrainWallet } from "@ethersproject/experimental";
+import { BrainWallet } from "@quais/experimental";
 
 
 _subsection: EIP1193Bridge @<experimental-eip1193bridge> @INHERIT<[[link-npm-events]]>
@@ -41,10 +41,10 @@ when interacting with other libraries.
 _code: Importing @lang<script>
 
 // Node
-const { Eip1193Bridge } = require("@ethersproject/experimental");
+const { Eip1193Bridge } = require("@quais/experimental");
 
 // ESM/TypeScript
-import { Eip1193Bridge } from "@ethersproject/experimental";
+import { Eip1193Bridge } from "@quais/experimental";
 
 
 _subsection: NonceManager @<experimental-noncemanager> @INHERIT<[[Signer]]>
@@ -87,7 +87,7 @@ this class.
 _code: Importing @lang<script>
 
 // Node
-const { NonceManager } = require("@ethersproject/experimental");
+const { NonceManager } = require("@quais/experimental");
 
 // ESM/TypeScript
-import { NonceManager } from "@ethersproject/experimental";
+import { NonceManager } from "@quais/experimental";

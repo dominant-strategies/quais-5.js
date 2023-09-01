@@ -258,7 +258,7 @@ export class Logger {
         }
 
         if (url) {
-            message += " [ See: https:/\/links.ethers.org/v5-errors-" + url + " ]";
+            message += " [ See: https:/\/links.quais.org/v5-errors-" + url + " ]";
         }
 
         if (messageDetails.length) {

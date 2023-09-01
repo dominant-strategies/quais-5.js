@@ -1,15 +1,16 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.showThrottleMessage = exports.isCommunityResource = exports.isCommunityResourcable = exports.Formatter = void 0;
-var address_1 = require("@ethersproject/address");
-var bignumber_1 = require("@ethersproject/bignumber");
-var bytes_1 = require("@ethersproject/bytes");
-var constants_1 = require("@ethersproject/constants");
-var properties_1 = require("@ethersproject/properties");
-var transactions_1 = require("@ethersproject/transactions");
-var logger_1 = require("@ethersproject/logger");
+var address_1 = require("@quais/address");
+var bignumber_1 = require("@quais/bignumber");
+var bytes_1 = require("@quais/bytes");
+var constants_1 = require("@quais/constants");
+var properties_1 = require("@quais/properties");
+var transactions_1 = require("@quais/transactions");
+var logger_1 = require("@quais/logger");
 var _version_1 = require("./_version");
 var logger = new logger_1.Logger(_version_1.version);
+var HIERARCHY_DEPTH = 3;
 var Formatter = /** @class */ (function () {
     function Formatter() {
         this.formats = this.getDefaultFormats();
@@ -19,9 +20,11 @@ var Formatter = /** @class */ (function () {
         var formats = ({});
         var address = this.address.bind(this);
         var bigNumber = this.bigNumber.bind(this);
+        var bigNumberArray = this.bigNumberArray.bind(this);
         var blockTag = this.blockTag.bind(this);
         var data = this.data.bind(this);
         var hash = this.hash.bind(this);
+        var hashArray = this.hashArray.bind(this);
         var hex = this.hex.bind(this);
         var number = this.number.bind(this);
         var type = this.type.bind(this);
@@ -63,6 +66,10 @@ var Formatter = /** @class */ (function () {
             data: Formatter.allowNull(strictData),
             type: Formatter.allowNull(number),
             accessList: Formatter.allowNull(this.accessList.bind(this), null),
+            externalGasPrice: Formatter.allowNull(bigNumber),
+            externalMaxPriorityFeePerGas: Formatter.allowNull(bigNumber),
+            externalGasTip: Formatter.allowNull(bigNumber),
+            externalAccessList: Formatter.allowNull(this.accessList.bind(this), null),
         };
         formats.receiptLog = {
             transactionIndex: number,
@@ -95,11 +102,11 @@ var Formatter = /** @class */ (function () {
         };
         formats.block = {
             hash: Formatter.allowNull(hash),
-            parentHash: hash,
-            number: number,
+            parentHash: hashArray,
+            number: bigNumberArray,
             timestamp: number,
             nonce: Formatter.allowNull(hex),
-            difficulty: this.difficulty.bind(this),
+            difficulty: bigNumber,
             gasLimit: bigNumber,
             gasUsed: bigNumber,
             miner: Formatter.allowNull(address),
@@ -150,6 +157,10 @@ var Formatter = /** @class */ (function () {
     Formatter.prototype.bigNumber = function (value) {
         return bignumber_1.BigNumber.from(value);
     };
+    // Strict! Used on input.
+    Formatter.prototype.bigNumberArray = function (value) {
+        return Array.from(value);
+    };
     // Requires a boolean, "true" or  "false"; returns a boolean
     Formatter.prototype.boolean = function (value) {
         if (typeof (value) === "boolean") {
@@ -197,7 +208,7 @@ var Formatter = /** @class */ (function () {
         return (address === constants_1.AddressZero) ? null : address;
     };
     Formatter.prototype.contractAddress = function (value) {
-        return (0, address_1.getContractAddress)(value);
+        return (0, address_1.getContractAddress)(value.from, value.nonce, value.data);
     };
     // Strict! Used on input.
     Formatter.prototype.blockTag = function (blockTag) {
@@ -228,6 +239,22 @@ var Formatter = /** @class */ (function () {
         }
         return result;
     };
+    // Requires a hash array, optionally requires 0x prefix; returns prefixed lowercase hash.
+    Formatter.prototype.hashArray = function (value, strict) {
+        if (value.length != HIERARCHY_DEPTH) {
+            return logger.throwArgumentError("invalid hash array", "value", value);
+        }
+        var results = [];
+        for (var _i = 0, value_1 = value; _i < value_1.length; _i++) {
+            var hash = value_1[_i];
+            var result = this.hex(hash, strict);
+            if ((0, bytes_1.hexDataLength)(result) !== 32) {
+                return logger.throwArgumentError("invalid hash", "value", value);
+            }
+            results.push(result);
+        }
+        return results;
+    };
     // Returns the difficulty as a number, or if too large (i.e. PoA network) null
     Formatter.prototype.difficulty = function (value) {
         if (value == null) {
@@ -246,21 +273,44 @@ var Formatter = /** @class */ (function () {
         }
         return (0, bytes_1.hexZeroPad)(value, 32);
     };
-    Formatter.prototype._block = function (value, format) {
+    Formatter.prototype._block = function (value, format, context) {
         if (value.author != null && value.miner == null) {
             value.miner = value.author;
         }
         // The difficulty may need to come from _difficulty in recursed blocks
         var difficulty = (value._difficulty != null) ? value._difficulty : value.difficulty;
         var result = Formatter.check(format, value);
-        result._difficulty = ((difficulty == null) ? null : bignumber_1.BigNumber.from(difficulty));
+        result._difficulty = ((difficulty == null) ? null : difficulty);
+        if (context) {
+            return this.contextBlock(result, context);
+        }
         return result;
     };
-    Formatter.prototype.block = function (value) {
-        return this._block(value, this.formats.block);
+    Formatter.prototype.block = function (value, context) {
+        return this._block(value, this.formats.block, context);
     };
     Formatter.prototype.blockWithTransactions = function (value) {
         return this._block(value, this.formats.blockWithTransactions);
+    };
+    Formatter.prototype.contextBlock = function (value, context) {
+        var contextBlock = {
+            number: value.number[context],
+            transactions: value.transactions,
+            hash: value.hash,
+            parentHash: value.parentHash[context],
+            timestamp: value.timestamp,
+            nonce: value.nonce,
+            difficulty: value.difficulty,
+            _difficulty: value._difficulty,
+            gasLimit: value.gasLimit,
+            gasUsed: value.gasUsed,
+            miner: value.miner,
+            extraData: value.data,
+            transactionsRoot: value.transactionsRoot,
+            stateRoot: value.stateRoot,
+            receiptsRoot: value.receiptsRoot
+        };
+        return contextBlock;
     };
     // Strict! Used on input.
     Formatter.prototype.transactionRequest = function (value) {
@@ -334,13 +384,13 @@ var Formatter = /** @class */ (function () {
         if (result.root != null) {
             if (result.root.length <= 4) {
                 // Could be 0x00, 0x0, 0x01 or 0x1
-                var value_1 = bignumber_1.BigNumber.from(result.root).toNumber();
-                if (value_1 === 0 || value_1 === 1) {
+                var value_2 = bignumber_1.BigNumber.from(result.root).toNumber();
+                if (value_2 === 0 || value_2 === 1) {
                     // Make sure if both are specified, they match
-                    if (result.status != null && (result.status !== value_1)) {
+                    if (result.status != null && (result.status !== value_2)) {
                         logger.throwArgumentError("alt-root-status/status mismatch", "value", { root: result.root, status: result.status });
                     }
-                    result.status = value_1;
+                    result.status = value_2;
                     delete result.root;
                 }
                 else {

@@ -1,4 +1,4 @@
-import { BigNumber } from "@ethersproject/bignumber";
+import { BigNumber } from "@quais/bignumber";
 declare const NegativeOne: BigNumber;
 declare const Zero: BigNumber;
 declare const One: BigNumber;

@@ -16,7 +16,7 @@ var __extends = (this && this.__extends) || (function () {
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.langKo = void 0;
-var strings_1 = require("@ethersproject/strings");
+var strings_1 = require("@quais/strings");
 var wordlist_1 = require("./wordlist");
 var data = [
     "OYAa",

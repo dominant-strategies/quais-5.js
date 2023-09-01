@@ -38,8 +38,8 @@
  *
  */
 
-import { arrayify, BytesLike } from "@ethersproject/bytes";
-import { defineReadOnly } from "@ethersproject/properties";
+import { arrayify, BytesLike } from "@quais/bytes";
+import { defineReadOnly } from "@quais/properties";
 
 export class BaseX {
     readonly alphabet: string;

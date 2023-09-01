@@ -1,17 +1,17 @@
 "use strict";
 
-import { Block, BlockWithTransactions, Provider } from "@ethersproject/abstract-provider";
-import { BigNumber } from "@ethersproject/bignumber";
-import { isHexString } from "@ethersproject/bytes";
-import { Network } from "@ethersproject/networks";
-import { deepCopy, defineReadOnly, shallowCopy } from "@ethersproject/properties";
-import { shuffled } from "@ethersproject/random";
-import { poll } from "@ethersproject/web";
+import { Block, BlockWithTransactions, Provider } from "@quais/abstract-provider";
+import { BigNumber } from "@quais/bignumber";
+import { isHexString } from "@quais/bytes";
+import { Network } from "@quais/networks";
+import { deepCopy, defineReadOnly, shallowCopy } from "@quais/properties";
+import { shuffled } from "@quais/random";
+import { poll } from "@quais/web";
 
 import { BaseProvider } from "./base-provider";
 import { isCommunityResource } from "./formatter";
 
-import { Logger } from "@ethersproject/logger";
+import { Logger } from "@quais/logger";
 import { version } from "./_version";
 const logger = new Logger(version);
 

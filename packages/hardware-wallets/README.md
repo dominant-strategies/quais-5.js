@@ -10,7 +10,7 @@ API
 ===
 
 ```
-import { LedgerSigner } from "@ethersproject/hardware-wallets";
+import { LedgerSigner } from "@quais/hardware-wallets";
 const signer = new LedgerSigner(provider, type, path);
 // By default:
 //   - in node, type = "hid"
@@ -20,7 +20,7 @@ const signer = new LedgerSigner(provider, type, path);
 License
 =======
 
-All ethers code is MIT License.
+All quais code is MIT License.
 
 Each hardware wallet manufacturer may impose additional license
 requirements so please check the related abstraction libraries

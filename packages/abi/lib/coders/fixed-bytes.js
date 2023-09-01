@@ -16,7 +16,7 @@ var __extends = (this && this.__extends) || (function () {
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.FixedBytesCoder = void 0;
-var bytes_1 = require("@ethersproject/bytes");
+var bytes_1 = require("@quais/bytes");
 var abstract_coder_1 = require("./abstract-coder");
 // @TODO: Merge this with bytes
 var FixedBytesCoder = /** @class */ (function (_super) {

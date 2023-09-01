@@ -7,7 +7,7 @@
 //   See: https://eips.ethereum.org/EIPS/eip-1014
 // EXTCODEHASH
 //   See: https://eips.ethereum.org/EIPS/eip-1052
-import { ethers } from "ethers";
+import { quais } from "quais";
 export var OpcodeMemoryAccess;
 (function (OpcodeMemoryAccess) {
     OpcodeMemoryAccess["write"] = "write";
@@ -17,11 +17,11 @@ export var OpcodeMemoryAccess;
 ;
 export class Opcode {
     constructor(mnemonic, value, delta, alpha, doc) {
-        ethers.utils.defineReadOnly(this, "mnemonic", mnemonic);
-        ethers.utils.defineReadOnly(this, "value", value);
-        ethers.utils.defineReadOnly(this, "delta", delta);
-        ethers.utils.defineReadOnly(this, "alpha", alpha);
-        ethers.utils.defineReadOnly(this, "doc", doc || null);
+        quais.utils.defineReadOnly(this, "mnemonic", mnemonic);
+        quais.utils.defineReadOnly(this, "value", value);
+        quais.utils.defineReadOnly(this, "delta", delta);
+        quais.utils.defineReadOnly(this, "alpha", alpha);
+        quais.utils.defineReadOnly(this, "doc", doc || null);
     }
     // Returns if this opcode is a jump
     isJump() {

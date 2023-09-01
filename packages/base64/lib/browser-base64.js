@@ -1,7 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.encode = exports.decode = void 0;
-var bytes_1 = require("@ethersproject/bytes");
+var bytes_1 = require("@quais/bytes");
 function decode(textData) {
     textData = atob(textData);
     var data = [];

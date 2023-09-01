@@ -78,14 +78,14 @@ const utils_1 = require("../utils");
             }
             latestVersions[pLocal.name] = version;
             // Write out the _version.ts
-            if (!pLocal._ethers_nobuild) {
+            if (!pLocal._quais_nobuild) {
                 const code = "export const version = " + JSON.stringify(dirname + "/" + version) + ";\n";
                 fs_1.default.writeFileSync((0, path_1.resolve)((0, path_1.getPackagePath)(dirname), "src.ts/_version.ts"), code);
             }
         }
         progress(1);
         if (updated) {
-            const filename = (0, path_1.resolve)("packages/ethers/package.json");
+            const filename = (0, path_1.resolve)("packages/quais/package.json");
             const info = (0, utils_1.loadJson)(filename);
             Object.keys(info.dependencies).forEach((name) => {
                 const version = latestVersions[name];

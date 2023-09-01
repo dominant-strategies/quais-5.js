@@ -4,11 +4,11 @@ import { createHash, createHmac } from "crypto";
 
 import hash from "hash.js";
 
-import { arrayify, BytesLike } from "@ethersproject/bytes";
+import { arrayify, BytesLike } from "@quais/bytes";
 
 import { SupportedAlgorithm } from "./types";
 
-import { Logger } from "@ethersproject/logger";
+import { Logger } from "@quais/logger";
 import { version } from "./_version";
 const logger = new Logger(version);
 

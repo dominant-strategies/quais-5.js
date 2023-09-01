@@ -1,4 +1,4 @@
-import { Bytes, Hexable } from "@ethersproject/bytes";
+import { Bytes, Hexable } from "@quais/bytes";
 export declare type BigNumberish = BigNumber | Bytes | bigint | string | number;
 export declare function isBigNumberish(value: any): value is BigNumberish;
 export declare class BigNumber implements Hexable {

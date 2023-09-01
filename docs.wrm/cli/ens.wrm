@@ -5,7 +5,7 @@ _subsection: Help
 _code: @lang<text>
 
 Usage:
-   ethers-ens COMMAND [ ARGS ] [ OPTIONS ]
+   quais-ens COMMAND [ ARGS ] [ OPTIONS ]
 
 COMMANDS
    lookup [ NAME | ADDRESS [ ... ] ]

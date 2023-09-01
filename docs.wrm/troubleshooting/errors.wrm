@@ -1,6 +1,6 @@
 _section: Error Codes @<error-codes>
 
-All errors in ethers are created by the [[Logger]] class, which includes
+All errors in quais are created by the [[Logger]] class, which includes
 a number of additional properties and extra data, which can assist in
 debugging and when submitting issues.
 
@@ -59,22 +59,22 @@ to execute the transaction.
 
 _subsection: MISSING_NEW @<help-MISSING_NEW>
 
-Classes in ethers must be instantiated with the ``new`` operator. This
+Classes in quais must be instantiated with the ``new`` operator. This
 error indicates that a Class is attempting to be used as a function.
 
 _code: Examples @lang<javascript>
 
 //_hide: privateKey = "0x0123456789012345678901234567890123456789012345678901234567890123";
-//_hide: Wallet = ethers.Wallet;
+//_hide: Wallet = quais.Wallet;
 
 // Bad:
 //_throws:
-ethers.Wallet(privateKey)
+quais.Wallet(privateKey)
 //_log:
 
 // Good:
 //_result:
-new ethers.Wallet(privateKey)
+new quais.Wallet(privateKey)
 //_log:
 
 
@@ -172,17 +172,17 @@ This error occurs when dividing by zero or attempting to take the modulo zero.
 
 _heading: Unbound Result @<help-NUMERIC_FAULT-unbound-result>
 
-The ethers [[BigNumber]] does not support bitwise operators
+The quais [[BigNumber]] does not support bitwise operators
 on negative numbers which can result in the need for an infinite
 number of set bits.
 
 Other implementations may use negative values to indicate this,
-but this is considered out of scope for ethers.
+but this is considered out of scope for quais.
 
 
 _heading: Unsupported Operation @<help-NUMERIC_FAULT-unsupported>
 
-The ethers [[BigNumber]] does not support negative powers or bitwise
+The quais [[BigNumber]] does not support negative powers or bitwise
 shift operation using negative values.
 
 _code: Examples @lang<javascript>

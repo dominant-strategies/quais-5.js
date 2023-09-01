@@ -1,6 +1,6 @@
-import { Block, TransactionReceipt, TransactionResponse } from "@ethersproject/abstract-provider";
-import { BigNumber } from "@ethersproject/bignumber";
-import { AccessList } from "@ethersproject/transactions";
+import { Block, TransactionReceipt, TransactionResponse } from "@quais/abstract-provider";
+import { BigNumber } from "@quais/bignumber";
+import { AccessList } from "@quais/transactions";
 export declare type FormatFunc = (value: any) => any;
 export declare type FormatFuncs = {
     [key: string]: FormatFunc;
@@ -23,6 +23,7 @@ export declare class Formatter {
     number(number: any): number;
     type(number: any): number;
     bigNumber(value: any): BigNumber;
+    bigNumberArray(value: any): BigNumber[];
     boolean(value: any): boolean;
     hex(value: any, strict?: boolean): string;
     data(value: any, strict?: boolean): string;
@@ -31,11 +32,13 @@ export declare class Formatter {
     contractAddress(value: any): string;
     blockTag(blockTag: any): string;
     hash(value: any, strict?: boolean): string;
+    hashArray(value: any, strict?: boolean): string[];
     difficulty(value: any): number;
     uint256(value: any): string;
-    _block(value: any, format: any): Block;
-    block(value: any): Block;
+    _block(value: any, format: any, context?: number): Block;
+    block(value: any, context?: number): Block;
     blockWithTransactions(value: any): Block;
+    contextBlock(value: any, context: number): Block;
     transactionRequest(value: any): any;
     transactionResponse(transaction: any): TransactionResponse;
     transaction(value: any): any;

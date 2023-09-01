@@ -16,14 +16,14 @@ function addUtilsReplace(plugins) {
 
     // Remove the buffer check from BN.js
     plugins.push(replace({
-        "require('buffer')": "/*RicMoo:ethers:require(buffer)*/(null)",
+        "require('buffer')": "/*RicMoo:quais:require(buffer)*/(null)",
         include: "**/lib/bn.js",
         delimiters: [ '', '' ]
     }));
 
     // Remove the util from inhjerits (forces browser inherits)
     plugins.push(replace({
-        "require('util')": "/*RicMoo:ethers:require(util)*/(null)",
+        "require('util')": "/*RicMoo:quais:require(util)*/(null)",
         include: "**/inherits/inherits.js",
         delimiters: [ '', '' ]
     }));
@@ -34,7 +34,7 @@ function addUtilsReplace(plugins) {
 function addLangReplace(plugins) {
 
     plugins.push(replace({
-        'require("./wordlists")': 'require("./browser-wordlists")/*RicMoo:ethers:require(wordlists)*/',
+        'require("./wordlists")': 'require("./browser-wordlists")/*RicMoo:quais:require(wordlists)*/',
         include: "**/wordlists/lib/index.js",
         delimiters: [ '', '' ]
     }));
@@ -46,7 +46,7 @@ function addEllipticReplace(plugins) {
 
     // Replace the package.json in elliptic
     plugins.push(replace({
-        "require('../package.json')": `/*RicMoo:ethers*/{ version: "${ elliptic.version }" }`,
+        "require('../package.json')": `/*RicMoo:quais*/{ version: "${ elliptic.version }" }`,
         include: "**/lib/elliptic.js",
         delimiters: [ '', '' ]
     }));
@@ -67,7 +67,7 @@ function addEllipticReplace(plugins) {
             include: `**/${ filename }`,
             delimiters: [ '', '' ]
         };
-        replacement[`require('${ name }')`] = `/*RicMoo:ethers:require(${ name })*/${ text }`,
+        replacement[`require('${ name }')`] = `/*RicMoo:quais:require(${ name })*/${ text }`,
         plugins.push(replace(replacement));
     });
 
@@ -89,11 +89,11 @@ function getUmdConfig() {
     plugins.push(commonjs({ }));
 
     return {
-        input: `packages/ethers/lib/index.js`,
+        input: `packages/quais/lib/index.js`,
         output: {
-            file: `packages/ethers/dist/ethers.umd.js`,
+            file: `packages/quais/dist/quais.umd.js`,
             format: "umd",
-            name: "ethers",
+            name: "quais",
             sourcemap: true
         },
         context: "commonjsGlobal",
@@ -116,9 +116,9 @@ function getEsmConfig() {
     plugins.push(commonjs({ }));
 
     return {
-        input: `packages/ethers/lib.esm/index.js`,
+        input: `packages/quais/lib.esm/index.js`,
         output: {
-            file: `packages/ethers/dist/ethers.esm.js`,
+            file: `packages/quais/dist/quais.esm.js`,
             format: "esm",
             sourcemap: true
         },
@@ -134,7 +134,7 @@ function getConfig() {
 
     // Remove the buffer check from BN.js
     plugins.push(replace({
-        "require('buffer')": "/ * RicMoo:ethers * /(null)",
+        "require('buffer')": "/ * RicMoo:quais * /(null)",
         include: "* * / lib/bn.js",
         delimiters: [ '', '' ]
     }));
@@ -144,12 +144,12 @@ function getConfig() {
     plugins.push(commonjs({ }));
 
     return {
-        input: `packages/ethers/lib.esm/index.js`,
+        input: `packages/quais/lib.esm/index.js`,
         output: {
-            file: `packages/ethers/dist/test-esm.js`,
+            file: `packages/quais/dist/test-esm.js`,
             //preserveModules: true,
             format: "esm",
-            //name: `ethers`,
+            //name: `quais`,
             sourcemap: true,
             exports: "named"
         },

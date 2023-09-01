@@ -1,6 +1,6 @@
 "use strict";
-import { deepCopy, defineReadOnly } from "@ethersproject/properties";
-import { Logger } from "@ethersproject/logger";
+import { deepCopy, defineReadOnly } from "@quais/properties";
+import { Logger } from "@quais/logger";
 import { version } from "./_version";
 const logger = new Logger(version);
 import { JsonRpcProvider } from "./json-rpc-provider";

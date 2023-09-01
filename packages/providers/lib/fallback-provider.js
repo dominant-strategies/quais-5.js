@@ -52,15 +52,15 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.FallbackProvider = void 0;
-var abstract_provider_1 = require("@ethersproject/abstract-provider");
-var bignumber_1 = require("@ethersproject/bignumber");
-var bytes_1 = require("@ethersproject/bytes");
-var properties_1 = require("@ethersproject/properties");
-var random_1 = require("@ethersproject/random");
-var web_1 = require("@ethersproject/web");
+var abstract_provider_1 = require("@quais/abstract-provider");
+var bignumber_1 = require("@quais/bignumber");
+var bytes_1 = require("@quais/bytes");
+var properties_1 = require("@quais/properties");
+var random_1 = require("@quais/random");
+var web_1 = require("@quais/web");
 var base_provider_1 = require("./base-provider");
 var formatter_1 = require("./formatter");
-var logger_1 = require("@ethersproject/logger");
+var logger_1 = require("@quais/logger");
 var _version_1 = require("./_version");
 var logger = new logger_1.Logger(_version_1.version);
 function now() { return (new Date()).getTime(); }

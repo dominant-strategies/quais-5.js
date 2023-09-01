@@ -1,6 +1,6 @@
 _section: Signing Key @<SigningKey>
 
-_property: new ethers.utils.SigningKey(privateKey)  @<SigningKey-constructor> @src<signing-key:constructor.SigningKey>
+_property: new quais.utils.SigningKey(privateKey)  @<SigningKey-constructor> @src<signing-key:constructor.SigningKey>
 Create a new SigningKey for //privateKey//.
 
 _property: signingKey.privateKey => string<[[DataHexString]]<32>>
@@ -31,7 +31,7 @@ Returns true if //anObject// is a SigningKey.
 
 _subsection: Other Functions
 
-_property: ethers.utils.verifyMessage(message, signature) => string<[[address]]>  @<utils-verifyMessage> @SRC<wallet>
+_property: quais.utils.verifyMessage(message, signature) => string<[[address]]>  @<utils-verifyMessage> @SRC<wallet>
 Returns the address that signed //message// producing //signature//. The
 signature may have a non-canonical v (i.e. does not need to be 27 or 28),
 in which case it will be normalized to compute the `recoveryParam` which
@@ -39,15 +39,15 @@ will then be used to compute the address; this allows systems which use
 the v to encode additional data (such as [EIP-155](link-eip-155))
 to be used since the v parameter is still completely non-ambiguous.
 
-_property: ethers.utils.verifyTypedData(domain, types, value, signature) => string<[[address]]>  @<utils-verifyTypedData> @SRC<wallet>
+_property: quais.utils.verifyTypedData(domain, types, value, signature) => string<[[address]]>  @<utils-verifyTypedData> @SRC<wallet>
 Returns the address that signed the [[link-eip-712]] //value// for the //domain//
 and //types// to produce the signature.
 
-_property: ethers.utils.recoverPublicKey(digest, signature) => string<[[DataHexString]]<65>> @<utils-recoverPublicKey>
+_property: quais.utils.recoverPublicKey(digest, signature) => string<[[DataHexString]]<65>> @<utils-recoverPublicKey>
 Returns the uncompressed public key (i.e. the first byte will be ``0x04``)
 of the private key that was used to sign //digest// which gave the //signature//.
 
-_property: ethers.utils.computePublicKey(key [, compressed = false ]) => string<[[DataHexString]]> @<utils-computePublicKey>
+_property: quais.utils.computePublicKey(key [, compressed = false ]) => string<[[DataHexString]]> @<utils-computePublicKey>
 Computes the public key of //key//, optionally compressing it. The //key//
 can be any form of public key (compressed or uncompressed) or a private
 key.

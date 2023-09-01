@@ -13,4 +13,4 @@ export async function getGitTag(filename: string): Promise<string> {
     return hashMatch[1];
 }
 
-//getGitTag("/Users/ricmoo/Development/ethers/ethers.js/packages/abi").then(console.log);
+//getGitTag("/Users/ricmoo/Development/quais/quais.js/packages/abi").then(console.log);

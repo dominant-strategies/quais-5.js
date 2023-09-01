@@ -2,26 +2,26 @@
 
 'use strict';
 
-import { ethers } from "ethers";
+import { quais } from "quais";
 
 function randomBytes(seed: string, lower: number, upper?: number): Uint8Array {
     if (!upper) { upper = lower; }
 
     if (upper === 0 && upper === lower) { return new Uint8Array(0); }
 
-    let result = ethers.utils.arrayify(ethers.utils.keccak256(ethers.utils.toUtf8Bytes(seed)));
+    let result = quais.utils.arrayify(quais.utils.keccak256(quais.utils.toUtf8Bytes(seed)));
     while (result.length < upper) {
-        result = ethers.utils.concat([result, ethers.utils.keccak256(ethers.utils.concat([seed, result]))]);
+        result = quais.utils.concat([result, quais.utils.keccak256(quais.utils.concat([seed, result]))]);
     }
 
-    let top = ethers.utils.arrayify(ethers.utils.keccak256(result));
+    let top = quais.utils.arrayify(quais.utils.keccak256(result));
     let percent = ((top[0] << 16) | (top[1] << 8) | top[2]) / 0x01000000;
 
     return result.slice(0, lower + Math.floor((upper - lower) * percent));
 }
 
 function randomHexString(seed: string, lower: number, upper?: number): string {
-    return ethers.utils.hexlify(randomBytes(seed, lower, upper));
+    return quais.utils.hexlify(randomBytes(seed, lower, upper));
 }
 
 function randomNumber(seed: string, lower: number, upper: number): number {
@@ -61,8 +61,8 @@ function equals(a: any, b: any): boolean {
     return a === b;
 }
 
-function getWallet(): ethers.Wallet {
-    const provider = new ethers.providers.InfuraProvider("goerli", "49a0efa3aaee4fd99797bfa94d8ce2f1");
+function getWallet(): quais.Wallet {
+    const provider = new quais.providers.InfuraProvider("goerli", "49a0efa3aaee4fd99797bfa94d8ce2f1");
 
     let key: null | string = null;
 
@@ -88,7 +88,7 @@ function getWallet(): ethers.Wallet {
         throw new Error("could not find faucet private key");
     }
 
-    return new ethers.Wallet(key, provider);
+    return new quais.Wallet(key, provider);
 }
 
 export async function fundAddress(address: string): Promise<string> {
@@ -105,7 +105,7 @@ export async function fundAddress(address: string): Promise<string> {
     }
 }
 
-export async function returnFunds(wallet: ethers.Wallet): Promise<string> {
+export async function returnFunds(wallet: quais.Wallet): Promise<string> {
 
     const faucet = getWallet();
 
@@ -124,7 +124,7 @@ export async function returnFunds(wallet: ethers.Wallet): Promise<string> {
     return tx.hash;
 }
 
-export async function sendTransaction(txObj: ethers.providers.TransactionRequest): Promise<string> {
+export async function sendTransaction(txObj: quais.providers.TransactionRequest): Promise<string> {
     const wallet = getWallet();
     const tx = await wallet.sendTransaction(txObj);
     return tx.hash;

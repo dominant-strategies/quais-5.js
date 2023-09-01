@@ -5,8 +5,8 @@ import fs from "fs";
 import { colorify } from "../log";
 import { resolve } from "../path";
 
-const sourceEthers = fs.readFileSync(resolve("packages/ethers/src.ts/ethers.ts")).toString();
-const targets = sourceEthers.match(/export\s*{\s*((.|\s)*)}/)[1].trim();
+const sourceQuais = fs.readFileSync(resolve("packages/quais/src.ts/quais.ts")).toString();
+const targets = sourceQuais.match(/export\s*{\s*((.|\s)*)}/)[1].trim();
 
 ////////////////////
 // Begin template
@@ -16,21 +16,21 @@ const output = `"use strict";
 
 // To modify this file, you must update ./misc/admin/lib/cmds/update-exports.js
 
-import * as ethers from "./ethers";
+import * as quais from "./quais";
 
 try {
     const anyGlobal = (window as any);
 
-    if (anyGlobal._ethers == null) {
-        anyGlobal._ethers = ethers;
+    if (anyGlobal._quais == null) {
+        anyGlobal._quais = quais;
     }
 } catch (error) { }
 
-export { ethers };
+export { quais };
 
 export {
     ${ targets }
-} from "./ethers";
+} from "./quais";
 `;
 
 ////////////////////
@@ -39,4 +39,4 @@ export {
 
 console.log(colorify.bold(`Flattening exports...`))
 
-fs.writeFileSync(resolve("packages/ethers/src.ts/index.ts"), output);
+fs.writeFileSync(resolve("packages/quais/src.ts/index.ts"), output);

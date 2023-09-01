@@ -59,7 +59,7 @@ abi addr api app arg arrayify asm backend basex bigint bignumber bn byte
 bytecode callback calldata ccip charset checksum ciphertext cli codepoint
 commify config
 contenthash ctr ctrl debug dd dklen eexist encseed eof eq erc ethaddr
-ethseed ethers eval exec filename func gz gzip hid http https hw iv
+ethseed quais eval exec filename func gz gzip hid http https hw iv
 info init ipc json kdf kdfparams labelhash lang lib metadata mm multihash nfc
 nfkc nfd nfkd nodehash notok nowait nullish offchain oob opcode org pbkdf pc plugin
 pragma pre prf recid repl rpc sighash topichash solc stderr stdin stdout subclasses
@@ -75,7 +75,7 @@ apikey asc endblock startblock
 alchemyapi ankr arbitrum Cloudflare com Etherscan INFURA IPFS IPNS MetaMask Nodesmith
 Trezor ledgerhq axic bitcoinjs browserify easyseed ethereumjs
 goerli homestead kotti kovan mainnet morden mordor rinkeby kintsugi
-ropsten skynet testnet lb maticmum
+ropsten skynet testnet lb maticmum quai Quai
 
 // Demo words
 args foo eth foo foobar ll localhost passwd ricmoo tx xxx yna
@@ -198,7 +198,7 @@ function starts(text, prefix) {
                     return;
                 }
                 // Prolly a require
-                if (value.match(/^@ethersproject\/[a-z0-9-]+$/)) {
+                if (value.match(/^@quais\/[a-z0-9-]+$/)) {
                     return;
                 }
                 if (value.substring(0, 2) === "./") {

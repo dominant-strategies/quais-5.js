@@ -1,20 +1,20 @@
 "use strict";
-import { ethers } from "ethers";
+import { quais } from "quais";
 import { version } from "./_version";
-const logger = new ethers.utils.Logger(version);
-export class MetamaskProvider extends ethers.providers.Web3Provider {
+const logger = new quais.utils.Logger(version);
+export class MetamaskProvider extends quais.providers.Web3Provider {
     constructor(ethereum) {
         if (!ethereum) {
             ethereum = global.ethereum;
             if (!ethereum) {
-                logger.throwError("could not auto-detect global.ethereum", ethers.errors.UNSUPPORTED_OPERATION, {
+                logger.throwError("could not auto-detect global.ethereum", quais.errors.UNSUPPORTED_OPERATION, {
                     operation: "window.ethereum"
                 });
             }
         }
         super(ethereum);
         let _account = null;
-        ethers.utils.defineReadOnly(this, "_pollAccountFunc", () => {
+        quais.utils.defineReadOnly(this, "_pollAccountFunc", () => {
             let account = null;
             if (account === _account) {
                 return;

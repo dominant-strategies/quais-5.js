@@ -1,10 +1,10 @@
 {
-  "author": "Richard Moore <me@ricmoo.com>",
+  "author": "",
   "dependencies": {
-    "ethers": "^5.7.0"
+    "quais": "^0.1.0"
   },
   "description": "ASM libraries and tools for the Ethereum EVM.",
-  "ethereum": "donations.ethers.eth",
+  "ethereum": "donations.quais.eth",
   "funding": [
     {
       "type": "individual",
@@ -23,14 +23,14 @@
   "license": "MIT",
   "main": "./lib/index.js",
   "module": "./lib.esm/index.js",
-  "name": "@ethersproject/asm",
+  "name": "@quais/asm",
   "publishConfig": {
     "access": "public"
   },
   "repository": {
     "directory": "packages/asm",
     "type": "git",
-    "url": "git://github.com/ethers-io/ethers.js.git"
+    "url": "git://github.com:dominant-strategies/quais.js.git"
   },
   "scripts": {
     "generate": "node ./generate.js",
@@ -38,5 +38,5 @@
   },
   "tarballHash": "0x66d57d00b6a8b039209e081aa5482b1f737570441d220f0906700cf1478437b6",
   "types": "./lib/index.d.ts",
-  "version": "5.7.0"
+  "version": "0.1.0"
 }

@@ -1,10 +1,10 @@
-import { Provider, TransactionRequest, TransactionResponse } from "@ethersproject/abstract-provider";
-import { Signer, TypedDataDomain, TypedDataField, TypedDataSigner } from "@ethersproject/abstract-signer";
-import { Bytes } from "@ethersproject/bytes";
-import { Network, Networkish } from "@ethersproject/networks";
-import { Deferrable } from "@ethersproject/properties";
-import { AccessList } from "@ethersproject/transactions";
-import { ConnectionInfo } from "@ethersproject/web";
+import { Provider, TransactionRequest, TransactionResponse } from "@quais/abstract-provider";
+import { Signer, TypedDataDomain, TypedDataField, TypedDataSigner } from "@quais/abstract-signer";
+import { Bytes } from "@quais/bytes";
+import { Network, Networkish } from "@quais/networks";
+import { Deferrable } from "@quais/properties";
+import { AccessList } from "@quais/transactions";
+import { ConnectionInfo } from "@quais/web";
 import { BaseProvider, Event } from "./base-provider";
 export declare class JsonRpcSigner extends Signer implements TypedDataSigner {
     readonly provider: JsonRpcProvider;
@@ -31,10 +31,11 @@ export declare class JsonRpcProvider extends BaseProvider {
     _nextId: number;
     _eventLoopCache: Record<string, Promise<any>>;
     get _cache(): Record<string, Promise<any>>;
-    constructor(url?: ConnectionInfo | string, network?: Networkish);
+    constructor(url?: ConnectionInfo | string, network?: Networkish, context?: number);
     static defaultUrl(): string;
     detectNetwork(): Promise<Network>;
     _uncachedDetectNetwork(): Promise<Network>;
+    detectContext(): Promise<number>;
     getSigner(addressOrIndex?: string | number): JsonRpcSigner;
     getUncheckedSigner(addressOrIndex?: string | number): UncheckedJsonRpcSigner;
     listAccounts(): Promise<Array<string>>;

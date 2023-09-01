@@ -30,4 +30,4 @@ function getGitTag(filename) {
     });
 }
 exports.getGitTag = getGitTag;
-//getGitTag("/Users/ricmoo/Development/ethers/ethers.js/packages/abi").then(console.log);
+//getGitTag("/Users/ricmoo/Development/quais/quais.js/packages/abi").then(console.log);

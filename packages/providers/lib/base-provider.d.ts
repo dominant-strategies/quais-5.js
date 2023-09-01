@@ -1,9 +1,9 @@
 /// <reference types="node" />
-import { Block, BlockTag, BlockWithTransactions, EventType, Filter, FilterByBlockHash, Listener, Log, Provider, TransactionReceipt, TransactionRequest, TransactionResponse } from "@ethersproject/abstract-provider";
-import { BigNumber, BigNumberish } from "@ethersproject/bignumber";
-import { Network, Networkish } from "@ethersproject/networks";
-import { Deferrable } from "@ethersproject/properties";
-import { Transaction } from "@ethersproject/transactions";
+import { Block, BlockTag, BlockWithTransactions, EventType, Filter, FilterByBlockHash, Listener, Log, Provider, TransactionReceipt, TransactionRequest, TransactionResponse } from "@quais/abstract-provider";
+import { BigNumber, BigNumberish } from "@quais/bignumber";
+import { Network, Networkish } from "@quais/networks";
+import { Deferrable } from "@quais/properties";
+import { Transaction } from "@quais/transactions";
 import { Formatter } from "./formatter";
 export declare class Event {
     readonly listener: Listener;
@@ -75,6 +75,7 @@ export declare class BaseProvider extends Provider implements EnsProvider {
         reqTime: number;
         respTime: number;
     }>;
+    _context: number;
     readonly anyNetwork: boolean;
     disableCcipRead: boolean;
     /**
@@ -116,6 +117,7 @@ export declare class BaseProvider extends Provider implements EnsProvider {
     }): Promise<TransactionReceipt>;
     getBlockNumber(): Promise<number>;
     getGasPrice(): Promise<BigNumber>;
+    getMaxPriorityFeePerGas(): Promise<BigNumber>;
     getBalance(addressOrName: string | Promise<string>, blockTag?: BlockTag | Promise<BlockTag>): Promise<BigNumber>;
     getTransactionCount(addressOrName: string | Promise<string>, blockTag?: BlockTag | Promise<BlockTag>): Promise<number>;
     getCode(addressOrName: string | Promise<string>, blockTag?: BlockTag | Promise<BlockTag>): Promise<string>;

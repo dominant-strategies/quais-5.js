@@ -9,8 +9,8 @@ import { loadJson, saveJson } from "../utils";
         return accum;
     }, <Record<string, string>>({ }));
     dirnames.forEach((dirname) => {
-        // Skip ethers; it's versions are locked during update-versions
-        if (dirname === "ethers") { return; }
+        // Skip quais; it's versions are locked during update-versions
+        if (dirname === "quais") { return; }
 
         console.log(dirname);
 

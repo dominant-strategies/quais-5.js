@@ -1,7 +1,7 @@
 _section: Command Line Interfaces
 
 _toc:
-    ethers
+    quais
     asm
     ens
     typescript

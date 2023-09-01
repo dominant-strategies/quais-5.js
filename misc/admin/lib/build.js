@@ -15,7 +15,7 @@ function setupConfig(outDir, moduleType, targetType) {
     path_1.dirnames.forEach((dirname) => {
         const filename = (0, path_1.getPackageJsonPath)(dirname);
         const info = (0, utils_1.loadJson)(filename);
-        if (info._ethers_nobuild) {
+        if (info._quais_nobuild) {
             return;
         }
         let path = (0, path_1.resolve)("packages", dirname, "tsconfig.json");

@@ -1,4 +1,4 @@
-import { BytesLike } from "@ethersproject/bytes";
+import { BytesLike } from "@quais/bytes";
 import { SupportedAlgorithm } from "./types";
 export declare function ripemd160(data: BytesLike): string;
 export declare function sha256(data: BytesLike): string;

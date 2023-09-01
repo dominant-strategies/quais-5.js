@@ -1,21 +1,21 @@
 "use strict";
 
-import { ethers } from "ethers";
+import { quais } from "quais";
 
 import { version } from "./_version";
 
-const logger = new ethers.utils.Logger(version);
+const logger = new quais.utils.Logger(version);
 
-export class MetamaskProvider extends ethers.providers.Web3Provider {
+export class MetamaskProvider extends quais.providers.Web3Provider {
 
     _pollingAccount: any;
     _pollAccountFunc: () => void;
 
-    constructor(ethereum?: ethers.providers.ExternalProvider) {
+    constructor(ethereum?: quais.providers.ExternalProvider) {
         if (!ethereum) {
             ethereum = (<any>global).ethereum;
             if (!ethereum) {
-                logger.throwError("could not auto-detect global.ethereum", ethers.errors.UNSUPPORTED_OPERATION, {
+                logger.throwError("could not auto-detect global.ethereum", quais.errors.UNSUPPORTED_OPERATION, {
                     operation: "window.ethereum"
                 });
             }
@@ -24,7 +24,7 @@ export class MetamaskProvider extends ethers.providers.Web3Provider {
         super(ethereum);
 
         let _account: string = null;
-        ethers.utils.defineReadOnly(this, "_pollAccountFunc", () => {
+        quais.utils.defineReadOnly(this, "_pollAccountFunc", () => {
             let account: string = null;
             if (account === _account) { return; }
             console.log("poll");
@@ -35,7 +35,7 @@ export class MetamaskProvider extends ethers.providers.Web3Provider {
         super(ethereum);
     }
 
-    getSigner(addressOrIndex?: string | number): ethers.providers.JsonRpcSigner {
+    getSigner(addressOrIndex?: string | number): quais.providers.JsonRpcSigner {
         if (!this.enabled) { return null }
         return super.getSigner(addressOrIndex);
     }
@@ -57,7 +57,7 @@ export class MetamaskProvider extends ethers.providers.Web3Provider {
         this._pollingAccount = null;
     }
 
-    on(eventName: ethers.providers.EventType, listener: ethers.providers.Listener): this {
+    on(eventName: quais.providers.EventType, listener: quais.providers.Listener): this {
         super.on(eventName, listener);
         if (this.listenerCount("account") > 0) {
             this._startPollingAccount();
@@ -65,7 +65,7 @@ export class MetamaskProvider extends ethers.providers.Web3Provider {
         return this;
     }
 
-    off(eventName: ethers.providers.EventType, listener?: ethers.providers.Listener): this {
+    off(eventName: quais.providers.EventType, listener?: quais.providers.Listener): this {
         super.off(eventName, listener);
         if (this.listenerCount("account") === 0) {
             this._stopPollingAccount();

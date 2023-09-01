@@ -1,13 +1,13 @@
 "use strict";
-import { ethers } from "ethers";
+import { quais } from "quais";
 // @TODO: Keep a per-NonceManager pool of sent but unmined transactions for
 //        rebroadcasting, in case we overrun the transaction pool
-export class NonceManager extends ethers.Signer {
+export class NonceManager extends quais.Signer {
     constructor(signer) {
         super();
         this._deltaCount = 0;
-        ethers.utils.defineReadOnly(this, "signer", signer);
-        ethers.utils.defineReadOnly(this, "provider", signer.provider || null);
+        quais.utils.defineReadOnly(this, "signer", signer);
+        quais.utils.defineReadOnly(this, "provider", signer.provider || null);
     }
     connect(provider) {
         return new NonceManager(this.signer.connect(provider));
@@ -27,7 +27,7 @@ export class NonceManager extends ethers.Signer {
     }
     setTransactionCount(transactionCount) {
         this._initialPromise = Promise.resolve(transactionCount).then((nonce) => {
-            return ethers.BigNumber.from(nonce).toNumber();
+            return quais.BigNumber.from(nonce).toNumber();
         });
         this._deltaCount = 0;
     }
@@ -43,7 +43,7 @@ export class NonceManager extends ethers.Signer {
     }
     sendTransaction(transaction) {
         if (transaction.nonce == null) {
-            transaction = ethers.utils.shallowCopy(transaction);
+            transaction = quais.utils.shallowCopy(transaction);
             transaction.nonce = this.getTransactionCount("pending");
             this.incrementTransactionCount();
         }

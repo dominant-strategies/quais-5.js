@@ -16,17 +16,17 @@ var __extends = (this && this.__extends) || (function () {
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Interface = exports.Indexed = exports.ErrorDescription = exports.TransactionDescription = exports.LogDescription = exports.checkResultErrors = void 0;
-var address_1 = require("@ethersproject/address");
-var bignumber_1 = require("@ethersproject/bignumber");
-var bytes_1 = require("@ethersproject/bytes");
-var hash_1 = require("@ethersproject/hash");
-var keccak256_1 = require("@ethersproject/keccak256");
-var properties_1 = require("@ethersproject/properties");
+var address_1 = require("@quais/address");
+var bignumber_1 = require("@quais/bignumber");
+var bytes_1 = require("@quais/bytes");
+var hash_1 = require("@quais/hash");
+var keccak256_1 = require("@quais/keccak256");
+var properties_1 = require("@quais/properties");
 var abi_coder_1 = require("./abi-coder");
 var abstract_coder_1 = require("./coders/abstract-coder");
 Object.defineProperty(exports, "checkResultErrors", { enumerable: true, get: function () { return abstract_coder_1.checkResultErrors; } });
 var fragments_1 = require("./fragments");
-var logger_1 = require("@ethersproject/logger");
+var logger_1 = require("@quais/logger");
 var _version_1 = require("./_version");
 var logger = new logger_1.Logger(_version_1.version);
 var LogDescription = /** @class */ (function (_super) {

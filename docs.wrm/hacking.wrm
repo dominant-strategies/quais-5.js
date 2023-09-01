@@ -12,10 +12,10 @@ _heading: Dependencies
 Adding a dependency is non-trivial and will require fairly convincing
 arguments.
 
-Further, **ALL** dependencies for ethers, **must** be MIT licensed or
+Further, **ALL** dependencies for quais, **must** be MIT licensed or
 public domain (CC0).
 
-All contributions to ethers are then included under the MIT license.
+All contributions to quais are then included under the MIT license.
 
 
 _heading: Printable ASCII (7-bit) Characters

@@ -1,45 +1,34 @@
 {
-  "_ethers.alias": {
+  "_quais.alias": {
     "geturl.js": "browser-geturl.js"
   },
-  "author": "Richard Moore <me@ricmoo.com>",
+  "author": "",
   "browser": {
     "./lib/geturl": "./lib/browser-geturl.js"
   },
   "dependencies": {
-    "@ethersproject/base64": "^5.7.0",
-    "@ethersproject/bytes": "^5.7.0",
-    "@ethersproject/logger": "^5.7.0",
-    "@ethersproject/properties": "^5.7.0",
-    "@ethersproject/strings": "^5.7.0"
+    "@quais/base64": "^0.1.0",
+    "@quais/bytes": "^0.1.0",
+    "@quais/logger": "^0.1.0",
+    "@quais/properties": "^0.1.0",
+    "@quais/strings": "^0.1.0"
   },
-  "description": "Utility fucntions for managing web requests for ethers.",
-  "ethereum": "donations.ethers.eth",
-  "funding": [
-    {
-      "type": "individual",
-      "url": "https://gitcoin.co/grants/13/ethersjs-complete-simple-and-tiny-2"
-    },
-    {
-      "type": "individual",
-      "url": "https://www.buymeacoffee.com/ricmoo"
-    }
-  ],
+  "description": "Utility fucntions for managing web requests for quais.",
   "keywords": [
-    "Ethereum",
-    "ethers"
+    "Quai",
+    "quais"
   ],
   "license": "MIT",
   "main": "./lib/index.js",
   "module": "./lib.esm/index.js",
-  "name": "@ethersproject/web",
+  "name": "@quais/web",
   "publishConfig": {
     "access": "public"
   },
   "repository": {
     "directory": "packages/web",
     "type": "git",
-    "url": "git://github.com/ethers-io/ethers.js.git"
+    "url": "git://github.com:dominant-strategies/quais.js.git"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -47,5 +36,5 @@
   "sideEffects": false,
   "tarballHash": "0x37945bd0bcbf905a641db7e631bb538570042dbe6513e1e4cdd088f25b4ec274",
   "types": "./lib/index.d.ts",
-  "version": "5.7.1"
+  "version": "0.1.0"
 }

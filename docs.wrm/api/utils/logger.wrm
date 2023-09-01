@@ -14,7 +14,7 @@ functionality, ensure that your bundling is configured properly.
 
 _subsection: Logger @<Logger> @SRC<logger:class.Logger>
 
-_property: new ethers.utils.Logger(version) @SRC<logger:constructor.Logger>
+_property: new quais.utils.Logger(version) @SRC<logger:constructor.Logger>
 Create a new logger which will include //version// in all errors thrown.
 
 _property: Logger.globalLogger() => [[Logger]] @SRC<logger>
@@ -36,7 +36,7 @@ Log warnings.
 _heading: Errors
 
 These functions honor the current [Censorship](Logger--censorship) and help create
-a standard error model for detecting and processing errors within Ethers.
+a standard error model for detecting and processing errors within quais.
 
 _property: logger.makeError(message [ , code = UNKNOWN_ERROR [ , params ] ]) => Error @SRC<logger>
 Create an Error object with //message// and an optional //code// and

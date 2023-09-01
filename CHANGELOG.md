@@ -19,7 +19,7 @@ ethers/v5.7.1 (2022-09-13 21:28)
   - Add support for all data URL formats. ([#3341](https://github.com/ethers-io/ethers.js/issues/3341); [4c86dc9](https://github.com/ethers-io/ethers.js/commit/4c86dc9ed41fcf889daaaca41686a218a0c68e90))
   - Added Sepolia network. ([#3325](https://github.com/ethers-io/ethers.js/issues/3325); [d083522](https://github.com/ethers-io/ethers.js/commit/d083522374b8e48e02688d2f8e29cd86f99e5fc4))
 
-ethers/v5.7.0 (2022-08-18 16:17)
+ethers/v0.1.0 (2022-08-18 16:17)
 --------------------------------
 
   - Update PocketProvider to newer URL format. ([#2980](https://github.com/ethers-io/ethers.js/issues/2980); [10d07ca](https://github.com/ethers-io/ethers.js/commit/10d07ca6ec0622fb5a58b7e61b089166ebe8ea15))

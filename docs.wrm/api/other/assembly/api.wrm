@@ -6,7 +6,7 @@ The assembler utilities allow parsing and assembling an
 [Ethers ASM Dialect](asm-dialect) source file.
 
 _property: asm.parse(code) => [[asm-node]] @<asm-parse> @SRC<asm/assembler>
-Parse an ethers-format assembly file and return the [[asm-ast]].
+Parse an quais-format assembly file and return the [[asm-ast]].
 
 _property: asm.assemble(node) => string<[[DataHexString]]> @SRC<asm/assembler:function.assemble>
 Performs assembly of the [[asm-ast]] //node// and return the

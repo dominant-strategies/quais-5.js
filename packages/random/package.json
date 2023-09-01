@@ -1,17 +1,17 @@
 {
-  "_ethers.alias": {
+  "_quais.alias": {
     "random.js": "browser-random.js"
   },
-  "author": "Richard Moore <me@ricmoo.com>",
+  "author": "",
   "browser": {
     "./lib/random": "./lib/browser-random.js"
   },
   "dependencies": {
-    "@ethersproject/bytes": "^5.7.0",
-    "@ethersproject/logger": "^5.7.0"
+    "@quais/bytes": "^0.1.0",
+    "@quais/logger": "^0.1.0"
   },
-  "description": "Random utility functions for ethers.",
-  "ethereum": "donations.ethers.eth",
+  "description": "Random utility functions for quais.",
+  "ethereum": "donations.quais.eth",
   "funding": [
     {
       "type": "individual",
@@ -30,14 +30,14 @@
   "license": "MIT",
   "main": "./lib/index.js",
   "module": "./lib.esm/index.js",
-  "name": "@ethersproject/random",
+  "name": "@quais/random",
   "publishConfig": {
     "access": "public"
   },
   "repository": {
     "directory": "packages/random",
     "type": "git",
-    "url": "git://github.com/ethers-io/ethers.js.git"
+    "url": "git://github.com:dominant-strategies/quais.js.git"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -45,5 +45,5 @@
   "sideEffects": false,
   "tarballHash": "0xb91a9e0289e2dcbc8a1521cc785465161f4ae4aad01aea6ddf3a1a3f2c29a4da",
   "types": "./lib/index.d.ts",
-  "version": "5.7.0"
+  "version": "0.1.0"
 }

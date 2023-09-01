@@ -9,7 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-import { ethers } from "ethers";
+import { quais } from "quais";
 function randomBytes(seed, lower, upper) {
     if (!upper) {
         upper = lower;
@@ -17,16 +17,16 @@ function randomBytes(seed, lower, upper) {
     if (upper === 0 && upper === lower) {
         return new Uint8Array(0);
     }
-    let result = ethers.utils.arrayify(ethers.utils.keccak256(ethers.utils.toUtf8Bytes(seed)));
+    let result = quais.utils.arrayify(quais.utils.keccak256(quais.utils.toUtf8Bytes(seed)));
     while (result.length < upper) {
-        result = ethers.utils.concat([result, ethers.utils.keccak256(ethers.utils.concat([seed, result]))]);
+        result = quais.utils.concat([result, quais.utils.keccak256(quais.utils.concat([seed, result]))]);
     }
-    let top = ethers.utils.arrayify(ethers.utils.keccak256(result));
+    let top = quais.utils.arrayify(quais.utils.keccak256(result));
     let percent = ((top[0] << 16) | (top[1] << 8) | top[2]) / 0x01000000;
     return result.slice(0, lower + Math.floor((upper - lower) * percent));
 }
 function randomHexString(seed, lower, upper) {
-    return ethers.utils.hexlify(randomBytes(seed, lower, upper));
+    return quais.utils.hexlify(randomBytes(seed, lower, upper));
 }
 function randomNumber(seed, lower, upper) {
     let top = randomBytes(seed, 3);
@@ -69,7 +69,7 @@ function equals(a, b) {
     return a === b;
 }
 function getWallet() {
-    const provider = new ethers.providers.InfuraProvider("goerli", "49a0efa3aaee4fd99797bfa94d8ce2f1");
+    const provider = new quais.providers.InfuraProvider("goerli", "49a0efa3aaee4fd99797bfa94d8ce2f1");
     let key = null;
     // browser
     if (key == null) {
@@ -96,7 +96,7 @@ function getWallet() {
     if (key == null) {
         throw new Error("could not find faucet private key");
     }
-    return new ethers.Wallet(key, provider);
+    return new quais.Wallet(key, provider);
 }
 export function fundAddress(address) {
     return __awaiter(this, void 0, void 0, function* () {

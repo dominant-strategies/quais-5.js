@@ -45,7 +45,7 @@ const log_1 = require("../log");
 const npm = __importStar(require("../npm"));
 const path_1 = require("../path");
 const utils_1 = require("../utils");
-const USER_AGENT = "ethers-dist@0.0.1";
+const USER_AGENT = "quais-dist@0.0.1";
 const TAG = "latest";
 const forcePublish = (process.argv.slice(2).indexOf("--publish") >= 0);
 function putObject(s3, info) {
@@ -158,7 +158,7 @@ exports.invalidate = invalidate;
             yield npm.publish(path, info, options);
             local.updateJson(pathJson, { gitHead: undefined }, true);
         }
-        if (publishNames.indexOf("ethers") >= 0 || forcePublish) {
+        if (publishNames.indexOf("quais") >= 0 || forcePublish) {
             const change = (0, changelog_1.getLatestChange)();
             const patchVersion = change.version.substring(1);
             const minorVersion = patchVersion.split(".").slice(0, 2).join(".");
@@ -169,7 +169,7 @@ exports.invalidate = invalidate;
                 // The password above already succeeded
                 const username = yield config_1.config.get("github-user");
                 const password = yield config_1.config.get("github-release");
-                const hash = createHash("sha384").update(fs_1.default.readFileSync((0, path_1.resolve)("packages/ethers/dist/ethers.umd.min.js"))).digest("base64");
+                const hash = createHash("sha384").update(fs_1.default.readFileSync((0, path_1.resolve)("packages/quais/dist/quais.umd.min.js"))).digest("base64");
                 const gitCommit = yield (0, git_1.getGitTag)((0, path_1.resolve)("CHANGELOG.md"));
                 let content = change.content.trim();
                 content += '\n\n----\n\n';
@@ -178,7 +178,7 @@ exports.invalidate = invalidate;
                 content += '<script type="text/javascript"\n';
                 content += `        integrity="sha384-${hash}"\n`;
                 content += '        crossorigin="anonymous"\n';
-                content += `        src="https:/\/cdn-cors.ethers.io/lib/ethers-${patchVersion}.umd.min.js">\n`;
+                content += `        src="https:/\/cdn-cors.quais.io/lib/quais-${patchVersion}.umd.min.js">\n`;
                 content += '</script>\n';
                 content += '```';
                 // Publish the release
@@ -186,7 +186,7 @@ exports.invalidate = invalidate;
                 const link = yield (0, github_1.createRelease)(username, password, change.version, change.title, content, beta, gitCommit);
                 console.log(`${log_1.colorify.bold("Published release:")} ${link}`);
             }
-            // Upload libs to the CDN (as ethers-v5.1 and ethers-5.1.x)
+            // Upload libs to the CDN (as quais-v5.1 and quais-5.1.x)
             {
                 const bucketNameLib = yield config_1.config.get("aws-upload-scripts-bucket");
                 const originRootLib = yield config_1.config.get("aws-upload-scripts-root");
@@ -197,47 +197,47 @@ exports.invalidate = invalidate;
                     accessKeyId: awsAccessId,
                     secretAccessKey: awsSecretKey
                 });
-                // Upload the libs to ethers-v5.1 and ethers-5.1.x
+                // Upload the libs to quais-v5.1 and quais-5.1.x
                 const fileInfos = [
-                    // The CORS-enabled versions on cdn-cors.ethers.io
+                    // The CORS-enabled versions on cdn-cors.quais.io
                     {
                         bucketName: bucketNameCors,
                         originRoot: originRootCors,
                         suffix: "-cors",
-                        filename: "packages/ethers/dist/ethers.esm.min.js",
-                        key: `ethers-${patchVersion}.esm.min.js`
+                        filename: "packages/quais/dist/quais.esm.min.js",
+                        key: `quais-${patchVersion}.esm.min.js`
                     },
                     {
                         bucketName: bucketNameCors,
                         originRoot: originRootCors,
                         suffix: "-cors",
-                        filename: "packages/ethers/dist/ethers.umd.min.js",
-                        key: `ethers-${patchVersion}.umd.min.js`
+                        filename: "packages/quais/dist/quais.umd.min.js",
+                        key: `quais-${patchVersion}.umd.min.js`
                     },
-                    // The non-CORS-enabled versions on cdn.ethers.io
+                    // The non-CORS-enabled versions on cdn.quais.io
                     {
                         bucketName: bucketNameLib,
                         originRoot: originRootLib,
-                        filename: "packages/ethers/dist/ethers.esm.min.js",
-                        key: `ethers-${patchVersion}.esm.min.js`
-                    },
-                    {
-                        bucketName: bucketNameLib,
-                        originRoot: originRootLib,
-                        filename: "packages/ethers/dist/ethers.umd.min.js",
-                        key: `ethers-${patchVersion}.umd.min.js`
+                        filename: "packages/quais/dist/quais.esm.min.js",
+                        key: `quais-${patchVersion}.esm.min.js`
                     },
                     {
                         bucketName: bucketNameLib,
                         originRoot: originRootLib,
-                        filename: "packages/ethers/dist/ethers.esm.min.js",
-                        key: `ethers-${minorVersion}.esm.min.js`
+                        filename: "packages/quais/dist/quais.umd.min.js",
+                        key: `quais-${patchVersion}.umd.min.js`
                     },
                     {
                         bucketName: bucketNameLib,
                         originRoot: originRootLib,
-                        filename: "packages/ethers/dist/ethers.umd.min.js",
-                        key: `ethers-${minorVersion}.umd.min.js`
+                        filename: "packages/quais/dist/quais.esm.min.js",
+                        key: `quais-${minorVersion}.esm.min.js`
+                    },
+                    {
+                        bucketName: bucketNameLib,
+                        originRoot: originRootLib,
+                        filename: "packages/quais/dist/quais.umd.min.js",
+                        key: `quais-${minorVersion}.umd.min.js`
                     },
                 ];
                 for (let i = 0; i < fileInfos.length; i++) {
@@ -249,7 +249,7 @@ exports.invalidate = invalidate;
                         ContentType: "application/javascript; charset=utf-8",
                         Key: (originRoot + key)
                     });
-                    console.log(`${log_1.colorify.bold("Uploaded:")} https://cdn${suffix || ""}.ethers.io/lib/${key}`);
+                    console.log(`${log_1.colorify.bold("Uploaded:")} https://cdn${suffix || ""}.quais.io/lib/${key}`);
                 }
             }
             // Flush the edge caches

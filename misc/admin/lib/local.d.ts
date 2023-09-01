@@ -10,7 +10,7 @@ export declare type Package = {
     version: string;
     tarballHash: string;
     location: "remote" | "local";
-    _ethers_nobuild: boolean;
+    _quais_nobuild: boolean;
 };
 export declare function getPackage(name: string): Package;
 export declare function updateJson(path: string, replace: Record<string, any>, sort?: boolean): void;

@@ -1,6 +1,6 @@
-import { ethers } from "ethers";
+import { quais } from "quais";
 export interface ContractCode {
-    interface: ethers.utils.Interface;
+    interface: quais.utils.Interface;
     name: string;
     compiler: string;
     bytecode: string;

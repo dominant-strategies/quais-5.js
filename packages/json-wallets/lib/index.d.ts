@@ -1,5 +1,5 @@
-import { Bytes } from "@ethersproject/bytes";
-import { ExternallyOwnedAccount } from "@ethersproject/abstract-signer";
+import { Bytes } from "@quais/bytes";
+import { ExternallyOwnedAccount } from "@quais/abstract-signer";
 import { decrypt as decryptCrowdsale } from "./crowdsale";
 import { getJsonWalletAddress, isCrowdsaleWallet, isKeystoreWallet } from "./inspect";
 import { decrypt as decryptKeystore, decryptSync as decryptKeystoreSync, encrypt as encryptKeystore, EncryptOptions, ProgressCallback } from "./keystore";

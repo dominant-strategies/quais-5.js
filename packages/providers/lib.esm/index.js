@@ -1,6 +1,6 @@
 "use strict";
-import { Provider } from "@ethersproject/abstract-provider";
-import { getNetwork } from "@ethersproject/networks";
+import { Provider } from "@quais/abstract-provider";
+import { getNetwork } from "@quais/networks";
 import { BaseProvider, Resolver } from "./base-provider";
 import { AlchemyProvider, AlchemyWebSocketProvider } from "./alchemy-provider";
 import { AnkrProvider } from "./ankr-provider";
@@ -17,7 +17,7 @@ import { StaticJsonRpcProvider, UrlJsonRpcProvider } from "./url-json-rpc-provid
 import { Web3Provider } from "./web3-provider";
 import { WebSocketProvider } from "./websocket-provider";
 import { Formatter, isCommunityResourcable, isCommunityResource, showThrottleMessage } from "./formatter";
-import { Logger } from "@ethersproject/logger";
+import { Logger } from "@quais/logger";
 import { version } from "./_version";
 const logger = new Logger(version);
 ////////////////////////

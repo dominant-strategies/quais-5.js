@@ -16,8 +16,8 @@ var __extends = (this && this.__extends) || (function () {
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.langJa = void 0;
-var bytes_1 = require("@ethersproject/bytes");
-var strings_1 = require("@ethersproject/strings");
+var bytes_1 = require("@quais/bytes");
+var strings_1 = require("@quais/strings");
 var wordlist_1 = require("./wordlist");
 var data = [
     // 4-kana words

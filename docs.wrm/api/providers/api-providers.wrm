@@ -16,7 +16,7 @@ _subsection: EtherscanProvider @<EtherscanProvider> @inherit<[[BaseProvider]]> @
 The **EtherscanProvider** is backed by a combination of the various
 [Etherscan APIs](link-etherscan-api).
 
-_property: new ethers.providers.EtherscanProvider([ network = "homestead", [ apiKey ] ])
+_property: new quais.providers.EtherscanProvider([ network = "homestead", [ apiKey ] ])
 Create a new **EtherscanProvider** connected to //network// with the
 optional //apiKey//.
 
@@ -47,7 +47,7 @@ _definition: **Supported Networks**
 
 _code: Etherscan Examples @lang<javascript>
 
-//_hide: const EtherscanProvider = ethers.providers.EtherscanProvider;
+//_hide: const EtherscanProvider = quais.providers.EtherscanProvider;
 //_hide: const apiKey = "...";
 
 // Connect to mainnet (homestead)
@@ -57,7 +57,7 @@ provider = new EtherscanProvider();
 provider = new EtherscanProvider("rinkeby");
 provider = new EtherscanProvider(4);
 
-network = ethers.providers.getNetwork("rinkeby");
+network = quais.providers.getNetwork("rinkeby");
 //_hide: delete network._defaultProvider;
 //_log: network
 
@@ -77,7 +77,7 @@ _subsection: InfuraProvider @<InfuraProvider> @INHERIT<[[UrlJsonRpcProvider]]> @
 The **InfuraProvider** is backed by the popular [INFURA](link-infura)
 Ethereum service.
 
-_property: new ethers.providers.InfuraProvider([ network = "homestead", [ apiKey ] ]) @SRC<providers>
+_property: new quais.providers.InfuraProvider([ network = "homestead", [ apiKey ] ]) @SRC<providers>
 Create a new **InfuraProvider** connected to //network// with
 the optional //apiKey//.
 
@@ -120,7 +120,7 @@ _definition: **Supported Networks**
 
 _code: INFURA Examples @lang<javascript>
 
-//_hide: const InfuraProvider = ethers.providers.InfuraProvider;
+//_hide: const InfuraProvider = quais.providers.InfuraProvider;
 //_hide: const projectId = "...";
 //_hide: const projectSecret = "...";
 
@@ -150,7 +150,7 @@ _subsection: AlchemyProvider @<AlchemyProvider> @inherit<[[UrlJsonRpcProvider]]>
 
 The **AlchemyProvider** is backed by [Alchemy](link-alchemy).
 
-_property: new ethers.providers.AlchemyProvider([ network = "homestead", [ apiKey ] ])
+_property: new quais.providers.AlchemyProvider([ network = "homestead", [ apiKey ] ])
 Create a new **AlchemyProvider** connected to //network// with
 the optional //apiKey//.
 
@@ -181,7 +181,7 @@ _definition: **Supported Networks**
 
 _code: Alchemy Examples @lang<javascript>
 
-//_hide: const AlchemyProvider = ethers.providers.AlchemyProvider;
+//_hide: const AlchemyProvider = quais.providers.AlchemyProvider;
 //_hide: const apiKey = "...";
 
 // Connect to mainnet (homestead)
@@ -204,7 +204,7 @@ _subsection: CloudflareProvider @<CloudflareProvider> @inherit<[[UrlJsonRpcProvi
 
 The CloudflareProvider is backed by the [Cloudflare Ethereum Gateway](link-cloudflare).
 
-_property: new ethers.providers.CloudflareProvider()
+_property: new quais.providers.CloudflareProvider()
 Create a new **CloudflareProvider** connected to mainnet (i.e. "homestead").
 
 _definition: **Supported Networks**
@@ -213,7 +213,7 @@ _definition: **Supported Networks**
 
 _code: Cloudflare Examples @lang<javascript>
 
-//_hide: const CloudflareProvider = ethers.providers.CloudflareProvider;
+//_hide: const CloudflareProvider = quais.providers.CloudflareProvider;
 
 // Connect to mainnet (homestead)
 provider = new CloudflareProvider();
@@ -223,7 +223,7 @@ _subsection: PocketProvider @<PocketProvider> @inherit<[[UrlJsonRpcProvider]]> @
 
 The **PocketProvider** is backed by [Pocket](link-pocket).
 
-_property: new ethers.providers.PocketProvider([ network = "homestead", [ apiKey ] ])
+_property: new quais.providers.PocketProvider([ network = "homestead", [ apiKey ] ])
 Create a new **PocketProvider** connected to //network// with
 the optional //apiKey//.
 
@@ -247,7 +247,7 @@ _definition: **Supported Networks**
 
 _code: Pocket Examples @lang<javascript>
 
-//_hide: const PocketProvider = ethers.providers.PocketProvider;
+//_hide: const PocketProvider = quais.providers.PocketProvider;
 //_hide: const applicationId = "...";
 //_hide: const applicationSecretKey = "...";
 //_hide: const loadBalancer = true;
@@ -276,7 +276,7 @@ _subsection: AnkrProvider @<AnkrProvider> @inherit<[[UrlJsonRpcProvider]]> @src<
 
 The **AnkrProvider** is backed by [Ankr](link-ankr).
 
-_property: new ethers.providers.AnkrProvider([ network = "homestead", [ apiKey ] ])
+_property: new quais.providers.AnkrProvider([ network = "homestead", [ apiKey ] ])
 Create a new **AnkrProvider** connected to //network// with
 the optional //apiKey//.
 
@@ -299,7 +299,7 @@ _definition: **Supported Networks**
 
 _code: Ankr Examples @lang<javascript>
 
-//_hide: const AnkrProvider = ethers.providers.AnkrProvider;
+//_hide: const AnkrProvider = quais.providers.AnkrProvider;
 //_hide: const apiKey = "...";
 
 // Connect to mainnet (homestead)

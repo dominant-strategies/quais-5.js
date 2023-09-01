@@ -13,4 +13,4 @@ export {
 } from "./bignumbers";
 export { HashZero } from "./hashes";
 export { EtherSymbol } from "./strings";
-
+export { ShardData } from "./quai-contexts";

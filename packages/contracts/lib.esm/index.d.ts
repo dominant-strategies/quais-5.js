@@ -1,9 +1,9 @@
-import { Fragment, Indexed, Interface, JsonFragment, Result } from "@ethersproject/abi";
-import { Block, BlockTag, Listener, Log, Provider, TransactionReceipt, TransactionRequest, TransactionResponse } from "@ethersproject/abstract-provider";
-import { Signer } from "@ethersproject/abstract-signer";
-import { BigNumber, BigNumberish } from "@ethersproject/bignumber";
-import { BytesLike } from "@ethersproject/bytes";
-import { AccessList, AccessListish } from "@ethersproject/transactions";
+import { Fragment, Indexed, Interface, JsonFragment, Result } from "@quais/abi";
+import { Block, BlockTag, Listener, Log, Provider, TransactionReceipt, TransactionRequest, TransactionResponse } from "@quais/abstract-provider";
+import { Signer } from "@quais/abstract-signer";
+import { BigNumber, BigNumberish } from "@quais/bignumber";
+import { BytesLike } from "@quais/bytes";
+import { AccessList, AccessListish } from "@quais/transactions";
 export interface Overrides {
     gasLimit?: BigNumberish | Promise<BigNumberish>;
     gasPrice?: BigNumberish | Promise<BigNumberish>;
@@ -108,6 +108,7 @@ export declare class BaseContract {
     static getContractAddress(transaction: {
         from: string;
         nonce: BigNumberish;
+        data: BytesLike;
     }): string;
     static getInterface(contractInterface: ContractInterface): Interface;
     deployed(): Promise<Contract>;
@@ -147,11 +148,9 @@ export declare class ContractFactory {
     connect(signer: Signer): ContractFactory;
     static fromSolidity(compilerOutput: any, signer?: Signer): ContractFactory;
     static getInterface(contractInterface: ContractInterface): Interface;
-    static getContractAddress(tx: {
-        from: string;
-        nonce: BytesLike | BigNumber | number;
-    }): string;
+    static getContractAddress(transaction: TransactionResponse): string;
     static getContract(address: string, contractInterface: ContractInterface, signer?: Signer): Contract;
+    grindContractAddress(tx: TransactionRequest): Promise<TransactionRequest>;
 }
 export {};
 //# sourceMappingURL=index.d.ts.map

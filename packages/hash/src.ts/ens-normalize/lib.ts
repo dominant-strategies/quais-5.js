@@ -27,7 +27,7 @@
  * See: https://github.com/adraffy/ens-normalize.js
  */
 
-import { toUtf8CodePoints } from "@ethersproject/strings";
+import { toUtf8CodePoints } from "@quais/strings";
 
 import { getData } from './include.js';
 const r = getData();

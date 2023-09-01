@@ -2,10 +2,10 @@
 
 import { connect } from "net";
 
-import { defineReadOnly } from "@ethersproject/properties";
-import { Networkish } from "@ethersproject/networks";
+import { defineReadOnly } from "@quais/properties";
+import { Networkish } from "@quais/networks";
 
-import { Logger } from "@ethersproject/logger";
+import { Logger } from "@quais/logger";
 import { version } from "./_version";
 const logger = new Logger(version);
 

@@ -52,15 +52,15 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.JsonRpcProvider = exports.JsonRpcSigner = void 0;
-var abstract_signer_1 = require("@ethersproject/abstract-signer");
-var bignumber_1 = require("@ethersproject/bignumber");
-var bytes_1 = require("@ethersproject/bytes");
-var hash_1 = require("@ethersproject/hash");
-var properties_1 = require("@ethersproject/properties");
-var strings_1 = require("@ethersproject/strings");
-var transactions_1 = require("@ethersproject/transactions");
-var web_1 = require("@ethersproject/web");
-var logger_1 = require("@ethersproject/logger");
+var abstract_signer_1 = require("@quais/abstract-signer");
+var bignumber_1 = require("@quais/bignumber");
+var bytes_1 = require("@quais/bytes");
+var hash_1 = require("@quais/hash");
+var properties_1 = require("@quais/properties");
+var strings_1 = require("@quais/strings");
+var transactions_1 = require("@quais/transactions");
+var web_1 = require("@quais/web");
+var logger_1 = require("@quais/logger");
 var _version_1 = require("./_version");
 var logger = new logger_1.Logger(_version_1.version);
 var base_provider_1 = require("./base-provider");
@@ -119,7 +119,7 @@ function checkError(method, error, params) {
         }
         // Found "reverted", this is a CALL_EXCEPTION
         if (result) {
-            logger.throwError("cannot estimate gas; transaction may fail or may require manual gas limit", logger_1.Logger.errors.UNPREDICTABLE_GAS_LIMIT, {
+            logger.throwError("json-rpc-provider: cannot estimate gas; transaction may fail or may require manual gas limit", logger_1.Logger.errors.UNPREDICTABLE_GAS_LIMIT, {
                 reason: result.message,
                 method: method,
                 transaction: transaction,
@@ -239,7 +239,7 @@ var JsonRpcSigner = /** @class */ (function (_super) {
         if (this._address) {
             return Promise.resolve(this._address);
         }
-        return this.provider.send("eth_accounts", []).then(function (accounts) {
+        return this.provider.send("quai_accounts", []).then(function (accounts) {
             if (accounts.length <= _this._index) {
                 logger.throwError("unknown account #" + _this._index, logger_1.Logger.errors.UNSUPPORTED_OPERATION, {
                     operation: "getAddress"
@@ -257,7 +257,7 @@ var JsonRpcSigner = /** @class */ (function (_super) {
             }
             return address;
         });
-        // The JSON-RPC for eth_sendTransaction uses 90000 gas; if the user
+        // The JSON-RPC for quai_sendTransaction uses 90000 gas; if the user
         // wishes to use this, it is easy to specify explicitly, otherwise
         // we look it up for them.
         if (transaction.gasLimit == null) {
@@ -299,7 +299,7 @@ var JsonRpcSigner = /** @class */ (function (_super) {
                 tx.from = sender;
             }
             var hexTx = _this.provider.constructor.hexlifyTransaction(tx, { from: true });
-            return _this.provider.send("eth_sendTransaction", [hexTx]).then(function (hash) {
+            return _this.provider.send("quai_sendTransaction", [hexTx]).then(function (hash) {
                 return hash;
             }, function (error) {
                 if (typeof (error.message) === "string" && error.message.match(/user denied/i)) {
@@ -403,9 +403,9 @@ var JsonRpcSigner = /** @class */ (function (_super) {
                         _a.label = 2;
                     case 2:
                         _a.trys.push([2, 4, , 5]);
-                        return [4 /*yield*/, this.provider.send("eth_sign", [address.toLowerCase(), (0, bytes_1.hexlify)(data)])];
+                        return [4 /*yield*/, this.provider.send("quai_sign", [address.toLowerCase(), (0, bytes_1.hexlify)(data)])];
                     case 3: 
-                    // https://github.com/ethereum/wiki/wiki/JSON-RPC#eth_sign
+                    // https://github.com/ethereum/wiki/wiki/JSON-RPC#quai_sign
                     return [2 /*return*/, _a.sent()];
                     case 4:
                         error_3 = _a.sent();
@@ -439,7 +439,7 @@ var JsonRpcSigner = /** @class */ (function (_super) {
                         _a.label = 3;
                     case 3:
                         _a.trys.push([3, 5, , 6]);
-                        return [4 /*yield*/, this.provider.send("eth_signTypedData_v4", [
+                        return [4 /*yield*/, this.provider.send("quai_signTypedData_v4", [
                                 address.toLowerCase(),
                                 JSON.stringify(hash_1._TypedDataEncoder.getPayload(populated.domain, types, populated.value))
                             ])];
@@ -504,11 +504,12 @@ var UncheckedJsonRpcSigner = /** @class */ (function (_super) {
 var allowedTransactionKeys = {
     chainId: true, data: true, gasLimit: true, gasPrice: true, nonce: true, to: true, value: true,
     type: true, accessList: true,
-    maxFeePerGas: true, maxPriorityFeePerGas: true
+    maxFeePerGas: true, maxPriorityFeePerGas: true,
+    externalGasLimit: true, externalGasPrice: true, externalGasTip: true, externalData: true, externalAccessList: true,
 };
 var JsonRpcProvider = /** @class */ (function (_super) {
     __extends(JsonRpcProvider, _super);
-    function JsonRpcProvider(url, network) {
+    function JsonRpcProvider(url, network, context) {
         var _this = this;
         var networkOrReady = network;
         // The network is unknown, query the JSON-RPC for it
@@ -523,6 +524,15 @@ var JsonRpcProvider = /** @class */ (function (_super) {
                 }, 0);
             });
         }
+        new Promise(function (resolve, reject) {
+            setTimeout(function () {
+                _this.detectContext().then(function (context) {
+                    resolve(context);
+                }, function (error) {
+                    reject(error);
+                });
+            }, 0);
+        });
         _this = _super.call(this, networkOrReady) || this;
         // Default URL
         if (!url) {
@@ -575,7 +585,7 @@ var JsonRpcProvider = /** @class */ (function (_super) {
                         _a.label = 2;
                     case 2:
                         _a.trys.push([2, 4, , 9]);
-                        return [4 /*yield*/, this.send("eth_chainId", [])];
+                        return [4 /*yield*/, this.send("quai_chainId", [])];
                     case 3:
                         chainId = _a.sent();
                         return [3 /*break*/, 9];
@@ -613,6 +623,37 @@ var JsonRpcProvider = /** @class */ (function (_super) {
             });
         });
     };
+    JsonRpcProvider.prototype.detectContext = function () {
+        return __awaiter(this, void 0, void 0, function () {
+            var location, error_7;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0: return [4 /*yield*/, timer(0)];
+                    case 1:
+                        _a.sent();
+                        location = null;
+                        _a.label = 2;
+                    case 2:
+                        _a.trys.push([2, 4, , 5]);
+                        return [4 /*yield*/, this.send("quai_nodeLocation", [])];
+                    case 3:
+                        location = _a.sent();
+                        return [3 /*break*/, 5];
+                    case 4:
+                        error_7 = _a.sent();
+                        return [3 /*break*/, 5];
+                    case 5:
+                        if (location != null) {
+                            this._context = location.length;
+                            return [2 /*return*/, this._context];
+                        }
+                        return [2 /*return*/, logger.throwError("could not detect context", logger_1.Logger.errors.NETWORK_ERROR, {
+                                event: "noNetwork"
+                            })];
+                }
+            });
+        });
+    };
     JsonRpcProvider.prototype.getSigner = function (addressOrIndex) {
         return new JsonRpcSigner(_constructorGuard, this, addressOrIndex);
     };
@@ -621,7 +662,7 @@ var JsonRpcProvider = /** @class */ (function (_super) {
     };
     JsonRpcProvider.prototype.listAccounts = function () {
         var _this = this;
-        return this.send("eth_accounts", []).then(function (accounts) {
+        return this.send("quai_accounts", []).then(function (accounts) {
             return accounts.map(function (a) { return _this.formatter.address(a); });
         });
     };
@@ -640,7 +681,7 @@ var JsonRpcProvider = /** @class */ (function (_super) {
         });
         // We can expand this in the future to any call, but for now these
         // are the biggest wins and do not require any serializing parameters.
-        var cache = (["eth_chainId", "eth_blockNumber"].indexOf(method) >= 0);
+        var cache = (["quai_chainId", "quai_blockNumber"].indexOf(method) >= 0);
         if (cache && this._cache[method]) {
             return this._cache[method];
         }
@@ -673,44 +714,46 @@ var JsonRpcProvider = /** @class */ (function (_super) {
     JsonRpcProvider.prototype.prepareRequest = function (method, params) {
         switch (method) {
             case "getBlockNumber":
-                return ["eth_blockNumber", []];
+                return ["quai_blockNumber", []];
             case "getGasPrice":
-                return ["eth_gasPrice", []];
+                return ["quai_gasPrice", []];
+            case "getMaxPriorityFeePerGas":
+                return ["quai_maxPriorityFeePerGas", []];
             case "getBalance":
-                return ["eth_getBalance", [getLowerCase(params.address), params.blockTag]];
+                return ["quai_getBalance", [getLowerCase(params.address), params.blockTag]];
             case "getTransactionCount":
-                return ["eth_getTransactionCount", [getLowerCase(params.address), params.blockTag]];
+                return ["quai_getTransactionCount", [getLowerCase(params.address), params.blockTag]];
             case "getCode":
-                return ["eth_getCode", [getLowerCase(params.address), params.blockTag]];
+                return ["quai_getCode", [getLowerCase(params.address), params.blockTag]];
             case "getStorageAt":
-                return ["eth_getStorageAt", [getLowerCase(params.address), (0, bytes_1.hexZeroPad)(params.position, 32), params.blockTag]];
+                return ["quai_getStorageAt", [getLowerCase(params.address), (0, bytes_1.hexZeroPad)(params.position, 32), params.blockTag]];
             case "sendTransaction":
-                return ["eth_sendRawTransaction", [params.signedTransaction]];
+                return ["quai_sendRawTransaction", [params.signedTransaction]];
             case "getBlock":
                 if (params.blockTag) {
-                    return ["eth_getBlockByNumber", [params.blockTag, !!params.includeTransactions]];
+                    return ["quai_getBlockByNumber", [params.blockTag, !!params.includeTransactions]];
                 }
                 else if (params.blockHash) {
-                    return ["eth_getBlockByHash", [params.blockHash, !!params.includeTransactions]];
+                    return ["quai_getBlockByHash", [params.blockHash, !!params.includeTransactions]];
                 }
                 return null;
             case "getTransaction":
-                return ["eth_getTransactionByHash", [params.transactionHash]];
+                return ["quai_getTransactionByHash", [params.transactionHash]];
             case "getTransactionReceipt":
-                return ["eth_getTransactionReceipt", [params.transactionHash]];
+                return ["quai_getTransactionReceipt", [params.transactionHash]];
             case "call": {
                 var hexlifyTransaction = (0, properties_1.getStatic)(this.constructor, "hexlifyTransaction");
-                return ["eth_call", [hexlifyTransaction(params.transaction, { from: true }), params.blockTag]];
+                return ["quai_call", [hexlifyTransaction(params.transaction, { from: true }), params.blockTag]];
             }
             case "estimateGas": {
                 var hexlifyTransaction = (0, properties_1.getStatic)(this.constructor, "hexlifyTransaction");
-                return ["eth_estimateGas", [hexlifyTransaction(params.transaction, { from: true })]];
+                return ["quai_estimateGas", [hexlifyTransaction(params.transaction, { from: true })]];
             }
             case "getLogs":
                 if (params.filter && params.filter.address != null) {
                     params.filter.address = getLowerCase(params.filter.address);
                 }
-                return ["eth_getLogs", [params.filter]];
+                return ["quai_getLogs", [params.filter]];
             default:
                 break;
         }
@@ -718,7 +761,7 @@ var JsonRpcProvider = /** @class */ (function (_super) {
     };
     JsonRpcProvider.prototype.perform = function (method, params) {
         return __awaiter(this, void 0, void 0, function () {
-            var tx, feeData, args, error_7;
+            var tx, feeData, args, error_8;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
@@ -747,8 +790,8 @@ var JsonRpcProvider = /** @class */ (function (_super) {
                         return [4 /*yield*/, this.send(args[0], args[1])];
                     case 4: return [2 /*return*/, _a.sent()];
                     case 5:
-                        error_7 = _a.sent();
-                        return [2 /*return*/, checkError(method, error_7, params)];
+                        error_8 = _a.sent();
+                        return [2 /*return*/, checkError(method, error_8, params)];
                     case 6: return [2 /*return*/];
                 }
             });
@@ -765,11 +808,11 @@ var JsonRpcProvider = /** @class */ (function (_super) {
             return;
         }
         var self = this;
-        var pendingFilter = this.send("eth_newPendingTransactionFilter", []);
+        var pendingFilter = this.send("quai_newPendingTransactionFilter", []);
         this._pendingFilter = pendingFilter;
         pendingFilter.then(function (filterId) {
             function poll() {
-                self.send("eth_getFilterChanges", [filterId]).then(function (hashes) {
+                self.send("quai_getFilterChanges", [filterId]).then(function (hashes) {
                     if (self._pendingFilter != pendingFilter) {
                         return null;
                     }
@@ -789,7 +832,7 @@ var JsonRpcProvider = /** @class */ (function (_super) {
                     });
                 }).then(function () {
                     if (self._pendingFilter != pendingFilter) {
-                        self.send("eth_uninstallFilter", [filterId]);
+                        self.send("quai_uninstallFilter", [filterId]);
                         return;
                     }
                     setTimeout(function () { poll(); }, 0);

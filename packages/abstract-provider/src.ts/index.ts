@@ -1,13 +1,13 @@
 "use strict";
 
-import { BigNumber, BigNumberish } from "@ethersproject/bignumber";
-import { BytesLike, isHexString } from "@ethersproject/bytes";
-import { Network } from "@ethersproject/networks";
-import { Deferrable, Description, defineReadOnly, resolveProperties } from "@ethersproject/properties";
-import { AccessListish, Transaction } from "@ethersproject/transactions";
-import { OnceBlockable } from "@ethersproject/web";
+import { BigNumber, BigNumberish } from "@quais/bignumber";
+import { BytesLike, isHexString } from "@quais/bytes";
+import { Network } from "@quais/networks";
+import { Deferrable, Description, defineReadOnly, resolveProperties } from "@quais/properties";
+import { AccessListish, Transaction } from "@quais/transactions";
+import { OnceBlockable } from "@quais/web";
 
-import { Logger } from "@ethersproject/logger";
+import { Logger } from "@quais/logger";
 import { version } from "./_version";
 const logger = new Logger(version);
 
@@ -35,6 +35,12 @@ export type TransactionRequest = {
 
     customData?: Record<string, any>;
     ccipReadEnabled?: boolean;
+
+    externalGasLimit?: BigNumberish;
+    externalGasPrice?: BigNumberish;
+    externalGasTip?: BigNumberish;
+    externalData?: BytesLike;
+    externalAccessList?: AccessListish;
 }
 
 export interface TransactionResponse extends Transaction {
@@ -76,6 +82,10 @@ export interface _Block {
     extraData: string;
 
     baseFeePerGas?: null | BigNumber;
+
+    stateRoot: string;
+    transactionsRoot: string;
+    receiptsRoot: string;
 }
 
 export interface Block extends _Block {
@@ -232,25 +242,33 @@ export abstract class Provider implements OnceBlockable {
     // Latest State
     abstract getBlockNumber(): Promise<number>;
     abstract getGasPrice(): Promise<BigNumber>;
+    abstract getMaxPriorityFeePerGas(): Promise<BigNumber>;
     async getFeeData(): Promise<FeeData> {
-        const { block, gasPrice } = await resolveProperties({
+        const { block, gasPrice, maxFeePerGas, maxPriorityFeePerGas } = await resolveProperties({
             block: this.getBlock("latest"),
             gasPrice: this.getGasPrice().catch((error) => {
-                // @TODO: Why is this now failing on Calaveras?
-                //console.log(error);
+                console.log(error);
                 return null;
-            })
+            }),
+            maxFeePerGas: this.getGasPrice().catch((error) => {
+                console.log(error);
+                return null;
+            }),
+            maxPriorityFeePerGas: this.getMaxPriorityFeePerGas().catch((error) => {
+                console.log(error);
+                return null;
+            }),
         });
 
-        let lastBaseFeePerGas = null, maxFeePerGas = null, maxPriorityFeePerGas = null;
+        let lastBaseFeePerGas = null;
 
         if (block && block.baseFeePerGas) {
             // We may want to compute this more accurately in the future,
             // using the formula "check if the base fee is correct".
             // See: https://eips.ethereum.org/EIPS/eip-1559
-            lastBaseFeePerGas = block.baseFeePerGas;
-            maxPriorityFeePerGas = BigNumber.from("1500000000");
-            maxFeePerGas = block.baseFeePerGas.mul(2).add(maxPriorityFeePerGas);
+            // lastBaseFeePerGas = block.baseFeePerGas;
+            // maxPriorityFeePerGas = BigNumber.from("1500000000");
+            // maxFeePerGas = block.baseFeePerGas.mul(2).add(maxPriorityFeePerGas);
         }
 
         return { lastBaseFeePerGas, maxFeePerGas, maxPriorityFeePerGas, gasPrice };

@@ -1,39 +1,28 @@
 {
-  "author": "Richard Moore <me@ricmoo.com>",
+  "author": "",
   "dependencies": {
-    "@ethersproject/bignumber": "^5.7.0",
-    "@ethersproject/bytes": "^5.7.0",
-    "@ethersproject/keccak256": "^5.7.0",
-    "@ethersproject/logger": "^5.7.0",
-    "@ethersproject/rlp": "^5.7.0"
+    "@quais/bignumber": "^0.1.0",
+    "@quais/bytes": "^0.1.0",
+    "@quais/keccak256": "^0.1.0",
+    "@quais/logger": "^0.1.0",
+    "@quais/rlp": "^0.1.0"
   },
-  "description": "Utilities for handling Ethereum Addresses for ethers.",
-  "ethereum": "donations.ethers.eth",
-  "funding": [
-    {
-      "type": "individual",
-      "url": "https://gitcoin.co/grants/13/ethersjs-complete-simple-and-tiny-2"
-    },
-    {
-      "type": "individual",
-      "url": "https://www.buymeacoffee.com/ricmoo"
-    }
-  ],
+  "description": "Utilities for handling Ethereum Addresses for quais.",
   "keywords": [
-    "Ethereum",
-    "ethers"
+    "Quai",
+    "quais"
   ],
   "license": "MIT",
   "main": "./lib/index.js",
   "module": "./lib.esm/index.js",
-  "name": "@ethersproject/address",
+  "name": "@quais/address",
   "publishConfig": {
     "access": "public"
   },
   "repository": {
     "directory": "packages/address",
     "type": "git",
-    "url": "git://github.com/ethers-io/ethers.js.git"
+    "url": "git://github.com:dominant-strategies/quais.js.git"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -41,5 +30,5 @@
   "sideEffects": false,
   "tarballHash": "0x6732663914c6efc33735eb97dc36ecaf0ecf4ff34ad1877ee7b842f1c27f98f4",
   "types": "./lib/index.d.ts",
-  "version": "5.7.0"
+  "version": "0.1.2"
 }

@@ -1,8 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.parseBytes32String = exports.formatBytes32String = void 0;
-var constants_1 = require("@ethersproject/constants");
-var bytes_1 = require("@ethersproject/bytes");
+var constants_1 = require("@quais/constants");
+var bytes_1 = require("@quais/bytes");
 var utf8_1 = require("./utf8");
 function formatBytes32String(text) {
     // Get the bytes

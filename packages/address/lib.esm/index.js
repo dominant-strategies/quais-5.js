@@ -1,10 +1,10 @@
 "use strict";
-import { arrayify, concat, hexDataLength, hexDataSlice, isHexString, stripZeros } from "@ethersproject/bytes";
-import { BigNumber, _base16To36, _base36To16 } from "@ethersproject/bignumber";
-import { keccak256 } from "@ethersproject/keccak256";
-import { encode } from "@ethersproject/rlp";
-import { Logger } from "@ethersproject/logger";
+import { arrayify, concat, hexDataLength, hexDataSlice, isHexString, hexStripZeros, hexZeroPad } from "@quais/bytes";
+import { BigNumber, _base16To36, _base36To16 } from "@quais/bignumber";
+import { keccak256 } from "@quais/keccak256";
+import { Logger } from "@quais/logger";
 import { version } from "./_version";
+import { ShardData } from "@quais/constants";
 const logger = new Logger(version);
 function getChecksumAddress(address) {
     if (!isHexString(address, 20)) {
@@ -110,17 +110,9 @@ export function getIcapAddress(address) {
     }
     return "XE" + ibanChecksum("XE00" + base36) + base36;
 }
-// http://ethereum.stackexchange.com/questions/760/how-is-the-address-of-an-ethereum-contract-computed
-export function getContractAddress(transaction) {
-    let from = null;
-    try {
-        from = getAddress(transaction.from);
-    }
-    catch (error) {
-        logger.throwArgumentError("missing from address", "transaction", transaction);
-    }
-    const nonce = stripZeros(arrayify(BigNumber.from(transaction.nonce).toHexString()));
-    return getAddress(hexDataSlice(keccak256(encode([from, nonce])), 12));
+export function getContractAddress(from, nonce, data) {
+    const nonceBytes = hexZeroPad(BigNumber.from(nonce).toHexString(), 8);
+    return getAddress(hexDataSlice(keccak256(concat([getAddress(from), nonceBytes, hexStripZeros(data)])), 12));
 }
 export function getCreate2Address(from, salt, initCodeHash) {
     if (hexDataLength(salt) !== 32) {
@@ -130,5 +122,26 @@ export function getCreate2Address(from, salt, initCodeHash) {
         logger.throwArgumentError("initCodeHash must be 32 bytes", "initCodeHash", initCodeHash);
     }
     return getAddress(hexDataSlice(keccak256(concat(["0xff", getAddress(from), salt, initCodeHash])), 12));
+}
+export function validShard(shard) {
+    let shardData = ShardData.filter((obj) => {
+        return obj.shard == shard;
+    });
+    if (shardData.length === 0) {
+        return false;
+    }
+    return true;
+}
+export function getShardFromAddress(address) {
+    let shardData = ShardData.filter((obj) => {
+        const num = Number(address.substring(0, 4));
+        const start = Number("0x" + obj.byte[0]);
+        const end = Number("0x" + obj.byte[1]);
+        return num >= start && num <= end;
+    });
+    if (shardData.length === 0) {
+        return null;
+    }
+    return shardData[0].shard;
 }
 //# sourceMappingURL=index.js.map

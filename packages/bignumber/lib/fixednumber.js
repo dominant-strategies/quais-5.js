@@ -1,8 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.FixedNumber = exports.FixedFormat = exports.parseFixed = exports.formatFixed = void 0;
-var bytes_1 = require("@ethersproject/bytes");
-var logger_1 = require("@ethersproject/logger");
+var bytes_1 = require("@quais/bytes");
+var logger_1 = require("@quais/logger");
 var _version_1 = require("./_version");
 var logger = new logger_1.Logger(_version_1.version);
 var bignumber_1 = require("./bignumber");

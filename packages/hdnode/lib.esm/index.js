@@ -1,15 +1,17 @@
 "use strict";
-import { Base58 } from "@ethersproject/basex";
-import { arrayify, concat, hexDataSlice, hexZeroPad, hexlify } from "@ethersproject/bytes";
-import { BigNumber } from "@ethersproject/bignumber";
-import { toUtf8Bytes, UnicodeNormalizationForm } from "@ethersproject/strings";
-import { pbkdf2 } from "@ethersproject/pbkdf2";
-import { defineReadOnly } from "@ethersproject/properties";
-import { SigningKey } from "@ethersproject/signing-key";
-import { computeHmac, ripemd160, sha256, SupportedAlgorithm } from "@ethersproject/sha2";
-import { computeAddress } from "@ethersproject/transactions";
-import { wordlists } from "@ethersproject/wordlists";
-import { Logger } from "@ethersproject/logger";
+import { Base58 } from "@quais/basex";
+import { arrayify, concat, hexDataSlice, hexZeroPad, hexlify } from "@quais/bytes";
+import { BigNumber } from "@quais/bignumber";
+import { toUtf8Bytes, UnicodeNormalizationForm } from "@quais/strings";
+import { pbkdf2 } from "@quais/pbkdf2";
+import { defineReadOnly } from "@quais/properties";
+import { SigningKey } from "@quais/signing-key";
+import { computeHmac, ripemd160, sha256, SupportedAlgorithm } from "@quais/sha2";
+import { computeAddress } from "@quais/transactions";
+import { wordlists } from "@quais/wordlists";
+import { getShardFromAddress } from "@quais/address";
+import { ShardData } from "@quais/constants";
+import { Logger } from "@quais/logger";
 import { version } from "./_version";
 const logger = new Logger(version);
 const N = BigNumber.from("0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141");
@@ -44,7 +46,8 @@ function getWordlist(wordlist) {
     return wordlist;
 }
 const _constructorGuard = {};
-export const defaultPath = "m/44'/60'/0'/0/0";
+export const defaultPath = "m/44'/994'/0'/0/0";
+export const defaultAccountPath = "m/44'/994'/0'/0/";
 ;
 export class HDNode {
     /**
@@ -326,5 +329,32 @@ export function getAccountPath(index) {
         logger.throwArgumentError("invalid account index", "index", index);
     }
     return `m/44'/60'/${index}'/0/0`;
+}
+export function getShardAddressChildNode(hdnode, path, startingIndex, shard) {
+    let found = false;
+    let childNode;
+    while (!found) {
+        childNode = hdnode.derivePath(path + "/" + startingIndex.toString());
+        const addrShard = getShardFromAddress(childNode.address);
+        // Check if address is in a shard
+        if (addrShard !== undefined) {
+            // Check if address is in correct shard
+            if (addrShard === shard) {
+                found = true;
+                break;
+            }
+        }
+        startingIndex++;
+    }
+    return childNode;
+}
+export function getAllShardsAddressChildNode(hdnode, accountPath) {
+    const childNodes = [];
+    let shards = ShardData.map((shard) => shard.shard);
+    for (const shard of shards) {
+        const childNode = getShardAddressChildNode(hdnode, accountPath, 0, shard);
+        childNodes.push(childNode);
+    }
+    return childNodes;
 }
 //# sourceMappingURL=index.js.map

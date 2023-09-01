@@ -31,33 +31,33 @@ the registered //name//.
 _subsection: Languages @<wordlists--languages>
 
 The [official wordlists](link-bip39-wordlists) available at
-`ethers.wordlists`. In the browser, only the english language is
+`quais.wordlists`. In the browser, only the english language is
 available by default; to include the others (which increases the
-size of the library), see the dist files in the `ethers` package.
+size of the library), see the dist files in the `quais` package.
 
-_property: ethers.wordlists.cz => Wordlist
+_property: quais.wordlists.cz => Wordlist
 The Czech [[Wordlist]].
 
-_property: ethers.wordlists.en => Wordlist
+_property: quais.wordlists.en => Wordlist
 The English [[Wordlist]].
 
-_property: ethers.wordlists.es => Wordlist
+_property: quais.wordlists.es => Wordlist
 The Spanish [[Wordlist]].
 
-_property: ethers.wordlists.fr => Wordlist
+_property: quais.wordlists.fr => Wordlist
 The French [[Wordlist]].
 
-_property: ethers.wordlists.it => Wordlist
+_property: quais.wordlists.it => Wordlist
 The Italian [[Wordlist]].
 
-_property: ethers.wordlists.ja => Wordlist
+_property: quais.wordlists.ja => Wordlist
 The Japanese [[Wordlist]].
 
-_property: ethers.wordlists.ko => Wordlist
+_property: quais.wordlists.ko => Wordlist
 The Korean [[Wordlist]].
 
-_property: ethers.wordlists.zh_cn => Wordlist
+_property: quais.wordlists.zh_cn => Wordlist
 The Simplified Chinese [[Wordlist]].
 
-_property: ethers.wordlists.zh_tw => Wordlist
+_property: quais.wordlists.zh_tw => Wordlist
 The Traditional Chinese [[Wordlist]].

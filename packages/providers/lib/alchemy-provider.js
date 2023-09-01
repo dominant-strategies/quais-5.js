@@ -16,14 +16,14 @@ var __extends = (this && this.__extends) || (function () {
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AlchemyProvider = exports.AlchemyWebSocketProvider = void 0;
-var properties_1 = require("@ethersproject/properties");
+var properties_1 = require("@quais/properties");
 var formatter_1 = require("./formatter");
 var websocket_provider_1 = require("./websocket-provider");
-var logger_1 = require("@ethersproject/logger");
+var logger_1 = require("@quais/logger");
 var _version_1 = require("./_version");
 var logger = new logger_1.Logger(_version_1.version);
 var url_json_rpc_provider_1 = require("./url-json-rpc-provider");
-// This key was provided to ethers.js by Alchemy to be used by the
+// This key was provided to quais.js by Alchemy to be used by the
 // default provider, but it is recommended that for your own
 // production environments, that you acquire your own API key at:
 //   https://dashboard.alchemyapi.io

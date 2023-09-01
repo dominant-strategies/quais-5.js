@@ -1,7 +1,7 @@
 
 _section: Signers @<signers>
 
-A **Signer** in //ethers// is an abstraction of an Ethereum Account,
+A **Signer** in //quais// is an abstraction of an Ethereum Account,
 which can be used to sign messages and transactions and send
 signed transactions to the Ethereum Network to execute state
 changing operations.
@@ -126,7 +126,7 @@ the [[link-eip-712]] specification.
 _warning: Experimental feature (this method name will change)
 
 This is still an experimental feature. If using it, please specify the **exact**
-version of ethers you are using (e.g. spcify ``"5.0.18"``, **not** ``"^5.0.18"``) as
+version of quais you are using (e.g. spcify ``"5.0.18"``, **not** ``"^5.0.18"``) as
 the method name will be renamed from ``_signTypedData`` to ``signTypedData`` once
 it has been used in the field a bit.
 
@@ -216,32 +216,32 @@ _subsection: Wallet  @<Wallet> @INHERIT<[[ExternallyOwnedAccount]] and [[Signer]
 The Wallet class inherits [[Signer]] and can sign transactions and messages
 using a private key as a standard Externally Owned Account (EOA).
 
-_property: new ethers.Wallet(privateKey [ , provider ])  @<Wallet-constructor> @SRC<wallet:constructor.Wallet>
+_property: new quais.Wallet(privateKey [ , provider ])  @<Wallet-constructor> @SRC<wallet:constructor.Wallet>
 Create a new Wallet instance for //privateKey// and optionally
 connected to the //provider//.
 
-_property: ethers.Wallet.createRandom( [ options = { } ]) => [[Wallet]]  @<Wallet-createRandom> @SRC<wallet>
+_property: quais.Wallet.createRandom( [ options = { } ]) => [[Wallet]]  @<Wallet-createRandom> @SRC<wallet>
 Returns a new Wallet with a random private key, generated from
 cryptographically secure entropy sources. If the current environment
 does not have a secure entropy source, an error is thrown.
 
 Wallets created using this method will have a mnemonic.
 
-_property: ethers.Wallet.fromEncryptedJson(json, password [ , progress ])  => Promise<[[Wallet]]> @<Wallet-fromEncryptedJson> @SRC<wallet>
+_property: quais.Wallet.fromEncryptedJson(json, password [ , progress ])  => Promise<[[Wallet]]> @<Wallet-fromEncryptedJson> @SRC<wallet>
 Create an instance by decrypting an encrypted JSON wallet.
 
 If //progress// is provided it will be called during decryption
 with a value between 0 and 1 indicating the progress towards
 completion.
 
-_property: ethers.Wallet.fromEncryptedJsonSync(json, password)  => [[Wallet]] @<Wallet-fromEncryptedJsonSync> @SRC<wallet>
+_property: quais.Wallet.fromEncryptedJsonSync(json, password)  => [[Wallet]] @<Wallet-fromEncryptedJsonSync> @SRC<wallet>
 Create an instance from an encrypted JSON wallet.
 
 This operation will operate synchronously which will lock up the user
 interface, possibly for a non-trivial duration. Most applications should
 use the asynchronous ``fromEncryptedJson`` instead.
 
-_property: ethers.Wallet.fromMnemonic(mnemonic [ , path, [ wordlist ] ]) => [[Wallet]] @<Wallet.fromMnemonic>
+_property: quais.Wallet.fromMnemonic(mnemonic [ , path, [ wordlist ] ]) => [[Wallet]] @<Wallet.fromMnemonic>
 Create an instance from a mnemonic phrase.
 
 If path is not specified, the Ethereum default path is used (i.e. ``m/44'/60'/0'/0/0``).
@@ -366,7 +366,7 @@ will be carried.
 For example, the ``call`` operation will automatically have the
 provided address passed along during the execution.
 
-_property: new ethers.VoidSigner(address [ , provider ]) => [[VoidSigner]]
+_property: new quais.VoidSigner(address [ , provider ]) => [[VoidSigner]]
 Create a new instance of a **VoidSigner** for //address//.
 
 _property: voidSigner.address => string<[[address]]>
@@ -375,14 +375,14 @@ The address of this **VoidSigner**.
 _code: VoidSigner Pre-flight Example @lang<javascript>
 
 address = "0x8ba1f109551bD432803012645Ac136ddd64DBA72"
-signer = new ethers.VoidSigner(address, provider)
+signer = new quais.VoidSigner(address, provider)
 
 // The DAI token contract
 abi = [
   "function balanceOf(address) view returns (uint)",
   "function transfer(address, uint) returns (bool)"
 ]
-contract = new ethers.Contract("dai.tokens.ethers.eth", abi, signer)
+contract = new quais.Contract("dai.tokens.quais.eth", abi, signer)
 
 // Get the number of tokens for this account
 //_result:
@@ -400,12 +400,12 @@ tokens = await contract.balanceOf(signer.getAddress())
 
 // This will pass since the token balance is available
 //_result:
-await contract.callStatic.transfer("donations.ethers.eth", tokens)
+await contract.callStatic.transfer("donations.quais.eth", tokens)
 //_log:
 
 // This will fail since it is greater than the token balance
 //_throws:
-await contract.callStatic.transfer("donations.ethers.eth", tokens.add(1))
+await contract.callStatic.transfer("donations.quais.eth", tokens.add(1))
 //_log:
 
 

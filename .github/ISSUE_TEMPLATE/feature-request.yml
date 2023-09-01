@@ -6,7 +6,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        The best place to start a new feature request is by starting an [Idea discussion](https://github.com/ethers-io/ethers.js/discussions), to mull over the feature, discuss current options and think through the impact on the overall library.
+        The best place to start a new feature request is by starting an [Idea discussion](https://github.com/quais-io/quais.js/discussions), to mull over the feature, discuss current options and think through the impact on the overall library.
 
         Keep in mind that features increase the library size, and may require additional dependencies. Ethers strives to remain lean and the number of dependencies low, so many features may make more sense as ancillary packages.
   - type: textarea
