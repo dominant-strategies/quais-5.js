@@ -19895,6 +19895,8 @@ class BaseProvider extends Provider {
         });
     }
     poll() {
+        // Polling is now disabled
+        return;
         return __awaiter$9(this, void 0, void 0, function* () {
             const pollId = nextPollId++;
             // Track all running promises, so we can trigger a post-poll once they are complete

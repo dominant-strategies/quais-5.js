@@ -771,7 +771,7 @@ var BaseProvider = /** @class */ (function (_super) {
         _this._maxInternalBlockNumber = -1024;
         _this._lastBlockNumber = -2;
         _this._maxFilterBlockRange = 10;
-        _this._pollingInterval = 4000;
+        _this._pollingInterval = 40000;
         _this._fastQueryDate = 0;
         return _this;
     }
@@ -982,11 +982,9 @@ var BaseProvider = /** @class */ (function (_super) {
             var _this = this;
             return __generator(this, function (_a) {
                 switch (_a.label) {
-                    case 0:
-                        pollId = nextPollId++;
-                        runners = [];
-                        blockNumber = null;
-                        _a.label = 1;
+                    case 0: 
+                    // Polling is now disabled
+                    return [2 /*return*/];
                     case 1:
                         _a.trys.push([1, 3, , 4]);
                         return [4 /*yield*/, this._getInternalBlockNumber(100 + this.pollingInterval / 2)];
