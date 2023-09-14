@@ -123,6 +123,7 @@ export interface TransactionReceipt {
     logsBloom: string,
     blockHash: string,
     transactionHash: string,
+    etxs: Array<Transaction>,
     logs: Array<Log>,
     blockNumber: number,
     confirmations: number,

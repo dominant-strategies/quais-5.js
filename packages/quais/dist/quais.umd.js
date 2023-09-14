@@ -3605,7 +3605,7 @@
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.version = void 0;
-	exports.version = "logger/5.7.0";
+	exports.version = "logger/0.1.0";
 
 	});
 
@@ -3991,7 +3991,7 @@
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.version = void 0;
-	exports.version = "bytes/5.7.0";
+	exports.version = "bytes/0.1.0";
 
 	});
 
@@ -4433,7 +4433,7 @@
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.version = void 0;
-	exports.version = "bignumber/5.7.0";
+	exports.version = "bignumber/0.1.0";
 
 	});
 
@@ -5157,7 +5157,7 @@
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.version = void 0;
-	exports.version = "properties/5.7.0";
+	exports.version = "properties/0.1.0";
 
 	});
 
@@ -5343,7 +5343,7 @@
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.version = void 0;
-	exports.version = "abi/5.7.0";
+	exports.version = "abi/0.1.0";
 
 	});
 
@@ -8034,7 +8034,7 @@
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.version = void 0;
-	exports.version = "strings/5.7.0";
+	exports.version = "strings/0.1.0";
 
 	});
 
@@ -8815,7 +8815,7 @@
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.version = void 0;
-	exports.version = "hash/5.7.0";
+	exports.version = "hash/0.1.0";
 
 	});
 
@@ -10870,7 +10870,7 @@
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.version = void 0;
-	exports.version = "abstract-signer/5.7.0";
+	exports.version = "abstract-signer/0.1.0";
 
 	});
 
@@ -11175,6 +11175,7 @@
 	                    case 2: return [4 /*yield*/, this.getFeeData()];
 	                    case 3:
 	                        feeData = _a.sent();
+	                        console.log("FEE DATA:", feeData);
 	                        if (tx.type == null) {
 	                            // We need to auto-detect the intended type of this transaction...
 	                            if (feeData.maxFeePerGas != null && feeData.maxPriorityFeePerGas != null) {
@@ -11305,7 +11306,7 @@
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.version = void 0;
-	exports.version = "rlp/5.7.0";
+	exports.version = "rlp/0.1.0";
 
 	});
 
@@ -18613,7 +18614,7 @@
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.version = void 0;
-	exports.version = "signing-key/5.7.0";
+	exports.version = "signing-key/0.1.0";
 
 	});
 
@@ -20197,8 +20198,6 @@
 	                        return [4 /*yield*/, this.grindContractAddress(unsignedTx)];
 	                    case 2:
 	                        grindedTx = _a.sent();
-	                        // Send the deployment transaction
-	                        console.log("Deploying contract with address: " + grindedTx);
 	                        return [4 /*yield*/, this.signer.sendTransaction(grindedTx)];
 	                    case 3:
 	                        tx = _a.sent();
@@ -20266,7 +20265,6 @@
 	                            contractAddress = (0, lib$6.getContractAddress)(sender, tx.nonce, tx.data);
 	                            contractShard = (0, lib$6.getShardFromAddress)(contractAddress);
 	                            if (contractShard === toShard) {
-	                                console.log("Found address", contractAddress, "on shard", contractShard, "for shard", toShard);
 	                                return [2 /*return*/, tx];
 	                            }
 	                            salt = (0, crypto_1__default['default'].randomBytes)(32);
@@ -20436,7 +20434,7 @@
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.version = void 0;
-	exports.version = "sha2/5.7.0";
+	exports.version = "sha2/0.1.0";
 
 	});
 
@@ -20566,7 +20564,7 @@
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.version = void 0;
-	exports.version = "wordlists/5.7.0";
+	exports.version = "wordlists/0.1.0";
 
 	});
 
@@ -21115,7 +21113,7 @@
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.version = void 0;
-	exports.version = "random/5.7.0";
+	exports.version = "random/0.1.0";
 
 	});
 
@@ -22010,7 +22008,7 @@
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.version = void 0;
-	exports.version = "json-wallets/5.7.0";
+	exports.version = "json-wallets/0.1.0";
 
 	});
 
@@ -23156,7 +23154,7 @@
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.version = void 0;
-	exports.version = "wallet/5.7.0";
+	exports.version = "wallet/0.1.0";
 
 	});
 
@@ -23419,7 +23417,7 @@
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.version = void 0;
-	exports.version = "networks/5.7.1";
+	exports.version = "networks/0.1.0";
 
 	});
 
@@ -24339,6 +24337,9 @@
 	            v: Formatter.allowNull(number),
 	            creates: Formatter.allowNull(address, null),
 	            raw: Formatter.allowNull(data),
+	            gas: Formatter.allowNull(bigNumber),
+	            input: Formatter.allowNull(data),
+	            sender: Formatter.allowNull(address),
 	        };
 	        formats.transactionRequest = {
 	            from: Formatter.allowNull(address),
@@ -24378,6 +24379,7 @@
 	            logsBloom: Formatter.allowNull(data),
 	            blockHash: hash,
 	            transactionHash: hash,
+	            exts: Formatter.allowNull(this.etx, null),
 	            logs: Formatter.arrayOf(this.receiptLog.bind(this)),
 	            blockNumber: number,
 	            confirmations: Formatter.allowNull(number, null),
@@ -24485,6 +24487,9 @@
 	    // Strict! Used on input.
 	    Formatter.prototype.address = function (value) {
 	        return (0, lib$6.getAddress)(value);
+	    };
+	    Formatter.prototype.etx = function (value) {
+	        return value;
 	    };
 	    Formatter.prototype.callAddress = function (value) {
 	        if (!(0, lib$1.isHexString)(value, 32)) {
@@ -31120,7 +31125,7 @@
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.version = void 0;
-	exports.version = "solidity/5.7.0";
+	exports.version = "solidity/0.1.0";
 
 	});
 
@@ -31231,7 +31236,7 @@
 	"use strict";
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.version = void 0;
-	exports.version = "units/5.7.0";
+	exports.version = "units/0.1.0";
 
 	});
 

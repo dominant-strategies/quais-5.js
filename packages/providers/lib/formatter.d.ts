@@ -28,6 +28,7 @@ export declare class Formatter {
     hex(value: any, strict?: boolean): string;
     data(value: any, strict?: boolean): string;
     address(value: any): string;
+    etx(value: any): any;
     callAddress(value: any): string;
     contractAddress(value: any): string;
     blockTag(blockTag: any): string;

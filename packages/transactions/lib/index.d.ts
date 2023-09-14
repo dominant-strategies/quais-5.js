@@ -50,6 +50,9 @@ export interface Transaction {
     externalGasTip?: BigNumber;
     externalData?: string;
     externalAccessList?: AccessList;
+    gas?: BigNumberish;
+    input?: string;
+    sender?: string;
 }
 export declare function computeAddress(key: BytesLike | string): string;
 export declare function recoverAddress(digest: BytesLike, signature: SignatureLike): string;

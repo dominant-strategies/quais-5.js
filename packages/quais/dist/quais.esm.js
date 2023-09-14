@@ -3593,7 +3593,7 @@ var bn = createCommonjsModule(function (module) {
 })('object' === 'undefined' || module, commonjsGlobal);
 });
 
-const version = "logger/5.7.0";
+const version = "logger/0.1.0";
 
 "use strict";
 let _permanentCensorErrors = false;
@@ -3949,7 +3949,7 @@ class Logger {
 Logger.errors = ErrorCode;
 Logger.levels = LogLevel;
 
-const version$1 = "bytes/5.7.0";
+const version$1 = "bytes/0.1.0";
 
 "use strict";
 const logger = new Logger(version$1);
@@ -4358,7 +4358,7 @@ function joinSignature(signature) {
     ]));
 }
 
-const version$2 = "bignumber/5.7.0";
+const version$2 = "bignumber/0.1.0";
 
 "use strict";
 var BN = bn.BN;
@@ -5011,7 +5011,7 @@ class FixedNumber {
 const ONE = FixedNumber.from(1);
 const BUMP = FixedNumber.from("0.5");
 
-const version$3 = "properties/5.7.0";
+const version$3 = "properties/0.1.0";
 
 "use strict";
 var __awaiter = (commonjsGlobal && commonjsGlobal.__awaiter) || function (thisArg, _arguments, P, generator) {
@@ -5137,7 +5137,7 @@ class Description {
     }
 }
 
-const version$4 = "abi/5.7.0";
+const version$4 = "abi/0.1.0";
 
 "use strict";
 const logger$4 = new Logger(version$4);
@@ -7400,7 +7400,7 @@ class NumberCoder extends Coder {
     }
 }
 
-const version$6 = "strings/5.7.0";
+const version$6 = "strings/0.1.0";
 
 "use strict";
 const logger$8 = new Logger(version$6);
@@ -8016,7 +8016,7 @@ function id(text) {
     return keccak256(toUtf8Bytes(text));
 }
 
-const version$7 = "hash/5.7.0";
+const version$7 = "hash/0.1.0";
 
 "use strict";
 function decode(textData) {
@@ -9693,7 +9693,7 @@ class Provider {
     }
 }
 
-const version$9 = "abstract-signer/5.7.0";
+const version$9 = "abstract-signer/0.1.0";
 
 "use strict";
 var __awaiter$3 = (commonjsGlobal && commonjsGlobal.__awaiter) || function (thisArg, _arguments, P, generator) {
@@ -9858,6 +9858,7 @@ class Signer {
             else {
                 // We need to get fee data to determine things
                 const feeData = yield this.getFeeData();
+                console.log("FEE DATA:", feeData);
                 if (tx.type == null) {
                     // We need to auto-detect the intended type of this transaction...
                     if (feeData.maxFeePerGas != null && feeData.maxPriorityFeePerGas != null) {
@@ -9970,7 +9971,7 @@ class VoidSigner extends Signer {
     }
 }
 
-const version$a = "rlp/5.7.0";
+const version$a = "rlp/0.1.0";
 
 "use strict";
 const logger$f = new Logger(version$a);
@@ -13898,7 +13899,7 @@ elliptic.eddsa = /*RicMoo:quais:require(./elliptic/eddsa)*/(null);
 
 var EC$1 = elliptic_1.ec;
 
-const version$b = "signing-key/5.7.0";
+const version$b = "signing-key/0.1.0";
 
 "use strict";
 const logger$g = new Logger(version$b);
@@ -15411,7 +15412,7 @@ var SupportedAlgorithm;
 })(SupportedAlgorithm || (SupportedAlgorithm = {}));
 ;
 
-const version$e = "sha2/5.7.0";
+const version$e = "sha2/0.1.0";
 
 "use strict";
 const logger$j = new Logger(version$e);
@@ -15476,7 +15477,7 @@ function pbkdf2(password, salt, iterations, keylen, hashAlgorithm) {
     return hexlify(DK);
 }
 
-const version$f = "wordlists/5.7.0";
+const version$f = "wordlists/0.1.0";
 
 "use strict";
 // This gets overridden by rollup
@@ -15912,7 +15913,7 @@ function getAllShardsAddressChildNode(hdnode, accountPath) {
     return childNodes;
 }
 
-const version$h = "random/5.7.0";
+const version$h = "random/0.1.0";
 
 "use strict";
 const logger$m = new Logger(version$h);
@@ -16769,7 +16770,7 @@ var aesJs = createCommonjsModule(function (module, exports) {
 })(commonjsGlobal);
 });
 
-const version$i = "json-wallets/5.7.0";
+const version$i = "json-wallets/0.1.0";
 
 "use strict";
 function looseArrayify(hexString) {
@@ -17739,7 +17740,7 @@ function decryptJsonWalletSync(json, password) {
     throw new Error("invalid JSON wallet");
 }
 
-const version$j = "wallet/5.7.0";
+const version$j = "wallet/0.1.0";
 
 "use strict";
 var __awaiter$6 = (commonjsGlobal && commonjsGlobal.__awaiter) || function (thisArg, _arguments, P, generator) {
@@ -17903,7 +17904,7 @@ function verifyTypedData(domain, types, value, signature) {
     return recoverAddress(TypedDataEncoder.hash(domain, types, value), signature);
 }
 
-const version$k = "networks/5.7.1";
+const version$k = "networks/0.1.0";
 
 "use strict";
 const logger$q = new Logger(version$k);
@@ -18664,6 +18665,9 @@ class Formatter {
             v: Formatter.allowNull(number),
             creates: Formatter.allowNull(address, null),
             raw: Formatter.allowNull(data),
+            gas: Formatter.allowNull(bigNumber),
+            input: Formatter.allowNull(data),
+            sender: Formatter.allowNull(address),
         };
         formats.transactionRequest = {
             from: Formatter.allowNull(address),
@@ -18703,6 +18707,7 @@ class Formatter {
             logsBloom: Formatter.allowNull(data),
             blockHash: hash,
             transactionHash: hash,
+            exts: Formatter.allowNull(this.etx, null),
             logs: Formatter.arrayOf(this.receiptLog.bind(this)),
             blockNumber: number,
             confirmations: Formatter.allowNull(number, null),
@@ -18810,6 +18815,9 @@ class Formatter {
     // Strict! Used on input.
     address(value) {
         return getAddress(value);
+    }
+    etx(value) {
+        return value;
     }
     callAddress(value) {
         if (!isHexString(value, 32)) {
@@ -23863,7 +23871,7 @@ var index$3 = /*#__PURE__*/Object.freeze({
 	Formatter: Formatter
 });
 
-const version$n = "solidity/5.7.0";
+const version$n = "solidity/0.1.0";
 
 "use strict";
 const regexBytes = new RegExp("^bytes([0-9]+)$");
@@ -23949,7 +23957,7 @@ function sha256$2(types, values) {
     return sha256$1(pack$1(types, values));
 }
 
-const version$o = "units/5.7.0";
+const version$o = "units/0.1.0";
 
 "use strict";
 const logger$I = new Logger(version$o);

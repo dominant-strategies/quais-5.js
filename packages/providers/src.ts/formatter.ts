@@ -85,6 +85,10 @@ export class Formatter {
             creates: Formatter.allowNull(address, null),
 
             raw: Formatter.allowNull(data),
+
+            gas: Formatter.allowNull(bigNumber),
+            input: Formatter.allowNull(data),
+            sender: Formatter.allowNull(address),
         };
 
         formats.transactionRequest = {
@@ -127,6 +131,7 @@ export class Formatter {
             logsBloom: Formatter.allowNull(data),// @TODO: should this be data?
             blockHash: hash,
             transactionHash: hash,
+            exts: Formatter.allowNull(this.etx, null),
             logs: Formatter.arrayOf(this.receiptLog.bind(this)),
             blockNumber: number,
             confirmations: Formatter.allowNull(number, null),
@@ -245,6 +250,10 @@ export class Formatter {
     // Strict! Used on input.
     address(value: any): string {
         return getAddress(value);
+    }
+
+    etx(value: any): any {
+        return value;
     }
 
     callAddress(value: any): string {

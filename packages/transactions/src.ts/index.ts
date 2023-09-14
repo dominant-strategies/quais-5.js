@@ -89,6 +89,11 @@ export interface Transaction {
     externalGasTip?: BigNumber;
     externalData?: string;
     externalAccessList?: AccessList;
+
+    // ETX Fields from TX Receipt
+    gas?: BigNumberish;
+    input?: string;
+    sender?: string;
 }
 
 ///////////////////////////////
