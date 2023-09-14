@@ -53,6 +53,9 @@ var Formatter = /** @class */ (function () {
             v: Formatter.allowNull(number),
             creates: Formatter.allowNull(address, null),
             raw: Formatter.allowNull(data),
+            gas: Formatter.allowNull(bigNumber),
+            input: Formatter.allowNull(data),
+            sender: Formatter.allowNull(address),
         };
         formats.transactionRequest = {
             from: Formatter.allowNull(address),
@@ -92,6 +95,7 @@ var Formatter = /** @class */ (function () {
             logsBloom: Formatter.allowNull(data),
             blockHash: hash,
             transactionHash: hash,
+            exts: Formatter.allowNull(this.etx, null),
             logs: Formatter.arrayOf(this.receiptLog.bind(this)),
             blockNumber: number,
             confirmations: Formatter.allowNull(number, null),
@@ -199,6 +203,9 @@ var Formatter = /** @class */ (function () {
     // Strict! Used on input.
     Formatter.prototype.address = function (value) {
         return (0, address_1.getAddress)(value);
+    };
+    Formatter.prototype.etx = function (value) {
+        return value;
     };
     Formatter.prototype.callAddress = function (value) {
         if (!(0, bytes_1.isHexString)(value, 32)) {
