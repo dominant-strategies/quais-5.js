@@ -18707,7 +18707,7 @@ class Formatter {
             logsBloom: Formatter.allowNull(data),
             blockHash: hash,
             transactionHash: hash,
-            exts: Formatter.allowNull(this.etx, null),
+            etxs: Formatter.allowNull(this.etx, null),
             logs: Formatter.arrayOf(this.receiptLog.bind(this)),
             blockNumber: number,
             confirmations: Formatter.allowNull(number, null),
@@ -19742,7 +19742,7 @@ class BaseProvider extends Provider {
         this._maxInternalBlockNumber = -1024;
         this._lastBlockNumber = -2;
         this._maxFilterBlockRange = 10;
-        this._pollingInterval = 4000;
+        this._pollingInterval = 40000;
         this._fastQueryDate = 0;
     }
     _ready() {
@@ -19903,9 +19903,9 @@ class BaseProvider extends Provider {
         });
     }
     poll() {
-        // Polling is now disabled
-        return;
         return __awaiter$9(this, void 0, void 0, function* () {
+            // Polling is now disabled
+            return;
             const pollId = nextPollId++;
             // Track all running promises, so we can trigger a post-poll once they are complete
             const runners = [];
