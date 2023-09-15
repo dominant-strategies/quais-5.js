@@ -95,7 +95,7 @@ var Formatter = /** @class */ (function () {
             logsBloom: Formatter.allowNull(data),
             blockHash: hash,
             transactionHash: hash,
-            exts: Formatter.allowNull(this.etx, null),
+            etxs: Formatter.allowNull(this.etx, null),
             logs: Formatter.arrayOf(this.receiptLog.bind(this)),
             blockNumber: number,
             confirmations: Formatter.allowNull(number, null),
