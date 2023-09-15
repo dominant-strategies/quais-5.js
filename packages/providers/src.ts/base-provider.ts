@@ -784,7 +784,7 @@ export class BaseProvider extends Provider implements EnsProvider {
        this._lastBlockNumber = -2;
        this._maxFilterBlockRange = 10;
 
-       this._pollingInterval = 4000;
+       this._pollingInterval = 40000;
 
        this._fastQueryDate = 0;
    }
@@ -968,6 +968,8 @@ export class BaseProvider extends Provider implements EnsProvider {
    }
 
    async poll(): Promise<void> {
+        // Polling is now disabled
+        return;
        const pollId = nextPollId++;
 
        // Track all running promises, so we can trigger a post-poll once they are complete
