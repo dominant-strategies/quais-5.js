@@ -59,6 +59,7 @@ function getDefaultProvider(network, options) {
         // @TODO: Add support for IpcProvider; maybe if it ends in ".ipc"?
         // Handle http and ws (and their secure variants)
         var match = network.match(/^(ws|http)s?:/i);
+        console.log('default provider', network, match);
         if (match) {
             switch (match[1].toLowerCase()) {
                 case "http":

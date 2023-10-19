@@ -337,7 +337,6 @@ function _parseStandardETx(payload: Uint8Array): Transaction {
 
 export function parse(rawTransaction: BytesLike): Transaction {
     const payload = arrayify(rawTransaction);
-
     // Typed Transaction (EIP-2718)
     switch (payload[0]) {
         case 0:

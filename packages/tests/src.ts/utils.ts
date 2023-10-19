@@ -62,7 +62,7 @@ function equals(a: any, b: any): boolean {
 }
 
 function getWallet(): quais.Wallet {
-    const provider = new quais.providers.InfuraProvider("goerli", "49a0efa3aaee4fd99797bfa94d8ce2f1");
+    const provider = new quais.providers.JsonRpcProvider("https://rpc.cyprus1.colosseum.quaiscan.io");
 
     let key: null | string = null;
 

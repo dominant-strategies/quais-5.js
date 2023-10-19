@@ -12,7 +12,7 @@ import assert from "assert";
 import { quais } from "quais";
 import { sendTransaction } from "./utils";
 import contractData from "./test-contract.json";
-const provider = new quais.providers.InfuraProvider("goerli", "49a0efa3aaee4fd99797bfa94d8ce2f1");
+const provider = new quais.providers.JsonRpcProvider("https://rpc.cyprus1.colosseum.quaiscan.io");
 //const provider = quais.getDefaultProvider("rinkeby");
 const TIMEOUT_PERIOD = 120000;
 const contract = (function () {
@@ -102,7 +102,7 @@ function TestContractEvents() {
     });
 }
 describe('Test Contract Objects', function () {
-    it('parses events', function () {
+    it.skip('parses events', function () {
         this.timeout(TIMEOUT_PERIOD);
         return TestContractEvents();
     });
@@ -184,7 +184,7 @@ describe("Test Contract Transaction Population", function () {
             assert.equal(tx.from, testAddressCheck, "from address matches");
         });
     });
-    it("allows ENS 'from' overrides", function () {
+    it.skip("allows ENS 'from' overrides", function () {
         return __awaiter(this, void 0, void 0, function* () {
             this.timeout(20000);
             const tx = yield contractConnected.populateTransaction.balanceOf(testAddress, {

@@ -8,7 +8,7 @@ import { sendTransaction } from "./utils"
 
 import contractData from "./test-contract.json";
 
-const provider = new quais.providers.InfuraProvider("goerli", "49a0efa3aaee4fd99797bfa94d8ce2f1");
+const provider = new quais.providers.JsonRpcProvider("https://rpc.cyprus1.colosseum.quaiscan.io");
 //const provider = quais.getDefaultProvider("rinkeby");
 
 const TIMEOUT_PERIOD = 120000;
@@ -108,7 +108,7 @@ async function TestContractEvents() {
 
 describe('Test Contract Objects', function() {
 
-    it('parses events', function() {
+    it.skip('parses events', function() { //Skip due to using polling, disabled on QUAI as of 10/18/2023
         this.timeout(TIMEOUT_PERIOD);
         return TestContractEvents();
     });
@@ -199,7 +199,7 @@ describe("Test Contract Transaction Population", function() {
         assert.equal((<any>tx).from, testAddressCheck, "from address matches");
     });
 
-    it("allows ENS 'from' overrides", async function() {
+    it.skip("allows ENS 'from' overrides", async function() { //No ENS support on QUAI as of 10/18/2023
         this.timeout(20000);
 
         const tx = await contractConnected.populateTransaction.balanceOf(testAddress, {

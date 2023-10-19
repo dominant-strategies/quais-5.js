@@ -9858,7 +9858,6 @@ class Signer {
             else {
                 // We need to get fee data to determine things
                 const feeData = yield this.getFeeData();
-                console.log("FEE DATA:", feeData);
                 if (tx.type == null) {
                     // We need to auto-detect the intended type of this transaction...
                     if (feeData.maxFeePerGas != null && feeData.maxPriorityFeePerGas != null) {
@@ -23807,6 +23806,7 @@ function getDefaultProvider(network, options) {
         // @TODO: Add support for IpcProvider; maybe if it ends in ".ipc"?
         // Handle http and ws (and their secure variants)
         const match = network.match(/^(ws|http)s?:/i);
+        console.log('default provider', network, match);
         if (match) {
             switch (match[1].toLowerCase()) {
                 case "http":

@@ -43,7 +43,7 @@ var assert_1 = __importDefault(require("assert"));
 var quais_1 = require("quais");
 var utils_1 = require("./utils");
 var test_contract_json_1 = __importDefault(require("./test-contract.json"));
-var provider = new quais_1.quais.providers.InfuraProvider("goerli", "49a0efa3aaee4fd99797bfa94d8ce2f1");
+var provider = new quais_1.quais.providers.JsonRpcProvider("https://rpc.cyprus1.colosseum.quaiscan.io");
 //const provider = quais.getDefaultProvider("rinkeby");
 var TIMEOUT_PERIOD = 120000;
 var contract = (function () {
@@ -141,7 +141,7 @@ function TestContractEvents() {
     });
 }
 describe('Test Contract Objects', function () {
-    it('parses events', function () {
+    it.skip('parses events', function () {
         this.timeout(TIMEOUT_PERIOD);
         return TestContractEvents();
     });
@@ -239,7 +239,7 @@ describe("Test Contract Transaction Population", function () {
             });
         });
     });
-    it("allows ENS 'from' overrides", function () {
+    it.skip("allows ENS 'from' overrides", function () {
         return __awaiter(this, void 0, void 0, function () {
             var tx;
             return __generator(this, function (_a) {

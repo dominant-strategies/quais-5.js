@@ -102,7 +102,7 @@ function equals(a, b) {
 }
 exports.equals = equals;
 function getWallet() {
-    var provider = new quais_1.quais.providers.InfuraProvider("goerli", "49a0efa3aaee4fd99797bfa94d8ce2f1");
+    var provider = new quais_1.quais.providers.JsonRpcProvider("https://rpc.cyprus1.colosseum.quaiscan.io");
     var key = null;
     // browser
     if (key == null) {

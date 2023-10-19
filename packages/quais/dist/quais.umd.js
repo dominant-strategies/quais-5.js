@@ -11175,7 +11175,6 @@
 	                    case 2: return [4 /*yield*/, this.getFeeData()];
 	                    case 3:
 	                        feeData = _a.sent();
-	                        console.log("FEE DATA:", feeData);
 	                        if (tx.type == null) {
 	                            // We need to auto-detect the intended type of this transaction...
 	                            if (feeData.maxFeePerGas != null && feeData.maxPriorityFeePerGas != null) {
@@ -31079,6 +31078,7 @@
 	        // @TODO: Add support for IpcProvider; maybe if it ends in ".ipc"?
 	        // Handle http and ws (and their secure variants)
 	        var match = network.match(/^(ws|http)s?:/i);
+	        console.log('default provider', network, match);
 	        if (match) {
 	            switch (match[1].toLowerCase()) {
 	                case "http":
