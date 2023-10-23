@@ -26,8 +26,8 @@
  *
  * See: https://github.com/adraffy/ens-normalize.js
  */
-export declare type Numbers = Uint8Array | Array<number>;
-export declare type NextFunc = (...args: Array<any>) => number;
+export type Numbers = Uint8Array | Array<number>;
+export type NextFunc = (...args: Array<any>) => number;
 export declare function decode_arithmetic(bytes: Numbers): Array<number>;
 export declare function read_payload(v: Numbers): NextFunc;
 export declare function read_compressed_payload(bytes: Numbers): NextFunc;
@@ -35,11 +35,11 @@ export declare function signed(i: number): number;
 export declare function read_member_array(next: NextFunc, lookup?: Record<number, number>): number[];
 export declare function read_mapped_map(next: NextFunc): Record<number, Array<number>>;
 export declare function read_zero_terminated_array(next: NextFunc): Array<number>;
-export declare type Branch = {
+export type Branch = {
     set: Set<number>;
     node: Node;
 };
-export declare type Node = {
+export type Node = {
     branches: Array<Branch>;
     valid: number;
     fe0f: boolean;

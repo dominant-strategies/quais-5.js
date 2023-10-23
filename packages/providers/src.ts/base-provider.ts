@@ -1810,7 +1810,7 @@ export class BaseProvider extends Provider implements EnsProvider {
 
                // For block tags, if we are asking for a future block, we return null
                if (params.blockTag != null) {
-                   if (blockNumber > this._emitted.block) { return null; }
+                   if (blockNumber > Number(this._emitted.block)) { return null; }
                }
 
                // Retry on the next block
