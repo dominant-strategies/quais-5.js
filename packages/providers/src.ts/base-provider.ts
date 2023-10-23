@@ -1523,14 +1523,12 @@ export class BaseProvider extends Provider implements EnsProvider {
    // This should be called by any subclass wrapping a TransactionResponse
    _wrapTransaction(tx: Transaction, hash?: string, startBlock?: number): TransactionResponse {
        if (hash != null && hexDataLength(hash) !== 32) { throw new Error("invalid response - sendTransaction"); }
-
        const result = <TransactionResponse>tx;
 
        // Check the hash we expect is the same as the hash the server reported
        if (hash != null && tx.hash !== hash) {
            logger.throwError("Transaction hash mismatch from Provider.sendTransaction.", Logger.errors.UNKNOWN_ERROR, { expectedHash: tx.hash, returnedHash: hash });
        }
-
        result.wait = async (confirms?: number, timeout?: number) => {
            if (confirms == null) { confirms = 1; }
            if (timeout == null) { timeout = 0; }
@@ -1863,7 +1861,6 @@ export class BaseProvider extends Provider implements EnsProvider {
 
        return poll(async () => {
            const result = await this.perform("getTransaction", params);
-
            if (result == null) {
                if (this._emitted["t:" + transactionHash] == null) {
                    return null;

@@ -599,7 +599,8 @@ export class JsonRpcProvider extends BaseProvider {
                 logger.throwError(method + " not implemented", Logger.errors.NOT_IMPLEMENTED, { operation: method });
             }
             try {
-                return yield this.send(args[0], args[1]);
+                const res = yield this.send(args[0], args[1]);
+                return res;
             }
             catch (error) {
                 return checkError(method, error, params);

@@ -38,23 +38,36 @@ export interface TransactionResponse extends Transaction {
 export declare type BlockTag = string | number;
 export interface _Block {
     hash: string;
-    parentHash: string;
-    number: number;
+    parentHash: Array<string>;
+    parentEntropy: Array<String>;
+    number: Array<number>;
     timestamp: number;
     nonce: string;
     difficulty: number;
-    _difficulty: BigNumber;
     gasLimit: BigNumber;
     gasUsed: BigNumber;
     miner: string;
     extraData: string;
     baseFeePerGas?: null | BigNumber;
+    extRollupRoot: string;
+    extTransactionsRoot: string;
     stateRoot: string;
+    location: string;
+    manifestHash: Array<String>;
+    mixHash: string;
     transactionsRoot: string;
     receiptsRoot: string;
+    order: number;
+    parentDeltaS: Array<String>;
+    sha3Uncles: String;
+    size: number;
+    subManifest: Array<String>;
+    totalEntropy: number;
+    uncles: Array<String>;
 }
 export interface Block extends _Block {
     transactions: Array<string>;
+    extTransactions: Array<String>;
 }
 export interface BlockWithTransactions extends _Block {
     transactions: Array<TransactionResponse>;

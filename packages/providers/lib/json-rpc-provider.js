@@ -761,7 +761,7 @@ var JsonRpcProvider = /** @class */ (function (_super) {
     };
     JsonRpcProvider.prototype.perform = function (method, params) {
         return __awaiter(this, void 0, void 0, function () {
-            var tx, feeData, args, error_8;
+            var tx, feeData, args, res, error_8;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
@@ -788,7 +788,9 @@ var JsonRpcProvider = /** @class */ (function (_super) {
                     case 3:
                         _a.trys.push([3, 5, , 6]);
                         return [4 /*yield*/, this.send(args[0], args[1])];
-                    case 4: return [2 /*return*/, _a.sent()];
+                    case 4:
+                        res = _a.sent();
+                        return [2 /*return*/, res];
                     case 5:
                         error_8 = _a.sent();
                         return [2 /*return*/, checkError(method, error_8, params)];

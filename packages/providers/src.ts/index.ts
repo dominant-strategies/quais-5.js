@@ -53,7 +53,6 @@ function getDefaultProvider(network?: Networkish, options?: any): BaseProvider {
 
         // Handle http and ws (and their secure variants)
         const match = network.match(/^(ws|http)s?:/i);
-        console.log('default provider', network, match);
         if (match) {
             switch (match[1].toLowerCase()) {
                 case "http": case "https":
