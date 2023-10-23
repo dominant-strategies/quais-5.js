@@ -6,16 +6,27 @@ import { quais } from "quais";
 
 import { sendTransaction } from "./utils"
 
-import contractData from "./test-contract.json";
+const hre = require("hardhat");
+const network = process.env.CYPRUS1URL || "http://localhost:8610";
+const provider = new quais.providers.JsonRpcProvider(network);
+let ethersContract, walletWithProvider, quaisContract, QuaisContract;
 
-const provider = new quais.providers.InfuraProvider("goerli", "49a0efa3aaee4fd99797bfa94d8ce2f1");
-//const provider = quais.getDefaultProvider("rinkeby");
+async function setUpContract() {
+    ethersContract =  await  hre.ethers.getContractFactory('TestContract');
+    walletWithProvider = new quais.Wallet(hre.network.config.accounts[0], provider);
+    QuaisContract = new quais.ContractFactory(
+        ethersContract.interface.fragments,
+        ethersContract.bytecode,
+        walletWithProvider
+    );
+    quaisContract = await QuaisContract.deploy({ gasLimit: 4000000 }).then(function(contract) {
+        return contract;
+    })
+    return await new quais.Contract(quaisContract.address, quaisContract.interface, provider);
+}
+
 
 const TIMEOUT_PERIOD = 120000;
-
-const contract = (function() {
-    return new quais.Contract(contractData.contractAddress, contractData.interface, provider);
-})();
 
 function equals(name: string, actual: any, expected: any): void {
     if (Array.isArray(expected)) {
@@ -44,6 +55,7 @@ function equals(name: string, actual: any, expected: any): void {
 }
 
 async function TestContractEvents() {
+    let contract = await setUpContract();
 
     function waitForEvent(eventName: string, expected: Array<any>): Promise<void> {
         return new Promise(function(resolve, reject) {
@@ -106,9 +118,10 @@ async function TestContractEvents() {
     return running;
 }
 
-describe('Test Contract Objects', function() {
-
-    it('parses events', function() {
+describe('Test Contract Objects', async function() {
+    let contract = await setUpContract();
+    //Skip due to disabled polling in go-quai
+    it.skip('parses events', function() { 
         this.timeout(TIMEOUT_PERIOD);
         return TestContractEvents();
     });
@@ -198,8 +211,8 @@ describe("Test Contract Transaction Population", function() {
         assert.equal(tx.to, testAddressCheck, "to address matches");
         assert.equal((<any>tx).from, testAddressCheck, "from address matches");
     });
-
-    it("allows ENS 'from' overrides", async function() {
+    //Skip due to no ENS in quai
+    it.skip("allows ENS 'from' overrides", async function() {
         this.timeout(20000);
 
         const tx = await contractConnected.populateTransaction.balanceOf(testAddress, {
