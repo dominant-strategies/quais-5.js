@@ -107,6 +107,41 @@
       "artifacts": [
         "Lib"
       ]
+    },
+    "/Users/denis26/Desktop/QUAI/quais-5.js/packages/tests/contracts/TestContract.sol": {
+      "lastModificationDate": 1698094899792,
+      "contentHash": "e8a05ccdb0d62731cf286f80a9d5659f",
+      "sourceName": "contracts/TestContract.sol",
+      "solcConfig": {
+        "version": "0.8.17",
+        "settings": {
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.8.0"
+      ],
+      "artifacts": [
+        "TestContract"
+      ]
     }
   }
 }
