@@ -34,7 +34,7 @@ function Reporter(runner) {
     function forceOutput() {
         if (((getTime() - lastOutput) / 1000) > MAX_DELAY) {
             var currentSuite = suites[suites.length - 1];
-            log("[ Still running suite - test # " + (currentSuite ? currentSuite._countTotal : "0") + " ]");
+            log("[ Still running suite - test # ".concat((currentSuite ? currentSuite._countTotal : "0"), " ]"));
         }
     }
     var timer = setInterval(forceOutput, 1000);
@@ -83,7 +83,7 @@ function Reporter(runner) {
         if (extras.length) {
             extra = " (" + extras.join(",") + ")  ******** WARNING! ********";
         }
-        log("  Total Tests: " + suite._countPass + "/" + suite._countTotal + " passed " + getDelta(suite._t0) + " " + extra + " \n");
+        log("  Total Tests: ".concat(suite._countPass, "/").concat(suite._countTotal, " passed ").concat(getDelta(suite._t0), " ").concat(extra, " \n"));
         if (suites.length > 0) {
             var currentSuite = suites[suites.length - 1];
             currentSuite._countFail += suite._countFail;
@@ -94,7 +94,7 @@ function Reporter(runner) {
         else {
             clearTimeout(timer);
             var status_1 = (suite._countPass === suite._countTotal) ? 0 : 1;
-            log("# status:" + status_1);
+            log("# status:".concat(status_1));
             // Force quit after 5s
             setTimeout(function () {
                 process.exit(status_1);

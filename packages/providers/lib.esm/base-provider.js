@@ -1622,7 +1622,7 @@ export class BaseProvider extends Provider {
                     }
                     // For block tags, if we are asking for a future block, we return null
                     if (params.blockTag != null) {
-                        if (blockNumber > this._emitted.block) {
+                        if (blockNumber > Number(this._emitted.block)) {
                             return null;
                         }
                     }

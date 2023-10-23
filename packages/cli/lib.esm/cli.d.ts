@@ -59,7 +59,7 @@ export declare abstract class Plugin {
     throwUsageError(message?: string): never;
     throwError(message: string): never;
 }
-export declare type Options = {
+export type Options = {
     account?: boolean;
     provider?: boolean;
     transaction?: boolean;

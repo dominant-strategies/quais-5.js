@@ -14,7 +14,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     function verb(n) { return function (v) { return step([n, v]); }; }
     function step(op) {
         if (f) throw new TypeError("Generator is already executing.");
-        while (_) try {
+        while (g && (g = 0, op[0] && (_ = 0)), _) try {
             if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
             if (y = 0, t) op = [op[0] & 2, t.value];
             switch (op[0]) {
@@ -42,9 +42,36 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var assert_1 = __importDefault(require("assert"));
 var quais_1 = require("quais");
 var utils_1 = require("./utils");
+<<<<<<< HEAD
 var test_contract_json_1 = __importDefault(require("./test-contract.json"));
 var provider = new quais_1.quais.providers.InfuraProvider("goerli", "49a0efa3aaee4fd99797bfa94d8ce2f1");
 //const provider = quais.getDefaultProvider("rinkeby");
+=======
+var hre = require("hardhat");
+var network = process.env.CYPRUS1URL || "http://localhost:8610";
+var provider = new quais_1.quais.providers.JsonRpcProvider(network);
+var ethersContract, walletWithProvider, quaisContract, QuaisContract;
+function setUpContract() {
+    return __awaiter(this, void 0, void 0, function () {
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0: return [4 /*yield*/, hre.ethers.getContractFactory('TestContract')];
+                case 1:
+                    ethersContract = _a.sent();
+                    walletWithProvider = new quais_1.quais.Wallet(hre.network.config.accounts[0], provider);
+                    QuaisContract = new quais_1.quais.ContractFactory(ethersContract.interface.fragments, ethersContract.bytecode, walletWithProvider);
+                    return [4 /*yield*/, QuaisContract.deploy({ gasLimit: 4000000 }).then(function (contract) {
+                            return contract;
+                        })];
+                case 2:
+                    quaisContract = _a.sent();
+                    return [4 /*yield*/, new quais_1.quais.Contract(quaisContract.address, quaisContract.interface, provider)];
+                case 3: return [2 /*return*/, _a.sent()];
+            }
+        });
+    });
+}
+>>>>>>> 42abdc1 (refactor test-contract-interface.ts to use runtime deployed contract)
 var TIMEOUT_PERIOD = 120000;
 var contract = (function () {
     return new quais_1.quais.Contract(test_contract_json_1.default.contractAddress, test_contract_json_1.default.interface, provider);

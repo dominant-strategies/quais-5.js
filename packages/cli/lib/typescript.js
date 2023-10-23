@@ -30,7 +30,7 @@ function getType(param, flexible) {
         return "Array<" + getType(param.arrayChildren) + ">";
     }
     if (param.type === "tuple") {
-        var struct = param.components.map(function (p, i) { return (p.name || "p_" + i) + ": " + getType(p, flexible); });
+        var struct = param.components.map(function (p, i) { return "".concat(p.name || "p_" + i, ": ").concat(getType(p, flexible)); });
         return "{ " + struct.join(", ") + " }";
     }
     throw new Error("unknown type");
@@ -45,12 +45,12 @@ function generate(contract, bytecode) {
     lines.push("        super(addressOrName, new.target.ABI(), providerOrSigner)");
     lines.push("    }");
     lines.push("");
-    lines.push("    connect(providerOrSigner: quais.Signer | quais.providers.Provider): " + contract.name + " {");
-    lines.push("        return new (<{ new(...args: any[]): " + contract.name + " }>(this.constructor))(this.address, providerOrSigner)");
+    lines.push("    connect(providerOrSigner: quais.Signer | quais.providers.Provider): ".concat(contract.name, " {"));
+    lines.push("        return new (<{ new(...args: any[]): ".concat(contract.name, " }>(this.constructor))(this.address, providerOrSigner)"));
     lines.push("    }");
     lines.push("");
-    lines.push("    attach(addressOrName: string): " + contract.name + " {");
-    lines.push("        return new (<{ new(...args: any[]): " + contract.name + " }>(this.constructor))(addressOrName, this.signer || this.provider)");
+    lines.push("    attach(addressOrName: string): ".concat(contract.name, " {"));
+    lines.push("        return new (<{ new(...args: any[]): ".concat(contract.name, " }>(this.constructor))(addressOrName, this.signer || this.provider)"));
     lines.push("    }");
     var _loop_1 = function (signature) {
         if (signature.indexOf('(') === -1) {
@@ -96,8 +96,8 @@ function generate(contract, bytecode) {
         inputs.push("_overrides?: " + overrides);
         passed.push("_overrides");
         lines.push("");
-        lines.push("    " + fragment.name + "(" + inputs.join(', ') + "): " + output_1 + " {");
-        lines.push("        return this.functions[\"" + signature + "\"](" + passed.join(", ") + ");");
+        lines.push("    ".concat(fragment.name, "(").concat(inputs.join(', '), "): ").concat(output_1, " {"));
+        lines.push("        return this.functions[\"".concat(signature, "\"](").concat(passed.join(", "), ");"));
         lines.push("    }");
     };
     for (var signature in contract.interface.functions) {
@@ -120,7 +120,7 @@ function generate(contract, bytecode) {
     lines.push("    static ABI(): Array<string> {");
     lines.push("        return [");
     contract.interface.fragments.forEach(function (fragment) {
-        lines.push("            \"" + fragment.format(quais_1.quais.utils.FormatTypes.full) + "\",");
+        lines.push("            \"".concat(fragment.format(quais_1.quais.utils.FormatTypes.full), "\","));
     });
     lines.push("        ];");
     lines.push("    }");
