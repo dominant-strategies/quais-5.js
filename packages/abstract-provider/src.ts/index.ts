@@ -67,13 +67,12 @@ export type BlockTag = string | number;
 
 export interface _Block {
     hash: string;
-    parentHash: string;
-    number: number;
-
+    parentHash: Array<string>;
+    parentEntropy: Array<string>;
+    number: Array<number>;
     timestamp: number;
     nonce: string;
     difficulty: number;
-    _difficulty: BigNumber;
 
     gasLimit: BigNumber;
     gasUsed: BigNumber;
@@ -82,14 +81,27 @@ export interface _Block {
     extraData: string;
 
     baseFeePerGas?: null | BigNumber;
-
+    extRollupRoot: string;
+    extTransactionsRoot: string;
     stateRoot: string;
+    location: string;
+    manifestHash: Array<string>;
+    mixHash: string;
     transactionsRoot: string;
     receiptsRoot: string;
+    order: number;
+    parentDeltaS: Array<string>;
+    sha3Uncles: string;
+    size: number;
+    subManifest: Array<string>;
+    totalEntropy: number;
+    uncles: Array<string>;
+
 }
 
 export interface Block extends _Block {
     transactions: Array<string>;
+    extTransactions: Array<string>
 }
 
 export interface BlockWithTransactions extends _Block {
