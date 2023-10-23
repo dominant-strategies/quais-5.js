@@ -1,6 +1,6 @@
 import { Networkish } from "@quais/networks";
 import { JsonRpcProvider } from "./json-rpc-provider";
-export declare type ExternalProvider = {
+export type ExternalProvider = {
     isMetaMask?: boolean;
     isStatus?: boolean;
     host?: string;
@@ -18,7 +18,7 @@ export declare type ExternalProvider = {
         params?: Array<any>;
     }) => Promise<any>;
 };
-export declare type JsonRpcFetchFunc = (method: string, params?: Array<any>) => Promise<any>;
+export type JsonRpcFetchFunc = (method: string, params?: Array<any>) => Promise<any>;
 export declare class Web3Provider extends JsonRpcProvider {
     readonly provider: ExternalProvider;
     readonly jsonRpcFetchFunc: JsonRpcFetchFunc;

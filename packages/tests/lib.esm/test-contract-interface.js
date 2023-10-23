@@ -11,6 +11,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 import assert from "assert";
 import { quais } from "quais";
 import { loadTests } from "@quais/testcases";
+const hre = require("hardhat");
 const bnify = quais.BigNumber.from;
 function equals(actual, expected) {
     // Array (treat recursively)
@@ -226,11 +227,11 @@ describe('Test Interface Signatures', function () {
     it('parses transaction function', function () {
         let iface = new quais.utils.Interface(["function transfer(address from, uint amount)"]);
         // Transaction: 0x820cc57bc77be44d8f4f024a18e18f64a8b6e62a82a3d7897db5970dbe181ba1
-        let rawTx = "0xf8aa028502540be4008316e36094334eec1482109bd802d9e72a447848de3bcc106380b844a9059cbb000000000000000000000000851b9167b7cbf772d38efaf89705b35022880a070000000000000000000000000000000000000000000000000de0b6b3a764000026a03200bf26e5f10f7eda59c0aad9adc2334dda79e785b9b004342524d97a66fca9a0450b07a4dc450bb472e08f8370350fa365fcef6db1a95309ae4c06c9d0748092";
+        let rawTx = "0x00f8ac8002808477359400833d0900940cca512ae8d1c089d696ed4e18cb3f1ed4c2c0af80b844a9059cbb000000000000000000000000193399fa97ae9762a186e921582cedb0987d9470000000000000000000000000000000000000000000000000016345785d8a0000c080a0ec79e316fe6b8eeb46e73dd76b1df0472a0e070533e6cc31f7b313015db4d071a015d76a0216dffa94294ff6aa2c0e1cfa7d1512591ad9a61150e06a3fbd6622e7";
         let tx = quais.utils.parseTransaction(rawTx);
         let descr = iface.parseTransaction(tx);
-        assert.equal(descr.args[0], '0x851b9167B7cbf772D38eFaf89705b35022880A07', 'parsed tx - args[0]');
-        assert.equal(descr.args[1].toString(), '1000000000000000000', 'parsed tx - args[1]');
+        assert.equal(descr.args[0], '0x193399fA97aE9762A186E921582cedb0987D9470', 'parsed tx - args[0]');
+        assert.equal(descr.args[1].toString(), '100000000000000000', 'parsed tx - args[1]');
         assert.equal(descr.name, 'transfer', 'parsed tx - name');
         assert.equal(descr.signature, 'transfer(address,uint256)', 'parsed tx - signature');
         assert.equal(descr.sighash, '0xa9059cbb', 'parsed tx - sighash');
@@ -516,10 +517,27 @@ describe("Test ParamType Parser", function () {
     });
 });
 describe('Test EIP-838 Error Codes', function () {
-    const addr = "0x9FC52a97e59aeea064D9c24a383B70e8475b3e0B";
+    const network = process.env.CYPRUS1URL || "http://localhost:8610";
+    let provider;
+    //let quaisContract;
+    let addr;
+    let testAddr;
+    this.timeout(20000);
+    before(() => __awaiter(this, void 0, void 0, function* () {
+        const ethersContract = yield hre.ethers.getContractFactory('eip838errors');
+        provider = yield new quais.providers.JsonRpcProvider(network);
+        const walletWithProvider = new quais.Wallet(hre.network.config.accounts[0], provider);
+        testAddr = walletWithProvider.address;
+        const QuaisContract = new quais.ContractFactory(ethersContract.interface.fragments, ethersContract.bytecode, walletWithProvider);
+        const quaisContract = yield QuaisContract.deploy({ gasLimit: 4000000 });
+        //await quaisContract.deployed();
+        addr = quaisContract.address;
+        console.log('Deployed contract at: ', addr);
+        yield new Promise(resolve => setTimeout(resolve, 10000));
+    }));
     it("testError1", function () {
         return __awaiter(this, void 0, void 0, function* () {
-            const provider = new quais.providers.InfuraProvider("goerli", "49a0efa3aaee4fd99797bfa94d8ce2f1");
+            console.log('Contract address: \n', addr);
             const contract = new quais.Contract(addr, [
                 "function testError1(bool pass, address addr, uint256 value) pure returns (bool)",
                 "function testError2(bool pass, bytes data) pure returns (bool)",
@@ -527,7 +545,7 @@ describe('Test EIP-838 Error Codes', function () {
                 "error TestError2(bytes data)",
             ], provider);
             try {
-                const result = yield contract.testError1(false, addr, 42);
+                const result = yield contract.testError1(false, testAddr, 42);
                 console.log(result);
                 assert.ok(false, "did not throw ");
             }
@@ -535,8 +553,8 @@ describe('Test EIP-838 Error Codes', function () {
                 assert.equal(error.code, quais.utils.Logger.errors.CALL_EXCEPTION, "error.code");
                 assert.equal(error.errorSignature, "TestError1(address,uint256)", "error.errorSignature");
                 assert.equal(error.errorName, "TestError1", "error.errorName");
-                assert.equal(error.errorArgs[0], addr, "error.errorArgs[0]");
-                assert.equal(error.errorArgs.addr, addr, "error.errorArgs.addr");
+                assert.equal(error.errorArgs[0], testAddr, "error.errorArgs[0]");
+                assert.equal(error.errorArgs.addr, testAddr, "error.errorArgs.addr");
                 assert.equal(error.errorArgs[1], 42, "error.errorArgs[1]");
                 assert.equal(error.errorArgs.value, 42, "error.errorArgs.value");
             }

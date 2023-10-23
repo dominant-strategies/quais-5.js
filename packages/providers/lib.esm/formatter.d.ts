@@ -1,11 +1,11 @@
 import { Block, TransactionReceipt, TransactionResponse } from "@quais/abstract-provider";
 import { BigNumber } from "@quais/bignumber";
 import { AccessList } from "@quais/transactions";
-export declare type FormatFunc = (value: any) => any;
-export declare type FormatFuncs = {
+export type FormatFunc = (value: any) => any;
+export type FormatFuncs = {
     [key: string]: FormatFunc;
 };
-export declare type Formats = {
+export type Formats = {
     transaction: FormatFuncs;
     transactionRequest: FormatFuncs;
     receipt: FormatFuncs;
@@ -21,19 +21,19 @@ export declare class Formatter {
     getDefaultFormats(): Formats;
     accessList(accessList: Array<any>): AccessList;
     number(number: any): number;
-    type(number: any): number;
     bigNumber(value: any): BigNumber;
     bigNumberArray(value: any): BigNumber[];
     boolean(value: any): boolean;
     hex(value: any, strict?: boolean): string;
     data(value: any, strict?: boolean): string;
     address(value: any): string;
-    etx(value: any): any;
+    etxs(value: any): any;
     callAddress(value: any): string;
     contractAddress(value: any): string;
     blockTag(blockTag: any): string;
     hash(value: any, strict?: boolean): string;
     hashArray(value: any, strict?: boolean): string[];
+    hashArrayAnyLength(value: any, strict?: boolean): string[];
     difficulty(value: any): number;
     uint256(value: any): string;
     _block(value: any, format: any, context?: number): Block;

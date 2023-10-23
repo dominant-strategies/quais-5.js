@@ -14,7 +14,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     function verb(n) { return function (v) { return step([n, v]); }; }
     function step(op) {
         if (f) throw new TypeError("Generator is already executing.");
-        while (_) try {
+        while (g && (g = 0, op[0] && (_ = 0)), _) try {
             if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
             if (y = 0, t) op = [op[0] & 2, t.value];
             switch (op[0]) {
@@ -42,6 +42,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var assert_1 = __importDefault(require("assert"));
 var quais_1 = require("quais");
 var testcases_1 = require("@quais/testcases");
+var hre = require("hardhat");
 var bnify = quais_1.quais.BigNumber.from;
 function equals(actual, expected) {
     // Array (treat recursively)
@@ -257,11 +258,11 @@ describe('Test Interface Signatures', function () {
     it('parses transaction function', function () {
         var iface = new quais_1.quais.utils.Interface(["function transfer(address from, uint amount)"]);
         // Transaction: 0x820cc57bc77be44d8f4f024a18e18f64a8b6e62a82a3d7897db5970dbe181ba1
-        var rawTx = "0xf8aa028502540be4008316e36094334eec1482109bd802d9e72a447848de3bcc106380b844a9059cbb000000000000000000000000851b9167b7cbf772d38efaf89705b35022880a070000000000000000000000000000000000000000000000000de0b6b3a764000026a03200bf26e5f10f7eda59c0aad9adc2334dda79e785b9b004342524d97a66fca9a0450b07a4dc450bb472e08f8370350fa365fcef6db1a95309ae4c06c9d0748092";
+        var rawTx = "0x00f8ac8002808477359400833d0900940cca512ae8d1c089d696ed4e18cb3f1ed4c2c0af80b844a9059cbb000000000000000000000000193399fa97ae9762a186e921582cedb0987d9470000000000000000000000000000000000000000000000000016345785d8a0000c080a0ec79e316fe6b8eeb46e73dd76b1df0472a0e070533e6cc31f7b313015db4d071a015d76a0216dffa94294ff6aa2c0e1cfa7d1512591ad9a61150e06a3fbd6622e7";
         var tx = quais_1.quais.utils.parseTransaction(rawTx);
         var descr = iface.parseTransaction(tx);
-        assert_1.default.equal(descr.args[0], '0x851b9167B7cbf772D38eFaf89705b35022880A07', 'parsed tx - args[0]');
-        assert_1.default.equal(descr.args[1].toString(), '1000000000000000000', 'parsed tx - args[1]');
+        assert_1.default.equal(descr.args[0], '0x193399fA97aE9762A186E921582cedb0987D9470', 'parsed tx - args[0]');
+        assert_1.default.equal(descr.args[1].toString(), '100000000000000000', 'parsed tx - args[1]');
         assert_1.default.equal(descr.name, 'transfer', 'parsed tx - name');
         assert_1.default.equal(descr.signature, 'transfer(address,uint256)', 'parsed tx - signature');
         assert_1.default.equal(descr.sighash, '0xa9059cbb', 'parsed tx - sighash');
@@ -539,7 +540,7 @@ describe("Test ParamType Parser", function () {
         { type: "tuple(address a, string[] b) memory foo", format: "tuple(address a, string[] b) foo" },
     ];
     Tests.forEach(function (test) {
-        it("allows correct modifiers " + JSON.stringify(test.type), function () {
+        it("allows correct modifiers ".concat(JSON.stringify(test.type)), function () {
             var paramType = quais_1.quais.utils.ParamType.from(test.type);
             //console.log(test, paramType.format("full"));
             assert_1.default.equal(paramType.format("full"), test.format);
@@ -547,14 +548,46 @@ describe("Test ParamType Parser", function () {
     });
 });
 describe('Test EIP-838 Error Codes', function () {
-    var addr = "0x9FC52a97e59aeea064D9c24a383B70e8475b3e0B";
+    var _this = this;
+    var network = process.env.CYPRUS1URL || "http://localhost:8610";
+    var provider;
+    //let quaisContract;
+    var addr;
+    var testAddr;
+    this.timeout(20000);
+    before(function () { return __awaiter(_this, void 0, void 0, function () {
+        var ethersContract, walletWithProvider, QuaisContract, quaisContract;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0: return [4 /*yield*/, hre.ethers.getContractFactory('eip838errors')];
+                case 1:
+                    ethersContract = _a.sent();
+                    return [4 /*yield*/, new quais_1.quais.providers.JsonRpcProvider(network)];
+                case 2:
+                    provider = _a.sent();
+                    walletWithProvider = new quais_1.quais.Wallet(hre.network.config.accounts[0], provider);
+                    testAddr = walletWithProvider.address;
+                    QuaisContract = new quais_1.quais.ContractFactory(ethersContract.interface.fragments, ethersContract.bytecode, walletWithProvider);
+                    return [4 /*yield*/, QuaisContract.deploy({ gasLimit: 4000000 })];
+                case 3:
+                    quaisContract = _a.sent();
+                    //await quaisContract.deployed();
+                    addr = quaisContract.address;
+                    console.log('Deployed contract at: ', addr);
+                    return [4 /*yield*/, new Promise(function (resolve) { return setTimeout(resolve, 10000); })];
+                case 4:
+                    _a.sent();
+                    return [2 /*return*/];
+            }
+        });
+    }); });
     it("testError1", function () {
         return __awaiter(this, void 0, void 0, function () {
-            var provider, contract, result, error_1;
+            var contract, result, error_1;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
-                        provider = new quais_1.quais.providers.InfuraProvider("goerli", "49a0efa3aaee4fd99797bfa94d8ce2f1");
+                        console.log('Contract address: \n', addr);
                         contract = new quais_1.quais.Contract(addr, [
                             "function testError1(bool pass, address addr, uint256 value) pure returns (bool)",
                             "function testError2(bool pass, bytes data) pure returns (bool)",
@@ -564,7 +597,7 @@ describe('Test EIP-838 Error Codes', function () {
                         _a.label = 1;
                     case 1:
                         _a.trys.push([1, 3, , 4]);
-                        return [4 /*yield*/, contract.testError1(false, addr, 42)];
+                        return [4 /*yield*/, contract.testError1(false, testAddr, 42)];
                     case 2:
                         result = _a.sent();
                         console.log(result);
@@ -575,8 +608,8 @@ describe('Test EIP-838 Error Codes', function () {
                         assert_1.default.equal(error_1.code, quais_1.quais.utils.Logger.errors.CALL_EXCEPTION, "error.code");
                         assert_1.default.equal(error_1.errorSignature, "TestError1(address,uint256)", "error.errorSignature");
                         assert_1.default.equal(error_1.errorName, "TestError1", "error.errorName");
-                        assert_1.default.equal(error_1.errorArgs[0], addr, "error.errorArgs[0]");
-                        assert_1.default.equal(error_1.errorArgs.addr, addr, "error.errorArgs.addr");
+                        assert_1.default.equal(error_1.errorArgs[0], testAddr, "error.errorArgs[0]");
+                        assert_1.default.equal(error_1.errorArgs.addr, testAddr, "error.errorArgs.addr");
                         assert_1.default.equal(error_1.errorArgs[1], 42, "error.errorArgs[1]");
                         assert_1.default.equal(error_1.errorArgs.value, 42, "error.errorArgs.value");
                         return [3 /*break*/, 4];

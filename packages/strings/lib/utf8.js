@@ -13,7 +13,7 @@ var UnicodeNormalizationForm;
     UnicodeNormalizationForm["NFD"] = "NFD";
     UnicodeNormalizationForm["NFKC"] = "NFKC";
     UnicodeNormalizationForm["NFKD"] = "NFKD";
-})(UnicodeNormalizationForm = exports.UnicodeNormalizationForm || (exports.UnicodeNormalizationForm = {}));
+})(UnicodeNormalizationForm || (exports.UnicodeNormalizationForm = UnicodeNormalizationForm = {}));
 ;
 var Utf8ErrorReason;
 (function (Utf8ErrorReason) {
@@ -41,10 +41,10 @@ var Utf8ErrorReason;
     // - offset       = start of this codepoint
     // - badCodepoint = the computed codepoint; already bounds checked
     Utf8ErrorReason["OVERLONG"] = "overlong representation";
-})(Utf8ErrorReason = exports.Utf8ErrorReason || (exports.Utf8ErrorReason = {}));
+})(Utf8ErrorReason || (exports.Utf8ErrorReason = Utf8ErrorReason = {}));
 ;
 function errorFunc(reason, offset, bytes, output, badCodepoint) {
-    return logger.throwArgumentError("invalid codepoint at offset " + offset + "; " + reason, "bytes", bytes);
+    return logger.throwArgumentError("invalid codepoint at offset ".concat(offset, "; ").concat(reason), "bytes", bytes);
 }
 function ignoreFunc(reason, offset, bytes, output, badCodepoint) {
     // If there is an invalid prefix (including stray continuation), skip any additional continuation bytes

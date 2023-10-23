@@ -29,7 +29,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     function verb(n) { return function (v) { return step([n, v]); }; }
     function step(op) {
         if (f) throw new TypeError("Generator is already executing.");
-        while (_) try {
+        while (g && (g = 0, op[0] && (_ = 0)), _) try {
             if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
             if (y = 0, t) op = [op[0] & 2, t.value];
             switch (op[0]) {
@@ -189,7 +189,7 @@ var Node = /** @class */ (function () {
         }
         logger.checkAbstract(_newTarget, Node);
         quais_1.quais.utils.defineReadOnly(this, "location", Object.freeze(location));
-        quais_1.quais.utils.defineReadOnly(this, "tag", "node-" + nextTag++ + "-" + this.constructor.name);
+        quais_1.quais.utils.defineReadOnly(this, "tag", "node-".concat(nextTag++, "-").concat(this.constructor.name));
         for (var key in options) {
             quais_1.quais.utils.defineReadOnly(this, key, options[key]);
         }
@@ -242,10 +242,8 @@ var ValueNode = /** @class */ (function (_super) {
     __extends(ValueNode, _super);
     function ValueNode(guard, location, options) {
         var _newTarget = this.constructor;
-        var _this = this;
         logger.checkAbstract(_newTarget, ValueNode);
-        _this = _super.call(this, guard, location, options) || this;
-        return _this;
+        return _super.call(this, guard, location, options) || this;
     }
     ValueNode.prototype.getPushLiteral = function (value) {
         // Convert value into a hexstring
@@ -256,7 +254,7 @@ var ValueNode = /** @class */ (function (_super) {
         // Make sure it will fit into a push
         var length = quais_1.quais.utils.hexDataLength(hex);
         if (length === 0 || length > 32) {
-            throwError("literal out of range: " + hex, this.location);
+            throwError("literal out of range: ".concat(hex), this.location);
         }
         return hexConcat([opcodes_1.Opcode.from("PUSH" + String(length)), hex]);
     };
@@ -463,12 +461,10 @@ var LabelledNode = /** @class */ (function (_super) {
     __extends(LabelledNode, _super);
     function LabelledNode(guard, location, name, values) {
         var _newTarget = this.constructor;
-        var _this = this;
         logger.checkAbstract(_newTarget, LabelledNode);
         values = quais_1.quais.utils.shallowCopy(values || {});
         values.name = name;
-        _this = _super.call(this, guard, location, values) || this;
-        return _this;
+        return _super.call(this, guard, location, values) || this;
     }
     return LabelledNode;
 }(Node));
@@ -707,7 +703,7 @@ function disassemble(bytecode) {
     while (i < bytes.length) {
         var opcode = opcodes_1.Opcode.from(bytes[i]);
         if (!opcode) {
-            opcode = new opcodes_1.Opcode("unknown (" + quais_1.quais.utils.hexlify(bytes[i]) + ")", bytes[i], 0, 0);
+            opcode = new opcodes_1.Opcode("unknown (".concat(quais_1.quais.utils.hexlify(bytes[i]), ")"), bytes[i], 0, 0);
         }
         else if (oob && opcode.mnemonic === "JUMPDEST") {
             opcode = new opcodes_1.Opcode("JUMPDEST (invalid; OOB!!)", bytes[i], 0, 0);
@@ -776,13 +772,13 @@ function formatBytecode(bytecode) {
         var push = opcode.isPush();
         if (push) {
             if (op.pushValue) {
-                operation = op.pushValue + (repeat(" ", 67 - op.pushValue.length) + "; #" + push + " ");
+                operation = op.pushValue + "".concat(repeat(" ", 67 - op.pushValue.length), "; #").concat(push, " ");
             }
             else {
-                operation += repeat(" ", 67 - operation.length) + "; OOB!! ";
+                operation += "".concat(repeat(" ", 67 - operation.length), "; OOB!! ");
             }
         }
-        lines.push(offset.substring(2) + ": " + operation);
+        lines.push("".concat(offset.substring(2), ": ").concat(operation));
     });
     return lines.join("\n");
 }
@@ -868,7 +864,7 @@ var Assembler = /** @class */ (function () {
             // Label offset (e.g. "@foo:"); accessible only within its direct scope
             //const scope = this.getAncestor(source, Scope);
             if (targetScope !== sourceScope) {
-                throwError("cannot access " + target.name + " from " + source.tag, source.location);
+                throwError("cannot access ".concat(target.name, " from ").concat(source.tag), source.location);
             }
             // Return the offset relative to its scope
             return this.nodes[target.tag].offset - this.nodes[targetScope.tag].offset;
@@ -893,7 +889,7 @@ var Assembler = /** @class */ (function () {
         // Not safe to access the offset; this will fault if anything tries.
         if (!safeOffset) {
             Object.defineProperty(bytes, "offset", {
-                get: function () { throwError("cannot access " + target.name + ".offset from " + source.tag, this.location); }
+                get: function () { throwError("cannot access ".concat(target.name, ".offset from ").concat(source.tag), this.location); }
             });
             quais_1.quais.utils.defineReadOnly(bytes, "_freeze", function () { });
         }
@@ -920,7 +916,7 @@ var SemanticErrorSeverity;
 (function (SemanticErrorSeverity) {
     SemanticErrorSeverity["error"] = "error";
     SemanticErrorSeverity["warning"] = "warning";
-})(SemanticErrorSeverity = exports.SemanticErrorSeverity || (exports.SemanticErrorSeverity = {}));
+})(SemanticErrorSeverity || (exports.SemanticErrorSeverity = SemanticErrorSeverity = {}));
 ;
 // This Assembler is designed to only check for errors and warnings
 // Warnings
@@ -945,7 +941,7 @@ var SemanticChecker = /** @class */ (function (_super) {
                 if (node.instructional) {
                     if (opcode.delta) {
                         errors.push({
-                            message: opcode.mnemonic + " used as instructional",
+                            message: "".concat(opcode.mnemonic, " used as instructional"),
                             severity: SemanticErrorSeverity.warning,
                             node: node
                         });
@@ -963,7 +959,7 @@ var SemanticChecker = /** @class */ (function (_super) {
                     }
                     else if (node.operands.length !== opcode.delta) {
                         errors.push({
-                            message: opcode.mnemonic + " expects " + opcode.delta + " operands",
+                            message: "".concat(opcode.mnemonic, " expects ").concat(opcode.delta, " operands"),
                             severity: SemanticErrorSeverity.error,
                             node: node
                         });
@@ -983,7 +979,7 @@ var SemanticChecker = /** @class */ (function (_super) {
                     // If an opcode does not push anything on the stack, it
                     // cannot be used as an operand
                     errors.push({
-                        message: node.opcode.mnemonic + " cannot be an operand",
+                        message: "".concat(node.opcode.mnemonic, " cannot be an operand"),
                         severity: SemanticErrorSeverity.error,
                         node: node
                     });
@@ -1019,7 +1015,7 @@ var SemanticChecker = /** @class */ (function (_super) {
                         }
                         else if (index !== lastIndex + 1) {
                             errors.push({
-                                message: "out-of-order stack placeholder " + popNode.placeholder + "; expected $$" + (lastIndex + 1),
+                                message: "out-of-order stack placeholder ".concat(popNode.placeholder, "; expected $$").concat(lastIndex + 1),
                                 severity: SemanticErrorSeverity.error,
                                 node: popNode
                             });
@@ -1043,7 +1039,7 @@ var SemanticChecker = /** @class */ (function (_super) {
                     var pops = ordered_1.filter(function (n) { return (n instanceof PopNode); });
                     if (pops.length) {
                         errors.push({
-                            message: "stack placeholder " + (pops[0]).placeholder + " must be stack adjacent",
+                            message: "stack placeholder ".concat((pops[0]).placeholder, " must be stack adjacent"),
                             severity: SemanticErrorSeverity.error,
                             node: pops[0]
                         });
@@ -1231,10 +1227,10 @@ var CodeGenerationAssembler = /** @class */ (function (_super) {
                         }
                         target = this.getTarget(label);
                         if (!target) {
-                            logger.throwArgumentError("unknown labelled target: " + label, "label", label);
+                            logger.throwArgumentError("unknown labelled target: ".concat(label), "label", label);
                         }
                         else if (!(target instanceof ScopeNode || target instanceof DataNode)) {
-                            logger.throwArgumentError("cannot assemble a bodyless label: " + label, "label", label);
+                            logger.throwArgumentError("cannot assemble a bodyless label: ".concat(label), "label", label);
                         }
                         // Continue re-evaluating the bytecode until a stable set of
                         // offsets, length and values are reached.
@@ -1266,7 +1262,7 @@ var CodeGenerationAssembler = /** @class */ (function (_super) {
                     case 4:
                         i++;
                         return [3 /*break*/, 2];
-                    case 5: return [2 /*return*/, logger.throwError("unable to assemble; " + this.retry + " attempts failed to generate stable bytecode", quais_1.quais.utils.Logger.errors.UNKNOWN_ERROR, {})];
+                    case 5: return [2 /*return*/, logger.throwError("unable to assemble; ".concat(this.retry, " attempts failed to generate stable bytecode"), quais_1.quais.utils.Logger.errors.UNKNOWN_ERROR, {})];
                 }
             });
         });

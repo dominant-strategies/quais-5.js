@@ -50,7 +50,7 @@ function checkModifier(type, name) {
 function parseParamType(param, allowIndexed) {
     var originalParam = param;
     function throwError(i) {
-        logger.throwArgumentError("unexpected character at position " + i, "param", param);
+        logger.throwArgumentError("unexpected character at position ".concat(i), "param", param);
     }
     param = param.replace(/\s/g, " ");
     function newNode(parent) {
@@ -779,7 +779,7 @@ exports.FunctionFragment = FunctionFragment;
 function checkForbidden(fragment) {
     var sig = fragment.format();
     if (sig === "Error(string)" || sig === "Panic(uint256)") {
-        logger.throwArgumentError("cannot specify user defined " + sig + " error", "fragment", fragment);
+        logger.throwArgumentError("cannot specify user defined ".concat(sig, " error"), "fragment", fragment);
     }
     return fragment;
 }
@@ -863,7 +863,7 @@ function verifyType(type) {
 var regexIdentifier = new RegExp("^[a-zA-Z$_][a-zA-Z0-9$_]*$");
 function verifyIdentifier(value) {
     if (!value || !value.match(regexIdentifier)) {
-        logger.throwArgumentError("invalid identifier \"" + value + "\"", "value", value);
+        logger.throwArgumentError("invalid identifier \"".concat(value, "\""), "value", value);
     }
     return value;
 }
