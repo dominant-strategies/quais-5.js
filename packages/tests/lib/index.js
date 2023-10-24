@@ -5,6 +5,7 @@ require("./test-account");
 require("./test-contract");
 require("./test-contract-interface");
 require("./test-hdnode");
+require("./test-providers-new");
 require("./test-providers");
 require("./test-utils");
 require("./test-wallet");

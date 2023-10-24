@@ -142,6 +142,41 @@
       "artifacts": [
         "TestContract"
       ]
+    },
+    "/Users/denis26/Desktop/QUAI/quais-5.js/packages/tests/contracts/QRC20.sol": {
+      "lastModificationDate": 1698259810606,
+      "contentHash": "32f4cfe3bae522d8355094f5bbb6beec",
+      "sourceName": "contracts/QRC20.sol",
+      "solcConfig": {
+        "version": "0.8.17",
+        "settings": {
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.8.0"
+      ],
+      "artifacts": [
+        "QRC20"
+      ]
     }
   }
 }

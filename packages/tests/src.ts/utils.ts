@@ -62,7 +62,7 @@ function equals(a: any, b: any): boolean {
 }
 
 function getWallet(): quais.Wallet {
-    const provider = new quais.providers.InfuraProvider("goerli", "49a0efa3aaee4fd99797bfa94d8ce2f1");
+    const provider = new quais.providers.JsonRpcProvider(process.env.CYPRUS1URL);
 
     let key: null | string = null;
 
@@ -79,7 +79,7 @@ function getWallet(): quais.Wallet {
     // node.js
     if (key == null) {
         try {
-            key = process.env.FAUCET_PRIVATEKEY;
+            key = process.env.FAUCET_PRIVATEKEY || process.env.CYPRUS1PK;
             if (typeof(key) !== "string") { key = null; }
         } catch (error) { }
     }
