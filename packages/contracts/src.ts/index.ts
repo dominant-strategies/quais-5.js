@@ -52,6 +52,7 @@ import { AccessList, accessListify, AccessListish } from "@quais/transactions";
 import { Logger } from "@quais/logger";
 import { version } from "./_version";
 import { randomBytes } from "crypto";
+import { start } from "repl";
 
 const logger = new Logger(version);
 
@@ -1674,7 +1675,7 @@ export class ContractFactory {
     return new Contract(address, contractInterface, signer);
   }
 
-  async grindContractAddress(
+  async grindContractAddressOld(
     tx: TransactionRequest
   ): Promise<TransactionRequest> {
     if (tx.nonce == null) {
@@ -1701,4 +1702,102 @@ export class ContractFactory {
     );
     return tx;
   }
+
+  async grindContractAddress(
+    tx: TransactionRequest
+  ): Promise<TransactionRequest> {
+    if (tx.nonce == null) {
+      tx.nonce = await this.signer.getTransactionCount("pending");
+    }
+    const sender = await this.signer.getAddress();
+    const toShard = getShardFromAddress(sender);
+    var i = 0;
+    var startingData = tx.data;
+    let index: number;
+    const contractNonce: ArrayLike<number> = new Uint8Array([49, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
+    const contractNonceStr = "3100000000000000000000000000000000000000000000000000000000000000"
+    let indexFound: boolean = false; 
+
+    if (typeof startingData === "string") {
+
+      index = startingData.length - 1;
+
+      for(let i = 0; i < startingData.length; i++) {
+        let j = i
+        for(let x = 0; x < contractNonceStr.length; x++) {
+          if(startingData.charAt(j) === contractNonceStr.charAt(x) && x === contractNonceStr.length - 1) {
+            index = j;
+            indexFound = true;
+            break;
+          } else if(startingData.charAt(j) !== contractNonceStr.charAt(x)) {
+            break;
+          } else if(startingData.charAt(j) === contractNonceStr.charAt(x)) {
+            j++;
+          }
+        }
+      }
+
+      while(i < 10000) {
+        startingData = this.setCharAt(startingData, index, String.fromCharCode(i));
+        let contractAddress = getContractAddress(sender, tx.nonce, startingData);
+        let contractShard = getShardFromAddress(contractAddress);
+        if(contractShard == toShard) {
+          tx.data = startingData;
+          return tx;
+        }
+        i++;
+      }
+
+    } else {
+
+      index = startingData.length - 1;
+
+      for(let i = 0; i < startingData.length; i++) {
+        let j = i
+        for(let x = 0; x < contractNonce.length; x++) {
+          if(startingData[j] === contractNonce[x] && x === contractNonce.length - 1) {
+            index = j;
+            indexFound = true;
+            break;
+          } else if(startingData[j] !== contractNonce[x]) {
+            break;
+          } else if(startingData[j] === contractNonce[x]) {
+            j++;
+          }
+        }
+      }
+
+      if(isBytes(startingData)) {
+        while(i < 10000) {
+          if(isBytes(startingData)) {
+            let mutableContract: Array<number> = Array.from(startingData);
+            mutableContract[index] = i;
+            startingData = mutableContract;
+            let contractAddress = getContractAddress(sender, tx.nonce, startingData);
+            let contractShard = getShardFromAddress(contractAddress);
+            if(contractShard == toShard) {
+              tx.data = startingData;
+              return tx;
+            }
+          } else {
+            logger.throwError(
+              "tx.data is an invalid format",
+              Logger.errors.TIMEOUT
+            );
+          }
+        }
+      } else {
+        logger.throwError(
+          "tx.data is an invalid format",
+          Logger.errors.TIMEOUT
+        );
+      }
+    }
+  }
+
+// Helper function to replace a character at a specific index in a string
+ setCharAt(str: string, index: number, chr: string): string {
+  if (index > str.length - 1) return str;
+  return str.substr(0, index) + chr + str.substr(index + 1);
+}
 }
