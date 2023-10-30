@@ -6,7 +6,7 @@ export interface ContractCode {
     bytecode: string;
     runtime: string;
 }
-export type CompilerOptions = {
+export declare type CompilerOptions = {
     filename?: string;
     basedir?: string;
     optimize?: boolean;

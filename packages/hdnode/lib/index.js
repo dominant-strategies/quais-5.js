@@ -340,7 +340,7 @@ function getAccountPath(index) {
     if (typeof (index) !== "number" || index < 0 || index >= HardenedBit || index % 1) {
         logger.throwArgumentError("invalid account index", "index", index);
     }
-    return "m/44'/60'/".concat(index, "'/0/0");
+    return "m/44'/60'/" + index + "'/0/0";
 }
 exports.getAccountPath = getAccountPath;
 function getShardAddressChildNode(hdnode, path, startingIndex, shard) {

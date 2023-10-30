@@ -29,7 +29,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     function verb(n) { return function (v) { return step([n, v]); }; }
     function step(op) {
         if (f) throw new TypeError("Generator is already executing.");
-        while (g && (g = 0, op[0] && (_ = 0)), _) try {
+        while (_) try {
             if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
             if (y = 0, t) op = [op[0] & 2, t.value];
             switch (op[0]) {
@@ -78,7 +78,7 @@ function getTransactionPostData(transaction) {
         }
         else if (key === "accessList") {
             value = "[" + (0, transactions_1.accessListify)(value).map(function (set) {
-                return "{address:\"".concat(set.address, "\",storageKeys:[\"").concat(set.storageKeys.join('","'), "\"]}");
+                return "{address:\"" + set.address + "\",storageKeys:[\"" + set.storageKeys.join('","') + "\"]}";
             }).join(",") + "]";
         }
         else {
@@ -244,15 +244,15 @@ var EtherscanProvider = /** @class */ (function (_super) {
         var query = Object.keys(params).reduce(function (accum, key) {
             var value = params[key];
             if (value != null) {
-                accum += "&".concat(key, "=").concat(value);
+                accum += "&" + key + "=" + value;
             }
             return accum;
         }, "");
-        var apiKey = ((this.apiKey) ? "&apikey=".concat(this.apiKey) : "");
-        return "".concat(this.baseUrl, "/api?module=").concat(module).concat(query).concat(apiKey);
+        var apiKey = ((this.apiKey) ? "&apikey=" + this.apiKey : "");
+        return this.baseUrl + "/api?module=" + module + query + apiKey;
     };
     EtherscanProvider.prototype.getPostUrl = function () {
-        return "".concat(this.baseUrl, "/api");
+        return this.baseUrl + "/api";
     };
     EtherscanProvider.prototype.getPostData = function (module, params) {
         params.module = module;
@@ -288,7 +288,7 @@ var EtherscanProvider = /** @class */ (function (_super) {
                         if (payload) {
                             connection.headers = { "content-type": "application/x-www-form-urlencoded; charset=UTF-8" };
                             payloadStr = Object.keys(payload).map(function (key) {
-                                return "".concat(key, "=").concat(payload[key]);
+                                return key + "=" + payload[key];
                             }).join("&");
                         }
                         return [4 /*yield*/, (0, web_1.fetchJson)(connection, payloadStr, procFunc || getJsonResult)];

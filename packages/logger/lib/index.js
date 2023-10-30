@@ -42,7 +42,7 @@ var LogLevel;
     LogLevel["WARNING"] = "WARNING";
     LogLevel["ERROR"] = "ERROR";
     LogLevel["OFF"] = "OFF";
-})(LogLevel || (exports.LogLevel = LogLevel = {}));
+})(LogLevel = exports.LogLevel || (exports.LogLevel = {}));
 var ErrorCode;
 (function (ErrorCode) {
     ///////////////////
@@ -121,7 +121,7 @@ var ErrorCode;
     // The user rejected the action, such as signing a message or sending
     // a transaction
     ErrorCode["ACTION_REJECTED"] = "ACTION_REJECTED";
-})(ErrorCode || (exports.ErrorCode = ErrorCode = {}));
+})(ErrorCode = exports.ErrorCode || (exports.ErrorCode = {}));
 ;
 var HEX = "0123456789abcdef";
 var Logger = /** @class */ (function () {
@@ -194,8 +194,8 @@ var Logger = /** @class */ (function () {
                 messageDetails.push(key + "=" + JSON.stringify(params[key].toString()));
             }
         });
-        messageDetails.push("code=".concat(code));
-        messageDetails.push("version=".concat(this.version));
+        messageDetails.push("code=" + code);
+        messageDetails.push("version=" + this.version);
         var reason = message;
         var url = "";
         switch (code) {

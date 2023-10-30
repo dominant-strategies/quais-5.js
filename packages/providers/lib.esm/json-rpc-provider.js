@@ -366,12 +366,6 @@ const allowedTransactionKeys = {
     externalGasLimit: true, externalGasPrice: true, externalGasTip: true, externalData: true, externalAccessList: true,
 };
 export class JsonRpcProvider extends BaseProvider {
-    get _cache() {
-        if (this._eventLoopCache == null) {
-            this._eventLoopCache = {};
-        }
-        return this._eventLoopCache;
-    }
     constructor(url, network, context) {
         let networkOrReady = network;
         // The network is unknown, query the JSON-RPC for it
@@ -409,6 +403,12 @@ export class JsonRpcProvider extends BaseProvider {
             defineReadOnly(this, "connection", Object.freeze(shallowCopy(url)));
         }
         this._nextId = 42;
+    }
+    get _cache() {
+        if (this._eventLoopCache == null) {
+            this._eventLoopCache = {};
+        }
+        return this._eventLoopCache;
     }
     static defaultUrl() {
         return "http:/\/localhost:8545";

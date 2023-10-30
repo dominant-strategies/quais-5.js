@@ -1,5 +1,5 @@
 import type { Transport } from "@ledgerhq/hw-transport-node-hid";
-export type TransportCreator = {
+export declare type TransportCreator = {
     create: () => Promise<Transport>;
 };
 export declare const transports: {

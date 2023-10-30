@@ -29,7 +29,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     function verb(n) { return function (v) { return step([n, v]); }; }
     function step(op) {
         if (f) throw new TypeError("Generator is already executing.");
-        while (g && (g = 0, op[0] && (_ = 0)), _) try {
+        while (_) try {
             if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
             if (y = 0, t) op = [op[0] & 2, t.value];
             switch (op[0]) {
@@ -279,7 +279,7 @@ function getIpfsLink(link) {
     else {
         logger.throwArgumentError("unsupported IPFS format", "link", link);
     }
-    return "https://gateway.ipfs.io/ipfs/".concat(link);
+    return "https://gateway.ipfs.io/ipfs/" + link;
 }
 function numPad(value) {
     var result = (0, bytes_1.arrayify)(value);
@@ -410,8 +410,8 @@ var Resolver = /** @class */ (function () {
     Resolver.prototype._getAddress = function (coinType, hexBytes) {
         var coinInfo = coinInfos[String(coinType)];
         if (coinInfo == null) {
-            logger.throwError("unsupported coin type: ".concat(coinType), logger_1.Logger.errors.UNSUPPORTED_OPERATION, {
-                operation: "getAddress(".concat(coinType, ")")
+            logger.throwError("unsupported coin type: " + coinType, logger_1.Logger.errors.UNSUPPORTED_OPERATION, {
+                operation: "getAddress(" + coinType + ")"
             });
         }
         if (coinInfo.ilk === "eth") {
@@ -491,7 +491,7 @@ var Resolver = /** @class */ (function () {
                         address = this._getAddress(coinType, hexBytes);
                         if (address == null) {
                             logger.throwError("invalid or unsupported coin data", logger_1.Logger.errors.UNSUPPORTED_OPERATION, {
-                                operation: "getAddress(".concat(coinType, ")"),
+                                operation: "getAddress(" + coinType + ")",
                                 coinType: coinType,
                                 data: hexBytes
                             });
@@ -885,7 +885,7 @@ var BaseProvider = /** @class */ (function (_super) {
                         errorMessage = (result.message || "unknown error");
                         // 4xx indicates the result is not present; stop
                         if (result.status >= 400 && result.status < 500) {
-                            return [2 /*return*/, logger.throwError("response not found during CCIP fetch: ".concat(errorMessage), logger_1.Logger.errors.SERVER_ERROR, { url: url, errorMessage: errorMessage })];
+                            return [2 /*return*/, logger.throwError("response not found during CCIP fetch: " + errorMessage, logger_1.Logger.errors.SERVER_ERROR, { url: url, errorMessage: errorMessage })];
                         }
                         // 5xx indicates server issue; try the next url
                         errorMessages.push(errorMessage);
@@ -893,7 +893,7 @@ var BaseProvider = /** @class */ (function (_super) {
                     case 3:
                         i++;
                         return [3 /*break*/, 1];
-                    case 4: return [2 /*return*/, logger.throwError("error encountered during CCIP fetch: ".concat(errorMessages.map(function (m) { return JSON.stringify(m); }).join(", ")), logger_1.Logger.errors.SERVER_ERROR, {
+                    case 4: return [2 /*return*/, logger.throwError("error encountered during CCIP fetch: " + errorMessages.map(function (m) { return JSON.stringify(m); }).join(", "), logger_1.Logger.errors.SERVER_ERROR, {
                             urls: urls,
                             errorMessages: errorMessages
                         })];
@@ -1009,7 +1009,7 @@ var BaseProvider = /** @class */ (function (_super) {
                             this._emitted.block = blockNumber - 1;
                         }
                         if (Math.abs((this._emitted.block) - blockNumber) > 1000) {
-                            logger.warn("network block skew detected; skipping block events (emitted=".concat(this._emitted.block, " blockNumber").concat(blockNumber, ")"));
+                            logger.warn("network block skew detected; skipping block events (emitted=" + this._emitted.block + " blockNumber" + blockNumber + ")");
                             this.emit("error", logger.makeError("network block skew detected", logger_1.Logger.errors.NETWORK_ERROR, {
                                 blockNumber: blockNumber,
                                 event: "blockSkew",
@@ -1993,7 +1993,7 @@ var BaseProvider = /** @class */ (function (_super) {
                         address = _a.sent();
                         if (address == null) {
                             logger.throwError("ENS name not configured", logger_1.Logger.errors.UNSUPPORTED_OPERATION, {
-                                operation: "resolveName(".concat(JSON.stringify(addressOrName), ")")
+                                operation: "resolveName(" + JSON.stringify(addressOrName) + ")"
                             });
                         }
                         return [2 /*return*/, address];

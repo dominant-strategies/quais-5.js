@@ -54,7 +54,7 @@ function ReporterKeepAlive(runner) {
     function forceOutput() {
         if (((getTime() - lastOutput) / 1000) > MAX_DELAY) {
             var currentLog = releaseLog();
-            console.log("# Keep Alive: ".concat(currentLog));
+            console.log("# Keep Alive: " + currentLog);
             captureLog();
             lastOutput = getTime();
         }
@@ -72,7 +72,7 @@ function ReporterKeepAlive(runner) {
             // Reset standard output
             var currentLog = releaseLog();
             if (logOut.length) {
-                console.log("# Keep Alive: ".concat(currentLog));
+                console.log("# Keep Alive: " + currentLog);
             }
             // Stop the keep-alive poller
             clearTimeout(timer);
@@ -85,7 +85,7 @@ function ReporterKeepAlive(runner) {
                         console.log("#");
                     }
                     error.toString().split("\n").forEach(function (line) {
-                        console.log("# ".concat(line));
+                        console.log("# " + line);
                     });
                 });
             }
@@ -97,7 +97,7 @@ function ReporterKeepAlive(runner) {
     runner.on('fail', function (test, error) {
         fails++;
         if (fails < 10) {
-            errors.push("Error #".concat(errors.length, " (").concat(test.title, "): ").concat(error.message, "\n").concat(error.stack));
+            errors.push("Error #" + errors.length + " (" + test.title + "): " + error.message + "\n" + error.stack);
             log("!");
         }
     });

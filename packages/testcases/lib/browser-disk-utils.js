@@ -16,7 +16,7 @@ var Cache = {};
 function loadTests(tag) {
     var filename = 'testcases/' + tag + ".json.gz";
     if (Cache[filename] == null) {
-        console.log("Loading Test Case: ".concat(filename));
+        console.log("Loading Test Case: " + filename);
         try {
             var fileData = browser_data_json_1.default[filename];
             var comps = fileData.split(",");
@@ -36,7 +36,7 @@ exports.loadTests = loadTests;
 function loadData(filename) {
     // Strip any leading relative paths (e.g. "./foo" => "foo")
     filename = filename.replace(/^[^a-z0-9_]/i, "");
-    console.log("Loading Data File: ".concat(filename));
+    console.log("Loading Data File: " + filename);
     //filename = path.join(filename);
     return quais_1.quais.utils.base64.decode(browser_data_json_1.default[filename]);
 }

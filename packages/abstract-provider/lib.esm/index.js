@@ -69,6 +69,10 @@ export class TransactionOrderForkEvent extends ForkEvent {
 ///////////////////////////////
 // Exported Abstracts
 export class Provider {
+    constructor() {
+        logger.checkAbstract(new.target, Provider);
+        defineReadOnly(this, "_isProvider", true);
+    }
     getFeeData() {
         return __awaiter(this, void 0, void 0, function* () {
             const { block, gasPrice, maxFeePerGas, maxPriorityFeePerGas } = yield resolveProperties({
@@ -105,10 +109,6 @@ export class Provider {
     // Alias for "off"
     removeListener(eventName, listener) {
         return this.off(eventName, listener);
-    }
-    constructor() {
-        logger.checkAbstract(new.target, Provider);
-        defineReadOnly(this, "_isProvider", true);
     }
     static isProvider(value) {
         return !!(value && value._isProvider);

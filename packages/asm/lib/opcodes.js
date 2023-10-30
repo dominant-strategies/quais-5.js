@@ -15,7 +15,7 @@ var OpcodeMemoryAccess;
     OpcodeMemoryAccess["write"] = "write";
     OpcodeMemoryAccess["read"] = "read";
     OpcodeMemoryAccess["full"] = "full";
-})(OpcodeMemoryAccess || (exports.OpcodeMemoryAccess = OpcodeMemoryAccess = {}));
+})(OpcodeMemoryAccess = exports.OpcodeMemoryAccess || (exports.OpcodeMemoryAccess = {}));
 ;
 var Opcode = /** @class */ (function () {
     function Opcode(mnemonic, value, delta, alpha, doc) {

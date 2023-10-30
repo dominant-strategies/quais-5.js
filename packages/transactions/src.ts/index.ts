@@ -169,6 +169,7 @@ function _serialize(transaction: UnsignedTransaction, signature?: SignatureLike)
     // If there is an explicit gasPrice, make sure it matches the
     // EIP-1559 fees; otherwise they may not understand what they
     // think they are setting in terms of fee.
+    //console.log('Serializing tx: \n', JSON.stringify(transaction, null, 4));
     if (transaction.gasPrice != null) {
         const gasPrice = BigNumber.from(transaction.gasPrice);
         const maxFeePerGas = BigNumber.from(transaction.maxFeePerGas || 0);
@@ -197,7 +198,7 @@ function _serialize(transaction: UnsignedTransaction, signature?: SignatureLike)
         fields.push(stripZeros(sig.r));
         fields.push(stripZeros(sig.s));
     }
-
+    //console.log('Encoding tx: \n', JSON.stringify(fields, null, 4));
     return hexConcat([ "0x00", RLP.encode(fields)]);
 }
 
@@ -301,9 +302,9 @@ function _parse(payload: Uint8Array): Transaction {
 function _parseStandardETx(payload: Uint8Array): Transaction {
     const transaction = RLP.decode(payload.slice(1));
 
-    if (transaction.length !== 8 && transaction.length !== 17) {
-        logger.throwArgumentError("invalid component count for transaction type: 1", "payload", hexlify(payload));
-    }
+    // if (transaction.length !== 8 && transaction.length !== 17) {
+    //     logger.throwArgumentError("invalid component count for transaction type: 1", "payload", hexlify(payload));
+    // }
 
     const maxPriorityFeePerGas = handleNumber(transaction[2]);
     const maxFeePerGas = handleNumber(transaction[3]);
@@ -330,7 +331,6 @@ function _parseStandardETx(payload: Uint8Array): Transaction {
     if (transaction.length === 8) { return tx; }
 
     tx.hash = keccak256(payload);
-    console.log('HERE')
     _parseEipSignature(tx, transaction.slice(14), _serializeStandardETx);
 
     return tx;
@@ -338,7 +338,6 @@ function _parseStandardETx(payload: Uint8Array): Transaction {
 
 export function parse(rawTransaction: BytesLike): Transaction {
     const payload = arrayify(rawTransaction);
-
     // Typed Transaction (EIP-2718)
     switch (payload[0]) {
         case 0:

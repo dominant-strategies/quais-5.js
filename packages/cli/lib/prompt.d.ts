@@ -1,4 +1,4 @@
-export type PromptOptions = {
+export declare type PromptOptions = {
     choice?: Array<string>;
     defaultChoice?: string;
     mask?: string;

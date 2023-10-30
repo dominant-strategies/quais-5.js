@@ -15,8 +15,8 @@ export declare class KeystoreAccount extends Description<_KeystoreAccount> imple
     readonly _isKeystoreAccount: boolean;
     isKeystoreAccount(value: any): value is KeystoreAccount;
 }
-export type ProgressCallback = (percent: number) => void;
-export type EncryptOptions = {
+export declare type ProgressCallback = (percent: number) => void;
+export declare type EncryptOptions = {
     iv?: BytesLike;
     entropy?: BytesLike;
     client?: string;

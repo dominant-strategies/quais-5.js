@@ -63,7 +63,7 @@ function ens_normalize_post_check(name) {
             }
         }
         catch (err) {
-            throw new Error("Invalid label \"".concat(label, "\": ").concat(err.message));
+            throw new Error("Invalid label \"" + label + "\": " + err.message);
         }
     }
     return name;
@@ -95,7 +95,7 @@ function normalize(name, emoji_filter) {
             output.push.apply(output, cps);
             continue;
         }
-        throw new Error("Disallowed codepoint: 0x".concat(cp.toString(16).toUpperCase()));
+        throw new Error("Disallowed codepoint: 0x" + cp.toString(16).toUpperCase());
     }
     return ens_normalize_post_check(nfc(String.fromCodePoint.apply(String, output)));
 }

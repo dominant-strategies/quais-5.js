@@ -75,12 +75,10 @@ describe('Test JSON Wallets', function () {
 describe('Test Transaction Signing and Parsing', function () {
     function checkTransaction(parsedTransaction, test) {
         let transaction = {};
-        console.log("parsedTransaction", JSON.stringify(parsedTransaction, null, 2));
         ['nonce', 'gasLimit', 'to', 'value', 'data'].forEach((key) => {
             let expected = test[key];
             let value = parsedTransaction[key];
             if (["gasLimit", "value"].indexOf(key) >= 0) {
-                console.log('Value -' + key + '-' + value);
                 assert.ok((quais.BigNumber.isBigNumber(value)), 'parsed into a big number - ' + key);
                 value = value.toHexString();
                 if (!expected || expected === '0x') {
@@ -116,10 +114,8 @@ describe('Test Transaction Signing and Parsing', function () {
         it(('parses and signs transaction - ' + test.name), function () {
             this.timeout(120000);
             if (test.type == 0) {
-                console.log("Parsing unsigned transaction:" + test.unsignedTransaction);
                 checkTransaction(quais.utils.parseTransaction(test.unsignedTransaction), test);
             }
-            console.log("Parsing signed transaction:" + test.signedTransaction);
             let parsedTransaction = quais.utils.parseTransaction(test.signedTransaction);
             checkTransaction(parsedTransaction, test);
         });
@@ -204,14 +200,20 @@ describe("Serialize Transactions", function () {
             gasLimit: "0x1",
 <<<<<<< HEAD
             gasPrice: "0x1",
+<<<<<<< HEAD
             value: "0x1"
 =======
+=======
+>>>>>>> 0858ff5 (test-utils.ts)
             value: "0x1",
             maxPriorityFeePerGas: "0x1",
             maxFeePerGas: "0x1",
             type: 0,
             //nonce: 0,
+<<<<<<< HEAD
 >>>>>>> 8048f36 (test-wallet.ts)
+=======
+>>>>>>> 0858ff5 (test-utils.ts)
         });
         //console.log(result);
     });

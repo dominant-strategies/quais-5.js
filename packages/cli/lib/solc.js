@@ -54,7 +54,7 @@ function _compile(_solc, source, options) {
     var version = parseFloat(ver[2] + "." + ver[3]);
     //if (version < 4.11 || version >= 8) {
     if (version < 5.0 || version >= 8.0) {
-        throw new Error("unsupported version: ".concat(ver[1], ".").concat(ver[2], ".").concat(ver[3]));
+        throw new Error("unsupported version: " + ver[1] + "." + ver[2] + "." + ver[3]);
     }
     options = populateOptions(options);
     var input = getInput(source, options);

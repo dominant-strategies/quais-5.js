@@ -69,7 +69,7 @@ var BuiltinErrors = {
     "0x4e487b71": { signature: "Panic(uint256)", name: "Panic", inputs: ["uint256"] }
 };
 function wrapAccessError(property, error) {
-    var wrap = new Error("deferred error during ABI decoding triggered accessing ".concat(property));
+    var wrap = new Error("deferred error during ABI decoding triggered accessing " + property);
     wrap.error = error;
     return wrap;
 }
@@ -88,8 +88,8 @@ function checkNames(fragment: Fragment, type: "input" | "output", params: Array<
 */
 var Interface = /** @class */ (function () {
     function Interface(fragments) {
-        var _this = this;
         var _newTarget = this.constructor;
+        var _this = this;
         var abi = [];
         if (typeof (fragments) === "string") {
             abi = JSON.parse(fragments);
@@ -304,7 +304,7 @@ var Interface = /** @class */ (function () {
         }
         var bytes = (0, bytes_1.arrayify)(data);
         if ((0, bytes_1.hexlify)(bytes.slice(0, 4)) !== this.getSighash(fragment)) {
-            logger.throwArgumentError("data signature does not match error ".concat(fragment.name, "."), "data", (0, bytes_1.hexlify)(bytes));
+            logger.throwArgumentError("data signature does not match error " + fragment.name + ".", "data", (0, bytes_1.hexlify)(bytes));
         }
         return this._decodeParams(fragment.inputs, bytes.slice(4));
     };
@@ -324,7 +324,7 @@ var Interface = /** @class */ (function () {
         }
         var bytes = (0, bytes_1.arrayify)(data);
         if ((0, bytes_1.hexlify)(bytes.slice(0, 4)) !== this.getSighash(functionFragment)) {
-            logger.throwArgumentError("data signature does not match function ".concat(functionFragment.name, "."), "data", (0, bytes_1.hexlify)(bytes));
+            logger.throwArgumentError("data signature does not match function " + functionFragment.name + ".", "data", (0, bytes_1.hexlify)(bytes));
         }
         return this._decodeParams(functionFragment.inputs, bytes.slice(4));
     };
@@ -367,10 +367,10 @@ var Interface = /** @class */ (function () {
                         reason = errorArgs[0];
                     }
                     if (errorName === "Error") {
-                        message = "; VM Exception while processing transaction: reverted with reason string ".concat(JSON.stringify(errorArgs[0]));
+                        message = "; VM Exception while processing transaction: reverted with reason string " + JSON.stringify(errorArgs[0]);
                     }
                     else if (errorName === "Panic") {
-                        message = "; VM Exception while processing transaction: reverted with panic code ".concat(errorArgs[0]);
+                        message = "; VM Exception while processing transaction: reverted with panic code " + errorArgs[0];
                     }
                 }
                 else {
@@ -571,7 +571,7 @@ var Interface = /** @class */ (function () {
                 if (value_1 instanceof Error) {
                     Object.defineProperty(result, param.name, {
                         enumerable: true,
-                        get: function () { throw wrapAccessError("property ".concat(JSON.stringify(param.name)), value_1); }
+                        get: function () { throw wrapAccessError("property " + JSON.stringify(param.name), value_1); }
                     });
                 }
                 else {
@@ -584,7 +584,7 @@ var Interface = /** @class */ (function () {
             if (value instanceof Error) {
                 Object.defineProperty(result, i, {
                     enumerable: true,
-                    get: function () { throw wrapAccessError("index ".concat(i), value); }
+                    get: function () { throw wrapAccessError("index " + i, value); }
                 });
             }
         };
