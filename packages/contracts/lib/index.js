@@ -29,7 +29,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     function verb(n) { return function (v) { return step([n, v]); }; }
     function step(op) {
         if (f) throw new TypeError("Generator is already executing.");
-        while (g && (g = 0, op[0] && (_ = 0)), _) try {
+        while (_) try {
             if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
             if (y = 0, t) op = [op[0] & 2, t.value];
             switch (op[0]) {
@@ -281,7 +281,7 @@ function populateTransaction(contract, fragment, args) {
                     delete overrides.ccipReadEnabled;
                     leftovers = Object.keys(overrides).filter(function (key) { return overrides[key] != null; });
                     if (leftovers.length) {
-                        logger.throwError("cannot override ".concat(leftovers.map(function (l) { return JSON.stringify(l); }).join(",")), logger_1.Logger.errors.UNSUPPORTED_OPERATION, {
+                        logger.throwError("cannot override " + leftovers.map(function (l) { return JSON.stringify(l); }).join(","), logger_1.Logger.errors.UNSUPPORTED_OPERATION, {
                             operation: "overrides",
                             overrides: leftovers,
                         });
@@ -626,8 +626,8 @@ var WildcardRunningEvent = /** @class */ (function (_super) {
 }(RunningEvent));
 var BaseContract = /** @class */ (function () {
     function BaseContract(addressOrName, contractInterface, signerOrProvider) {
-        var _this = this;
         var _newTarget = this.constructor;
+        var _this = this;
         // @TODO: Maybe still check the addressOrName looks like a valid address or name?
         //address = getAddress(address);
         (0, properties_1.defineReadOnly)(this, "interface", (0, properties_1.getStatic)(_newTarget, "getInterface")(contractInterface));
@@ -676,7 +676,7 @@ var BaseContract = /** @class */ (function () {
                     (0, properties_1.defineReadOnly)(_this.filters, name, _this.filters[filters[0]]);
                 }
                 else {
-                    logger.warn("Duplicate definition of ".concat(name, " (").concat(filters.join(", "), ")"));
+                    logger.warn("Duplicate definition of " + name + " (" + filters.join(", ") + ")");
                 }
             });
         }
@@ -709,7 +709,7 @@ var BaseContract = /** @class */ (function () {
             // Check that the signature is unique; if not the ABI generation has
             // not been cleaned or may be incorrectly generated
             if (uniqueSignatures[signature]) {
-                logger.warn("Duplicate ABI entry for ".concat(JSON.stringify(signature)));
+                logger.warn("Duplicate ABI entry for " + JSON.stringify(signature));
                 return;
             }
             uniqueSignatures[signature] = true;
@@ -717,10 +717,10 @@ var BaseContract = /** @class */ (function () {
             // are ambiguous
             {
                 var name_1 = fragment.name;
-                if (!uniqueNames["%".concat(name_1)]) {
-                    uniqueNames["%".concat(name_1)] = [];
+                if (!uniqueNames["%" + name_1]) {
+                    uniqueNames["%" + name_1] = [];
                 }
-                uniqueNames["%".concat(name_1)].push(signature);
+                uniqueNames["%" + name_1].push(signature);
             }
             if (_this[signature] == null) {
                 (0, properties_1.defineReadOnly)(_this, signature, buildDefault(_this, fragment, true));

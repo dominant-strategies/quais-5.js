@@ -246,14 +246,20 @@ describe("Serialize Transactions", function() {
             gasLimit: "0x1",
 <<<<<<< HEAD
             gasPrice: "0x1",
+<<<<<<< HEAD
             value: "0x1"
 =======
+=======
+>>>>>>> 0858ff5 (test-utils.ts)
             value: "0x1",
             maxPriorityFeePerGas: "0x1",
             maxFeePerGas: "0x1",
             type: 0,
             //nonce: 0,
+<<<<<<< HEAD
 >>>>>>> 8048f36 (test-wallet.ts)
+=======
+>>>>>>> 0858ff5 (test-utils.ts)
         });
         //console.log(result);
     });

@@ -14,7 +14,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     function verb(n) { return function (v) { return step([n, v]); }; }
     function step(op) {
         if (f) throw new TypeError("Generator is already executing.");
-        while (g && (g = 0, op[0] && (_ = 0)), _) try {
+        while (_) try {
             if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
             if (y = 0, t) op = [op[0] & 2, t.value];
             switch (op[0]) {
@@ -75,7 +75,7 @@ var domainFieldNames = [
 function checkString(key) {
     return function (value) {
         if (typeof (value) !== "string") {
-            logger.throwArgumentError("invalid domain value for ".concat(JSON.stringify(key)), "domain.".concat(key), value);
+            logger.throwArgumentError("invalid domain value for " + JSON.stringify(key), "domain." + key, value);
         }
         return value;
     };
@@ -124,7 +124,7 @@ function getBaseEncoder(type) {
             return function (value) {
                 var v = bignumber_1.BigNumber.from(value);
                 if (v.lt(boundsLower_1) || v.gt(boundsUpper_1)) {
-                    logger.throwArgumentError("value out-of-bounds for ".concat(type), "value", value);
+                    logger.throwArgumentError("value out-of-bounds for " + type, "value", value);
                 }
                 return (0, bytes_1.hexZeroPad)(v.toTwos(256).toHexString(), 32);
             };
@@ -141,7 +141,7 @@ function getBaseEncoder(type) {
             return function (value) {
                 var bytes = (0, bytes_1.arrayify)(value);
                 if (bytes.length !== width_1) {
-                    logger.throwArgumentError("invalid length for ".concat(type), "value", value);
+                    logger.throwArgumentError("invalid length for " + type, "value", value);
                 }
                 return hexPadRight(value);
             };
@@ -164,10 +164,10 @@ function getBaseEncoder(type) {
     return null;
 }
 function encodeType(name, fields) {
-    return "".concat(name, "(").concat(fields.map(function (_a) {
+    return name + "(" + fields.map(function (_a) {
         var name = _a.name, type = _a.type;
         return (type + " " + name);
-    }).join(","), ")");
+    }).join(",") + ")";
 }
 var TypedDataEncoder = /** @class */ (function () {
     function TypedDataEncoder(types) {
@@ -190,13 +190,13 @@ var TypedDataEncoder = /** @class */ (function () {
             types[name_1].forEach(function (field) {
                 // Check each field has a unique name
                 if (uniqueNames[field.name]) {
-                    logger.throwArgumentError("duplicate variable name ".concat(JSON.stringify(field.name), " in ").concat(JSON.stringify(name_1)), "types", types);
+                    logger.throwArgumentError("duplicate variable name " + JSON.stringify(field.name) + " in " + JSON.stringify(name_1), "types", types);
                 }
                 uniqueNames[field.name] = true;
                 // Get the base type (drop any array specifiers)
                 var baseType = field.type.match(/^([^\x5b]*)(\x5b|$)/)[1];
                 if (baseType === name_1) {
-                    logger.throwArgumentError("circular type reference to ".concat(JSON.stringify(baseType)), "types", types);
+                    logger.throwArgumentError("circular type reference to " + JSON.stringify(baseType), "types", types);
                 }
                 // Is this a base encoding type?
                 var encoder = getBaseEncoder(baseType);
@@ -204,7 +204,7 @@ var TypedDataEncoder = /** @class */ (function () {
                     return;
                 }
                 if (!parents[baseType]) {
-                    logger.throwArgumentError("unknown type ".concat(JSON.stringify(baseType)), "types", types);
+                    logger.throwArgumentError("unknown type " + JSON.stringify(baseType), "types", types);
                 }
                 // Add linkage
                 parents[baseType].push(name_1);
@@ -220,13 +220,13 @@ var TypedDataEncoder = /** @class */ (function () {
             logger.throwArgumentError("missing primary type", "types", types);
         }
         else if (primaryTypes.length > 1) {
-            logger.throwArgumentError("ambiguous primary types or unused types: ".concat(primaryTypes.map(function (t) { return (JSON.stringify(t)); }).join(", ")), "types", types);
+            logger.throwArgumentError("ambiguous primary types or unused types: " + primaryTypes.map(function (t) { return (JSON.stringify(t)); }).join(", "), "types", types);
         }
         (0, properties_1.defineReadOnly)(this, "primaryType", primaryTypes[0]);
         // Check for circular type references
         function checkCircular(type, found) {
             if (found[type]) {
-                logger.throwArgumentError("circular type reference to ".concat(JSON.stringify(type)), "types", types);
+                logger.throwArgumentError("circular type reference to " + JSON.stringify(type), "types", types);
             }
             found[type] = true;
             Object.keys(links[type]).forEach(function (child) {
@@ -300,12 +300,12 @@ var TypedDataEncoder = /** @class */ (function () {
                 return (0, bytes_1.hexConcat)(values);
             };
         }
-        return logger.throwArgumentError("unknown type: ".concat(type), "type", type);
+        return logger.throwArgumentError("unknown type: " + type, "type", type);
     };
     TypedDataEncoder.prototype.encodeType = function (name) {
         var result = this._types[name];
         if (!result) {
-            logger.throwArgumentError("unknown type: ".concat(JSON.stringify(name)), "name", name);
+            logger.throwArgumentError("unknown type: " + JSON.stringify(name), "name", name);
         }
         return result;
     };
@@ -349,7 +349,7 @@ var TypedDataEncoder = /** @class */ (function () {
                 return accum;
             }, {});
         }
-        return logger.throwArgumentError("unknown type: ".concat(type), "type", type);
+        return logger.throwArgumentError("unknown type: " + type, "type", type);
     };
     TypedDataEncoder.prototype.visit = function (value, callback) {
         return this._visit(this.primaryType, value, callback);
@@ -368,7 +368,7 @@ var TypedDataEncoder = /** @class */ (function () {
         for (var name_3 in domain) {
             var type = domainFieldTypes[name_3];
             if (!type) {
-                logger.throwArgumentError("invalid typed-data domain key: ".concat(JSON.stringify(name_3)), "domain", domain);
+                logger.throwArgumentError("invalid typed-data domain key: " + JSON.stringify(name_3), "domain", domain);
             }
             domainFields.push({ name: name_3, type: type });
         }
@@ -390,9 +390,9 @@ var TypedDataEncoder = /** @class */ (function () {
     // Replaces all address types with ENS names with their looked up address
     TypedDataEncoder.resolveNames = function (domain, types, value, resolveName) {
         return __awaiter(this, void 0, void 0, function () {
-            var ensCache, encoder, _a, _b, _c, _i, name_4, _d, _e;
-            return __generator(this, function (_f) {
-                switch (_f.label) {
+            var ensCache, encoder, _a, _b, _i, name_4, _c, _d;
+            return __generator(this, function (_e) {
+                switch (_e.label) {
                     case 0:
                         // Make a copy to isolate it from the object passed in
                         domain = (0, properties_1.shallowCopy)(domain);
@@ -409,23 +409,20 @@ var TypedDataEncoder = /** @class */ (function () {
                             }
                             return value;
                         });
-                        _a = ensCache;
-                        _b = [];
-                        for (_c in _a)
-                            _b.push(_c);
+                        _a = [];
+                        for (_b in ensCache)
+                            _a.push(_b);
                         _i = 0;
-                        _f.label = 1;
+                        _e.label = 1;
                     case 1:
-                        if (!(_i < _b.length)) return [3 /*break*/, 4];
-                        _c = _b[_i];
-                        if (!(_c in _a)) return [3 /*break*/, 3];
-                        name_4 = _c;
-                        _d = ensCache;
-                        _e = name_4;
+                        if (!(_i < _a.length)) return [3 /*break*/, 4];
+                        name_4 = _a[_i];
+                        _c = ensCache;
+                        _d = name_4;
                         return [4 /*yield*/, resolveName(name_4)];
                     case 2:
-                        _d[_e] = _f.sent();
-                        _f.label = 3;
+                        _c[_d] = _e.sent();
+                        _e.label = 3;
                     case 3:
                         _i++;
                         return [3 /*break*/, 1];

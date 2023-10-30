@@ -1,11 +1,11 @@
 import { Network, Networkish } from "@quais/networks";
 import { Event } from "./base-provider";
 import { JsonRpcProvider } from "./json-rpc-provider";
-export type InflightRequest = {
+export declare type InflightRequest = {
     callback: (error: Error, result: any) => void;
     payload: string;
 };
-export type Subscription = {
+export declare type Subscription = {
     tag: string;
     processFunc: (payload: any) => void;
 };

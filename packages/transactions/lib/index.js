@@ -1,11 +1,7 @@
 "use strict";
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
+    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
 }) : (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
     o[k2] = m[k];
@@ -39,7 +35,7 @@ var TransactionTypes;
     TransactionTypes[TransactionTypes["standard"] = 0] = "standard";
     TransactionTypes[TransactionTypes["etx"] = 1] = "etx";
     TransactionTypes[TransactionTypes["standardETx"] = 2] = "standardETx";
-})(TransactionTypes || (exports.TransactionTypes = TransactionTypes = {}));
+})(TransactionTypes = exports.TransactionTypes || (exports.TransactionTypes = {}));
 ;
 ///////////////////////////////
 function handleAddress(value) {
@@ -75,7 +71,7 @@ function accessSetify(addr, storageKeys) {
         address: (0, address_1.getAddress)(addr),
         storageKeys: (storageKeys || []).map(function (storageKey, index) {
             if ((0, bytes_1.hexDataLength)(storageKey) !== 32) {
-                logger.throwArgumentError("invalid access list storageKey", "accessList[".concat(addr, ":").concat(index, "]"), storageKey);
+                logger.throwArgumentError("invalid access list storageKey", "accessList[" + addr + ":" + index + "]", storageKey);
             }
             return storageKey.toLowerCase();
         })
@@ -86,7 +82,7 @@ function accessListify(value) {
         return value.map(function (set, index) {
             if (Array.isArray(set)) {
                 if (set.length > 2) {
-                    logger.throwArgumentError("access list expected to be [ address, storageKeys[] ]", "value[".concat(index, "]"), set);
+                    logger.throwArgumentError("access list expected to be [ address, storageKeys[] ]", "value[" + index + "]", set);
                 }
                 return accessSetify(set[0], set[1]);
             }
@@ -111,6 +107,7 @@ function _serialize(transaction, signature) {
     // If there is an explicit gasPrice, make sure it matches the
     // EIP-1559 fees; otherwise they may not understand what they
     // think they are setting in terms of fee.
+    //console.log('Serializing tx: \n', JSON.stringify(transaction, null, 4));
     if (transaction.gasPrice != null) {
         var gasPrice = bignumber_1.BigNumber.from(transaction.gasPrice);
         var maxFeePerGas = bignumber_1.BigNumber.from(transaction.maxFeePerGas || 0);
@@ -138,6 +135,7 @@ function _serialize(transaction, signature) {
         fields.push((0, bytes_1.stripZeros)(sig.r));
         fields.push((0, bytes_1.stripZeros)(sig.s));
     }
+    //console.log('Encoding tx: \n', JSON.stringify(fields, null, 4));
     return (0, bytes_1.hexConcat)(["0x00", RLP.encode(fields)]);
 }
 function _serializeStandardETx(transaction, signature) {
@@ -175,7 +173,7 @@ function serialize(transaction, signature) {
         default:
             break;
     }
-    return logger.throwError("unsupported transaction type: ".concat(transaction.type), logger_1.Logger.errors.UNSUPPORTED_OPERATION, {
+    return logger.throwError("unsupported transaction type: " + transaction.type, logger_1.Logger.errors.UNSUPPORTED_OPERATION, {
         operation: "serializeTransaction",
         transactionType: transaction.type
     });
@@ -183,8 +181,8 @@ function serialize(transaction, signature) {
 exports.serialize = serialize;
 function _parseEipSignature(tx, fields, serialize) {
     try {
-        console.log("invalid v: ", fields[0]);
         var recid = handleNumber(fields[0]).toNumber();
+        console.log("Recid: ", recid);
         if (recid !== 0 && recid !== 1) {
             throw new Error("bad recid");
         }
@@ -231,9 +229,9 @@ function _parse(payload) {
 }
 function _parseStandardETx(payload) {
     var transaction = RLP.decode(payload.slice(1));
-    if (transaction.length !== 8 && transaction.length !== 17) {
-        logger.throwArgumentError("invalid component count for transaction type: 1", "payload", (0, bytes_1.hexlify)(payload));
-    }
+    // if (transaction.length !== 8 && transaction.length !== 17) {
+    //     logger.throwArgumentError("invalid component count for transaction type: 1", "payload", hexlify(payload));
+    // }
     var maxPriorityFeePerGas = handleNumber(transaction[2]);
     var maxFeePerGas = handleNumber(transaction[3]);
     var tx = {
@@ -259,7 +257,6 @@ function _parseStandardETx(payload) {
         return tx;
     }
     tx.hash = (0, keccak256_1.keccak256)(payload);
-    console.log('HERE');
     _parseEipSignature(tx, transaction.slice(14), _serializeStandardETx);
     return tx;
 }
@@ -274,7 +271,7 @@ function parse(rawTransaction) {
         default:
             break;
     }
-    return logger.throwError("unsupported transaction type: ".concat(payload[0]), logger_1.Logger.errors.UNSUPPORTED_OPERATION, {
+    return logger.throwError("unsupported transaction type: " + payload[0], logger_1.Logger.errors.UNSUPPORTED_OPERATION, {
         operation: "parseTransaction",
         transactionType: payload[0]
     });

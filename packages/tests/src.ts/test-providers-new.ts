@@ -322,10 +322,8 @@ describe("Test Providers", async function() {
 
     it("should fetch transaction receipt for internal to external tx", async function () {
         internalToExternalTx = await sendTransaction(cyprus2Destination);
-        console.log("Internal to External Tx: ", internalToExternalTx.hash)
         const receipt = await fetchRPCTxReceipt(internalToExternalTx.hash, process.env.CYPRUS1URL || "http://localhost:8610");
         waiter(10000);
-        console.log("Receipt: ", JSON.stringify(receipt, null, 2))
         const expectedReceipt = {
             blockHash: receipt.blockHash,
             blockNumber: Number(receipt.blockNumber),
