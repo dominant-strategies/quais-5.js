@@ -1,13 +1,13 @@
-export type Bytes = ArrayLike<number>;
-export type BytesLike = Bytes | string;
-export type DataOptions = {
+export declare type Bytes = ArrayLike<number>;
+export declare type BytesLike = Bytes | string;
+export declare type DataOptions = {
     allowMissingPrefix?: boolean;
     hexPad?: "left" | "right" | null;
 };
 export interface Hexable {
     toHexString(): string;
 }
-export type SignatureLike = {
+export declare type SignatureLike = {
     r: string;
     s?: string;
     _vs?: string;

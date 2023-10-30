@@ -9647,6 +9647,10 @@ class TransactionOrderForkEvent extends ForkEvent {
 ///////////////////////////////
 // Exported Abstracts
 class Provider {
+    constructor() {
+        logger$d.checkAbstract(new.target, Provider);
+        defineReadOnly(this, "_isProvider", true);
+    }
     getFeeData() {
         return __awaiter$2(this, void 0, void 0, function* () {
             const { block, gasPrice, maxFeePerGas, maxPriorityFeePerGas } = yield resolveProperties({
@@ -9683,10 +9687,6 @@ class Provider {
     // Alias for "off"
     removeListener(eventName, listener) {
         return this.off(eventName, listener);
-    }
-    constructor() {
-        logger$d.checkAbstract(new.target, Provider);
-        defineReadOnly(this, "_isProvider", true);
     }
     static isProvider(value) {
         return !!(value && value._isProvider);
@@ -14055,6 +14055,7 @@ function _serialize(transaction, signature) {
     // If there is an explicit gasPrice, make sure it matches the
     // EIP-1559 fees; otherwise they may not understand what they
     // think they are setting in terms of fee.
+    //console.log('Serializing tx: \n', JSON.stringify(transaction, null, 4));
     if (transaction.gasPrice != null) {
         const gasPrice = BigNumber.from(transaction.gasPrice);
         const maxFeePerGas = BigNumber.from(transaction.maxFeePerGas || 0);
@@ -14081,6 +14082,7 @@ function _serialize(transaction, signature) {
         fields.push(stripZeros(sig.r));
         fields.push(stripZeros(sig.s));
     }
+    //console.log('Encoding tx: \n', JSON.stringify(fields, null, 4));
     return hexConcat(["0x00", encode$1(fields)]);
 }
 function _serializeStandardETx(transaction, signature) {
@@ -14125,8 +14127,8 @@ function serialize(transaction, signature) {
 }
 function _parseEipSignature(tx, fields, serialize) {
     try {
-        console.log("invalid v: ", fields[0]);
         const recid = handleNumber(fields[0]).toNumber();
+        console.log("Recid: ", recid);
         if (recid !== 0 && recid !== 1) {
             throw new Error("bad recid");
         }
@@ -14173,9 +14175,9 @@ function _parse(payload) {
 }
 function _parseStandardETx(payload) {
     const transaction = decode$1(payload.slice(1));
-    if (transaction.length !== 8 && transaction.length !== 17) {
-        logger$h.throwArgumentError("invalid component count for transaction type: 1", "payload", hexlify(payload));
-    }
+    // if (transaction.length !== 8 && transaction.length !== 17) {
+    //     logger.throwArgumentError("invalid component count for transaction type: 1", "payload", hexlify(payload));
+    // }
     const maxPriorityFeePerGas = handleNumber(transaction[2]);
     const maxFeePerGas = handleNumber(transaction[3]);
     const tx = {
@@ -14201,7 +14203,6 @@ function _parseStandardETx(payload) {
         return tx;
     }
     tx.hash = keccak256(payload);
-    console.log('HERE');
     _parseEipSignature(tx, transaction.slice(14), _serializeStandardETx);
     return tx;
 }
@@ -21540,12 +21541,6 @@ const allowedTransactionKeys$2 = {
     externalGasLimit: true, externalGasPrice: true, externalGasTip: true, externalData: true, externalAccessList: true,
 };
 class JsonRpcProvider extends BaseProvider {
-    get _cache() {
-        if (this._eventLoopCache == null) {
-            this._eventLoopCache = {};
-        }
-        return this._eventLoopCache;
-    }
     constructor(url, network, context) {
         let networkOrReady = network;
         // The network is unknown, query the JSON-RPC for it
@@ -21583,6 +21578,12 @@ class JsonRpcProvider extends BaseProvider {
             defineReadOnly(this, "connection", Object.freeze(shallowCopy(url)));
         }
         this._nextId = 42;
+    }
+    get _cache() {
+        if (this._eventLoopCache == null) {
+            this._eventLoopCache = {};
+        }
+        return this._eventLoopCache;
     }
     static defaultUrl() {
         return "http:/\/localhost:8545";

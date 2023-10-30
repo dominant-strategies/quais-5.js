@@ -1,4 +1,4 @@
-export type GetUrlResponse = {
+export declare type GetUrlResponse = {
     statusCode: number;
     statusMessage: string;
     headers: {
@@ -6,7 +6,7 @@ export type GetUrlResponse = {
     };
     body: Uint8Array;
 };
-export type Options = {
+export declare type Options = {
     method?: string;
     allowGzip?: boolean;
     body?: Uint8Array;

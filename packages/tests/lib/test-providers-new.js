@@ -14,7 +14,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     function verb(n) { return function (v) { return step([n, v]); }; }
     function step(op) {
         if (f) throw new TypeError("Generator is already executing.");
-        while (g && (g = 0, op[0] && (_ = 0)), _) try {
+        while (_) try {
             if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
             if (y = 0, t) op = [op[0] & 2, t.value];
             switch (op[0]) {
@@ -138,7 +138,7 @@ describe("Test Providers", function () {
                             return [2 /*return*/, response.data.result];
                         case 2:
                             error_1 = _a.sent();
-                            throw new Error("Error fetching block: ".concat(error_1.message));
+                            throw new Error("Error fetching block: " + error_1.message);
                         case 3: return [2 /*return*/];
                     }
                 });
@@ -162,7 +162,7 @@ describe("Test Providers", function () {
                             return [2 /*return*/, response.data.result];
                         case 2:
                             error_2 = _a.sent();
-                            throw new Error("Error fetching block: ".concat(error_2.message));
+                            throw new Error("Error fetching block: " + error_2.message);
                         case 3: return [2 /*return*/];
                     }
                 });
@@ -203,7 +203,7 @@ describe("Test Providers", function () {
                             return [4 /*yield*/, waiter(5000)];
                         case 4:
                             _b.sent();
-                            console.log("Transaction hash for type ".concat(typeValue, ": "), txResponse.hash);
+                            console.log("Transaction hash for type " + typeValue + ": ", txResponse.hash);
                             return [2 /*return*/, txResponse];
                         case 5:
                             e_1 = _b.sent();
@@ -235,7 +235,7 @@ describe("Test Providers", function () {
                             return [2 /*return*/, response.data.result];
                         case 2:
                             error_3 = _a.sent();
-                            throw new Error("Error fetching block: ".concat(error_3.message));
+                            throw new Error("Error fetching block: " + error_3.message);
                         case 3: return [2 /*return*/];
                     }
                 });
@@ -262,7 +262,7 @@ describe("Test Providers", function () {
                             return [2 /*return*/, response.data.result];
                         case 2:
                             error_4 = _a.sent();
-                            throw new Error("Error fetching block: ".concat(error_4.message));
+                            throw new Error("Error fetching block: " + error_4.message);
                         case 3: return [2 /*return*/];
                     }
                 });
@@ -288,7 +288,7 @@ describe("Test Providers", function () {
                             return [2 /*return*/, response.data.result];
                         case 2:
                             error_5 = _a.sent();
-                            throw new Error("Error fetching block: ".concat(error_5.message));
+                            throw new Error("Error fetching block: " + error_5.message);
                         case 3: return [2 /*return*/];
                     }
                 });

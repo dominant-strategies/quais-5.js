@@ -1,16 +1,16 @@
 import { BigNumber, BigNumberish } from "@quais/bignumber";
 import { BytesLike, SignatureLike } from "@quais/bytes";
-export type AccessList = Array<{
+export declare type AccessList = Array<{
     address: string;
     storageKeys: Array<string>;
 }>;
-export type AccessListish = AccessList | Array<[string, Array<string>]> | Record<string, Array<string>>;
+export declare type AccessListish = AccessList | Array<[string, Array<string>]> | Record<string, Array<string>>;
 export declare enum TransactionTypes {
     standard = 0,
     etx = 1,
     standardETx = 2
 }
-export type UnsignedTransaction = {
+export declare type UnsignedTransaction = {
     to?: string;
     nonce?: number;
     gasLimit?: BigNumberish;

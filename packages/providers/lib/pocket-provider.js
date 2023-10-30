@@ -81,7 +81,7 @@ var PocketProvider = /** @class */ (function (_super) {
                     value: network
                 });
         }
-        var url = "https://".concat(host, "/v1/lb/").concat(apiKey.applicationId);
+        var url = "https://" + host + "/v1/lb/" + apiKey.applicationId;
         var connection = { headers: {}, url: url };
         if (apiKey.applicationSecretKey != null) {
             connection.user = "";

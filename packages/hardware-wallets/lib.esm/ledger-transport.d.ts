@@ -1,5 +1,5 @@
 import u2f from "@ledgerhq/hw-transport-u2f";
-export type TransportCreator = {
+export declare type TransportCreator = {
     create: () => Promise<u2f.Transport>;
 };
 export declare const transports: {

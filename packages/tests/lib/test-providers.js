@@ -14,7 +14,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     function verb(n) { return function (v) { return step([n, v]); }; }
     function step(op) {
         if (f) throw new TypeError("Generator is already executing.");
-        while (g && (g = 0, op[0] && (_ = 0)), _) try {
+        while (_) try {
             if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
             if (y = 0, t) op = [op[0] & 2, t.value];
             switch (op[0]) {
@@ -204,7 +204,7 @@ Object.keys(blockchainData).forEach(function (network) {
                         case 1:
                             value = _a.sent();
                             Object.keys(expected).forEach(function (key) {
-                                equals("".concat(name, ".").concat(key), value[key], expected[key]);
+                                equals(name + "." + key, value[key], expected[key]);
                             });
                             return [2 /*return*/];
 =======
@@ -243,25 +243,25 @@ Object.keys(blockchainData).forEach(function (network) {
     // - ENS name
     tests.addresses.forEach(function (test) {
         if (test.balance) {
-            addSimpleTest("fetches account balance: ".concat(test.address), function (provider) {
+            addSimpleTest("fetches account balance: " + test.address, function (provider) {
                 return provider.getBalance(test.address);
             }, test.balance);
         }
 <<<<<<< HEAD
         if (test.code) {
-            addSimpleTest("fetches account code: ".concat(test.address), function (provider) {
+            addSimpleTest("fetches account code: " + test.address, function (provider) {
                 return provider.getCode(test.address);
             }, test.code);
         }
         if (test.storage) {
             Object.keys(test.storage).forEach(function (position) {
-                addSimpleTest("fetches storage: ".concat(test.address, ":").concat(position), function (provider) {
+                addSimpleTest("fetches storage: " + test.address + ":" + position, function (provider) {
                     return provider.getStorageAt(test.address, bnify(position));
                 }, test.storage[position]);
             });
         }
         if (test.name) {
-            addSimpleTest("fetches ENS name: ".concat(test.address), function (provider) {
+            addSimpleTest("fetches ENS name: " + test.address, function (provider) {
                 return provider.resolveName(test.name);
             }, test.address);
 =======
@@ -389,12 +389,12 @@ Object.keys(blockchainData).forEach(function (network) {
         }
     });
     tests.blocks.forEach(function (test) {
-        addObjectTest("fetches block (by number) #".concat(test.number), function (provider) {
+        addObjectTest("fetches block (by number) #" + test.number, function (provider) {
             return provider.getBlock(test.number);
         }, test);
     });
     tests.blocks.forEach(function (test) {
-        addObjectTest("fetches block (by hash) ".concat(test.hash), function (provider) {
+        addObjectTest("fetches block (by hash) " + test.hash, function (provider) {
             return provider.getBlock(test.hash);
         }, test, function (provider, network, test) {
             return (provider === "EtherscanProvider");
@@ -402,7 +402,7 @@ Object.keys(blockchainData).forEach(function (network) {
     });
     tests.transactions.forEach(function (test) {
         var hash = test.hash;
-        addObjectTest("fetches transaction ".concat(hash), function (provider) { return __awaiter(void 0, void 0, void 0, function () {
+        addObjectTest("fetches transaction " + hash, function (provider) { return __awaiter(void 0, void 0, void 0, function () {
             var tx;
             return __generator(this, function (_a) {
                 switch (_a.label) {
@@ -425,7 +425,7 @@ Object.keys(blockchainData).forEach(function (network) {
     });
     tests.transactionReceipts.forEach(function (test) {
         var hash = test.transactionHash;
-        addObjectTest("fetches transaction receipt ".concat(hash), function (provider) { return __awaiter(void 0, void 0, void 0, function () {
+        addObjectTest("fetches transaction receipt " + hash, function (provider) { return __awaiter(void 0, void 0, void 0, function () {
             var receipt;
             return __generator(this, function (_a) {
                 switch (_a.label) {
@@ -455,7 +455,7 @@ Object.keys(blockchainData).forEach(function (network) {
     function addErrorTest(code, func) {
         var _this = this;
         testFunctions.push({
-            name: "throws correct ".concat(code, " error"),
+            name: "throws correct " + code + " error",
             networks: ["goerli"],
             checkSkip: function (provider, network, test) {
                 return false;
@@ -475,7 +475,7 @@ Object.keys(blockchainData).forEach(function (network) {
                             return [3 /*break*/, 3];
                         case 2:
                             error_1 = _a.sent();
-                            assert_1.default.equal(error_1.code, code, "incorrect error thrown: actual:".concat(error_1.code, " != expected:").concat(code));
+                            assert_1.default.equal(error_1.code, code, "incorrect error thrown: actual:" + error_1.code + " != expected:" + code);
                             return [3 /*break*/, 3];
                         case 3: return [2 /*return*/];
 =======
@@ -565,7 +565,7 @@ describe.skip("Test Provider Methods", function () {
                 // Get some ether from the faucet
                 //const funder = await quais.utils.fetchJson(`https:/\/api.quais.io/api/v1/?action=fundAccount&address=${ fundWallet.address.toLowerCase() }`);
                 fundReceipt = (0, utils_1.fundAddress)(fundWallet.address).then(function (hash) {
-                    console.log("*** Funded: ".concat(fundWallet.address));
+                    console.log("*** Funded: " + fundWallet.address);
                     return hash;
 =======
             cyprus1Destination = '0x193399fa97ae9762a186e921582cedb0987d9470';
@@ -738,7 +738,7 @@ describe.skip("Test Provider Methods", function () {
                     accum[key] = true;
                     return accum;
                 }, {});
-                it("".concat(name, ".").concat(network ? network : "default", " ").concat(test.name), function () {
+                it(name + "." + (network ? network : "default") + " " + test.name, function () {
                     return __awaiter(this, void 0, void 0, function () {
                         var error, attempt, result, attemptError_1;
                         return __generator(this, function (_a) {
@@ -777,7 +777,7 @@ describe.skip("Test Provider Methods", function () {
                                     return [2 /*return*/, result];
                                 case 8:
                                     attemptError_1 = _a.sent();
-                                    console.log("*** Failed attempt ".concat(attempt + 1, ": ").concat(attemptError_1.message));
+                                    console.log("*** Failed attempt " + (attempt + 1) + ": " + attemptError_1.message);
                                     error = attemptError_1;
                                     // On failure, wait 5s
                                     return [4 /*yield*/, waiter(5000)];
