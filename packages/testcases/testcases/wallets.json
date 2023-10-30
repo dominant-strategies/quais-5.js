@@ -1,0 +1,92 @@
+[
+ {
+  "name": "crowdsale_null",
+  "type": "crowdsale",
+  "hasAddress": false,
+  "address": "0x0b88d4b324ec24c8c078551e6e5075547157e5b6",
+  "privateKey": "0xd4375d2a931db84ea8825b69a3128913597744d9236cacec675cc18e1bda4446",
+  "mnemonic": null,
+  "password": "",
+  "json": "{\"encseed\": \"3a7cc89f7d53d44d6e6445a2cf7fa359598f7914e1b4f808a1b55a13ea4cc71a5529782ba169bb0b169b29e4160c2d4d3167ed282267634ae326379cdf400bf82bc9512be11169bc1822fef4a17b9cf4ad685544ddfc793eafee573650f19185\", \"ethaddr\": \"0b88d4b324ec24c8c078551e6e5075547157e5b6\", \"email\": \"me@ricmoo.com\", \"btcaddr\": \"13pey9DLvYxeftGaGF1xgTfPYNmhu1fbm3\"}"
+ },
+ {
+  "name": "crowdsale_password",
+  "type": "crowdsale",
+  "hasAddress": false,
+  "address": "0x2e326fa404fc3661de4f4361776ed9bbabdc26e3",
+  "privateKey": "0xcf367fc32bf789b3339c6664af4a12263e9db0e0eb70f247da1d1165e150c487",
+  "mnemonic": null,
+  "password": "foo",
+  "json": "{\"encseed\": \"e695362f72ab0a364385f35a3435300188300ee5220c03dcbcf461c62432b6679ab163abf476aefa5f8cf366eea73c8b7e28e8c0a79ef819634bb8ee1875253d05b3825076c514063a7ccd8f0f79ba352799571f8ec8b749f8508a638a9a891d\", \"ethaddr\": \"2e326fa404fc3661de4f4361776ed9bbabdc26e3\", \"email\": \"me@ricmoo.com\", \"btcaddr\": \"1GW9wXcbtFNV6N6Mxje82Tmjk2iB9fffaj\"}"
+ },
+ {
+  "name": "ethers1",
+  "type": "secret-storage",
+  "hasAddress": true,
+  "address": "0x012363d61bdc53d0290a0f25e9c89f8257550fb8",
+  "privateKey": "0x4c94faa2c558a998d10ee8b2b9b8eb1fbcb8a6ac5fd085c6f95535604fc1bffb",
+  "mnemonic": "service basket parent alcohol fault similar survey twelve hockey cloud walk panel",
+  "password": "password",
+  "json": "{\"address\":\"012363d61bdc53d0290a0f25e9c89f8257550fb8\",\"id\":\"5ba8719b-faf9-49ec-8bca-21522e3d56dc\",\"version\":3,\"Crypto\":{\"cipher\":\"aes-128-ctr\",\"cipherparams\":{\"iv\":\"bc0473d60284d2d6994bb6793e916d06\"},\"ciphertext\":\"e73ed0b0c53bcaea4516a15faba3f6d76dbe71b9b46a460ed7e04a68e0867dd7\",\"kdf\":\"scrypt\",\"kdfparams\":{\"salt\":\"97f0b6e17c392f76a726ceea02bac98f17265f1aa5cf8f9ad1c2b56025bc4714\",\"n\":131072,\"dklen\":32,\"p\":1,\"r\":8},\"mac\":\"ff4f2db7e7588f8dd41374d7b98dfd7746b554c0099a6c0765be7b1c7913e1f3\"},\"x-ethers\":{\"client\":\"ethers.js\",\"gethFilename\":\"UTC--2018-01-27T01-52-22.0Z--012363d61bdc53d0290a0f25e9c89f8257550fb8\",\"mnemonicCounter\":\"70224accc00e35328a010a19fef51121\",\"mnemonicCiphertext\":\"cf835e13e4f90b190052263dbd24b020\",\"version\":\"0.1\"}}\n"
+ },
+ {
+  "name": "ethers2",
+  "type": "secret-storage",
+  "hasAddress": true,
+  "address": "0x15db397ed5f682acb22b0afc6c8de4cdfbda7cbc",
+  "privateKey": "0xcdf3c34a2ea0ff181f462856168f5851e68c37b583eb158403e43aeab4964fee",
+  "mnemonic": "debris glass rich exotic window other film slow expose flight either wealth",
+  "password": "password",
+  "json": "{\"version\":3,\"id\":\"05D302EE-23DC-48C4-B89C-CAAAC1C780C4\",\"x-ethers\":{\"gethFilename\":\"UTC--2018-01-26T20-25-02.0Z--15db397ed5f682acb22b0afc6c8de4cdfbda7cbc\",\"mnemonicCiphertext\":\"b92c7c3da540ae7beee55365fb330c33\",\"mnemonicCounter\":\"a65d689a73c096025f2acae3f7068510\",\"client\":\"ethers/iOS\",\"version\":\"0.1\"},\"Crypto\":{\"ciphertext\":\"fa6ff2374087a089ec9fcba3bc21389f5e26ec2932c95b608ebe0218efab83c6\",\"cipherparams\":{\"iv\":\"5ddca45b254406516ca2c97d18d5dfd9\"},\"kdf\":\"scrypt\",\"kdfparams\":{\"r\":8,\"p\":1,\"n\":262144,\"dklen\":32,\"salt\":\"864a474f8586ab0fa97ed9240ae6227b2b22b48bdf298137c355e4a07eb19831\"},\"mac\":\"eaa89325acedbf88c0893e53c8c8d426b590655746c66da9cd76e4f72d84084f\",\"cipher\":\"aes-128-ctr\"},\"address\":\"15db397ed5f682acb22b0afc6c8de4cdfbda7cbc\"}\n"
+ },
+ {
+  "name": "issue_582",
+  "type": "secret-storage",
+  "hasAddress": false,
+  "address": "0x008aeeda4d805471df9b2a5b0f38a0c3bcba786b",
+  "privateKey": "0x7a28b5ba57c53603b0b07b56bba752f7784bf506fa95edc395f5cf6c7514fe9d",
+  "mnemonic": null,
+  "password": "testpassword",
+  "json": "{\"crypto\":{\"cipher\":\"aes-128-ctr\",\"cipherparams\":{\"iv\":\"6087dab2f9fdbbfaddc31a909735c1e6\"},\"ciphertext\":\"5318b4d5bcd28de64ee5559e671353e16f075ecae9f99c7a79a38af5f869aa46\",\"kdf\":\"pbkdf2\",\"kdfparams\":{\"c\":262144,\"dklen\":32,\"prf\":\"hmac-sha256\",\"salt\":\"ae3cd4e7013836a3df6bd7241b12db061dbe2c6785853cce422d148a624ce0bd\"},\"mac\":\"517ead924a9d0dc3124507e3393d175ce3ff7c1e96529c6c555ce9e51205e9b2\"},\"id\":\"3198bc9c-6672-5ab3-d995-4942343ae5b6\",\"version\":3}\n"
+ },
+ {
+  "name": "life",
+  "type": "secret-storage",
+  "hasAddress": true,
+  "address": "0x17c5185167401ed00cf5f5b2fc97d9bbfdb7d025",
+  "privateKey": "0x4242424242424242424242424242424242424242424242424242424242424242",
+  "mnemonic": null,
+  "password": "foo",
+  "json": "{\"address\":\"17c5185167401ed00cf5f5b2fc97d9bbfdb7d025\",\"id\":\"01234567-8901-4345-a789-012345678901\",\"version\":3,\"Crypto\":{\"cipher\":\"aes-128-ctr\",\"cipherparams\":{\"iv\":\"deadbeef1deadbeef2deadbeef301234\"},\"ciphertext\":\"cea502df4b9405fa2b6d8d19ec4e2953c5ce08e0e01d4c0292512ce62baef8f3\",\"kdf\":\"scrypt\",\"kdfparams\":{\"salt\":\"abcd1abcd2abcd3abcd4abcd5abcd6ef\",\"n\":1024,\"dklen\":32,\"p\":2,\"r\":4},\"mac\":\"6e0a8e2409261d464e35a251f4b1fddd6ad0f7045a18d3957c127387f1c0de72\"}}\n"
+ },
+ {
+  "name": "parity",
+  "type": "secret-storage",
+  "hasAddress": true,
+  "address": "0x00a329c0648769a73afac7f9381e08fb43dbea72",
+  "privateKey": "0x4d5db4107d237df6a3d58ee5f70ae63d73d7658d4026f2eefd2f204c81682cb7",
+  "mnemonic": null,
+  "password": "",
+  "json": "{\"id\":\"a9b7570b-fd36-8a32-f4ea-26080a941143\",\"version\":3,\"crypto\":{\"cipher\":\"aes-128-ctr\",\"cipherparams\":{\"iv\":\"1de99c07c6592eaac911ae9cf07db88d\"},\"ciphertext\":\"951ca34a268314c0cde0409566bcac4d4907dc87f34764fe8542786415cb5726\",\"kdf\":\"pbkdf2\",\"kdfparams\":{\"c\":10240,\"dklen\":32,\"prf\":\"hmac-sha256\",\"salt\":\"7d2ebe49878f15e031bcdf9f0be47e7d49542252145850b7862a08a0c209a0e9\"},\"mac\":\"dc595787a3d08d98e2d808a981b8e9566d8ed1087c0257481ffc1196e13d8c0a\"},\"address\":\"00a329c0648769a73afac7f9381e08fb43dbea72\",\"name\":\"Blank\",\"meta\":\"{\\\"passwordHint\\\":\\\"\\\",\\\"timestamp\\\":1495227675346}\"}"
+ },
+ {
+  "name": "secretstorage_null",
+  "type": "secret-storage",
+  "hasAddress": true,
+  "address": "0x4a9cf99357f5789251a8d7fad5b86d0f31eeb938",
+  "privateKey": "0xa016182717223d01f776149ec0b4a217d0e9930cad263f205427c6d3cd5560e7",
+  "mnemonic": null,
+  "password": "",
+  "json": "{\"address\":\"4a9cf99357f5789251a8d7fad5b86d0f31eeb938\",\"Crypto\":{\"cipher\":\"aes-128-ctr\",\"ciphertext\":\"f93a875c23f5430bb86962da1ff2176d5b9179cfdd31e93027d67b0123e7a059\",\"cipherparams\":{\"iv\":\"5fb35020cc5e84447a4b8a3a39543dbe\"},\"kdf\":\"scrypt\",\"kdfparams\":{\"dklen\":32,\"n\":262144,\"p\":1,\"r\":8,\"salt\":\"0d6bf5361b8c70745b8d03bb096876b27f00de2627b503b3f7c5ce9e8e70abe6\"},\"mac\":\"8f80f79e55cc36c231a00a69c43d603bd0cf8eb70bb9d77532cd7ddb56e4707e\"},\"id\":\"372b47d8-aba7-41a5-b3cd-a848b4f5aab1\",\"version\":3}\n"
+ },
+ {
+  "name": "secretstorage_password",
+  "type": "secret-storage",
+  "hasAddress": true,
+  "address": "0x88a5c2d9919e46f883eb62f7b8dd9d0cc45bc290",
+  "privateKey": "0xf03e581353c794928373fb0893bc731aefc4c4e234e643f3a46998b03cd4d7c5",
+  "mnemonic": null,
+  "password": "foo",
+  "json": "{\"address\":\"88a5c2d9919e46f883eb62f7b8dd9d0cc45bc290\",\"Crypto\":{\"cipher\":\"aes-128-ctr\",\"ciphertext\":\"10adcc8bcaf49474c6710460e0dc974331f71ee4c7baa7314b4a23d25fd6c406\",\"cipherparams\":{\"iv\":\"1dcdf13e49cea706994ed38804f6d171\"},\"kdf\":\"scrypt\",\"kdfparams\":{\"dklen\":32,\"n\":262144,\"p\":1,\"r\":8,\"salt\":\"bbfa53547e3e3bfcc9786a2cbef8504a5031d82734ecef02153e29daeed658fd\"},\"mac\":\"1cf53b5ae8d75f8c037b453e7c3c61b010225d916768a6b145adf5cf9cb3a703\"},\"id\":\"fb1280c0-d646-4e40-9550-7026b1be504a\",\"version\":3}\n"
+ }
+]

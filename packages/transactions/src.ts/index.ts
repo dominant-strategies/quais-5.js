@@ -330,6 +330,7 @@ function _parseStandardETx(payload: Uint8Array): Transaction {
     if (transaction.length === 8) { return tx; }
 
     tx.hash = keccak256(payload);
+    console.log('HERE')
     _parseEipSignature(tx, transaction.slice(14), _serializeStandardETx);
 
     return tx;

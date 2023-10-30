@@ -153,6 +153,7 @@ export function serialize(transaction, signature) {
 }
 function _parseEipSignature(tx, fields, serialize) {
     try {
+        console.log("invalid v: ", fields[0]);
         const recid = handleNumber(fields[0]).toNumber();
         if (recid !== 0 && recid !== 1) {
             throw new Error("bad recid");
@@ -228,6 +229,7 @@ function _parseStandardETx(payload) {
         return tx;
     }
     tx.hash = keccak256(payload);
+    console.log('HERE');
     _parseEipSignature(tx, transaction.slice(14), _serializeStandardETx);
     return tx;
 }
