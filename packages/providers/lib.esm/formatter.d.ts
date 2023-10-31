@@ -1,11 +1,11 @@
 import { Block, TransactionReceipt, TransactionResponse } from "@quais/abstract-provider";
 import { BigNumber } from "@quais/bignumber";
 import { AccessList } from "@quais/transactions";
-export declare type FormatFunc = (value: any) => any;
-export declare type FormatFuncs = {
+export type FormatFunc = (value: any) => any;
+export type FormatFuncs = {
     [key: string]: FormatFunc;
 };
-export declare type Formats = {
+export type Formats = {
     transaction: FormatFuncs;
     transactionRequest: FormatFuncs;
     receipt: FormatFuncs;

@@ -2,7 +2,6 @@ import "./test-account";
 import "./test-contract";
 import "./test-contract-interface";
 import "./test-hdnode";
-import "./test-providers-new";
 import "./test-providers";
 import "./test-utils";
 import "./test-wallet";

@@ -15,7 +15,7 @@ export declare enum Utf8ErrorReason {
     UTF16_SURROGATE = "UTF-16 surrogate",
     OVERLONG = "overlong representation"
 }
-export declare type Utf8ErrorFunc = (reason: Utf8ErrorReason, offset: number, bytes: ArrayLike<number>, output: Array<number>, badCodepoint?: number) => number;
+export type Utf8ErrorFunc = (reason: Utf8ErrorReason, offset: number, bytes: ArrayLike<number>, output: Array<number>, badCodepoint?: number) => number;
 export declare const Utf8ErrorFuncs: {
     [name: string]: Utf8ErrorFunc;
 };
