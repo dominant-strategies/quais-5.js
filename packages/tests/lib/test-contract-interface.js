@@ -587,7 +587,6 @@ describe('Test EIP-838 Error Codes', function () {
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
-                        console.log('Contract address: \n', addr);
                         contract = new quais_1.quais.Contract(addr, [
                             "function testError1(bool pass, address addr, uint256 value) pure returns (bool)",
                             "function testError2(bool pass, bytes data) pure returns (bool)",

@@ -24305,6 +24305,7 @@
 	        var address = this.address.bind(this);
 	        var bigNumber = this.bigNumber.bind(this);
 	        var bigNumberArray = this.bigNumberArray.bind(this);
+	        var numberArray = this.numberArray.bind(this);
 	        var blockTag = this.blockTag.bind(this);
 	        var data = this.data.bind(this);
 	        var hash = this.hash.bind(this);
@@ -24332,7 +24333,7 @@
 	            value: bigNumber,
 	            nonce: number,
 	            data: Formatter.allowNull(data),
-	            r: Formatter.allowNull(this.uint256),
+	            r: Formatter.allowNull(hex),
 	            s: Formatter.allowNull(hex),
 	            v: Formatter.allowNull(hex),
 	            raw: Formatter.allowNull(data),
@@ -24396,7 +24397,7 @@
 	            hash: Formatter.allowNull(hash),
 	            parentHash: hashArray,
 	            parentEntropy: bigNumberArray,
-	            number: bigNumberArray,
+	            number: numberArray,
 	            timestamp: number,
 	            nonce: Formatter.allowNull(hex),
 	            difficulty: bigNumber,
@@ -24460,9 +24461,12 @@
 	    Formatter.prototype.bigNumber = function (value) {
 	        return lib$2.BigNumber.from(value);
 	    };
+	    Formatter.prototype.numberArray = function (value) {
+	        return Array.from(value, function (item) { return (Number(item)); });
+	    };
 	    // Strict! Used on input.
 	    Formatter.prototype.bigNumberArray = function (value) {
-	        return Array.from(value);
+	        return Array.from(value, function (item) { return (lib$2.BigNumber.from(item)); });
 	    };
 	    // Requires a boolean, "true" or  "false"; returns a boolean
 	    Formatter.prototype.boolean = function (value) {

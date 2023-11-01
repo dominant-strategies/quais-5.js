@@ -22,6 +22,7 @@ export declare class Formatter {
     accessList(accessList: Array<any>): AccessList;
     number(number: any): number;
     bigNumber(value: any): BigNumber;
+    numberArray(value: any[]): Number[];
     bigNumberArray(value: any): BigNumber[];
     boolean(value: any): boolean;
     hex(value: any, strict?: boolean): string;

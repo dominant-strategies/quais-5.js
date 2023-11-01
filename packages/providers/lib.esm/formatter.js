@@ -18,6 +18,7 @@ export class Formatter {
         const address = this.address.bind(this);
         const bigNumber = this.bigNumber.bind(this);
         const bigNumberArray = this.bigNumberArray.bind(this);
+        const numberArray = this.numberArray.bind(this);
         const blockTag = this.blockTag.bind(this);
         const data = this.data.bind(this);
         const hash = this.hash.bind(this);
@@ -45,7 +46,7 @@ export class Formatter {
             value: bigNumber,
             nonce: number,
             data: Formatter.allowNull(data),
-            r: Formatter.allowNull(this.uint256),
+            r: Formatter.allowNull(hex),
             s: Formatter.allowNull(hex),
             v: Formatter.allowNull(hex),
             raw: Formatter.allowNull(data),
@@ -109,7 +110,7 @@ export class Formatter {
             hash: Formatter.allowNull(hash),
             parentHash: hashArray,
             parentEntropy: bigNumberArray,
-            number: bigNumberArray,
+            number: numberArray,
             timestamp: number,
             nonce: Formatter.allowNull(hex),
             difficulty: bigNumber,
@@ -173,9 +174,12 @@ export class Formatter {
     bigNumber(value) {
         return BigNumber.from(value);
     }
+    numberArray(value) {
+        return Array.from(value, item => (Number(item)));
+    }
     // Strict! Used on input.
     bigNumberArray(value) {
-        return Array.from(value);
+        return Array.from(value, item => (BigNumber.from(item)));
     }
     // Requires a boolean, "true" or  "false"; returns a boolean
     boolean(value) {
