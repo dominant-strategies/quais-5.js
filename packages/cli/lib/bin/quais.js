@@ -30,7 +30,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     function verb(n) { return function (v) { return step([n, v]); }; }
     function step(op) {
         if (f) throw new TypeError("Generator is already executing.");
-        while (_) try {
+        while (g && (g = 0, op[0] && (_ = 0)), _) try {
             if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
             if (y = 0, t) op = [op[0] & 2, t.value];
             switch (op[0]) {
@@ -210,8 +210,8 @@ var SandboxPlugin = /** @class */ (function (_super) {
         });
     };
     SandboxPlugin.prototype.run = function () {
-        console.log("version: " + quais_1.quais.version);
-        console.log("network: " + this.network.name + " (chainId: " + this.network.chainId + ")");
+        console.log("version: ".concat(quais_1.quais.version));
+        console.log("network: ".concat(this.network.name, " (chainId: ").concat(this.network.chainId, ")"));
         var filename = (0, path_1.resolve)(process.cwd(), "./sandbox.js");
         var prompt = (this.provider ? this.network.name : "no-network") + "> ";
         var evaluate = function (code, context, file, _callback) {
@@ -231,7 +231,7 @@ var SandboxPlugin = /** @class */ (function (_super) {
                     if (leftover.trim()) {
                         // After the first line, the prompt is "... "
                         console.log(repeat("-", ((loc.line === 1) ? prompt.length : 4) + loc.column - 1) + "^");
-                        console.log("Syntax Error! " + error.message);
+                        console.log("Syntax Error! ".concat(error.message));
                     }
                     else {
                         error = new repl_1.default.Recoverable(error);
@@ -453,15 +453,15 @@ var InfoPlugin = /** @class */ (function (_super) {
                         this.queries = [];
                         runners = [];
                         this.accounts.forEach(function (account, index) {
-                            _this.queries.push("Account #" + index);
+                            _this.queries.push("Account #".concat(index));
                             runners.push(account.getAddress());
                         });
                         args.forEach(function (arg) {
                             if (quais_1.quais.utils.isAddress(arg)) {
-                                _this.queries.push("Address: " + arg);
+                                _this.queries.push("Address: ".concat(arg));
                             }
                             else {
-                                _this.queries.push("ENS Name: " + arg);
+                                _this.queries.push("ENS Name: ".concat(arg));
                             }
                             runners.push(_this.provider.resolveName(arg));
                         });

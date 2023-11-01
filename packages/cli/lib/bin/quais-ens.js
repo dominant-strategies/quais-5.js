@@ -30,7 +30,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     function verb(n) { return function (v) { return step([n, v]); }; }
     function step(op) {
         if (f) throw new TypeError("Generator is already executing.");
-        while (_) try {
+        while (g && (g = 0, op[0] && (_ = 0)), _) try {
             if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
             if (y = 0, t) op = [op[0] & 2, t.value];
             switch (op[0]) {
@@ -1325,7 +1325,7 @@ function formatDate(date) {
         date.getFullYear(),
         zpad(date.getMonth() + 1, 2),
         zpad(date.getDate(), 2)
-    ].join("-") + (" (" + count + " days from now)");
+    ].join("-") + " (".concat(count, " days from now)");
 }
 var RenewPlugin = /** @class */ (function (_super) {
     __extends(RenewPlugin, _super);
@@ -1410,7 +1410,7 @@ var RenewPlugin = /** @class */ (function (_super) {
                         args.forEach(function (arg) {
                             var comps = arg.split(".");
                             if (comps.length !== 2 || comps[1] !== "eth") {
-                                _this.throwError("name not supported " + JSON.stringify(arg));
+                                _this.throwError("name not supported ".concat(JSON.stringify(arg)));
                             }
                             labels.push(comps[0]);
                         });
@@ -1444,20 +1444,20 @@ var RenewPlugin = /** @class */ (function (_super) {
                     case 5:
                         expiration = (_a.sent()).toNumber();
                         if (expiration === 0) {
-                            this.throwError("not registered: " + label);
+                            this.throwError("not registered: ".concat(label));
                         }
                         duration = this.duration ? this.duration : this.getDuration(expiration, this.until);
                         if (duration < 0) {
-                            this.throwError("bad duration: " + duration);
+                            this.throwError("bad duration: ".concat(duration));
                         }
                         return [4 /*yield*/, ethController.rentPrice(label, duration)];
                     case 6:
                         fee = (_a.sent()).mul(11).div(10);
-                        this.dump("Renew: " + label + ".eth", {
+                        this.dump("Renew: ".concat(label, ".eth"), {
                             "Current Expiry": formatDate(new Date(expiration * 1000)),
-                            "Duration": (duration / (24 * 60 * 60)) + " days",
+                            "Duration": "".concat((duration / (24 * 60 * 60)), " days"),
                             "Until": formatDate(new Date((expiration + duration) * 1000)),
-                            "Fee": quais_1.quais.utils.formatEther(fee) + " (+10% buffer)",
+                            "Fee": "".concat(quais_1.quais.utils.formatEther(fee), " (+10% buffer)"),
                         });
                         return [4 /*yield*/, ethController.renew(label, duration, {
                                 value: fee

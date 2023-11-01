@@ -136,7 +136,7 @@ var FixedFormat = /** @class */ (function () {
             return value;
         }
         if (typeof (value) === "number") {
-            value = "fixed128x" + value;
+            value = "fixed128x".concat(value);
         }
         var signed = true;
         var width = 128;

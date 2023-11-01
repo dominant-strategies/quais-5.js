@@ -51,7 +51,7 @@ function _pack(type, value, isArray) {
             logger.throwArgumentError("invalid bytes type", "type", type);
         }
         if ((0, bytes_1.arrayify)(value).byteLength !== size) {
-            logger.throwArgumentError("invalid value for " + type, "value", value);
+            logger.throwArgumentError("invalid value for ".concat(type), "value", value);
         }
         if (isArray) {
             return (0, bytes_1.arrayify)((value + Zeros).substring(0, 66));
@@ -63,7 +63,7 @@ function _pack(type, value, isArray) {
         var baseType_1 = match[1];
         var count = parseInt(match[2] || String(value.length));
         if (count != value.length) {
-            logger.throwArgumentError("invalid array length for " + type, "value", value);
+            logger.throwArgumentError("invalid array length for ".concat(type), "value", value);
         }
         var result_1 = [];
         value.forEach(function (value) {

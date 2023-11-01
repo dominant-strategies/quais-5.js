@@ -1,14 +1,14 @@
 import { quais } from "quais";
 import { Opcode } from "./opcodes";
-export declare type Location = {
+export type Location = {
     offset: number;
     line: number;
     length: number;
     source: string;
     statement: boolean;
 };
-export declare type AssembleVisitFunc = (node: Node, bytecode: string) => void;
-export declare type VisitFunc = (node: Node) => void;
+export type AssembleVisitFunc = (node: Node, bytecode: string) => void;
+export type VisitFunc = (node: Node) => void;
 export declare abstract class Node {
     readonly tag: string;
     readonly location: Location;
@@ -100,7 +100,7 @@ export declare class ScopeNode extends LabelledNode {
     children(): Array<Node>;
     static from(options: any): ScopeNode;
 }
-export declare type Operation = {
+export type Operation = {
     opcode: Opcode;
     offset: number;
     length: number;
@@ -121,12 +121,12 @@ export interface DataSource extends Array<number> {
     source: string;
     _freeze?: () => void;
 }
-export declare type NodeState = {
+export type NodeState = {
     node: Node;
     offset: number;
     bytecode: string;
 };
-export declare type AssemblerOptions = {
+export type AssemblerOptions = {
     filename?: string;
     retry?: number;
     positionIndependentCode?: boolean;
@@ -135,7 +135,7 @@ export declare type AssemblerOptions = {
     };
     target?: string;
 };
-export declare type ParserOptions = {
+export type ParserOptions = {
     ignoreWarnings?: boolean;
 };
 declare class Assembler {
@@ -168,7 +168,7 @@ export declare enum SemanticErrorSeverity {
     error = "error",
     warning = "warning"
 }
-export declare type SemanticError = {
+export type SemanticError = {
     readonly message: string;
     readonly severity: SemanticErrorSeverity;
     readonly node: Node;
