@@ -760,10 +760,13 @@ describe.skip("Test Provider Methods", function () {
                                 tx = _a.sent();
 <<<<<<< HEAD
                                 delete tx.wait;
+<<<<<<< HEAD
 =======
 >>>>>>> ad4d865 (fix dependencies and remove temnp files)
                                 console.log("Expected:", JSON.stringify(deployTx, null, 2));
                                 console.log("Actual:", JSON.stringify(tx, null, 2));
+=======
+>>>>>>> 8b8c455 (remove console.logs)
                                 equals('Fetch Contract deployment TX', tx, deployTx);
                                 return [2 /*return*/];
                         }

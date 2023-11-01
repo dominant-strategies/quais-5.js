@@ -446,8 +446,6 @@ describe("Test Providers", function () {
             return __awaiter(this, void 0, void 0, function* () {
                 const tx = yield globalCyprus1Provider.getTransaction(deployTx.hash);
                 delete tx.wait;
-                console.log("Expected:", JSON.stringify(deployTx, null, 2));
-                console.log("Actual:", JSON.stringify(tx, null, 2));
                 equals('Fetch Contract deployment TX', tx, deployTx);
             });
 >>>>>>> 5509cc6 (contract deploy test in test-providers.ts and code cleanup)
