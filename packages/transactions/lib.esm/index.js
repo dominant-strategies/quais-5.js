@@ -156,7 +156,6 @@ export function serialize(transaction, signature) {
 function _parseEipSignature(tx, fields, serialize) {
     try {
         const recid = handleNumber(fields[0]).toNumber();
-        console.log("Recid: ", recid);
         if (recid !== 0 && recid !== 1) {
             throw new Error("bad recid");
         }

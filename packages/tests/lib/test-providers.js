@@ -107,14 +107,21 @@ describe("Test Providers", function () {
                 var ethersContract, QuaisContract;
                 return __generator(this, function (_a) {
                     switch (_a.label) {
-<<<<<<< HEAD
-<<<<<<< HEAD
-                        case 0: return [4 /*yield*/, func(provider)];
+                        case 0: return [4 /*yield*/, hre.ethers.getContractFactory('QRC20')];
                         case 1:
-                            value = _a.sent();
-                            equals(name, expected, value);
-                            return [2 /*return*/];
-=======
+                            ethersContract = _a.sent();
+                            QuaisContract = new quais_1.quais.ContractFactory(ethersContract.interface.fragments, ethersContract.bytecode, walletWithProvider);
+                            return [4 /*yield*/, QuaisContract.deploy({ gasLimit: 4000000 })];
+                        case 2: return [2 /*return*/, _a.sent()];
+                    }
+                });
+            });
+        }
+        function fetchRPCTransaction(txHash) {
+            return __awaiter(this, void 0, void 0, function () {
+                var response, error_1;
+                return __generator(this, function (_a) {
+                    switch (_a.label) {
                         case 0:
                             _a.trys.push([0, 5, , 6]);
                             response = void 0;
@@ -138,34 +145,15 @@ describe("Test Providers", function () {
                             error_1 = _a.sent();
                             throw new Error("Error fetching block: ".concat(error_1.message));
                         case 6: return [2 /*return*/];
->>>>>>> 5509cc6 (contract deploy test in test-providers.ts and code cleanup)
-=======
-                        case 0: return [4 /*yield*/, hre.ethers.getContractFactory('QRC20')];
-                        case 1:
-                            ethersContract = _a.sent();
-                            QuaisContract = new quais_1.quais.ContractFactory(ethersContract.interface.fragments, ethersContract.bytecode, walletWithProvider);
-                            return [4 /*yield*/, QuaisContract.deploy({ gasLimit: 4000000 })];
-                        case 2: return [2 /*return*/, _a.sent()];
->>>>>>> ad4d865 (fix dependencies and remove temnp files)
                     }
                 });
             });
         }
-        function fetchRPCTransaction(txHash) {
+        function getRPCGasPrice(url) {
             return __awaiter(this, void 0, void 0, function () {
-                var response, error_1;
+                var response, error_2;
                 return __generator(this, function (_a) {
                     switch (_a.label) {
-<<<<<<< HEAD
-<<<<<<< HEAD
-                        case 0: return [4 /*yield*/, func(provider)];
-                        case 1:
-                            value = _a.sent();
-                            Object.keys(expected).forEach(function (key) {
-                                equals(name + "." + key, value[key], expected[key]);
-                            });
-                            return [2 /*return*/];
-=======
                         case 0:
                             _a.trys.push([0, 5, , 6]);
                             response = void 0;
@@ -187,111 +175,24 @@ describe("Test Providers", function () {
                             error_2 = _a.sent();
                             throw new Error("Error fetching block: ".concat(error_2.message));
                         case 6: return [2 /*return*/];
->>>>>>> 5509cc6 (contract deploy test in test-providers.ts and code cleanup)
-                    }
-                });
-            }); }
-        });
-    }
-    var tests = blockchainData[network];
-    // And address test case can have any of the following:
-    // - balance
-    // - code
-    // - storage
-    // - ENS name
-    tests.addresses.forEach(function (test) {
-        if (test.balance) {
-            addSimpleTest("fetches account balance: " + test.address, function (provider) {
-                return provider.getBalance(test.address);
-            }, test.balance);
-        }
-<<<<<<< HEAD
-        if (test.code) {
-            addSimpleTest("fetches account code: " + test.address, function (provider) {
-                return provider.getCode(test.address);
-            }, test.code);
-=======
-                        case 0:
-                            _a.trys.push([0, 2, , 3]);
-                            return [4 /*yield*/, axios_1.default.post(process.env.CYPRUS1URL || "http://localhost:8610", {
-                                    jsonrpc: "2.0",
-                                    method: "quai_getBlockByNumber",
-                                    params: [
-                                        txHash,
-                                    ],
-                                    id: 1
-                                })];
-                        case 1:
-                            response = _a.sent();
-                            return [2 /*return*/, response.data.result];
-                        case 2:
-                            error_1 = _a.sent();
-                            throw new Error("Error fetching block: ".concat(error_1.message));
-                        case 3: return [2 /*return*/];
-                    }
-                });
-            });
->>>>>>> ad4d865 (fix dependencies and remove temnp files)
-        }
-        function getRPCGasPrice(url) {
-            return __awaiter(this, void 0, void 0, function () {
-                var response, error_2;
-                return __generator(this, function (_a) {
-                    switch (_a.label) {
-                        case 0:
-                            _a.trys.push([0, 2, , 3]);
-                            return [4 /*yield*/, axios_1.default.post(url || "http://localhost:8610", {
-                                    jsonrpc: "2.0",
-                                    method: "quai_gasPrice",
-                                    params: [],
-                                    id: 1
-                                })];
-                        case 1:
-                            response = _a.sent();
-                            return [2 /*return*/, response.data.result];
-                        case 2:
-                            error_2 = _a.sent();
-                            throw new Error("Error fetching block: ".concat(error_2.message));
-                        case 3: return [2 /*return*/];
                     }
                 });
             });
         }
-<<<<<<< HEAD
-        if (test.name) {
-            addSimpleTest("fetches ENS name: " + test.address, function (provider) {
-                return provider.resolveName(test.name);
-            }, test.address);
-=======
         function sendTransaction(to) {
             return __awaiter(this, void 0, void 0, function () {
                 var txResponse, typeValue, prefix, gas, tx, e_1;
-=======
-        function sendTransaction(to) {
-            return __awaiter(this, void 0, void 0, function () {
-                var prefix, typeValue, gas, tx, txResponse, e_1;
->>>>>>> ad4d865 (fix dependencies and remove temnp files)
                 var _a;
                 return __generator(this, function (_b) {
                     switch (_b.label) {
                         case 0:
-<<<<<<< HEAD
                             _b.trys.push([0, 8, , 9]);
-                            txResponse = void 0;
-                            typeValue = 0;
                             _b.label = 1;
                         case 1:
                             prefix = to.substring(0, 4);
                             typeValue = (Number(prefix) > 29) ? 2 : 0;
                             return [4 /*yield*/, getRPCGasPrice(process.env.CYPRUS1URL)];
                         case 2:
-=======
-                            _b.trys.push([0, 5, , 6]);
-                            prefix = to.substring(0, 4);
-                            typeValue = (Number(prefix) > 29) ? 2 : 0;
-                            return [4 /*yield*/, getRPCGasPrice(process.env.CYPRUS1URL)];
-                        case 1:
->>>>>>> ad4d865 (fix dependencies and remove temnp files)
                             gas = _b.sent();
                             _a = {
                                 from: walletWithProvider.address,
@@ -302,11 +203,7 @@ describe("Test Providers", function () {
                                 maxPriorityFeePerGas: quais_1.quais.utils.parseUnits('1', 'gwei')
                             };
                             return [4 /*yield*/, globalCyprus1Provider.getTransactionCount(walletWithProvider.address, 'latest')];
-<<<<<<< HEAD
                         case 3:
-=======
-                        case 2:
->>>>>>> ad4d865 (fix dependencies and remove temnp files)
                             tx = (_a.nonce = _b.sent(),
                                 _a.data = '',
                                 _a.type = typeValue,
@@ -314,7 +211,6 @@ describe("Test Providers", function () {
                                 _a.chainId = Number(process.env.CHAINID),
                                 _a);
                             return [4 /*yield*/, walletWithProvider.sendTransaction(tx)];
-<<<<<<< HEAD
                         case 4:
                             txResponse = _b.sent();
                             return [4 /*yield*/, waiter(5000)];
@@ -397,78 +293,7 @@ describe("Test Providers", function () {
                         case 5:
                             error_4 = _a.sent();
                             throw new Error("Error fetching block: ".concat(error_4.message));
-=======
-                        case 3:
-                            txResponse = _b.sent();
-                            return [4 /*yield*/, waiter(5000)];
-                        case 4:
-                            _b.sent();
-                            console.log("Transaction hash for type ".concat(typeValue, ": "), txResponse.hash);
-                            return [2 /*return*/, txResponse];
-                        case 5:
-                            e_1 = _b.sent();
-                            console.error('Failed to send Transaction: ', e_1);
-                            return [2 /*return*/, null];
->>>>>>> ad4d865 (fix dependencies and remove temnp files)
                         case 6: return [2 /*return*/];
-                    }
-                });
-            });
-<<<<<<< HEAD
->>>>>>> 5509cc6 (contract deploy test in test-providers.ts and code cleanup)
-=======
->>>>>>> ad4d865 (fix dependencies and remove temnp files)
-        }
-        function fetchRPCBalance(address, url) {
-            return __awaiter(this, void 0, void 0, function () {
-                var response, error_3;
-                return __generator(this, function (_a) {
-                    switch (_a.label) {
-                        case 0:
-                            _a.trys.push([0, 2, , 3]);
-                            return [4 /*yield*/, axios_1.default.post(url, {
-                                    jsonrpc: "2.0",
-                                    method: "quai_getBalance",
-                                    params: [
-                                        address,
-                                        'latest'
-                                    ],
-                                    id: 1
-                                })];
-                        case 1:
-                            response = _a.sent();
-                            return [2 /*return*/, response.data.result];
-                        case 2:
-                            error_3 = _a.sent();
-                            throw new Error("Error fetching block: ".concat(error_3.message));
-                        case 3: return [2 /*return*/];
-                    }
-                });
-            });
-        }
-        function fetchRPCBlock(blockNumber) {
-            return __awaiter(this, void 0, void 0, function () {
-                var response, error_4;
-                return __generator(this, function (_a) {
-                    switch (_a.label) {
-                        case 0:
-                            _a.trys.push([0, 2, , 3]);
-                            return [4 /*yield*/, axios_1.default.post(process.env.CYPRUS1URL || "http://localhost:8610", {
-                                    jsonrpc: "2.0",
-                                    method: "quai_getBlockByNumber",
-                                    params: [
-                                        blockNumber || '0xA',
-                                        false
-                                    ],
-                                    id: 1
-                                })];
-                        case 1:
-                            response = _a.sent();
-                            return [2 /*return*/, response.data.result];
-                        case 2:
-                            error_4 = _a.sent();
-                            throw new Error("Error fetching block: ".concat(error_4.message));
-                        case 3: return [2 /*return*/];
                     }
                 });
             });
@@ -479,24 +304,6 @@ describe("Test Providers", function () {
                 return __generator(this, function (_a) {
                     switch (_a.label) {
                         case 0:
-<<<<<<< HEAD
-                            _a.trys.push([0, 2, , 3]);
-                            return [4 /*yield*/, axios_1.default.post(url, {
-                                    jsonrpc: "2.0",
-                                    method: "quai_getTransactionReceipt",
-                                    params: [
-                                        hash
-                                    ],
-                                    id: 1
-                                })];
-                        case 1:
-                            response = _a.sent();
-                            return [2 /*return*/, response.data.result];
-                        case 2:
-                            error_5 = _a.sent();
-                            throw new Error("Error fetching block: ".concat(error_5.message));
-                        case 3: return [2 /*return*/];
-=======
                             _a.trys.push([0, 5, , 6]);
                             response = void 0;
                             _a.label = 1;
@@ -520,80 +327,13 @@ describe("Test Providers", function () {
                             error_5 = _a.sent();
                             throw new Error("Error fetching block: ".concat(error_5.message));
                         case 6: return [2 /*return*/];
->>>>>>> 5509cc6 (contract deploy test in test-providers.ts and code cleanup)
                     }
                 });
-<<<<<<< HEAD
-            }); }
-        });
-    }
-    // Wallet(id("foobar1234"))
-    addErrorTest(quais_1.quais.utils.Logger.errors.NONCE_EXPIRED, function (provider) { return __awaiter(_this, void 0, void 0, function () {
-        return __generator(this, function (_a) {
-<<<<<<< HEAD
-            return [2 /*return*/, provider.sendTransaction("0x02f86e05808459682f008459682f14830186a09475544911a6f2e69ceea374f3f7e5ea9c987ece098304cb2f80c001a0d9585a780dde9e7d8c855aacec0564054b49114931fd7e320e4e983009d864f7a050bee916f2770ef17367256d8bccfbc49885467a6ba27cf5cc57e8553c73a191")];
-        });
-    }); });
-    addErrorTest(quais_1.quais.utils.Logger.errors.INSUFFICIENT_FUNDS, function (provider) { return __awaiter(_this, void 0, void 0, function () {
-        var txProps, wallet, tx;
-        return __generator(this, function (_a) {
-            switch (_a.label) {
-                case 0:
-                    txProps = {
-                        to: "0x8ba1f109551bD432803012645Ac136ddd64DBA72",
-                        gasPrice: 9000000000,
-                        gasLimit: 21000,
-                        chainId: 5,
-                        value: 1,
-                    };
-                    wallet = quais_1.quais.Wallet.createRandom();
-                    return [4 /*yield*/, wallet.signTransaction(txProps)];
-                case 1:
-                    tx = _a.sent();
-                    return [2 /*return*/, provider.sendTransaction(tx)];
-            }
-        });
-    }); });
-    addErrorTest(quais_1.quais.utils.Logger.errors.INSUFFICIENT_FUNDS, function (provider) { return __awaiter(_this, void 0, void 0, function () {
-        var txProps, wallet;
-        return __generator(this, function (_a) {
-            txProps = {
-                to: "0x8ba1f109551bD432803012645Ac136ddd64DBA72",
-                gasPrice: 9000000000,
-                gasLimit: 21000,
-                value: 1,
-            };
-            wallet = quais_1.quais.Wallet.createRandom().connect(provider);
-            return [2 /*return*/, wallet.sendTransaction(txProps)];
-        });
-    }); });
-    addErrorTest(quais_1.quais.utils.Logger.errors.UNPREDICTABLE_GAS_LIMIT, function (provider) { return __awaiter(_this, void 0, void 0, function () {
-        return __generator(this, function (_a) {
-            return [2 /*return*/, provider.estimateGas({
-                    to: "0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e" // ENS contract
-                })];
-        });
-    }); });
-})();
-describe.skip("Test Provider Methods", function () {
-    var fundReceipt = null;
-    before(function () {
-        return __awaiter(this, void 0, void 0, function () {
-            return __generator(this, function (_a) {
-                this.timeout(300000);
-                // Get some ether from the faucet
-                //const funder = await quais.utils.fetchJson(`https:/\/api.quais.io/api/v1/?action=fundAccount&address=${ fundWallet.address.toLowerCase() }`);
-                fundReceipt = (0, utils_1.fundAddress)(fundWallet.address).then(function (hash) {
-                    console.log("*** Funded: " + fundWallet.address);
-                    return hash;
-=======
-=======
             });
         }
         var cyprus1Destination, cyprus2Destination, oldCyprus1Bal, globalCyprus1Provider, walletWithProvider, qrc20Contract, deployTx, block, internalTx, internalToExternalTx;
         var _this = this;
         return __generator(this, function (_a) {
->>>>>>> ad4d865 (fix dependencies and remove temnp files)
             cyprus1Destination = '0x193399fa97ae9762a186e921582cedb0987d9470';
             cyprus2Destination = '0x333f87cba94a5f121c3f8d7a4b4616e31f7859b4';
             this.timeout(60000);
@@ -611,23 +351,6 @@ describe.skip("Test Provider Methods", function () {
                             return [4 /*yield*/, fetchRPCBlock('0xA')];
                         case 3:
                             resBlock = _a.sent();
-<<<<<<< HEAD
-                            //Format block expected response
-=======
-                            return [4 /*yield*/, deployQRC20()];
-                        case 4:
-                            qrc20Contract = _a.sent();
-                            //await qrc20Contract.deployTransaction.wait();
-                            //console.log('Deploy Transaction: ', qrc20Contract.deployTransaction);
-                            return [4 /*yield*/, waiter(30000)];
-                        case 5:
-                            //await qrc20Contract.deployTransaction.wait();
-                            //console.log('Deploy Transaction: ', qrc20Contract.deployTransaction);
-                            _a.sent();
-                            return [4 /*yield*/, fetchRPCTransaction(qrc20Contract.deployTransaction.hash)];
-                        case 6:
-                            deployTx = _a.sent();
->>>>>>> ad4d865 (fix dependencies and remove temnp files)
                             block = {
                                 hash: resBlock.hash,
                                 number: resBlock.number.map(function (stringNumber) { return Number(stringNumber); }),
@@ -659,7 +382,6 @@ describe.skip("Test Provider Methods", function () {
                                 subManifest: resBlock.subManifest,
                                 totalEntropy: bnify(resBlock.totalEntropy),
                             };
-<<<<<<< HEAD
                             return [4 /*yield*/, deployQRC20()];
                         case 4:
                             qrc20Contract = _a.sent();
@@ -692,8 +414,6 @@ describe.skip("Test Provider Methods", function () {
                                 etxAccessList: null,
                                 confirmations: 1,
                             };
-=======
->>>>>>> ad4d865 (fix dependencies and remove temnp files)
                             return [2 /*return*/];
                     }
                 });
@@ -718,39 +438,9 @@ describe.skip("Test Provider Methods", function () {
                                 return [2 /*return*/];
                         }
                     });
-<<<<<<< HEAD
->>>>>>> 5509cc6 (contract deploy test in test-providers.ts and code cleanup)
-=======
->>>>>>> ad4d865 (fix dependencies and remove temnp files)
                 });
             });
-<<<<<<< HEAD
-<<<<<<< HEAD
-        });
-    });
-    after(function () {
-        return __awaiter(this, void 0, void 0, function () {
-            var hash;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0:
-                        this.timeout(300000);
-                        // Wait until the funding is complete
-                        return [4 /*yield*/, fundReceipt];
-                    case 1:
-                        // Wait until the funding is complete
-                        _a.sent();
-                        return [4 /*yield*/, (0, utils_1.returnFunds)(fundWallet)];
-                    case 2:
-                        hash = _a.sent();
-                        console.log("*** Sweep Transaction:", hash);
-                        return [2 /*return*/];
-                }
-=======
             it('should fetch deploy contract transaction', function () {
-=======
-            it.skip('should fetch deploy contract transaction', function () {
->>>>>>> ad4d865 (fix dependencies and remove temnp files)
                 return __awaiter(this, void 0, void 0, function () {
                     var tx;
                     return __generator(this, function (_a) {
@@ -758,24 +448,12 @@ describe.skip("Test Provider Methods", function () {
                             case 0: return [4 /*yield*/, globalCyprus1Provider.getTransaction(deployTx.hash)];
                             case 1:
                                 tx = _a.sent();
-<<<<<<< HEAD
                                 delete tx.wait;
-<<<<<<< HEAD
-=======
->>>>>>> ad4d865 (fix dependencies and remove temnp files)
-                                console.log("Expected:", JSON.stringify(deployTx, null, 2));
-                                console.log("Actual:", JSON.stringify(tx, null, 2));
-=======
->>>>>>> 8b8c455 (remove console.logs)
                                 equals('Fetch Contract deployment TX', tx, deployTx);
                                 return [2 /*return*/];
                         }
                     });
                 });
-<<<<<<< HEAD
->>>>>>> 5509cc6 (contract deploy test in test-providers.ts and code cleanup)
-=======
->>>>>>> ad4d865 (fix dependencies and remove temnp files)
             });
             it('should get account code', function () {
                 return __awaiter(this, void 0, void 0, function () {

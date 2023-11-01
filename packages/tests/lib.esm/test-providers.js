@@ -64,24 +64,8 @@ function equals(name, actual, expected) {
         if (typeof actual === 'string' && typeof expected === 'string') {
             assert.equal(actual.toLowerCase(), expected.toLowerCase(), name + " matches (case-insensitive)");
         }
-<<<<<<< HEAD
-<<<<<<< HEAD
-    });
-}
-const allNetworks = ["default", "homestead"];
-const providerFunctions = [
-    {
-        name: "getDefaultProvider",
-        networks: allNetworks,
-        create: (network) => {
-            if (network == "default") {
-                return quais.getDefaultProvider(process.env.CYPRUS1URL);
-            }
-            return quais.getDefaultProvider(process.env.CYPRUS1URL);
-=======
         else {
             assert.equal(actual, expected, name + " matches");
->>>>>>> ad4d865 (fix dependencies and remove temnp files)
         }
     }
 }
@@ -107,46 +91,6 @@ describe("Test Providers", function () {
                 return yield QuaisContract.deploy({ gasLimit: 4000000 });
             });
         }
-        function fetchRPCTransaction(txHash) {
-            return __awaiter(this, void 0, void 0, function* () {
-                try {
-                    const response = yield axios.post(process.env.CYPRUS1URL || "http://localhost:8610", {
-                        jsonrpc: "2.0",
-                        method: "quai_getBlockByNumber",
-                        params: [
-                            txHash,
-                        ],
-                        id: 1
-                    });
-                    return response.data.result;
-                }
-                catch (error) {
-                    throw new Error(`Error fetching block: ${error.message}`);
-                }
-            });
-        }
-        function getRPCGasPrice(url) {
-            return __awaiter(this, void 0, void 0, function* () {
-                try {
-                    const response = yield axios.post(url || "http://localhost:8610", {
-                        jsonrpc: "2.0",
-                        method: "quai_gasPrice",
-                        params: [],
-                        id: 1
-                    });
-                    return response.data.result;
-                }
-                catch (error) {
-                    throw new Error(`Error fetching block: ${error.message}`);
-                }
-            });
-        }
-<<<<<<< HEAD
-        if (test.name) {
-            addSimpleTest(`fetches ENS name: ${test.address}`, (provider) => {
-                return provider.resolveName(test.name);
-            }, test.address);
-=======
         function fetchRPCTransaction(txHash) {
             return __awaiter(this, void 0, void 0, function* () {
                 try {
@@ -189,9 +133,9 @@ describe("Test Providers", function () {
         }
         function sendTransaction(to) {
             return __awaiter(this, void 0, void 0, function* () {
+                let txResponse;
+                let typeValue;
                 try {
-                    let txResponse;
-                    let typeValue = 0;
                     do {
                         const prefix = to.substring(0, 4);
                         typeValue = (Number(prefix) > 29) ? 2 : 0;
@@ -212,29 +156,6 @@ describe("Test Providers", function () {
                         txResponse = yield walletWithProvider.sendTransaction(tx);
                         yield waiter(5000);
                     } while (txResponse.hash == null);
-=======
-        function sendTransaction(to) {
-            return __awaiter(this, void 0, void 0, function* () {
-                try {
-                    const prefix = to.substring(0, 4);
-                    const typeValue = (Number(prefix) > 29) ? 2 : 0;
-                    const gas = yield getRPCGasPrice(process.env.CYPRUS1URL);
-                    let tx = {
-                        from: walletWithProvider.address,
-                        to,
-                        value: quais.utils.parseEther('0.01'),
-                        gasPrice: gas,
-                        maxFeePerGas: gas,
-                        maxPriorityFeePerGas: quais.utils.parseUnits('1', 'gwei'),
-                        nonce: yield globalCyprus1Provider.getTransactionCount(walletWithProvider.address, 'latest'),
-                        data: '',
-                        type: typeValue,
-                        gasLimit: typeValue == 0 ? 21000 : 42000,
-                        chainId: Number(process.env.CHAINID),
-                    };
-                    const txResponse = yield walletWithProvider.sendTransaction(tx);
-                    yield waiter(5000);
->>>>>>> ad4d865 (fix dependencies and remove temnp files)
                     console.log(`Transaction hash for type ${typeValue}: `, txResponse.hash);
                     return txResponse;
                 }
@@ -243,7 +164,6 @@ describe("Test Providers", function () {
                     return null;
                 }
             });
-<<<<<<< HEAD
         }
         function fetchRPCBalance(address, url) {
             return __awaiter(this, void 0, void 0, function* () {
@@ -288,19 +208,10 @@ describe("Test Providers", function () {
                     throw new Error(`Error fetching block: ${error.message}`);
                 }
             });
->>>>>>> 5509cc6 (contract deploy test in test-providers.ts and code cleanup)
-=======
->>>>>>> ad4d865 (fix dependencies and remove temnp files)
         }
-        function fetchRPCBalance(address, url) {
+        function fetchRPCTxReceipt(hash, url) {
             return __awaiter(this, void 0, void 0, function* () {
                 try {
-<<<<<<< HEAD
-<<<<<<< HEAD
-                    const value = yield func(provider);
-                    console.log(value);
-                    assert.ok(false, "did not throw");
-=======
                     let response;
                     do {
                         response = yield axios.post(url, {
@@ -314,58 +225,10 @@ describe("Test Providers", function () {
                         waiter(5000);
                     } while (response.data.result.blockHash == null);
                     return response.data.result;
->>>>>>> 5509cc6 (contract deploy test in test-providers.ts and code cleanup)
-=======
-                    const response = yield axios.post(url, {
-                        jsonrpc: "2.0",
-                        method: "quai_getBalance",
-                        params: [
-                            address,
-                            'latest'
-                        ],
-                        id: 1
-                    });
-                    return response.data.result;
->>>>>>> ad4d865 (fix dependencies and remove temnp files)
                 }
                 catch (error) {
                     throw new Error(`Error fetching block: ${error.message}`);
                 }
-<<<<<<< HEAD
-<<<<<<< HEAD
-            })
-        });
-    }
-    // Wallet(id("foobar1234"))
-    addErrorTest(quais.utils.Logger.errors.NONCE_EXPIRED, (provider) => __awaiter(this, void 0, void 0, function* () {
-        return provider.sendTransaction("0x02f86e05808459682f008459682f14830186a09475544911a6f2e69ceea374f3f7e5ea9c987ece098304cb2f80c001a0d9585a780dde9e7d8c855aacec0564054b49114931fd7e320e4e983009d864f7a050bee916f2770ef17367256d8bccfbc49885467a6ba27cf5cc57e8553c73a191");
-    }));
-    addErrorTest(quais.utils.Logger.errors.INSUFFICIENT_FUNDS, (provider) => __awaiter(this, void 0, void 0, function* () {
-        const txProps = {
-            to: "0x8ba1f109551bD432803012645Ac136ddd64DBA72",
-            gasPrice: 9000000000,
-            gasLimit: 21000,
-            chainId: 5,
-            value: 1,
-        };
-        const wallet = quais.Wallet.createRandom();
-        const tx = yield wallet.signTransaction(txProps);
-        return provider.sendTransaction(tx);
-    }));
-    addErrorTest(quais.utils.Logger.errors.INSUFFICIENT_FUNDS, (provider) => __awaiter(this, void 0, void 0, function* () {
-        const txProps = {
-            to: "0x8ba1f109551bD432803012645Ac136ddd64DBA72",
-            gasPrice: 9000000000,
-            gasLimit: 21000,
-            value: 1,
-        };
-        const wallet = quais.Wallet.createRandom().connect(provider);
-        return wallet.sendTransaction(txProps);
-    }));
-    addErrorTest(quais.utils.Logger.errors.UNPREDICTABLE_GAS_LIMIT, (provider) => __awaiter(this, void 0, void 0, function* () {
-        return provider.estimateGas({
-            to: "0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e" // ENS contract
-=======
             });
         }
         before(() => __awaiter(this, void 0, void 0, function* () {
@@ -373,7 +236,6 @@ describe("Test Providers", function () {
             // globalCyprus2Provider = await new quais.providers.JsonRpcProvider(process.env.CYPRUS2URL || "http://localhost:8542");
             walletWithProvider = yield new quais.Wallet(hre.network.config.accounts[0], globalCyprus1Provider);
             const resBlock = yield fetchRPCBlock('0xA');
-            //Format block expected response
             block = {
                 hash: resBlock.hash,
                 number: resBlock.number.map((stringNumber) => Number(stringNumber)),
@@ -446,120 +308,6 @@ describe("Test Providers", function () {
             return __awaiter(this, void 0, void 0, function* () {
                 const tx = yield globalCyprus1Provider.getTransaction(deployTx.hash);
                 delete tx.wait;
-                equals('Fetch Contract deployment TX', tx, deployTx);
-            });
->>>>>>> 5509cc6 (contract deploy test in test-providers.ts and code cleanup)
-        });
-    }));
-})();
-describe.skip("Test Provider Methods", function () {
-    let fundReceipt = null;
-    before(function () {
-        return __awaiter(this, void 0, void 0, function* () {
-            this.timeout(300000);
-            // Get some ether from the faucet
-            //const funder = await quais.utils.fetchJson(`https:/\/api.quais.io/api/v1/?action=fundAccount&address=${ fundWallet.address.toLowerCase() }`);
-            fundReceipt = fundAddress(fundWallet.address).then((hash) => {
-                console.log(`*** Funded: ${fundWallet.address}`);
-                return hash;
-=======
->>>>>>> ad4d865 (fix dependencies and remove temnp files)
-            });
-        }
-        function fetchRPCBlock(blockNumber) {
-            return __awaiter(this, void 0, void 0, function* () {
-                try {
-                    const response = yield axios.post(process.env.CYPRUS1URL || "http://localhost:8610", {
-                        jsonrpc: "2.0",
-                        method: "quai_getBlockByNumber",
-                        params: [
-                            blockNumber || '0xA',
-                            false
-                        ],
-                        id: 1
-                    });
-                    return response.data.result;
-                }
-                catch (error) {
-                    throw new Error(`Error fetching block: ${error.message}`);
-                }
-            });
-        }
-        function fetchRPCTxReceipt(hash, url) {
-            return __awaiter(this, void 0, void 0, function* () {
-                try {
-                    const response = yield axios.post(url, {
-                        jsonrpc: "2.0",
-                        method: "quai_getTransactionReceipt",
-                        params: [
-                            hash
-                        ],
-                        id: 1
-                    });
-                    return response.data.result;
-                }
-                catch (error) {
-                    throw new Error(`Error fetching block: ${error.message}`);
-                }
-            });
-        }
-        before(() => __awaiter(this, void 0, void 0, function* () {
-            globalCyprus1Provider = yield new quais.providers.JsonRpcProvider(process.env.CYPRUS1URL || "http://localhost:8610");
-            // globalCyprus2Provider = await new quais.providers.JsonRpcProvider(process.env.CYPRUS2URL || "http://localhost:8542");
-            walletWithProvider = yield new quais.Wallet(hre.network.config.accounts[0], globalCyprus1Provider);
-            const resBlock = yield fetchRPCBlock('0xA');
-            qrc20Contract = yield deployQRC20();
-            //await qrc20Contract.deployTransaction.wait();
-            //console.log('Deploy Transaction: ', qrc20Contract.deployTransaction);
-            yield waiter(30000);
-            deployTx = yield fetchRPCTransaction(qrc20Contract.deployTransaction.hash);
-            block = {
-                hash: resBlock.hash,
-                number: resBlock.number.map((stringNumber) => Number(stringNumber)),
-                transactions: resBlock.transactions,
-                parentHash: resBlock.parentHash,
-                parentEntropy: resBlock.parentEntropy.map((entropy) => bnify(entropy)),
-                extTransactions: resBlock.extTransactions,
-                timestamp: Number(resBlock.timestamp),
-                nonce: resBlock.nonce,
-                difficulty: bnify(resBlock.difficulty),
-                gasLimit: bnify(resBlock.gasLimit),
-                gasUsed: bnify(resBlock.gasUsed),
-                miner: resBlock.miner,
-                extraData: resBlock.extraData,
-                transactionsRoot: resBlock.transactionsRoot,
-                stateRoot: resBlock.stateRoot,
-                receiptsRoot: resBlock.receiptsRoot,
-                baseFeePerGas: bnify(resBlock.baseFeePerGas),
-                extRollupRoot: resBlock.extRollupRoot,
-                extTransactionsRoot: resBlock.extTransactionsRoot,
-                location: resBlock.location,
-                manifestHash: resBlock.manifestHash,
-                mixHash: resBlock.mixHash,
-                order: resBlock.order,
-                parentDeltaS: resBlock.parentDeltaS.map((delta) => bnify(delta)),
-                sha3Uncles: resBlock.sha3Uncles,
-                size: bnify(resBlock.size),
-                uncles: resBlock.uncles,
-                subManifest: resBlock.subManifest,
-                totalEntropy: bnify(resBlock.totalEntropy),
-            };
-        }));
-        it('should fetch balance after internal tx', function () {
-            return __awaiter(this, void 0, void 0, function* () {
-                oldCyprus1Bal = yield fetchRPCBalance(cyprus1Destination, process.env.CYPRUS1URL || "http://localhost:8610");
-                internalTx = yield sendTransaction(cyprus1Destination);
-                const expectedBal = bnify(internalTx.value);
-                const balance = yield globalCyprus1Provider.getBalance(cyprus1Destination);
-                const actualBal = Number(balance) - Number(oldCyprus1Bal);
-                assert.equal(actualBal, Number(expectedBal));
-            });
-        });
-        it.skip('should fetch deploy contract transaction', function () {
-            return __awaiter(this, void 0, void 0, function* () {
-                const tx = yield globalCyprus1Provider.getTransaction(deployTx.hash);
-                console.log("Expected:", JSON.stringify(deployTx, null, 2));
-                console.log("Actual:", JSON.stringify(tx, null, 2));
                 equals('Fetch Contract deployment TX', tx, deployTx);
             });
         });

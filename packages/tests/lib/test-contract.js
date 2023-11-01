@@ -42,14 +42,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var assert_1 = __importDefault(require("assert"));
 var quais_1 = require("quais");
 var utils_1 = require("./utils");
-<<<<<<< HEAD
-<<<<<<< HEAD
-var test_contract_json_1 = __importDefault(require("./test-contract.json"));
-var provider = new quais_1.quais.providers.InfuraProvider("goerli", "49a0efa3aaee4fd99797bfa94d8ce2f1");
-//const provider = quais.getDefaultProvider("rinkeby");
-=======
-=======
->>>>>>> a1441d0 (tests for test-contract.ts)
 var hre = require("hardhat");
 var network = process.env.CYPRUS1URL || "http://localhost:8610";
 var provider = new quais_1.quais.providers.JsonRpcProvider(network);
@@ -64,10 +56,6 @@ function setUpContract() {
                     walletWithProvider = new quais_1.quais.Wallet(hre.network.config.accounts[0], provider);
                     QuaisContract = new quais_1.quais.ContractFactory(ethersContract.interface.fragments, ethersContract.bytecode, walletWithProvider);
                     return [4 /*yield*/, QuaisContract.deploy({ gasLimit: 4000000 }).then(function (contract) {
-<<<<<<< HEAD
-=======
-                            console.log("Contract: \n", contract);
->>>>>>> a1441d0 (tests for test-contract.ts)
                             return contract;
                         })];
                 case 2:
@@ -78,10 +66,6 @@ function setUpContract() {
         });
     });
 }
-<<<<<<< HEAD
->>>>>>> 42abdc1 (refactor test-contract-interface.ts to use runtime deployed contract)
-=======
->>>>>>> a1441d0 (tests for test-contract.ts)
 var TIMEOUT_PERIOD = 120000;
 function equals(name, actual, expected) {
     if (Array.isArray(expected)) {
