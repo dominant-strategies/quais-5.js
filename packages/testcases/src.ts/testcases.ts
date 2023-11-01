@@ -92,13 +92,11 @@ export interface SignedTransaction {
     signedTransaction: string
     unsignedTransaction: string;
 
-    signedTransactionChainId5: string
-    unsignedTransactionChainId5: string;
-
     nonce: number;
     gasLimit: string;
     gasPrice: string;
     to: string;
+    type: number;
     value: string;
     data: string;
 };

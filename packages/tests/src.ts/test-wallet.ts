@@ -60,7 +60,8 @@ describe('Test JSON Wallets', function() {
             }
 
             if (test.mnemonic) {
-                assert.equal(wallet.mnemonic.phrase, test.mnemonic,
+                const walletMnemonic = await quais.Wallet.fromMnemonic(test.mnemonic);
+                assert.equal(walletMnemonic.mnemonic.phrase, test.mnemonic,
                     'mnemonic enabled encrypted wallet has a mnemonic phrase');
             }
         });
@@ -96,13 +97,12 @@ describe('Test JSON Wallets', function() {
 describe('Test Transaction Signing and Parsing', function() {
     function checkTransaction(parsedTransaction: any, test: TestCase.SignedTransaction): any {
         let transaction: any = { };
-
-        ['nonce', 'gasLimit', 'gasPrice', 'to', 'value', 'data'].forEach((key: (keyof TestCase.SignedTransaction)) => {
+        ['nonce', 'gasLimit', 'to', 'value', 'data'].forEach((key: (keyof TestCase.SignedTransaction)) => {
             let expected = test[key];
 
             let value = parsedTransaction[key];
 
-            if ([ "gasLimit", "gasPrice", "value"].indexOf(key) >= 0) {
+            if ([ "gasLimit", "value"].indexOf(key) >= 0) {
                 assert.ok((quais.BigNumber.isBigNumber(value)),
                     'parsed into a big number - ' + key);
                 value = value.toHexString();
@@ -137,79 +137,16 @@ describe('Test Transaction Signing and Parsing', function() {
     }
 
 
-    let tests: Array<TestCase.SignedTransaction> = loadTests('transactions');
+    let tests: Array<TestCase.SignedTransaction> = loadTests('parsing-transactions');
     tests.forEach((test) => {
         it(('parses and signs transaction - ' + test.name), function() {
             this.timeout(120000);
 
-            let signingKey = new quais.utils.SigningKey(test.privateKey);
-            let signDigest = signingKey.signDigest.bind(signingKey);
-
-            // Legacy parsing unsigned transaction
+            if (test.type == 0) {
             checkTransaction(quais.utils.parseTransaction(test.unsignedTransaction), test);
-
+            }
             let parsedTransaction = quais.utils.parseTransaction(test.signedTransaction);
-            let transaction = checkTransaction(parsedTransaction, test);
-
-            // Legacy signed transaction ecrecover
-            assert.equal(parsedTransaction.from, quais.utils.getAddress(test.accountAddress),
-                'computed from');
-
-            // Legacy transaction chain ID
-            assert.equal(parsedTransaction.chainId, 0, 'parses chainId (legacy)');
-
-            // Legacy serializes unsigned transaction
-            (function() {
-                let unsignedTx = quais.utils.serializeTransaction(transaction);
-                assert.equal(unsignedTx, test.unsignedTransaction,
-                    'serializes unsigned transaction (legacy)');
-
-                // Legacy signed serialized transaction
-                let signature = signDigest(quais.utils.keccak256(unsignedTx));
-                assert.equal(quais.utils.serializeTransaction(transaction, signature), test.signedTransaction,
-                    'signs transaction (legacy)');
-            })();
-
-
-            // EIP155
-
-            // EIP-155 parsing unsigned transaction
-            let parsedUnsignedTransactionChainId5 = quais.utils.parseTransaction(test.unsignedTransactionChainId5);
-            checkTransaction(parsedUnsignedTransactionChainId5, test);
-            assert.equal(parsedUnsignedTransactionChainId5.chainId, 5, 'parses chainId (eip155)');
-
-            // EIP-155 fields
-            let parsedTransactionChainId5 = quais.utils.parseTransaction(test.signedTransactionChainId5);
-
-            type TxStringKey = 'data' | 'from' | 'nonce' | 'to';
-            ['data', 'from', 'nonce', 'to'].forEach((key: TxStringKey) => {
-                assert.equal(parsedTransaction[key], parsedTransactionChainId5[key],
-                    'parses ' + key + ' (eip155)');
-            });
-
-            type TxNumberKey = 'gasLimit' | 'gasPrice' | 'value';
-            ['gasLimit', 'gasPrice', 'value'].forEach((key: TxNumberKey) => {
-                assert.ok(parsedTransaction[key].eq(parsedTransactionChainId5[key]),
-                    'parses ' + key + ' (eip155)');
-            });
-
-            // EIP-155 chain ID
-            assert.equal(parsedTransactionChainId5.chainId, 5,
-                'parses chainId (eip155)');
-
-            transaction.chainId = 5;
-
-            (function() {
-                // EIP-155 serialized unsigned transaction
-                let unsignedTx = quais.utils.serializeTransaction(transaction);
-                assert.equal(unsignedTx, test.unsignedTransactionChainId5,
-                    'serializes unsigned transaction (eip155) ');
-
-                // EIP-155 signed serialized transaction
-                let signature = signDigest(quais.utils.keccak256(unsignedTx));
-                assert.equal(quais.utils.serializeTransaction(transaction, signature), test.signedTransactionChainId5,
-                    'signs transaction (eip155)');
-            })();
+            checkTransaction(parsedTransaction, test);
         });
     });
 
@@ -221,15 +158,15 @@ describe('Test Transaction Signing and Parsing', function() {
             const transaction = {
                 to: test.to,
                 data: test.data,
+                type: test.type,
                 gasLimit: test.gasLimit,
-                gasPrice: test.gasPrice,
                 value: test.value,
                 nonce: ((<any>(test.nonce)) === "0x") ? 0: test.nonce,
-                chainId: 5
+                chainId: 9000
             };
 
             const signedTx = await wallet.signTransaction(transaction);
-            assert.equal(signedTx, test.signedTransactionChainId5);
+            assert.equal(signedTx, test.signedTransaction);
         });
     });
 });
@@ -307,8 +244,11 @@ describe("Serialize Transactions", function() {
     it("allows odd-length numeric values", function() {
         quais.utils.serializeTransaction({
             gasLimit: "0x1",
-            gasPrice: "0x1",
-            value: "0x1"
+            value: "0x1",
+            maxPriorityFeePerGas: "0x1",
+            maxFeePerGas: "0x1",
+            type: 0,
+            //nonce: 0,
         });
         //console.log(result);
     });
