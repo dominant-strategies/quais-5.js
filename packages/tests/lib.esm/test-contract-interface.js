@@ -537,7 +537,6 @@ describe('Test EIP-838 Error Codes', function () {
     }));
     it("testError1", function () {
         return __awaiter(this, void 0, void 0, function* () {
-            console.log('Contract address: \n', addr);
             const contract = new quais.Contract(addr, [
                 "function testError1(bool pass, address addr, uint256 value) pure returns (bool)",
                 "function testError2(bool pass, bytes data) pure returns (bool)",
