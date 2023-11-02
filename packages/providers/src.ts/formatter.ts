@@ -50,7 +50,7 @@ export class Formatter {
         const hashArrayAnyLength = this.hashArrayAnyLength.bind(this);
         const hex = this.hex.bind(this);
         const number = this.number.bind(this);
-        const etxs = this.etxs.bind(this)
+        const etxs = this.etxs.bind(this);
 
         const strictData = (v: any) => { return this.data(v, true); };
 
@@ -72,7 +72,6 @@ export class Formatter {
             maxPriorityFeePerGas: Formatter.allowNull(bigNumber),
             maxFeePerGas: Formatter.allowNull(bigNumber),
 
-            //gasLimit: bigNumber,
             to: Formatter.allowNull(address, null),
             value: bigNumber,
             nonce: number,
@@ -85,7 +84,6 @@ export class Formatter {
             raw: Formatter.allowNull(data),
 
             gas: Formatter.allowNull(bigNumber),
-            //sender: Formatter.allowNull(address),
 
             //EXT TRANSACTIONS
             etxGasLimit: Formatter.allowNull(bigNumber),
@@ -200,8 +198,6 @@ export class Formatter {
             blockNumber: Formatter.allowNull(number),
             blockHash: Formatter.allowNull(hash),
             transactionIndex: number,
-
-            //removed: Formatter.allowNull(this.boolean.bind(this)),
 
             address: address,
             data: Formatter.allowFalsish(data, "0x"),
