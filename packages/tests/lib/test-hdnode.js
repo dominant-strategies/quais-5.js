@@ -147,7 +147,7 @@ describe("HD error cases", function () {
     ];
     var root = quais_1.quais.utils.HDNode.fromSeed("0xdeadbeefdeadbeefdeadbeefdeadbeef");
     testInvalid.forEach(function (path) {
-        it("fails on path \"" + path + "\"", function () {
+        it("fails on path \"".concat(path, "\""), function () {
             assert_1.default.throws(function () {
                 root.derivePath(path);
             }, function (error) {

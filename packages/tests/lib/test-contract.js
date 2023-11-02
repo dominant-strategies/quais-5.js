@@ -14,7 +14,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     function verb(n) { return function (v) { return step([n, v]); }; }
     function step(op) {
         if (f) throw new TypeError("Generator is already executing.");
-        while (_) try {
+        while (g && (g = 0, op[0] && (_ = 0)), _) try {
             if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
             if (y = 0, t) op = [op[0] & 2, t.value];
             switch (op[0]) {
@@ -42,14 +42,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var assert_1 = __importDefault(require("assert"));
 var quais_1 = require("quais");
 var utils_1 = require("./utils");
-<<<<<<< HEAD
-<<<<<<< HEAD
-var test_contract_json_1 = __importDefault(require("./test-contract.json"));
-var provider = new quais_1.quais.providers.InfuraProvider("goerli", "49a0efa3aaee4fd99797bfa94d8ce2f1");
-//const provider = quais.getDefaultProvider("rinkeby");
-=======
-=======
->>>>>>> a1441d0 (tests for test-contract.ts)
 var hre = require("hardhat");
 var network = process.env.CYPRUS1URL || "http://localhost:8610";
 var provider = new quais_1.quais.providers.JsonRpcProvider(network);
@@ -64,10 +56,6 @@ function setUpContract() {
                     walletWithProvider = new quais_1.quais.Wallet(hre.network.config.accounts[0], provider);
                     QuaisContract = new quais_1.quais.ContractFactory(ethersContract.interface.fragments, ethersContract.bytecode, walletWithProvider);
                     return [4 /*yield*/, QuaisContract.deploy({ gasLimit: 4000000 }).then(function (contract) {
-<<<<<<< HEAD
-=======
-                            console.log("Contract: \n", contract);
->>>>>>> a1441d0 (tests for test-contract.ts)
                             return contract;
                         })];
                 case 2:
@@ -78,10 +66,6 @@ function setUpContract() {
         });
     });
 }
-<<<<<<< HEAD
->>>>>>> 42abdc1 (refactor test-contract-interface.ts to use runtime deployed contract)
-=======
->>>>>>> a1441d0 (tests for test-contract.ts)
 var TIMEOUT_PERIOD = 120000;
 function equals(name, actual, expected) {
     if (Array.isArray(expected)) {

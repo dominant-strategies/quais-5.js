@@ -44,7 +44,6 @@ var Formatter = /** @class */ (function () {
             gasPrice: Formatter.allowNull(bigNumber),
             maxPriorityFeePerGas: Formatter.allowNull(bigNumber),
             maxFeePerGas: Formatter.allowNull(bigNumber),
-            //gasLimit: bigNumber,
             to: Formatter.allowNull(address, null),
             value: bigNumber,
             nonce: number,
@@ -54,7 +53,6 @@ var Formatter = /** @class */ (function () {
             v: Formatter.allowNull(hex),
             raw: Formatter.allowNull(data),
             gas: Formatter.allowNull(bigNumber),
-            //sender: Formatter.allowNull(address),
             //EXT TRANSACTIONS
             etxGasLimit: Formatter.allowNull(bigNumber),
             etxGasPrice: Formatter.allowNull(bigNumber),
@@ -153,7 +151,6 @@ var Formatter = /** @class */ (function () {
             blockNumber: Formatter.allowNull(number),
             blockHash: Formatter.allowNull(hash),
             transactionIndex: number,
-            //removed: Formatter.allowNull(this.boolean.bind(this)),
             address: address,
             data: Formatter.allowFalsish(data, "0x"),
             topics: Formatter.arrayOf(hash),

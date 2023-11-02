@@ -41,7 +41,6 @@ export class Formatter {
             gasPrice: Formatter.allowNull(bigNumber),
             maxPriorityFeePerGas: Formatter.allowNull(bigNumber),
             maxFeePerGas: Formatter.allowNull(bigNumber),
-            //gasLimit: bigNumber,
             to: Formatter.allowNull(address, null),
             value: bigNumber,
             nonce: number,
@@ -51,7 +50,6 @@ export class Formatter {
             v: Formatter.allowNull(hex),
             raw: Formatter.allowNull(data),
             gas: Formatter.allowNull(bigNumber),
-            //sender: Formatter.allowNull(address),
             //EXT TRANSACTIONS
             etxGasLimit: Formatter.allowNull(bigNumber),
             etxGasPrice: Formatter.allowNull(bigNumber),
@@ -150,7 +148,6 @@ export class Formatter {
             blockNumber: Formatter.allowNull(number),
             blockHash: Formatter.allowNull(hash),
             transactionIndex: number,
-            //removed: Formatter.allowNull(this.boolean.bind(this)),
             address: address,
             data: Formatter.allowFalsish(data, "0x"),
             topics: Formatter.arrayOf(hash),

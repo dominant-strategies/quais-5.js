@@ -7,7 +7,7 @@ export declare function checkResultErrors(result: Result): Array<{
     path: Array<string | number>;
     error: Error;
 }>;
-export declare type CoerceFunc = (type: string, value: any) => any;
+export type CoerceFunc = (type: string, value: any) => any;
 export declare abstract class Coder {
     readonly name: string;
     readonly type: string;

@@ -11,14 +11,6 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 import assert from "assert";
 import { quais } from "quais";
 import { sendTransaction } from "./utils";
-<<<<<<< HEAD
-<<<<<<< HEAD
-import contractData from "./test-contract.json";
-const provider = new quais.providers.InfuraProvider("goerli", "49a0efa3aaee4fd99797bfa94d8ce2f1");
-//const provider = quais.getDefaultProvider("rinkeby");
-=======
-=======
->>>>>>> a1441d0 (tests for test-contract.ts)
 const hre = require("hardhat");
 const network = process.env.CYPRUS1URL || "http://localhost:8610";
 const provider = new quais.providers.JsonRpcProvider(network);
@@ -29,19 +21,11 @@ function setUpContract() {
         walletWithProvider = new quais.Wallet(hre.network.config.accounts[0], provider);
         QuaisContract = new quais.ContractFactory(ethersContract.interface.fragments, ethersContract.bytecode, walletWithProvider);
         quaisContract = yield QuaisContract.deploy({ gasLimit: 4000000 }).then(function (contract) {
-<<<<<<< HEAD
-=======
-            console.log("Contract: \n", contract);
->>>>>>> a1441d0 (tests for test-contract.ts)
             return contract;
         });
         return yield new quais.Contract(quaisContract.address, quaisContract.interface, provider);
     });
 }
-<<<<<<< HEAD
->>>>>>> 42abdc1 (refactor test-contract-interface.ts to use runtime deployed contract)
-=======
->>>>>>> a1441d0 (tests for test-contract.ts)
 const TIMEOUT_PERIOD = 120000;
 function equals(name, actual, expected) {
     if (Array.isArray(expected)) {

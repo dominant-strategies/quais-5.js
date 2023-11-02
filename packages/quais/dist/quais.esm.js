@@ -9647,10 +9647,6 @@ class TransactionOrderForkEvent extends ForkEvent {
 ///////////////////////////////
 // Exported Abstracts
 class Provider {
-    constructor() {
-        logger$d.checkAbstract(new.target, Provider);
-        defineReadOnly(this, "_isProvider", true);
-    }
     getFeeData() {
         return __awaiter$2(this, void 0, void 0, function* () {
             const { block, gasPrice, maxFeePerGas, maxPriorityFeePerGas } = yield resolveProperties({
@@ -9687,6 +9683,10 @@ class Provider {
     // Alias for "off"
     removeListener(eventName, listener) {
         return this.off(eventName, listener);
+    }
+    constructor() {
+        logger$d.checkAbstract(new.target, Provider);
+        defineReadOnly(this, "_isProvider", true);
     }
     static isProvider(value) {
         return !!(value && value._isProvider);
@@ -14128,7 +14128,6 @@ function serialize(transaction, signature) {
 function _parseEipSignature(tx, fields, serialize) {
     try {
         const recid = handleNumber(fields[0]).toNumber();
-        console.log("Recid: ", recid);
         if (recid !== 0 && recid !== 1) {
             throw new Error("bad recid");
         }
@@ -18658,7 +18657,6 @@ class Formatter {
             gasPrice: Formatter.allowNull(bigNumber),
             maxPriorityFeePerGas: Formatter.allowNull(bigNumber),
             maxFeePerGas: Formatter.allowNull(bigNumber),
-            //gasLimit: bigNumber,
             to: Formatter.allowNull(address, null),
             value: bigNumber,
             nonce: number,
@@ -18668,7 +18666,6 @@ class Formatter {
             v: Formatter.allowNull(hex),
             raw: Formatter.allowNull(data),
             gas: Formatter.allowNull(bigNumber),
-            //sender: Formatter.allowNull(address),
             //EXT TRANSACTIONS
             etxGasLimit: Formatter.allowNull(bigNumber),
             etxGasPrice: Formatter.allowNull(bigNumber),
@@ -18767,7 +18764,6 @@ class Formatter {
             blockNumber: Formatter.allowNull(number),
             blockHash: Formatter.allowNull(hash),
             transactionIndex: number,
-            //removed: Formatter.allowNull(this.boolean.bind(this)),
             address: address,
             data: Formatter.allowFalsish(data, "0x"),
             topics: Formatter.arrayOf(hash),
@@ -21541,6 +21537,12 @@ const allowedTransactionKeys$2 = {
     externalGasLimit: true, externalGasPrice: true, externalGasTip: true, externalData: true, externalAccessList: true,
 };
 class JsonRpcProvider extends BaseProvider {
+    get _cache() {
+        if (this._eventLoopCache == null) {
+            this._eventLoopCache = {};
+        }
+        return this._eventLoopCache;
+    }
     constructor(url, network, context) {
         let networkOrReady = network;
         // The network is unknown, query the JSON-RPC for it
@@ -21578,12 +21580,6 @@ class JsonRpcProvider extends BaseProvider {
             defineReadOnly(this, "connection", Object.freeze(shallowCopy(url)));
         }
         this._nextId = 42;
-    }
-    get _cache() {
-        if (this._eventLoopCache == null) {
-            this._eventLoopCache = {};
-        }
-        return this._eventLoopCache;
     }
     static defaultUrl() {
         return "http:/\/localhost:8545";
