@@ -68,7 +68,7 @@ export type BlockTag = string | number;
 export interface _Block {
     hash: string;
     parentHash: Array<string>;
-    parentEntropy: Array<String>;
+    parentEntropy: Array<string>;
     number: Array<number>;
     timestamp: number;
     nonce: string;
@@ -85,23 +85,23 @@ export interface _Block {
     extTransactionsRoot: string;
     stateRoot: string;
     location: string;
-    manifestHash: Array<String>;
+    manifestHash: Array<string>;
     mixHash: string;
     transactionsRoot: string;
     receiptsRoot: string;
     order: number;
-    parentDeltaS: Array<String>;
-    sha3Uncles: String;
+    parentDeltaS: Array<string>;
+    sha3Uncles: string;
     size: number;
-    subManifest: Array<String>;
+    subManifest: Array<string>;
     totalEntropy: number;
-    uncles: Array<String>;
+    uncles: Array<string>;
 
 }
 
 export interface Block extends _Block {
     transactions: Array<string>;
-    extTransactions: Array<String>
+    extTransactions: Array<string>
 }
 
 export interface BlockWithTransactions extends _Block {
