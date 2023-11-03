@@ -1,6 +1,10 @@
 {
   "name": "quais",
+<<<<<<< HEAD
   "version": "1.0.0",
+=======
+  "version": "0.0.1",
+>>>>>>> ac38c8b (simplify block)
   "main": "./packages/quais/lib/quais.js",
   "common": {
     "funding": [
