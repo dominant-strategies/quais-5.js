@@ -497,6 +497,29 @@ describe("Test Providers", function () {
                     });
                 });
             });
+            it('should fetch a simplified block', function () {
+                return __awaiter(this, void 0, void 0, function () {
+                    var responseBlockHash, responseBlockNumber;
+                    return __generator(this, function (_a) {
+                        switch (_a.label) {
+                            case 0: return [4 /*yield*/, globalCyprus1Provider.getBlock(block.hash, true)];
+                            case 1:
+                                responseBlockHash = _a.sent();
+                                return [4 /*yield*/, globalCyprus1Provider.getBlock(block.number[2], true)];
+                            case 2:
+                                responseBlockNumber = _a.sent();
+                                block.number = block.number[2];
+                                block.parentEntropy = block.parentEntropy[2];
+                                block.parentDeltaS = block.parentDeltaS[2];
+                                block.parentHash = block.parentHash[2];
+                                block.manifestHash = block.manifestHash[2];
+                                equals("Simplified Block by Hash", responseBlockHash, block);
+                                equals("Simplified Block by Number", responseBlockNumber, block);
+                                return [2 /*return*/];
+                        }
+                    });
+                });
+            });
             it('should get transaction receipt for internal tx', function () {
                 return __awaiter(this, void 0, void 0, function () {
                     var receipt, expectedReceipt, receiptResult;

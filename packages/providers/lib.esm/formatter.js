@@ -339,7 +339,6 @@ export class Formatter {
         return result;
     }
     block(value, context, simplify) {
-        console.log("Simplify1", simplify);
         return this._block(value, this.formats.block, context, simplify);
     }
     blockWithTransactions(value) {
