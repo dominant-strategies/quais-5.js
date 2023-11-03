@@ -18955,7 +18955,6 @@ class Formatter {
         return result;
     }
     block(value, context, simplify) {
-        console.log("Simplify1", simplify);
         return this._block(value, this.formats.block, context, simplify);
     }
     blockWithTransactions(value) {
@@ -20819,13 +20818,11 @@ class BaseProvider extends Provider {
                     blockWithTxs.transactions = blockWithTxs.transactions.map((tx) => this._wrapTransaction(tx));
                     return blockWithTxs;
                 }
-                console.log("Simplify2", simplify);
                 return this.formatter.block(block, this._context, simplify);
             }), { oncePoll: this });
         });
     }
     getBlock(blockHashOrBlockTag, simplify = false) {
-        console.log("Simplify3", simplify);
         return (this._getBlock(blockHashOrBlockTag, false, simplify));
     }
     getBlockWithTransactions(blockHashOrBlockTag, simplify = false) {

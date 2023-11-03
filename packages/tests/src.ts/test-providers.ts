@@ -337,6 +337,20 @@ describe("Test Providers", async function() {
         equals("Block by Hash", responseBlock, block);
     });
 
+    it('should fetch a simplified block', async function (){
+        const responseBlockHash = await globalCyprus1Provider.getBlock(block.hash, true);
+        const responseBlockNumber = await globalCyprus1Provider.getBlock(block.number[2], true);
+
+        block.number = block.number[2]
+        block.parentEntropy = block.parentEntropy[2]
+        block.parentDeltaS = block.parentDeltaS[2]
+        block.parentHash = block.parentHash[2]
+        block.manifestHash = block.manifestHash[2]
+
+        equals("Simplified Block by Hash", responseBlockHash, block);
+        equals("Simplified Block by Number", responseBlockNumber, block);
+    })
+
     it('should get transaction receipt for internal tx', async function () {
         const receipt = await fetchRPCTxReceipt(internalTx.hash, process.env.CYPRUS1URL || "http://localhost:8610");
         const expectedReceipt = {

@@ -24630,7 +24630,6 @@
 	        return result;
 	    };
 	    Formatter.prototype.block = function (value, context, simplify) {
-	        console.log("Simplify1", simplify);
 	        return this._block(value, this.formats.block, context, simplify);
 	    };
 	    Formatter.prototype.blockWithTransactions = function (value) {
@@ -26960,9 +26959,7 @@
 	                                        blockWithTxs = this.formatter.blockWithTransactions(block);
 	                                        blockWithTxs.transactions = blockWithTxs.transactions.map(function (tx) { return _this._wrapTransaction(tx); });
 	                                        return [2 /*return*/, blockWithTxs];
-	                                    case 8:
-	                                        console.log("Simplify2", simplify);
-	                                        return [2 /*return*/, this.formatter.block(block, this._context, simplify)];
+	                                    case 8: return [2 /*return*/, this.formatter.block(block, this._context, simplify)];
 	                                }
 	                            });
 	                        }); }, { oncePoll: this })];
@@ -26972,7 +26969,6 @@
 	    };
 	    BaseProvider.prototype.getBlock = function (blockHashOrBlockTag, simplify) {
 	        if (simplify === void 0) { simplify = false; }
-	        console.log("Simplify3", simplify);
 	        return (this._getBlock(blockHashOrBlockTag, false, simplify));
 	    };
 	    BaseProvider.prototype.getBlockWithTransactions = function (blockHashOrBlockTag, simplify) {
