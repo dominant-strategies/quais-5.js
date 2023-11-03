@@ -28677,7 +28677,7 @@
 	        switch (event.type) {
 	            case "block":
 	                this._subscribe("block", ["newHeads"], function (result) {
-	                    var blockNumber = lib$2.BigNumber.from(result.number).toNumber();
+	                    var blockNumber = lib$2.BigNumber.from(result.number[2]).toNumber();
 	                    _this._emitted.block = blockNumber;
 	                    _this.emit("block", blockNumber);
 	                });
