@@ -325,7 +325,7 @@ export class Formatter {
         }
         return hexZeroPad(value, 32);
     }
-    _block(value, format, context) {
+    _block(value, format, context, simplify) {
         if (value.author != null && value.miner == null) {
             value.miner = value.author;
         }
@@ -334,23 +334,24 @@ export class Formatter {
         const result = Formatter.check(format, value);
         result._difficulty = ((difficulty == null) ? null : difficulty);
         if (context) {
-            return this.contextBlock(result, context);
+            return this.contextBlock(result, context, simplify);
         }
         return result;
     }
-    block(value, context) {
-        return this._block(value, this.formats.block, context);
+    block(value, context, simplify) {
+        console.log("Simplify1", simplify);
+        return this._block(value, this.formats.block, context, simplify);
     }
     blockWithTransactions(value) {
         return this._block(value, this.formats.blockWithTransactions);
     }
-    contextBlock(value, context) {
+    contextBlock(value, context, simplify = false) {
         let contextBlock = {
-            number: value.number,
+            number: simplify ? value.number[2] : value.number,
             transactions: value.transactions,
             hash: value.hash,
-            parentHash: value.parentHash,
-            parentEntropy: value.parentEntropy,
+            parentHash: simplify ? value.parentHash[2] : value.parentHash,
+            parentEntropy: simplify ? value.parentEntropy[2] : value.parentEntropy,
             extTransactions: value.extTransactions,
             timestamp: value.timestamp,
             nonce: value.nonce,
@@ -366,10 +367,10 @@ export class Formatter {
             extRollupRoot: value.extRollupRoot,
             extTransactionsRoot: value.extTransactionsRoot,
             location: value.location,
-            manifestHash: value.manifestHash,
+            manifestHash: simplify ? value.manifestHash[2] : value.manifestHash,
             mixHash: value.mixHash,
             order: value.order,
-            parentDeltaS: value.parentDeltaS,
+            parentDeltaS: simplify ? value.parentDeltaS[2] : value.parentDeltaS,
             sha3Uncles: value.sha3Uncles,
             size: value.size,
             uncles: value.uncles,

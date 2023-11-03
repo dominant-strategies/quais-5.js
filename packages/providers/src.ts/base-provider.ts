@@ -1770,7 +1770,7 @@ export class BaseProvider extends Provider implements EnsProvider {
        return address;
    }
 
-   async _getBlock(blockHashOrBlockTag: BlockTag | string | Promise<BlockTag | string>, includeTransactions?: boolean): Promise<Block | BlockWithTransactions> {
+   async _getBlock(blockHashOrBlockTag: BlockTag | string | Promise<BlockTag | string>, includeTransactions?: boolean, simplify?: boolean): Promise<Block | BlockWithTransactions> {
        await this.getNetwork();
 
        blockHashOrBlockTag = await blockHashOrBlockTag;
@@ -1779,7 +1779,8 @@ export class BaseProvider extends Provider implements EnsProvider {
        let blockNumber = -128;
 
        const params: { [key: string]: any } = {
-           includeTransactions: !!includeTransactions
+           includeTransactions: !!includeTransactions,
+           simplify:  !!simplify
        };
 
        if (isHexString(blockHashOrBlockTag, 32)) {
@@ -1841,18 +1842,17 @@ export class BaseProvider extends Provider implements EnsProvider {
                blockWithTxs.transactions = blockWithTxs.transactions.map((tx: TransactionResponse) => this._wrapTransaction(tx));
                return blockWithTxs;
            }
-
-           return this.formatter.block(block, this._context);
+           return this.formatter.block(block, this._context, simplify);
 
        }, { oncePoll: this });
    }
 
-   getBlock(blockHashOrBlockTag: BlockTag | string | Promise<BlockTag | string>): Promise<Block> {
-       return <Promise<Block>>(this._getBlock(blockHashOrBlockTag, false));
+   getBlock(blockHashOrBlockTag: BlockTag | string | Promise<BlockTag | string>, simplify: boolean = false): Promise<Block> {
+       return <Promise<Block>>(this._getBlock(blockHashOrBlockTag, false, simplify));
    }
 
-   getBlockWithTransactions(blockHashOrBlockTag: BlockTag | string | Promise<BlockTag | string>): Promise<BlockWithTransactions> {
-       return <Promise<BlockWithTransactions>>(this._getBlock(blockHashOrBlockTag, true));
+   getBlockWithTransactions(blockHashOrBlockTag: BlockTag | string | Promise<BlockTag | string>, simplify: boolean = false): Promise<BlockWithTransactions> {
+       return <Promise<BlockWithTransactions>>(this._getBlock(blockHashOrBlockTag, true, simplify));
    }
 
    async getTransaction(transactionHash: string | Promise<string>): Promise<TransactionResponse> {

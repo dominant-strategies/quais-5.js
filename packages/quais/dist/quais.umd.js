@@ -24616,7 +24616,7 @@
 	        }
 	        return (0, lib$1.hexZeroPad)(value, 32);
 	    };
-	    Formatter.prototype._block = function (value, format, context) {
+	    Formatter.prototype._block = function (value, format, context, simplify) {
 	        if (value.author != null && value.miner == null) {
 	            value.miner = value.author;
 	        }
@@ -24625,23 +24625,25 @@
 	        var result = Formatter.check(format, value);
 	        result._difficulty = ((difficulty == null) ? null : difficulty);
 	        if (context) {
-	            return this.contextBlock(result, context);
+	            return this.contextBlock(result, context, simplify);
 	        }
 	        return result;
 	    };
-	    Formatter.prototype.block = function (value, context) {
-	        return this._block(value, this.formats.block, context);
+	    Formatter.prototype.block = function (value, context, simplify) {
+	        console.log("Simplify1", simplify);
+	        return this._block(value, this.formats.block, context, simplify);
 	    };
 	    Formatter.prototype.blockWithTransactions = function (value) {
 	        return this._block(value, this.formats.blockWithTransactions);
 	    };
-	    Formatter.prototype.contextBlock = function (value, context) {
+	    Formatter.prototype.contextBlock = function (value, context, simplify) {
+	        if (simplify === void 0) { simplify = false; }
 	        var contextBlock = {
-	            number: value.number,
+	            number: simplify ? value.number[2] : value.number,
 	            transactions: value.transactions,
 	            hash: value.hash,
-	            parentHash: value.parentHash,
-	            parentEntropy: value.parentEntropy,
+	            parentHash: simplify ? value.parentHash[2] : value.parentHash,
+	            parentEntropy: simplify ? value.parentEntropy[2] : value.parentEntropy,
 	            extTransactions: value.extTransactions,
 	            timestamp: value.timestamp,
 	            nonce: value.nonce,
@@ -24657,10 +24659,10 @@
 	            extRollupRoot: value.extRollupRoot,
 	            extTransactionsRoot: value.extTransactionsRoot,
 	            location: value.location,
-	            manifestHash: value.manifestHash,
+	            manifestHash: simplify ? value.manifestHash[2] : value.manifestHash,
 	            mixHash: value.mixHash,
 	            order: value.order,
-	            parentDeltaS: value.parentDeltaS,
+	            parentDeltaS: simplify ? value.parentDeltaS[2] : value.parentDeltaS,
 	            sha3Uncles: value.sha3Uncles,
 	            size: value.size,
 	            uncles: value.uncles,
@@ -26866,7 +26868,7 @@
 	            });
 	        });
 	    };
-	    BaseProvider.prototype._getBlock = function (blockHashOrBlockTag, includeTransactions) {
+	    BaseProvider.prototype._getBlock = function (blockHashOrBlockTag, includeTransactions, simplify) {
 	        return __awaiter(this, void 0, void 0, function () {
 	            var blockNumber, params, _a, error_9;
 	            var _this = this;
@@ -26880,7 +26882,8 @@
 	                        blockHashOrBlockTag = _b.sent();
 	                        blockNumber = -128;
 	                        params = {
-	                            includeTransactions: !!includeTransactions
+	                            includeTransactions: !!includeTransactions,
+	                            simplify: !!simplify
 	                        };
 	                        if (!(0, lib$1.isHexString)(blockHashOrBlockTag, 32)) return [3 /*break*/, 3];
 	                        params.blockHash = blockHashOrBlockTag;
@@ -26957,7 +26960,9 @@
 	                                        blockWithTxs = this.formatter.blockWithTransactions(block);
 	                                        blockWithTxs.transactions = blockWithTxs.transactions.map(function (tx) { return _this._wrapTransaction(tx); });
 	                                        return [2 /*return*/, blockWithTxs];
-	                                    case 8: return [2 /*return*/, this.formatter.block(block, this._context)];
+	                                    case 8:
+	                                        console.log("Simplify2", simplify);
+	                                        return [2 /*return*/, this.formatter.block(block, this._context, simplify)];
 	                                }
 	                            });
 	                        }); }, { oncePoll: this })];
@@ -26965,11 +26970,14 @@
 	            });
 	        });
 	    };
-	    BaseProvider.prototype.getBlock = function (blockHashOrBlockTag) {
-	        return (this._getBlock(blockHashOrBlockTag, false));
+	    BaseProvider.prototype.getBlock = function (blockHashOrBlockTag, simplify) {
+	        if (simplify === void 0) { simplify = false; }
+	        console.log("Simplify3", simplify);
+	        return (this._getBlock(blockHashOrBlockTag, false, simplify));
 	    };
-	    BaseProvider.prototype.getBlockWithTransactions = function (blockHashOrBlockTag) {
-	        return (this._getBlock(blockHashOrBlockTag, true));
+	    BaseProvider.prototype.getBlockWithTransactions = function (blockHashOrBlockTag, simplify) {
+	        if (simplify === void 0) { simplify = false; }
+	        return (this._getBlock(blockHashOrBlockTag, true, simplify));
 	    };
 	    BaseProvider.prototype.getTransaction = function (transactionHash) {
 	        return __awaiter(this, void 0, void 0, function () {

@@ -18941,7 +18941,7 @@ class Formatter {
         }
         return hexZeroPad(value, 32);
     }
-    _block(value, format, context) {
+    _block(value, format, context, simplify) {
         if (value.author != null && value.miner == null) {
             value.miner = value.author;
         }
@@ -18950,23 +18950,24 @@ class Formatter {
         const result = Formatter.check(format, value);
         result._difficulty = ((difficulty == null) ? null : difficulty);
         if (context) {
-            return this.contextBlock(result, context);
+            return this.contextBlock(result, context, simplify);
         }
         return result;
     }
-    block(value, context) {
-        return this._block(value, this.formats.block, context);
+    block(value, context, simplify) {
+        console.log("Simplify1", simplify);
+        return this._block(value, this.formats.block, context, simplify);
     }
     blockWithTransactions(value) {
         return this._block(value, this.formats.blockWithTransactions);
     }
-    contextBlock(value, context) {
+    contextBlock(value, context, simplify = false) {
         let contextBlock = {
-            number: value.number,
+            number: simplify ? value.number[2] : value.number,
             transactions: value.transactions,
             hash: value.hash,
-            parentHash: value.parentHash,
-            parentEntropy: value.parentEntropy,
+            parentHash: simplify ? value.parentHash[2] : value.parentHash,
+            parentEntropy: simplify ? value.parentEntropy[2] : value.parentEntropy,
             extTransactions: value.extTransactions,
             timestamp: value.timestamp,
             nonce: value.nonce,
@@ -18982,10 +18983,10 @@ class Formatter {
             extRollupRoot: value.extRollupRoot,
             extTransactionsRoot: value.extTransactionsRoot,
             location: value.location,
-            manifestHash: value.manifestHash,
+            manifestHash: simplify ? value.manifestHash[2] : value.manifestHash,
             mixHash: value.mixHash,
             order: value.order,
-            parentDeltaS: value.parentDeltaS,
+            parentDeltaS: simplify ? value.parentDeltaS[2] : value.parentDeltaS,
             sha3Uncles: value.sha3Uncles,
             size: value.size,
             uncles: value.uncles,
@@ -20749,14 +20750,15 @@ class BaseProvider extends Provider {
             return address;
         });
     }
-    _getBlock(blockHashOrBlockTag, includeTransactions) {
+    _getBlock(blockHashOrBlockTag, includeTransactions, simplify) {
         return __awaiter$9(this, void 0, void 0, function* () {
             yield this.getNetwork();
             blockHashOrBlockTag = yield blockHashOrBlockTag;
             // If blockTag is a number (not "latest", etc), this is the block number
             let blockNumber = -128;
             const params = {
-                includeTransactions: !!includeTransactions
+                includeTransactions: !!includeTransactions,
+                simplify: !!simplify
             };
             if (isHexString(blockHashOrBlockTag, 32)) {
                 params.blockHash = blockHashOrBlockTag;
@@ -20817,15 +20819,17 @@ class BaseProvider extends Provider {
                     blockWithTxs.transactions = blockWithTxs.transactions.map((tx) => this._wrapTransaction(tx));
                     return blockWithTxs;
                 }
-                return this.formatter.block(block, this._context);
+                console.log("Simplify2", simplify);
+                return this.formatter.block(block, this._context, simplify);
             }), { oncePoll: this });
         });
     }
-    getBlock(blockHashOrBlockTag) {
-        return (this._getBlock(blockHashOrBlockTag, false));
+    getBlock(blockHashOrBlockTag, simplify = false) {
+        console.log("Simplify3", simplify);
+        return (this._getBlock(blockHashOrBlockTag, false, simplify));
     }
-    getBlockWithTransactions(blockHashOrBlockTag) {
-        return (this._getBlock(blockHashOrBlockTag, true));
+    getBlockWithTransactions(blockHashOrBlockTag, simplify = false) {
+        return (this._getBlock(blockHashOrBlockTag, true, simplify));
     }
     getTransaction(transactionHash) {
         return __awaiter$9(this, void 0, void 0, function* () {
