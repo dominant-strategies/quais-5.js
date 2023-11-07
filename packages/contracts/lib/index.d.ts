@@ -38,11 +38,11 @@ export interface PopulatedTransaction {
     customData?: Record<string, any>;
     ccipReadEnabled?: boolean;
 }
-export declare type EventFilter = {
+export type EventFilter = {
     address?: string;
     topics?: Array<string | Array<string>>;
 };
-export declare type ContractFunction<T = any> = (...args: Array<any>) => Promise<T>;
+export type ContractFunction<T = any> = (...args: Array<any>) => Promise<T>;
 export interface Event extends Log {
     event?: string;
     eventSignature?: string;
@@ -74,7 +74,7 @@ declare class RunningEvent {
     prepareEvent(event: Event): void;
     getEmit(event: Event): Array<any>;
 }
-export declare type ContractInterface = string | ReadonlyArray<Fragment | JsonFragment | string> | Interface;
+export type ContractInterface = string | ReadonlyArray<Fragment | JsonFragment | string> | Interface;
 export declare class BaseContract {
     readonly address: string;
     readonly interface: Interface;

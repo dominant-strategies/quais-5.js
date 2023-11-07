@@ -14,7 +14,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     function verb(n) { return function (v) { return step([n, v]); }; }
     function step(op) {
         if (f) throw new TypeError("Generator is already executing.");
-        while (_) try {
+        while (g && (g = 0, op[0] && (_ = 0)), _) try {
             if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
             if (y = 0, t) op = [op[0] & 2, t.value];
             switch (op[0]) {
@@ -42,13 +42,31 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var assert_1 = __importDefault(require("assert"));
 var quais_1 = require("quais");
 var utils_1 = require("./utils");
-var test_contract_json_1 = __importDefault(require("./test-contract.json"));
-var provider = new quais_1.quais.providers.InfuraProvider("goerli", "49a0efa3aaee4fd99797bfa94d8ce2f1");
-//const provider = quais.getDefaultProvider("rinkeby");
+var hre = require("hardhat");
+var network = process.env.CYPRUS1URL || "http://localhost:8610";
+var provider = new quais_1.quais.providers.JsonRpcProvider(network);
+var ethersContract, walletWithProvider, quaisContract, QuaisContract;
+function setUpContract() {
+    return __awaiter(this, void 0, void 0, function () {
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0: return [4 /*yield*/, hre.ethers.getContractFactory('TestContract')];
+                case 1:
+                    ethersContract = _a.sent();
+                    walletWithProvider = new quais_1.quais.Wallet(hre.network.config.accounts[0], provider);
+                    QuaisContract = new quais_1.quais.ContractFactory(ethersContract.interface.fragments, ethersContract.bytecode, walletWithProvider);
+                    return [4 /*yield*/, QuaisContract.deploy({ gasLimit: 4000000 }).then(function (contract) {
+                            return contract;
+                        })];
+                case 2:
+                    quaisContract = _a.sent();
+                    return [4 /*yield*/, new quais_1.quais.Contract(quaisContract.address, quaisContract.interface, provider)];
+                case 3: return [2 /*return*/, _a.sent()];
+            }
+        });
+    });
+}
 var TIMEOUT_PERIOD = 120000;
-var contract = (function () {
-    return new quais_1.quais.Contract(test_contract_json_1.default.contractAddress, test_contract_json_1.default.interface, provider);
-})();
 function equals(name, actual, expected) {
     if (Array.isArray(expected)) {
         assert_1.default.equal(actual.length, expected.length, 'array length mismatch - ' + name);
@@ -108,10 +126,12 @@ function TestContractEvents() {
                 }
             });
         }
-        var running, hash;
+        var contract, running, hash;
         return __generator(this, function (_a) {
             switch (_a.label) {
-                case 0:
+                case 0: return [4 /*yield*/, setUpContract()];
+                case 1:
+                    contract = _a.sent();
                     running = new Promise(function (resolve, reject) {
                         var p0 = '0x06B5955A67D827CDF91823E3bB8F069e6c89c1D6';
                         var p0_1 = '0x06b5955A67d827CdF91823e3Bb8F069e6C89C1d7';
@@ -132,7 +152,7 @@ function TestContractEvents() {
                             to: "0x63c5bd7ef280f150aca761a5e9a922959eb26732",
                             data: "0xbabf890100000000000000000000000006b5955a67d827cdf91823e3bb8f069e6c89c1d600000000000000000000000000000000000000000000000000000000000000420000000000000000000000000000000000000000000000000000000000000060000000000000000000000000000000000000000000000000000000000000000a48656c6c6f576f726c6400000000000000000000000000000000000000000000"
                         })];
-                case 1:
+                case 2:
                     hash = _a.sent();
                     console.log('*** Triggered Transaction Hash: ' + hash);
                     return [2 /*return*/, running];
@@ -141,51 +161,63 @@ function TestContractEvents() {
     });
 }
 describe('Test Contract Objects', function () {
-    it('parses events', function () {
-        this.timeout(TIMEOUT_PERIOD);
-        return TestContractEvents();
-    });
-    it('ABIv2 parameters and return types work', function () {
-        this.timeout(TIMEOUT_PERIOD);
-        var p0 = '0x06B5955A67D827CDF91823E3bB8F069e6c89c1D6';
-        var p0_0f = '0x06B5955a67d827cDF91823e3bB8F069E6c89c1e5';
-        var p0_f0 = '0x06b5955a67D827CDF91823e3Bb8F069E6C89c2C6';
-        var p1 = 0x42;
-        var p1_0f = 0x42 + 0x0f;
-        var p1_f0 = 0x42 + 0xf0;
-        var expectedPosStruct = [p0_f0, p1_f0, [p0_0f, p1_0f]];
-        var seq = Promise.resolve();
-        [
-            [p0, p1, [p0, p1]],
-            { p0: p0, p1: p1, child: [p0, p1] },
-            [p0, p1, { p0: p0, p1: p1 }],
-            { p0: p0, p1: p1, child: { p0: p0, p1: p1 } }
-        ].forEach(function (struct) {
-            seq = seq.then(function () {
-                return contract.testV2(struct).then(function (result) {
-                    equals('position input', result, expectedPosStruct);
-                    equals('keyword input p0', result.p0, expectedPosStruct[0]);
-                    equals('keyword input p1', result.p1, expectedPosStruct[1]);
-                    equals('keyword input child.p0', result.child.p0, expectedPosStruct[2][0]);
-                    equals('keyword input child.p1', result.child.p1, expectedPosStruct[2][1]);
-                });
-            });
-        });
-        return seq;
-    });
-    it('collapses single argument solidity methods', function () {
-        this.timeout(TIMEOUT_PERIOD);
-        return contract.testSingleResult(4).then(function (result) {
-            assert_1.default.equal(result, 5, 'single value returned');
-        });
-    });
-    it('does not collapses multi argument solidity methods', function () {
-        this.timeout(TIMEOUT_PERIOD);
-        return contract.testMultiResult(6).then(function (result) {
-            assert_1.default.equal(result[0], 7, 'multi value [0] returned');
-            assert_1.default.equal(result[1], 8, 'multi value [1] returned');
-            assert_1.default.equal(result.r0, 7, 'multi value [r0] returned');
-            assert_1.default.equal(result.r1, 8, 'multi value [r1] returned');
+    return __awaiter(this, void 0, void 0, function () {
+        var contract;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0: return [4 /*yield*/, setUpContract()];
+                case 1:
+                    contract = _a.sent();
+                    //Skip due to disabled polling in go-quai
+                    it.skip('parses events', function () {
+                        this.timeout(TIMEOUT_PERIOD);
+                        return TestContractEvents();
+                    });
+                    it('ABIv2 parameters and return types work', function () {
+                        this.timeout(TIMEOUT_PERIOD);
+                        var p0 = '0x06B5955A67D827CDF91823E3bB8F069e6c89c1D6';
+                        var p0_0f = '0x06B5955a67d827cDF91823e3bB8F069E6c89c1e5';
+                        var p0_f0 = '0x06b5955a67D827CDF91823e3Bb8F069E6C89c2C6';
+                        var p1 = 0x42;
+                        var p1_0f = 0x42 + 0x0f;
+                        var p1_f0 = 0x42 + 0xf0;
+                        var expectedPosStruct = [p0_f0, p1_f0, [p0_0f, p1_0f]];
+                        var seq = Promise.resolve();
+                        [
+                            [p0, p1, [p0, p1]],
+                            { p0: p0, p1: p1, child: [p0, p1] },
+                            [p0, p1, { p0: p0, p1: p1 }],
+                            { p0: p0, p1: p1, child: { p0: p0, p1: p1 } }
+                        ].forEach(function (struct) {
+                            seq = seq.then(function () {
+                                return contract.testV2(struct).then(function (result) {
+                                    equals('position input', result, expectedPosStruct);
+                                    equals('keyword input p0', result.p0, expectedPosStruct[0]);
+                                    equals('keyword input p1', result.p1, expectedPosStruct[1]);
+                                    equals('keyword input child.p0', result.child.p0, expectedPosStruct[2][0]);
+                                    equals('keyword input child.p1', result.child.p1, expectedPosStruct[2][1]);
+                                });
+                            });
+                        });
+                        return seq;
+                    });
+                    it('collapses single argument solidity methods', function () {
+                        this.timeout(TIMEOUT_PERIOD);
+                        return contract.testSingleResult(4).then(function (result) {
+                            assert_1.default.equal(result, 5, 'single value returned');
+                        });
+                    });
+                    it('does not collapses multi argument solidity methods', function () {
+                        this.timeout(TIMEOUT_PERIOD);
+                        return contract.testMultiResult(6).then(function (result) {
+                            assert_1.default.equal(result[0], 7, 'multi value [0] returned');
+                            assert_1.default.equal(result[1], 8, 'multi value [1] returned');
+                            assert_1.default.equal(result.r0, 7, 'multi value [r0] returned');
+                            assert_1.default.equal(result.r1, 8, 'multi value [r1] returned');
+                        });
+                    });
+                    return [2 /*return*/];
+            }
         });
     });
 });
@@ -239,7 +271,8 @@ describe("Test Contract Transaction Population", function () {
             });
         });
     });
-    it("allows ENS 'from' overrides", function () {
+    //Skip due to no ENS in quai
+    it.skip("allows ENS 'from' overrides", function () {
         return __awaiter(this, void 0, void 0, function () {
             var tx;
             return __generator(this, function (_a) {

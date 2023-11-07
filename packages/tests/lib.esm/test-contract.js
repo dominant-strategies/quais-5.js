@@ -11,13 +11,22 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 import assert from "assert";
 import { quais } from "quais";
 import { sendTransaction } from "./utils";
-import contractData from "./test-contract.json";
-const provider = new quais.providers.InfuraProvider("goerli", "49a0efa3aaee4fd99797bfa94d8ce2f1");
-//const provider = quais.getDefaultProvider("rinkeby");
+const hre = require("hardhat");
+const network = process.env.CYPRUS1URL || "http://localhost:8610";
+const provider = new quais.providers.JsonRpcProvider(network);
+let ethersContract, walletWithProvider, quaisContract, QuaisContract;
+function setUpContract() {
+    return __awaiter(this, void 0, void 0, function* () {
+        ethersContract = yield hre.ethers.getContractFactory('TestContract');
+        walletWithProvider = new quais.Wallet(hre.network.config.accounts[0], provider);
+        QuaisContract = new quais.ContractFactory(ethersContract.interface.fragments, ethersContract.bytecode, walletWithProvider);
+        quaisContract = yield QuaisContract.deploy({ gasLimit: 4000000 }).then(function (contract) {
+            return contract;
+        });
+        return yield new quais.Contract(quaisContract.address, quaisContract.interface, provider);
+    });
+}
 const TIMEOUT_PERIOD = 120000;
-const contract = (function () {
-    return new quais.Contract(contractData.contractAddress, contractData.interface, provider);
-})();
 function equals(name, actual, expected) {
     if (Array.isArray(expected)) {
         assert.equal(actual.length, expected.length, 'array length mismatch - ' + name);
@@ -42,6 +51,7 @@ function equals(name, actual, expected) {
 }
 function TestContractEvents() {
     return __awaiter(this, void 0, void 0, function* () {
+        let contract = yield setUpContract();
         function waitForEvent(eventName, expected) {
             return new Promise(function (resolve, reject) {
                 let done = false;
@@ -102,51 +112,55 @@ function TestContractEvents() {
     });
 }
 describe('Test Contract Objects', function () {
-    it('parses events', function () {
-        this.timeout(TIMEOUT_PERIOD);
-        return TestContractEvents();
-    });
-    it('ABIv2 parameters and return types work', function () {
-        this.timeout(TIMEOUT_PERIOD);
-        let p0 = '0x06B5955A67D827CDF91823E3bB8F069e6c89c1D6';
-        let p0_0f = '0x06B5955a67d827cDF91823e3bB8F069E6c89c1e5';
-        let p0_f0 = '0x06b5955a67D827CDF91823e3Bb8F069E6C89c2C6';
-        let p1 = 0x42;
-        let p1_0f = 0x42 + 0x0f;
-        let p1_f0 = 0x42 + 0xf0;
-        let expectedPosStruct = [p0_f0, p1_f0, [p0_0f, p1_0f]];
-        let seq = Promise.resolve();
-        [
-            [p0, p1, [p0, p1]],
-            { p0: p0, p1: p1, child: [p0, p1] },
-            [p0, p1, { p0: p0, p1: p1 }],
-            { p0: p0, p1: p1, child: { p0: p0, p1: p1 } }
-        ].forEach(function (struct) {
-            seq = seq.then(function () {
-                return contract.testV2(struct).then((result) => {
-                    equals('position input', result, expectedPosStruct);
-                    equals('keyword input p0', result.p0, expectedPosStruct[0]);
-                    equals('keyword input p1', result.p1, expectedPosStruct[1]);
-                    equals('keyword input child.p0', result.child.p0, expectedPosStruct[2][0]);
-                    equals('keyword input child.p1', result.child.p1, expectedPosStruct[2][1]);
+    return __awaiter(this, void 0, void 0, function* () {
+        let contract = yield setUpContract();
+        //Skip due to disabled polling in go-quai
+        it.skip('parses events', function () {
+            this.timeout(TIMEOUT_PERIOD);
+            return TestContractEvents();
+        });
+        it('ABIv2 parameters and return types work', function () {
+            this.timeout(TIMEOUT_PERIOD);
+            let p0 = '0x06B5955A67D827CDF91823E3bB8F069e6c89c1D6';
+            let p0_0f = '0x06B5955a67d827cDF91823e3bB8F069E6c89c1e5';
+            let p0_f0 = '0x06b5955a67D827CDF91823e3Bb8F069E6C89c2C6';
+            let p1 = 0x42;
+            let p1_0f = 0x42 + 0x0f;
+            let p1_f0 = 0x42 + 0xf0;
+            let expectedPosStruct = [p0_f0, p1_f0, [p0_0f, p1_0f]];
+            let seq = Promise.resolve();
+            [
+                [p0, p1, [p0, p1]],
+                { p0: p0, p1: p1, child: [p0, p1] },
+                [p0, p1, { p0: p0, p1: p1 }],
+                { p0: p0, p1: p1, child: { p0: p0, p1: p1 } }
+            ].forEach(function (struct) {
+                seq = seq.then(function () {
+                    return contract.testV2(struct).then((result) => {
+                        equals('position input', result, expectedPosStruct);
+                        equals('keyword input p0', result.p0, expectedPosStruct[0]);
+                        equals('keyword input p1', result.p1, expectedPosStruct[1]);
+                        equals('keyword input child.p0', result.child.p0, expectedPosStruct[2][0]);
+                        equals('keyword input child.p1', result.child.p1, expectedPosStruct[2][1]);
+                    });
                 });
             });
+            return seq;
         });
-        return seq;
-    });
-    it('collapses single argument solidity methods', function () {
-        this.timeout(TIMEOUT_PERIOD);
-        return contract.testSingleResult(4).then((result) => {
-            assert.equal(result, 5, 'single value returned');
+        it('collapses single argument solidity methods', function () {
+            this.timeout(TIMEOUT_PERIOD);
+            return contract.testSingleResult(4).then((result) => {
+                assert.equal(result, 5, 'single value returned');
+            });
         });
-    });
-    it('does not collapses multi argument solidity methods', function () {
-        this.timeout(TIMEOUT_PERIOD);
-        return contract.testMultiResult(6).then((result) => {
-            assert.equal(result[0], 7, 'multi value [0] returned');
-            assert.equal(result[1], 8, 'multi value [1] returned');
-            assert.equal(result.r0, 7, 'multi value [r0] returned');
-            assert.equal(result.r1, 8, 'multi value [r1] returned');
+        it('does not collapses multi argument solidity methods', function () {
+            this.timeout(TIMEOUT_PERIOD);
+            return contract.testMultiResult(6).then((result) => {
+                assert.equal(result[0], 7, 'multi value [0] returned');
+                assert.equal(result[1], 8, 'multi value [1] returned');
+                assert.equal(result.r0, 7, 'multi value [r0] returned');
+                assert.equal(result.r1, 8, 'multi value [r1] returned');
+            });
         });
     });
 });
@@ -184,7 +198,8 @@ describe("Test Contract Transaction Population", function () {
             assert.equal(tx.from, testAddressCheck, "from address matches");
         });
     });
-    it("allows ENS 'from' overrides", function () {
+    //Skip due to no ENS in quai
+    it.skip("allows ENS 'from' overrides", function () {
         return __awaiter(this, void 0, void 0, function* () {
             this.timeout(20000);
             const tx = yield contractConnected.populateTransaction.balanceOf(testAddress, {

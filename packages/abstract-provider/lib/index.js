@@ -29,7 +29,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     function verb(n) { return function (v) { return step([n, v]); }; }
     function step(op) {
         if (f) throw new TypeError("Generator is already executing.");
-        while (_) try {
+        while (g && (g = 0, op[0] && (_ = 0)), _) try {
             if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
             if (y = 0, t) op = [op[0] & 2, t.value];
             switch (op[0]) {
@@ -76,17 +76,15 @@ exports.ForkEvent = ForkEvent;
 var BlockForkEvent = /** @class */ (function (_super) {
     __extends(BlockForkEvent, _super);
     function BlockForkEvent(blockHash, expiry) {
-        var _this = this;
         if (!(0, bytes_1.isHexString)(blockHash, 32)) {
             logger.throwArgumentError("invalid blockHash", "blockHash", blockHash);
         }
-        _this = _super.call(this, {
+        return _super.call(this, {
             _isForkEvent: true,
             _isBlockForkEvent: true,
             expiry: (expiry || 0),
             blockHash: blockHash
         }) || this;
-        return _this;
     }
     return BlockForkEvent;
 }(ForkEvent));
@@ -94,17 +92,15 @@ exports.BlockForkEvent = BlockForkEvent;
 var TransactionForkEvent = /** @class */ (function (_super) {
     __extends(TransactionForkEvent, _super);
     function TransactionForkEvent(hash, expiry) {
-        var _this = this;
         if (!(0, bytes_1.isHexString)(hash, 32)) {
             logger.throwArgumentError("invalid transaction hash", "hash", hash);
         }
-        _this = _super.call(this, {
+        return _super.call(this, {
             _isForkEvent: true,
             _isTransactionForkEvent: true,
             expiry: (expiry || 0),
             hash: hash
         }) || this;
-        return _this;
     }
     return TransactionForkEvent;
 }(ForkEvent));
@@ -112,21 +108,19 @@ exports.TransactionForkEvent = TransactionForkEvent;
 var TransactionOrderForkEvent = /** @class */ (function (_super) {
     __extends(TransactionOrderForkEvent, _super);
     function TransactionOrderForkEvent(beforeHash, afterHash, expiry) {
-        var _this = this;
         if (!(0, bytes_1.isHexString)(beforeHash, 32)) {
             logger.throwArgumentError("invalid transaction hash", "beforeHash", beforeHash);
         }
         if (!(0, bytes_1.isHexString)(afterHash, 32)) {
             logger.throwArgumentError("invalid transaction hash", "afterHash", afterHash);
         }
-        _this = _super.call(this, {
+        return _super.call(this, {
             _isForkEvent: true,
             _isTransactionOrderForkEvent: true,
             expiry: (expiry || 0),
             beforeHash: beforeHash,
             afterHash: afterHash
         }) || this;
-        return _this;
     }
     return TransactionOrderForkEvent;
 }(ForkEvent));

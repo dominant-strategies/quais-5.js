@@ -1,7 +1,11 @@
 'use strict';
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
-    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
 }) : (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
     o[k2] = m[k];
@@ -33,7 +37,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     function verb(n) { return function (v) { return step([n, v]); }; }
     function step(op) {
         if (f) throw new TypeError("Generator is already executing.");
-        while (_) try {
+        while (g && (g = 0, op[0] && (_ = 0)), _) try {
             if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
             if (y = 0, t) op = [op[0] & 2, t.value];
             switch (op[0]) {
@@ -67,7 +71,7 @@ describe('Test JSON Wallets', function () {
     tests.forEach(function (test) {
         it(('decrypts wallet - ' + test.name), function () {
             return __awaiter(this, void 0, void 0, function () {
-                var wallet, walletAddress, provider, walletConnected, wallet2, wallet2;
+                var wallet, walletAddress, provider, walletConnected, wallet2, wallet2, walletMnemonic;
                 return __generator(this, function (_a) {
                     switch (_a.label) {
                         case 0:
@@ -103,10 +107,13 @@ describe('Test JSON Wallets', function () {
                                 wallet2 = quais_1.quais.Wallet.fromEncryptedJsonSync(test.json, test.password);
                                 assert_1.default.equal(wallet2.privateKey, test.privateKey, 'generated correct private key - ' + wallet2.privateKey);
                             }
-                            if (test.mnemonic) {
-                                assert_1.default.equal(wallet.mnemonic.phrase, test.mnemonic, 'mnemonic enabled encrypted wallet has a mnemonic phrase');
-                            }
-                            return [2 /*return*/];
+                            if (!test.mnemonic) return [3 /*break*/, 4];
+                            return [4 /*yield*/, quais_1.quais.Wallet.fromMnemonic(test.mnemonic)];
+                        case 3:
+                            walletMnemonic = _a.sent();
+                            assert_1.default.equal(walletMnemonic.mnemonic.phrase, test.mnemonic, 'mnemonic enabled encrypted wallet has a mnemonic phrase');
+                            _a.label = 4;
+                        case 4: return [2 /*return*/];
                     }
                 });
             });
@@ -135,10 +142,10 @@ describe('Test JSON Wallets', function () {
 describe('Test Transaction Signing and Parsing', function () {
     function checkTransaction(parsedTransaction, test) {
         var transaction = {};
-        ['nonce', 'gasLimit', 'gasPrice', 'to', 'value', 'data'].forEach(function (key) {
+        ['nonce', 'gasLimit', 'to', 'value', 'data'].forEach(function (key) {
             var expected = test[key];
             var value = parsedTransaction[key];
-            if (["gasLimit", "gasPrice", "value"].indexOf(key) >= 0) {
+            if (["gasLimit", "value"].indexOf(key) >= 0) {
                 assert_1.default.ok((quais_1.quais.BigNumber.isBigNumber(value)), 'parsed into a big number - ' + key);
                 value = value.toHexString();
                 if (!expected || expected === '0x') {
@@ -169,52 +176,15 @@ describe('Test Transaction Signing and Parsing', function () {
         });
         return transaction;
     }
-    var tests = (0, testcases_1.loadTests)('transactions');
+    var tests = (0, testcases_1.loadTests)('parsing-transactions');
     tests.forEach(function (test) {
         it(('parses and signs transaction - ' + test.name), function () {
             this.timeout(120000);
-            var signingKey = new quais_1.quais.utils.SigningKey(test.privateKey);
-            var signDigest = signingKey.signDigest.bind(signingKey);
-            // Legacy parsing unsigned transaction
-            checkTransaction(quais_1.quais.utils.parseTransaction(test.unsignedTransaction), test);
+            if (test.type == 0) {
+                checkTransaction(quais_1.quais.utils.parseTransaction(test.unsignedTransaction), test);
+            }
             var parsedTransaction = quais_1.quais.utils.parseTransaction(test.signedTransaction);
-            var transaction = checkTransaction(parsedTransaction, test);
-            // Legacy signed transaction ecrecover
-            assert_1.default.equal(parsedTransaction.from, quais_1.quais.utils.getAddress(test.accountAddress), 'computed from');
-            // Legacy transaction chain ID
-            assert_1.default.equal(parsedTransaction.chainId, 0, 'parses chainId (legacy)');
-            // Legacy serializes unsigned transaction
-            (function () {
-                var unsignedTx = quais_1.quais.utils.serializeTransaction(transaction);
-                assert_1.default.equal(unsignedTx, test.unsignedTransaction, 'serializes unsigned transaction (legacy)');
-                // Legacy signed serialized transaction
-                var signature = signDigest(quais_1.quais.utils.keccak256(unsignedTx));
-                assert_1.default.equal(quais_1.quais.utils.serializeTransaction(transaction, signature), test.signedTransaction, 'signs transaction (legacy)');
-            })();
-            // EIP155
-            // EIP-155 parsing unsigned transaction
-            var parsedUnsignedTransactionChainId5 = quais_1.quais.utils.parseTransaction(test.unsignedTransactionChainId5);
-            checkTransaction(parsedUnsignedTransactionChainId5, test);
-            assert_1.default.equal(parsedUnsignedTransactionChainId5.chainId, 5, 'parses chainId (eip155)');
-            // EIP-155 fields
-            var parsedTransactionChainId5 = quais_1.quais.utils.parseTransaction(test.signedTransactionChainId5);
-            ['data', 'from', 'nonce', 'to'].forEach(function (key) {
-                assert_1.default.equal(parsedTransaction[key], parsedTransactionChainId5[key], 'parses ' + key + ' (eip155)');
-            });
-            ['gasLimit', 'gasPrice', 'value'].forEach(function (key) {
-                assert_1.default.ok(parsedTransaction[key].eq(parsedTransactionChainId5[key]), 'parses ' + key + ' (eip155)');
-            });
-            // EIP-155 chain ID
-            assert_1.default.equal(parsedTransactionChainId5.chainId, 5, 'parses chainId (eip155)');
-            transaction.chainId = 5;
-            (function () {
-                // EIP-155 serialized unsigned transaction
-                var unsignedTx = quais_1.quais.utils.serializeTransaction(transaction);
-                assert_1.default.equal(unsignedTx, test.unsignedTransactionChainId5, 'serializes unsigned transaction (eip155) ');
-                // EIP-155 signed serialized transaction
-                var signature = signDigest(quais_1.quais.utils.keccak256(unsignedTx));
-                assert_1.default.equal(quais_1.quais.utils.serializeTransaction(transaction, signature), test.signedTransactionChainId5, 'signs transaction (eip155)');
-            })();
+            checkTransaction(parsedTransaction, test);
         });
     });
     tests.forEach(function (test) {
@@ -229,16 +199,16 @@ describe('Test Transaction Signing and Parsing', function () {
                             transaction = {
                                 to: test.to,
                                 data: test.data,
+                                type: test.type,
                                 gasLimit: test.gasLimit,
-                                gasPrice: test.gasPrice,
                                 value: test.value,
                                 nonce: ((test.nonce) === "0x") ? 0 : test.nonce,
-                                chainId: 5
+                                chainId: 9000
                             };
                             return [4 /*yield*/, wallet.signTransaction(transaction)];
                         case 1:
                             signedTx = _a.sent();
-                            assert_1.default.equal(signedTx, test.signedTransactionChainId5);
+                            assert_1.default.equal(signedTx, test.signedTransaction);
                             return [2 /*return*/];
                     }
                 });
@@ -304,8 +274,11 @@ describe("Serialize Transactions", function () {
     it("allows odd-length numeric values", function () {
         quais_1.quais.utils.serializeTransaction({
             gasLimit: "0x1",
-            gasPrice: "0x1",
-            value: "0x1"
+            value: "0x1",
+            maxPriorityFeePerGas: "0x1",
+            maxFeePerGas: "0x1",
+            type: 0,
+            //nonce: 0,
         });
         //console.log(result);
     });

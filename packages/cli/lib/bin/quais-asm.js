@@ -30,7 +30,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     function verb(n) { return function (v) { return step([n, v]); }; }
     function step(op) {
         if (f) throw new TypeError("Generator is already executing.");
-        while (_) try {
+        while (g && (g = 0, op[0] && (_ = 0)), _) try {
             if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
             if (y = 0, t) op = [op[0] & 2, t.value];
             switch (op[0]) {
@@ -122,7 +122,7 @@ var AssemblePlugin = /** @class */ (function (_super) {
                         argParser.consumeOptions("define").forEach(function (pair) {
                             var match = pair.match(/([a-z][a-z0-9_]+)(=.*)?/i);
                             if (!match) {
-                                _this.throwError("invalid define: " + pair);
+                                _this.throwError("invalid define: ".concat(pair));
                             }
                             _this.defines[match[1]] = (match[2] ? match[2].substring(1) : true);
                         });
@@ -184,7 +184,7 @@ var AssemblePlugin = /** @class */ (function (_super) {
                                 prefix = this.content.substring(0, offset);
                                 lineNo = prefix.length - prefix.replace(/\r|\n|\r\n/g, '').length;
                                 line = this.content.substring(offset - column).split(/\n/)[0];
-                                output = "Invalid Bytecode Character found in line " + (lineNo + 1) + ", column " + (column + 1) + "\n";
+                                output = "Invalid Bytecode Character found in line ".concat(lineNo + 1, ", column ").concat(column + 1, "\n");
                                 output += line + "\n";
                                 output += repeat("-", column) + "^";
                                 this.throwError(output);
@@ -225,10 +225,10 @@ var AssemblePlugin = /** @class */ (function (_super) {
                         if (error_1.errors) {
                             (error_1.errors).forEach(function (error) {
                                 if (error.severity === asm_1.SemanticErrorSeverity.error) {
-                                    console.log("Error: " + error.message + " (line: " + (error.node.location.line + 1) + ")");
+                                    console.log("Error: ".concat(error.message, " (line: ").concat(error.node.location.line + 1, ")"));
                                 }
                                 else if (error.severity === asm_1.SemanticErrorSeverity.warning) {
-                                    console.log("Warning: " + error.message + " (line: " + (error.node.location.line + 1) + ")");
+                                    console.log("Warning: ".concat(error.message, " (line: ").concat(error.node.location.line + 1, ")"));
                                 }
                                 else {
                                     console.log(error);

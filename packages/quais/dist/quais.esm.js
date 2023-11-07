@@ -9647,10 +9647,6 @@ class TransactionOrderForkEvent extends ForkEvent {
 ///////////////////////////////
 // Exported Abstracts
 class Provider {
-    constructor() {
-        logger$d.checkAbstract(new.target, Provider);
-        defineReadOnly(this, "_isProvider", true);
-    }
     getFeeData() {
         return __awaiter$2(this, void 0, void 0, function* () {
             const { block, gasPrice, maxFeePerGas, maxPriorityFeePerGas } = yield resolveProperties({
@@ -9687,6 +9683,10 @@ class Provider {
     // Alias for "off"
     removeListener(eventName, listener) {
         return this.off(eventName, listener);
+    }
+    constructor() {
+        logger$d.checkAbstract(new.target, Provider);
+        defineReadOnly(this, "_isProvider", true);
     }
     static isProvider(value) {
         return !!(value && value._isProvider);
@@ -9858,7 +9858,6 @@ class Signer {
             else {
                 // We need to get fee data to determine things
                 const feeData = yield this.getFeeData();
-                console.log("FEE DATA:", feeData);
                 if (tx.type == null) {
                     // We need to auto-detect the intended type of this transaction...
                     if (feeData.maxFeePerGas != null && feeData.maxPriorityFeePerGas != null) {
@@ -14056,6 +14055,7 @@ function _serialize(transaction, signature) {
     // If there is an explicit gasPrice, make sure it matches the
     // EIP-1559 fees; otherwise they may not understand what they
     // think they are setting in terms of fee.
+    //console.log('Serializing tx: \n', JSON.stringify(transaction, null, 4));
     if (transaction.gasPrice != null) {
         const gasPrice = BigNumber.from(transaction.gasPrice);
         const maxFeePerGas = BigNumber.from(transaction.maxFeePerGas || 0);
@@ -14082,6 +14082,7 @@ function _serialize(transaction, signature) {
         fields.push(stripZeros(sig.r));
         fields.push(stripZeros(sig.s));
     }
+    //console.log('Encoding tx: \n', JSON.stringify(fields, null, 4));
     return hexConcat(["0x00", encode$1(fields)]);
 }
 function _serializeStandardETx(transaction, signature) {
@@ -14173,9 +14174,9 @@ function _parse(payload) {
 }
 function _parseStandardETx(payload) {
     const transaction = decode$1(payload.slice(1));
-    if (transaction.length !== 8 && transaction.length !== 17) {
-        logger$h.throwArgumentError("invalid component count for transaction type: 1", "payload", hexlify(payload));
-    }
+    // if (transaction.length !== 8 && transaction.length !== 17) {
+    //     logger.throwArgumentError("invalid component count for transaction type: 1", "payload", hexlify(payload));
+    // }
     const maxPriorityFeePerGas = handleNumber(transaction[2]);
     const maxFeePerGas = handleNumber(transaction[3]);
     const tx = {
@@ -18633,41 +18634,44 @@ class Formatter {
         const address = this.address.bind(this);
         const bigNumber = this.bigNumber.bind(this);
         const bigNumberArray = this.bigNumberArray.bind(this);
+        const numberArray = this.numberArray.bind(this);
         const blockTag = this.blockTag.bind(this);
         const data = this.data.bind(this);
         const hash = this.hash.bind(this);
         const hashArray = this.hashArray.bind(this);
+        const hashArrayAnyLength = this.hashArrayAnyLength.bind(this);
         const hex = this.hex.bind(this);
         const number = this.number.bind(this);
-        const type = this.type.bind(this);
+        const etxs = this.etxs.bind(this);
         const strictData = (v) => { return this.data(v, true); };
         formats.transaction = {
             hash: hash,
-            type: type,
+            type: hex,
             accessList: Formatter.allowNull(this.accessList.bind(this), null),
             blockHash: Formatter.allowNull(hash, null),
             blockNumber: Formatter.allowNull(number, null),
             transactionIndex: Formatter.allowNull(number, null),
-            confirmations: Formatter.allowNull(number, null),
             from: address,
             // either (gasPrice) or (maxPriorityFeePerGas + maxFeePerGas)
             // must be set
             gasPrice: Formatter.allowNull(bigNumber),
             maxPriorityFeePerGas: Formatter.allowNull(bigNumber),
             maxFeePerGas: Formatter.allowNull(bigNumber),
-            gasLimit: bigNumber,
             to: Formatter.allowNull(address, null),
             value: bigNumber,
             nonce: number,
-            data: data,
-            r: Formatter.allowNull(this.uint256),
-            s: Formatter.allowNull(this.uint256),
-            v: Formatter.allowNull(number),
-            creates: Formatter.allowNull(address, null),
+            data: Formatter.allowNull(data),
+            r: Formatter.allowNull(hex),
+            s: Formatter.allowNull(hex),
+            v: Formatter.allowNull(hex),
             raw: Formatter.allowNull(data),
             gas: Formatter.allowNull(bigNumber),
-            input: Formatter.allowNull(data),
-            sender: Formatter.allowNull(address),
+            //EXT TRANSACTIONS
+            etxGasLimit: Formatter.allowNull(bigNumber),
+            etxGasPrice: Formatter.allowNull(bigNumber),
+            etxGasTip: Formatter.allowNull(bigNumber),
+            etxData: Formatter.allowNull(data),
+            etxAccessList: Formatter.allowNull(this.accessList.bind(this), null),
         };
         formats.transactionRequest = {
             from: Formatter.allowNull(address),
@@ -18704,31 +18708,48 @@ class Formatter {
             // should be allowNull(hash), but broken-EIP-658 support is handled in receipt
             root: Formatter.allowNull(hex),
             gasUsed: bigNumber,
-            logsBloom: Formatter.allowNull(data),
+            logsBloom: Formatter.allowNull(hex),
             blockHash: hash,
             transactionHash: hash,
-            etxs: Formatter.allowNull(this.etx, null),
+            etxs: Formatter.allowNull(etxs, null),
             logs: Formatter.arrayOf(this.receiptLog.bind(this)),
             blockNumber: number,
             confirmations: Formatter.allowNull(number, null),
             cumulativeGasUsed: bigNumber,
             effectiveGasPrice: Formatter.allowNull(bigNumber),
-            status: Formatter.allowNull(number),
-            type: type
+            status: hex,
+            type: hex,
         };
         formats.block = {
             hash: Formatter.allowNull(hash),
             parentHash: hashArray,
-            number: bigNumberArray,
+            parentEntropy: bigNumberArray,
+            number: numberArray,
             timestamp: number,
             nonce: Formatter.allowNull(hex),
             difficulty: bigNumber,
             gasLimit: bigNumber,
             gasUsed: bigNumber,
+            baseFeePerGas: Formatter.allowNull(bigNumber),
             miner: Formatter.allowNull(address),
             extraData: data,
             transactions: Formatter.allowNull(Formatter.arrayOf(hash)),
-            baseFeePerGas: Formatter.allowNull(bigNumber)
+            transactionsRoot: hash,
+            extTransactions: Formatter.allowNull(Formatter.arrayOf(hash)),
+            extRollupRoot: Formatter.allowNull(hash),
+            extTransactionsRoot: Formatter.allowNull(hash),
+            location: Formatter.allowNull(hex),
+            manifestHash: hashArrayAnyLength,
+            mixHash: hash,
+            order: Number,
+            parentDeltaS: bigNumberArray,
+            receiptsRoot: hash,
+            sha3Uncles: hash,
+            size: bigNumber,
+            stateRoot: hash,
+            uncles: Formatter.allowNull(Formatter.arrayOf(hash)),
+            subManifest: Formatter.allowNull(Formatter.arrayOf(hash)),
+            totalEntropy: bigNumber,
         };
         formats.blockWithTransactions = shallowCopy(formats.block);
         formats.blockWithTransactions.transactions = Formatter.allowNull(Formatter.arrayOf(this.transactionResponse.bind(this)));
@@ -18743,7 +18764,6 @@ class Formatter {
             blockNumber: Formatter.allowNull(number),
             blockHash: Formatter.allowNull(hash),
             transactionIndex: number,
-            removed: Formatter.allowNull(this.boolean.bind(this)),
             address: address,
             data: Formatter.allowFalsish(data, "0x"),
             topics: Formatter.arrayOf(hash),
@@ -18763,19 +18783,16 @@ class Formatter {
         }
         return BigNumber.from(number).toNumber();
     }
-    type(number) {
-        if (number === "0x" || number == null) {
-            return 0;
-        }
-        return BigNumber.from(number).toNumber();
-    }
     // Strict! Used on input.
     bigNumber(value) {
         return BigNumber.from(value);
     }
+    numberArray(value) {
+        return Array.from(value, item => (Number(item)));
+    }
     // Strict! Used on input.
     bigNumberArray(value) {
-        return Array.from(value);
+        return Array.from(value, item => (BigNumber.from(item)));
     }
     // Requires a boolean, "true" or  "false"; returns a boolean
     boolean(value) {
@@ -18816,8 +18833,30 @@ class Formatter {
     address(value) {
         return getAddress(value);
     }
-    etx(value) {
-        return value;
+    etxs(value) {
+        if (!Array.isArray(value)) {
+            throw new Error("Value must be an array.");
+        }
+        const formattedEtxs = [];
+        for (let i = 0; i < value.length; i++) {
+            const etx = value[i];
+            formattedEtxs.push({
+                type: etx.type,
+                nonce: Number(etx.nonce),
+                gasPrice: Formatter.allowNull(this.bigNumber, null)(etx.gasPrice),
+                maxPriorityFeePerGas: this.bigNumber(etx.maxPriorityFeePerGas),
+                maxFeePerGas: this.bigNumber(etx.maxFeePerGas),
+                gas: this.bigNumber(etx.gas),
+                value: this.bigNumber(etx.value),
+                data: this.data(etx.input),
+                to: this.address(etx.to),
+                accessList: Formatter.allowNull(this.accessList, null)(etx.accessList),
+                chainId: Number(etx.chainId),
+                from: this.address(etx.sender),
+                hash: this.hash(etx.hash)
+            });
+        }
+        return formattedEtxs;
     }
     callAddress(value) {
         if (!isHexString(value, 32)) {
@@ -18873,6 +18912,17 @@ class Formatter {
         }
         return results;
     }
+    hashArrayAnyLength(value, strict) {
+        if (value.length != HIERARCHY_DEPTH) {
+            return logger$s.throwArgumentError("invalid hash array", "value", value);
+        }
+        let results = [];
+        for (const hash of value) {
+            const result = this.hex(hash, strict);
+            results.push(result);
+        }
+        return results;
+    }
     // Returns the difficulty as a number, or if too large (i.e. PoA network) null
     difficulty(value) {
         if (value == null) {
@@ -18912,21 +18962,35 @@ class Formatter {
     }
     contextBlock(value, context) {
         let contextBlock = {
-            number: value.number[context],
+            number: value.number,
             transactions: value.transactions,
             hash: value.hash,
-            parentHash: value.parentHash[context],
+            parentHash: value.parentHash,
+            parentEntropy: value.parentEntropy,
+            extTransactions: value.extTransactions,
             timestamp: value.timestamp,
             nonce: value.nonce,
             difficulty: value.difficulty,
-            _difficulty: value._difficulty,
             gasLimit: value.gasLimit,
             gasUsed: value.gasUsed,
             miner: value.miner,
-            extraData: value.data,
+            extraData: value.extraData,
             transactionsRoot: value.transactionsRoot,
             stateRoot: value.stateRoot,
-            receiptsRoot: value.receiptsRoot
+            receiptsRoot: value.receiptsRoot,
+            baseFeePerGas: value.baseFeePerGas,
+            extRollupRoot: value.extRollupRoot,
+            extTransactionsRoot: value.extTransactionsRoot,
+            location: value.location,
+            manifestHash: value.manifestHash,
+            mixHash: value.mixHash,
+            order: value.order,
+            parentDeltaS: value.parentDeltaS,
+            sha3Uncles: value.sha3Uncles,
+            size: value.size,
+            uncles: value.uncles,
+            subManifest: value.subManifest,
+            totalEntropy: value.totalEntropy,
         };
         return contextBlock;
     }
@@ -18937,7 +19001,7 @@ class Formatter {
     transactionResponse(transaction) {
         // Rename gas to gasLimit
         if (transaction.gas != null && transaction.gasLimit == null) {
-            transaction.gasLimit = transaction.gas;
+            transaction.gas = transaction.gas;
         }
         // Some clients (TestRPC) do strange things like return 0x0 for the
         // 0 address; correct this to be a real address
@@ -18948,11 +19012,11 @@ class Formatter {
         if (transaction.input != null && transaction.data == null) {
             transaction.data = transaction.input;
         }
-        // If to and creates are empty, populate the creates from the transaction
-        if (transaction.to == null && transaction.creates == null) {
-            transaction.creates = this.contractAddress(transaction);
+        if (transaction.type == '0x1') {
+            transaction.from = transaction.sender;
+            delete transaction.sender;
         }
-        if ((transaction.type === 1 || transaction.type === 2) && transaction.accessList == null) {
+        if ((transaction.type === '0x1' || transaction.type === '0x2') && transaction.accessList == null) {
             transaction.accessList = [];
         }
         const result = Formatter.check(this.formats.transaction, transaction);
@@ -19019,9 +19083,6 @@ class Formatter {
                 // Must be a valid bytes32
                 logger$s.throwArgumentError("invalid root hash", "value.root", result.root);
             }
-        }
-        if (result.status != null) {
-            result.byzantium = true;
         }
         return result;
     }
@@ -20725,7 +20786,7 @@ class BaseProvider extends Provider {
                     }
                     // For block tags, if we are asking for a future block, we return null
                     if (params.blockTag != null) {
-                        if (blockNumber > this._emitted.block) {
+                        if (blockNumber > Number(this._emitted.block)) {
                             return null;
                         }
                     }
@@ -21476,6 +21537,12 @@ const allowedTransactionKeys$2 = {
     externalGasLimit: true, externalGasPrice: true, externalGasTip: true, externalData: true, externalAccessList: true,
 };
 class JsonRpcProvider extends BaseProvider {
+    get _cache() {
+        if (this._eventLoopCache == null) {
+            this._eventLoopCache = {};
+        }
+        return this._eventLoopCache;
+    }
     constructor(url, network, context) {
         let networkOrReady = network;
         // The network is unknown, query the JSON-RPC for it
@@ -21513,12 +21580,6 @@ class JsonRpcProvider extends BaseProvider {
             defineReadOnly(this, "connection", Object.freeze(shallowCopy(url)));
         }
         this._nextId = 42;
-    }
-    get _cache() {
-        if (this._eventLoopCache == null) {
-            this._eventLoopCache = {};
-        }
-        return this._eventLoopCache;
     }
     static defaultUrl() {
         return "http:/\/localhost:8545";

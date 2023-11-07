@@ -3656,7 +3656,7 @@
 	    LogLevel["WARNING"] = "WARNING";
 	    LogLevel["ERROR"] = "ERROR";
 	    LogLevel["OFF"] = "OFF";
-	})(LogLevel = exports.LogLevel || (exports.LogLevel = {}));
+	})(LogLevel || (exports.LogLevel = LogLevel = {}));
 	var ErrorCode;
 	(function (ErrorCode) {
 	    ///////////////////
@@ -3735,7 +3735,7 @@
 	    // The user rejected the action, such as signing a message or sending
 	    // a transaction
 	    ErrorCode["ACTION_REJECTED"] = "ACTION_REJECTED";
-	})(ErrorCode = exports.ErrorCode || (exports.ErrorCode = {}));
+	})(ErrorCode || (exports.ErrorCode = ErrorCode = {}));
 	;
 	var HEX = "0123456789abcdef";
 	var Logger = /** @class */ (function () {
@@ -3808,8 +3808,8 @@
 	                messageDetails.push(key + "=" + JSON.stringify(params[key].toString()));
 	            }
 	        });
-	        messageDetails.push("code=" + code);
-	        messageDetails.push("version=" + this.version);
+	        messageDetails.push("code=".concat(code));
+	        messageDetails.push("version=".concat(this.version));
 	        var reason = message;
 	        var url = "";
 	        switch (code) {
@@ -4898,7 +4898,7 @@
 	            return value;
 	        }
 	        if (typeof (value) === "number") {
-	            value = "fixed128x" + value;
+	            value = "fixed128x".concat(value);
 	        }
 	        var signed = true;
 	        var width = 128;
@@ -5180,7 +5180,7 @@
 	    function verb(n) { return function (v) { return step([n, v]); }; }
 	    function step(op) {
 	        if (f) throw new TypeError("Generator is already executing.");
-	        while (_) try {
+	        while (g && (g = 0, op[0] && (_ = 0)), _) try {
 	            if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
 	            if (y = 0, t) op = [op[0] & 2, t.value];
 	            switch (op[0]) {
@@ -5296,7 +5296,7 @@
 	        }
 	        return true;
 	    }
-	    return logger.throwArgumentError("Cannot deepCopy " + typeof (object), "object", object);
+	    return logger.throwArgumentError("Cannot deepCopy ".concat(typeof (object)), "object", object);
 	}
 	// Returns a new copy of object, such that no properties may be replaced.
 	// New properties may be added only to objects.
@@ -5319,7 +5319,7 @@
 	        }
 	        return result;
 	    }
-	    return logger.throwArgumentError("Cannot deepCopy " + typeof (object), "object", object);
+	    return logger.throwArgumentError("Cannot deepCopy ".concat(typeof (object)), "object", object);
 	}
 	function deepCopy(object) {
 	    return _deepCopy(object);
@@ -5402,7 +5402,7 @@
 	function parseParamType(param, allowIndexed) {
 	    var originalParam = param;
 	    function throwError(i) {
-	        logger.throwArgumentError("unexpected character at position " + i, "param", param);
+	        logger.throwArgumentError("unexpected character at position ".concat(i), "param", param);
 	    }
 	    param = param.replace(/\s/g, " ");
 	    function newNode(parent) {
@@ -6131,7 +6131,7 @@
 	function checkForbidden(fragment) {
 	    var sig = fragment.format();
 	    if (sig === "Error(string)" || sig === "Panic(uint256)") {
-	        logger.throwArgumentError("cannot specify user defined " + sig + " error", "fragment", fragment);
+	        logger.throwArgumentError("cannot specify user defined ".concat(sig, " error"), "fragment", fragment);
 	    }
 	    return fragment;
 	}
@@ -6215,7 +6215,7 @@
 	var regexIdentifier = new RegExp("^[a-zA-Z$_][a-zA-Z0-9$_]*$");
 	function verifyIdentifier(value) {
 	    if (!value || !value.match(regexIdentifier)) {
-	        logger.throwArgumentError("invalid identifier \"" + value + "\"", "value", value);
+	        logger.throwArgumentError("invalid identifier \"".concat(value, "\""), "value", value);
 	    }
 	    return value;
 	}
@@ -8056,7 +8056,7 @@
 	    UnicodeNormalizationForm["NFD"] = "NFD";
 	    UnicodeNormalizationForm["NFKC"] = "NFKC";
 	    UnicodeNormalizationForm["NFKD"] = "NFKD";
-	})(UnicodeNormalizationForm = exports.UnicodeNormalizationForm || (exports.UnicodeNormalizationForm = {}));
+	})(UnicodeNormalizationForm || (exports.UnicodeNormalizationForm = UnicodeNormalizationForm = {}));
 	;
 	var Utf8ErrorReason;
 	(function (Utf8ErrorReason) {
@@ -8084,10 +8084,10 @@
 	    // - offset       = start of this codepoint
 	    // - badCodepoint = the computed codepoint; already bounds checked
 	    Utf8ErrorReason["OVERLONG"] = "overlong representation";
-	})(Utf8ErrorReason = exports.Utf8ErrorReason || (exports.Utf8ErrorReason = {}));
+	})(Utf8ErrorReason || (exports.Utf8ErrorReason = Utf8ErrorReason = {}));
 	;
 	function errorFunc(reason, offset, bytes, output, badCodepoint) {
-	    return logger.throwArgumentError("invalid codepoint at offset " + offset + "; " + reason, "bytes", bytes);
+	    return logger.throwArgumentError("invalid codepoint at offset ".concat(offset, "; ").concat(reason), "bytes", bytes);
 	}
 	function ignoreFunc(reason, offset, bytes, output, badCodepoint) {
 	    // If there is an invalid prefix (including stray continuation), skip any additional continuation bytes
@@ -9241,7 +9241,7 @@
 	            }
 	        }
 	        catch (err) {
-	            throw new Error("Invalid label \"" + label + "\": " + err.message);
+	            throw new Error("Invalid label \"".concat(label, "\": ").concat(err.message));
 	        }
 	    }
 	    return name;
@@ -9273,7 +9273,7 @@
 	            output.push.apply(output, cps);
 	            continue;
 	        }
-	        throw new Error("Disallowed codepoint: 0x" + cp.toString(16).toUpperCase());
+	        throw new Error("Disallowed codepoint: 0x".concat(cp.toString(16).toUpperCase()));
 	    }
 	    return ens_normalize_post_check(nfc(String.fromCodePoint.apply(String, output)));
 	}
@@ -9453,7 +9453,7 @@
 	    function verb(n) { return function (v) { return step([n, v]); }; }
 	    function step(op) {
 	        if (f) throw new TypeError("Generator is already executing.");
-	        while (_) try {
+	        while (g && (g = 0, op[0] && (_ = 0)), _) try {
 	            if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
 	            if (y = 0, t) op = [op[0] & 2, t.value];
 	            switch (op[0]) {
@@ -9514,7 +9514,7 @@
 	function checkString(key) {
 	    return function (value) {
 	        if (typeof (value) !== "string") {
-	            logger.throwArgumentError("invalid domain value for " + JSON.stringify(key), "domain." + key, value);
+	            logger.throwArgumentError("invalid domain value for ".concat(JSON.stringify(key)), "domain.".concat(key), value);
 	        }
 	        return value;
 	    };
@@ -9563,7 +9563,7 @@
 	            return function (value) {
 	                var v = lib$2.BigNumber.from(value);
 	                if (v.lt(boundsLower_1) || v.gt(boundsUpper_1)) {
-	                    logger.throwArgumentError("value out-of-bounds for " + type, "value", value);
+	                    logger.throwArgumentError("value out-of-bounds for ".concat(type), "value", value);
 	                }
 	                return (0, lib$1.hexZeroPad)(v.toTwos(256).toHexString(), 32);
 	            };
@@ -9580,7 +9580,7 @@
 	            return function (value) {
 	                var bytes = (0, lib$1.arrayify)(value);
 	                if (bytes.length !== width_1) {
-	                    logger.throwArgumentError("invalid length for " + type, "value", value);
+	                    logger.throwArgumentError("invalid length for ".concat(type), "value", value);
 	                }
 	                return hexPadRight(value);
 	            };
@@ -9603,10 +9603,10 @@
 	    return null;
 	}
 	function encodeType(name, fields) {
-	    return name + "(" + fields.map(function (_a) {
+	    return "".concat(name, "(").concat(fields.map(function (_a) {
 	        var name = _a.name, type = _a.type;
 	        return (type + " " + name);
-	    }).join(",") + ")";
+	    }).join(","), ")");
 	}
 	var TypedDataEncoder = /** @class */ (function () {
 	    function TypedDataEncoder(types) {
@@ -9629,13 +9629,13 @@
 	            types[name_1].forEach(function (field) {
 	                // Check each field has a unique name
 	                if (uniqueNames[field.name]) {
-	                    logger.throwArgumentError("duplicate variable name " + JSON.stringify(field.name) + " in " + JSON.stringify(name_1), "types", types);
+	                    logger.throwArgumentError("duplicate variable name ".concat(JSON.stringify(field.name), " in ").concat(JSON.stringify(name_1)), "types", types);
 	                }
 	                uniqueNames[field.name] = true;
 	                // Get the base type (drop any array specifiers)
 	                var baseType = field.type.match(/^([^\x5b]*)(\x5b|$)/)[1];
 	                if (baseType === name_1) {
-	                    logger.throwArgumentError("circular type reference to " + JSON.stringify(baseType), "types", types);
+	                    logger.throwArgumentError("circular type reference to ".concat(JSON.stringify(baseType)), "types", types);
 	                }
 	                // Is this a base encoding type?
 	                var encoder = getBaseEncoder(baseType);
@@ -9643,7 +9643,7 @@
 	                    return;
 	                }
 	                if (!parents[baseType]) {
-	                    logger.throwArgumentError("unknown type " + JSON.stringify(baseType), "types", types);
+	                    logger.throwArgumentError("unknown type ".concat(JSON.stringify(baseType)), "types", types);
 	                }
 	                // Add linkage
 	                parents[baseType].push(name_1);
@@ -9659,13 +9659,13 @@
 	            logger.throwArgumentError("missing primary type", "types", types);
 	        }
 	        else if (primaryTypes.length > 1) {
-	            logger.throwArgumentError("ambiguous primary types or unused types: " + primaryTypes.map(function (t) { return (JSON.stringify(t)); }).join(", "), "types", types);
+	            logger.throwArgumentError("ambiguous primary types or unused types: ".concat(primaryTypes.map(function (t) { return (JSON.stringify(t)); }).join(", ")), "types", types);
 	        }
 	        (0, lib$3.defineReadOnly)(this, "primaryType", primaryTypes[0]);
 	        // Check for circular type references
 	        function checkCircular(type, found) {
 	            if (found[type]) {
-	                logger.throwArgumentError("circular type reference to " + JSON.stringify(type), "types", types);
+	                logger.throwArgumentError("circular type reference to ".concat(JSON.stringify(type)), "types", types);
 	            }
 	            found[type] = true;
 	            Object.keys(links[type]).forEach(function (child) {
@@ -9739,12 +9739,12 @@
 	                return (0, lib$1.hexConcat)(values);
 	            };
 	        }
-	        return logger.throwArgumentError("unknown type: " + type, "type", type);
+	        return logger.throwArgumentError("unknown type: ".concat(type), "type", type);
 	    };
 	    TypedDataEncoder.prototype.encodeType = function (name) {
 	        var result = this._types[name];
 	        if (!result) {
-	            logger.throwArgumentError("unknown type: " + JSON.stringify(name), "name", name);
+	            logger.throwArgumentError("unknown type: ".concat(JSON.stringify(name)), "name", name);
 	        }
 	        return result;
 	    };
@@ -9788,7 +9788,7 @@
 	                return accum;
 	            }, {});
 	        }
-	        return logger.throwArgumentError("unknown type: " + type, "type", type);
+	        return logger.throwArgumentError("unknown type: ".concat(type), "type", type);
 	    };
 	    TypedDataEncoder.prototype.visit = function (value, callback) {
 	        return this._visit(this.primaryType, value, callback);
@@ -9807,7 +9807,7 @@
 	        for (var name_3 in domain) {
 	            var type = domainFieldTypes[name_3];
 	            if (!type) {
-	                logger.throwArgumentError("invalid typed-data domain key: " + JSON.stringify(name_3), "domain", domain);
+	                logger.throwArgumentError("invalid typed-data domain key: ".concat(JSON.stringify(name_3)), "domain", domain);
 	            }
 	            domainFields.push({ name: name_3, type: type });
 	        }
@@ -9829,9 +9829,9 @@
 	    // Replaces all address types with ENS names with their looked up address
 	    TypedDataEncoder.resolveNames = function (domain, types, value, resolveName) {
 	        return __awaiter(this, void 0, void 0, function () {
-	            var ensCache, encoder, _a, _b, _i, name_4, _c, _d;
-	            return __generator(this, function (_e) {
-	                switch (_e.label) {
+	            var ensCache, encoder, _a, _b, _c, _i, name_4, _d, _e;
+	            return __generator(this, function (_f) {
+	                switch (_f.label) {
 	                    case 0:
 	                        // Make a copy to isolate it from the object passed in
 	                        domain = (0, lib$3.shallowCopy)(domain);
@@ -9848,20 +9848,23 @@
 	                            }
 	                            return value;
 	                        });
-	                        _a = [];
-	                        for (_b in ensCache)
-	                            _a.push(_b);
+	                        _a = ensCache;
+	                        _b = [];
+	                        for (_c in _a)
+	                            _b.push(_c);
 	                        _i = 0;
-	                        _e.label = 1;
+	                        _f.label = 1;
 	                    case 1:
-	                        if (!(_i < _a.length)) return [3 /*break*/, 4];
-	                        name_4 = _a[_i];
-	                        _c = ensCache;
-	                        _d = name_4;
+	                        if (!(_i < _b.length)) return [3 /*break*/, 4];
+	                        _c = _b[_i];
+	                        if (!(_c in _a)) return [3 /*break*/, 3];
+	                        name_4 = _c;
+	                        _d = ensCache;
+	                        _e = name_4;
 	                        return [4 /*yield*/, resolveName(name_4)];
 	                    case 2:
-	                        _c[_d] = _e.sent();
-	                        _e.label = 3;
+	                        _d[_e] = _f.sent();
+	                        _f.label = 3;
 	                    case 3:
 	                        _i++;
 	                        return [3 /*break*/, 1];
@@ -10036,7 +10039,7 @@
 	    "0x4e487b71": { signature: "Panic(uint256)", name: "Panic", inputs: ["uint256"] }
 	};
 	function wrapAccessError(property, error) {
-	    var wrap = new Error("deferred error during ABI decoding triggered accessing " + property);
+	    var wrap = new Error("deferred error during ABI decoding triggered accessing ".concat(property));
 	    wrap.error = error;
 	    return wrap;
 	}
@@ -10055,8 +10058,8 @@
 	*/
 	var Interface = /** @class */ (function () {
 	    function Interface(fragments$1) {
-	        var _newTarget = this.constructor;
 	        var _this = this;
+	        var _newTarget = this.constructor;
 	        var abi = [];
 	        if (typeof (fragments$1) === "string") {
 	            abi = JSON.parse(fragments$1);
@@ -10271,7 +10274,7 @@
 	        }
 	        var bytes = (0, lib$1.arrayify)(data);
 	        if ((0, lib$1.hexlify)(bytes.slice(0, 4)) !== this.getSighash(fragment)) {
-	            logger.throwArgumentError("data signature does not match error " + fragment.name + ".", "data", (0, lib$1.hexlify)(bytes));
+	            logger.throwArgumentError("data signature does not match error ".concat(fragment.name, "."), "data", (0, lib$1.hexlify)(bytes));
 	        }
 	        return this._decodeParams(fragment.inputs, bytes.slice(4));
 	    };
@@ -10291,7 +10294,7 @@
 	        }
 	        var bytes = (0, lib$1.arrayify)(data);
 	        if ((0, lib$1.hexlify)(bytes.slice(0, 4)) !== this.getSighash(functionFragment)) {
-	            logger.throwArgumentError("data signature does not match function " + functionFragment.name + ".", "data", (0, lib$1.hexlify)(bytes));
+	            logger.throwArgumentError("data signature does not match function ".concat(functionFragment.name, "."), "data", (0, lib$1.hexlify)(bytes));
 	        }
 	        return this._decodeParams(functionFragment.inputs, bytes.slice(4));
 	    };
@@ -10334,10 +10337,10 @@
 	                        reason = errorArgs[0];
 	                    }
 	                    if (errorName === "Error") {
-	                        message = "; VM Exception while processing transaction: reverted with reason string " + JSON.stringify(errorArgs[0]);
+	                        message = "; VM Exception while processing transaction: reverted with reason string ".concat(JSON.stringify(errorArgs[0]));
 	                    }
 	                    else if (errorName === "Panic") {
-	                        message = "; VM Exception while processing transaction: reverted with panic code " + errorArgs[0];
+	                        message = "; VM Exception while processing transaction: reverted with panic code ".concat(errorArgs[0]);
 	                    }
 	                }
 	                else {
@@ -10538,7 +10541,7 @@
 	                if (value_1 instanceof Error) {
 	                    Object.defineProperty(result, param.name, {
 	                        enumerable: true,
-	                        get: function () { throw wrapAccessError("property " + JSON.stringify(param.name), value_1); }
+	                        get: function () { throw wrapAccessError("property ".concat(JSON.stringify(param.name)), value_1); }
 	                    });
 	                }
 	                else {
@@ -10551,7 +10554,7 @@
 	            if (value instanceof Error) {
 	                Object.defineProperty(result, i, {
 	                    enumerable: true,
-	                    get: function () { throw wrapAccessError("index " + i, value); }
+	                    get: function () { throw wrapAccessError("index ".concat(i), value); }
 	                });
 	            }
 	        };
@@ -10701,7 +10704,7 @@
 	    function verb(n) { return function (v) { return step([n, v]); }; }
 	    function step(op) {
 	        if (f) throw new TypeError("Generator is already executing.");
-	        while (_) try {
+	        while (g && (g = 0, op[0] && (_ = 0)), _) try {
 	            if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
 	            if (y = 0, t) op = [op[0] & 2, t.value];
 	            switch (op[0]) {
@@ -10748,17 +10751,15 @@
 	var BlockForkEvent = /** @class */ (function (_super) {
 	    __extends(BlockForkEvent, _super);
 	    function BlockForkEvent(blockHash, expiry) {
-	        var _this = this;
 	        if (!(0, lib$1.isHexString)(blockHash, 32)) {
 	            logger.throwArgumentError("invalid blockHash", "blockHash", blockHash);
 	        }
-	        _this = _super.call(this, {
+	        return _super.call(this, {
 	            _isForkEvent: true,
 	            _isBlockForkEvent: true,
 	            expiry: (expiry || 0),
 	            blockHash: blockHash
 	        }) || this;
-	        return _this;
 	    }
 	    return BlockForkEvent;
 	}(ForkEvent));
@@ -10766,17 +10767,15 @@
 	var TransactionForkEvent = /** @class */ (function (_super) {
 	    __extends(TransactionForkEvent, _super);
 	    function TransactionForkEvent(hash, expiry) {
-	        var _this = this;
 	        if (!(0, lib$1.isHexString)(hash, 32)) {
 	            logger.throwArgumentError("invalid transaction hash", "hash", hash);
 	        }
-	        _this = _super.call(this, {
+	        return _super.call(this, {
 	            _isForkEvent: true,
 	            _isTransactionForkEvent: true,
 	            expiry: (expiry || 0),
 	            hash: hash
 	        }) || this;
-	        return _this;
 	    }
 	    return TransactionForkEvent;
 	}(ForkEvent));
@@ -10784,21 +10783,19 @@
 	var TransactionOrderForkEvent = /** @class */ (function (_super) {
 	    __extends(TransactionOrderForkEvent, _super);
 	    function TransactionOrderForkEvent(beforeHash, afterHash, expiry) {
-	        var _this = this;
 	        if (!(0, lib$1.isHexString)(beforeHash, 32)) {
 	            logger.throwArgumentError("invalid transaction hash", "beforeHash", beforeHash);
 	        }
 	        if (!(0, lib$1.isHexString)(afterHash, 32)) {
 	            logger.throwArgumentError("invalid transaction hash", "afterHash", afterHash);
 	        }
-	        _this = _super.call(this, {
+	        return _super.call(this, {
 	            _isForkEvent: true,
 	            _isTransactionOrderForkEvent: true,
 	            expiry: (expiry || 0),
 	            beforeHash: beforeHash,
 	            afterHash: afterHash
 	        }) || this;
-	        return _this;
 	    }
 	    return TransactionOrderForkEvent;
 	}(ForkEvent));
@@ -10908,7 +10905,7 @@
 	    function verb(n) { return function (v) { return step([n, v]); }; }
 	    function step(op) {
 	        if (f) throw new TypeError("Generator is already executing.");
-	        while (_) try {
+	        while (g && (g = 0, op[0] && (_ = 0)), _) try {
 	            if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
 	            if (y = 0, t) op = [op[0] & 2, t.value];
 	            switch (op[0]) {
@@ -11175,7 +11172,6 @@
 	                    case 2: return [4 /*yield*/, this.getFeeData()];
 	                    case 3:
 	                        feeData = _a.sent();
-	                        console.log("FEE DATA:", feeData);
 	                        if (tx.type == null) {
 	                            // We need to auto-detect the intended type of this transaction...
 	                            if (feeData.maxFeePerGas != null && feeData.maxPriorityFeePerGas != null) {
@@ -18727,7 +18723,11 @@
 	"use strict";
 	var __createBinding = (commonjsGlobal && commonjsGlobal.__createBinding) || (Object.create ? (function(o, m, k, k2) {
 	    if (k2 === undefined) k2 = k;
-	    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
+	    var desc = Object.getOwnPropertyDescriptor(m, k);
+	    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+	      desc = { enumerable: true, get: function() { return m[k]; } };
+	    }
+	    Object.defineProperty(o, k2, desc);
 	}) : (function(o, m, k, k2) {
 	    if (k2 === undefined) k2 = k;
 	    o[k2] = m[k];
@@ -18761,7 +18761,7 @@
 	    TransactionTypes[TransactionTypes["standard"] = 0] = "standard";
 	    TransactionTypes[TransactionTypes["etx"] = 1] = "etx";
 	    TransactionTypes[TransactionTypes["standardETx"] = 2] = "standardETx";
-	})(TransactionTypes = exports.TransactionTypes || (exports.TransactionTypes = {}));
+	})(TransactionTypes || (exports.TransactionTypes = TransactionTypes = {}));
 	;
 	///////////////////////////////
 	function handleAddress(value) {
@@ -18797,7 +18797,7 @@
 	        address: (0, lib$6.getAddress)(addr),
 	        storageKeys: (storageKeys || []).map(function (storageKey, index) {
 	            if ((0, lib$1.hexDataLength)(storageKey) !== 32) {
-	                logger.throwArgumentError("invalid access list storageKey", "accessList[" + addr + ":" + index + "]", storageKey);
+	                logger.throwArgumentError("invalid access list storageKey", "accessList[".concat(addr, ":").concat(index, "]"), storageKey);
 	            }
 	            return storageKey.toLowerCase();
 	        })
@@ -18808,7 +18808,7 @@
 	        return value.map(function (set, index) {
 	            if (Array.isArray(set)) {
 	                if (set.length > 2) {
-	                    logger.throwArgumentError("access list expected to be [ address, storageKeys[] ]", "value[" + index + "]", set);
+	                    logger.throwArgumentError("access list expected to be [ address, storageKeys[] ]", "value[".concat(index, "]"), set);
 	                }
 	                return accessSetify(set[0], set[1]);
 	            }
@@ -18833,6 +18833,7 @@
 	    // If there is an explicit gasPrice, make sure it matches the
 	    // EIP-1559 fees; otherwise they may not understand what they
 	    // think they are setting in terms of fee.
+	    //console.log('Serializing tx: \n', JSON.stringify(transaction, null, 4));
 	    if (transaction.gasPrice != null) {
 	        var gasPrice = lib$2.BigNumber.from(transaction.gasPrice);
 	        var maxFeePerGas = lib$2.BigNumber.from(transaction.maxFeePerGas || 0);
@@ -18860,6 +18861,7 @@
 	        fields.push((0, lib$1.stripZeros)(sig.r));
 	        fields.push((0, lib$1.stripZeros)(sig.s));
 	    }
+	    //console.log('Encoding tx: \n', JSON.stringify(fields, null, 4));
 	    return (0, lib$1.hexConcat)(["0x00", RLP.encode(fields)]);
 	}
 	function _serializeStandardETx(transaction, signature) {
@@ -18897,7 +18899,7 @@
 	        default:
 	            break;
 	    }
-	    return logger.throwError("unsupported transaction type: " + transaction.type, lib.Logger.errors.UNSUPPORTED_OPERATION, {
+	    return logger.throwError("unsupported transaction type: ".concat(transaction.type), lib.Logger.errors.UNSUPPORTED_OPERATION, {
 	        operation: "serializeTransaction",
 	        transactionType: transaction.type
 	    });
@@ -18952,9 +18954,9 @@
 	}
 	function _parseStandardETx(payload) {
 	    var transaction = RLP.decode(payload.slice(1));
-	    if (transaction.length !== 8 && transaction.length !== 17) {
-	        logger.throwArgumentError("invalid component count for transaction type: 1", "payload", (0, lib$1.hexlify)(payload));
-	    }
+	    // if (transaction.length !== 8 && transaction.length !== 17) {
+	    //     logger.throwArgumentError("invalid component count for transaction type: 1", "payload", hexlify(payload));
+	    // }
 	    var maxPriorityFeePerGas = handleNumber(transaction[2]);
 	    var maxFeePerGas = handleNumber(transaction[3]);
 	    var tx = {
@@ -18994,7 +18996,7 @@
 	        default:
 	            break;
 	    }
-	    return logger.throwError("unsupported transaction type: " + payload[0], lib.Logger.errors.UNSUPPORTED_OPERATION, {
+	    return logger.throwError("unsupported transaction type: ".concat(payload[0]), lib.Logger.errors.UNSUPPORTED_OPERATION, {
 	        operation: "parseTransaction",
 	        transactionType: payload[0]
 	    });
@@ -19047,7 +19049,7 @@
 	    function verb(n) { return function (v) { return step([n, v]); }; }
 	    function step(op) {
 	        if (f) throw new TypeError("Generator is already executing.");
-	        while (_) try {
+	        while (g && (g = 0, op[0] && (_ = 0)), _) try {
 	            if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
 	            if (y = 0, t) op = [op[0] & 2, t.value];
 	            switch (op[0]) {
@@ -19299,7 +19301,7 @@
 	                    delete overrides.ccipReadEnabled;
 	                    leftovers = Object.keys(overrides).filter(function (key) { return overrides[key] != null; });
 	                    if (leftovers.length) {
-	                        logger.throwError("cannot override " + leftovers.map(function (l) { return JSON.stringify(l); }).join(","), lib.Logger.errors.UNSUPPORTED_OPERATION, {
+	                        logger.throwError("cannot override ".concat(leftovers.map(function (l) { return JSON.stringify(l); }).join(",")), lib.Logger.errors.UNSUPPORTED_OPERATION, {
 	                            operation: "overrides",
 	                            overrides: leftovers,
 	                        });
@@ -19644,8 +19646,8 @@
 	}(RunningEvent));
 	var BaseContract = /** @class */ (function () {
 	    function BaseContract(addressOrName, contractInterface, signerOrProvider) {
-	        var _newTarget = this.constructor;
 	        var _this = this;
+	        var _newTarget = this.constructor;
 	        // @TODO: Maybe still check the addressOrName looks like a valid address or name?
 	        //address = getAddress(address);
 	        (0, lib$3.defineReadOnly)(this, "interface", (0, lib$3.getStatic)(_newTarget, "getInterface")(contractInterface));
@@ -19694,7 +19696,7 @@
 	                    (0, lib$3.defineReadOnly)(_this.filters, name, _this.filters[filters[0]]);
 	                }
 	                else {
-	                    logger.warn("Duplicate definition of " + name + " (" + filters.join(", ") + ")");
+	                    logger.warn("Duplicate definition of ".concat(name, " (").concat(filters.join(", "), ")"));
 	                }
 	            });
 	        }
@@ -19727,7 +19729,7 @@
 	            // Check that the signature is unique; if not the ABI generation has
 	            // not been cleaned or may be incorrectly generated
 	            if (uniqueSignatures[signature]) {
-	                logger.warn("Duplicate ABI entry for " + JSON.stringify(signature));
+	                logger.warn("Duplicate ABI entry for ".concat(JSON.stringify(signature)));
 	                return;
 	            }
 	            uniqueSignatures[signature] = true;
@@ -19735,10 +19737,10 @@
 	            // are ambiguous
 	            {
 	                var name_1 = fragment.name;
-	                if (!uniqueNames["%" + name_1]) {
-	                    uniqueNames["%" + name_1] = [];
+	                if (!uniqueNames["%".concat(name_1)]) {
+	                    uniqueNames["%".concat(name_1)] = [];
 	                }
-	                uniqueNames["%" + name_1].push(signature);
+	                uniqueNames["%".concat(name_1)].push(signature);
 	            }
 	            if (_this[signature] == null) {
 	                (0, lib$3.defineReadOnly)(_this, signature, buildDefault(_this, fragment, true));
@@ -20423,7 +20425,7 @@
 	(function (SupportedAlgorithm) {
 	    SupportedAlgorithm["sha256"] = "sha256";
 	    SupportedAlgorithm["sha512"] = "sha512";
-	})(SupportedAlgorithm = exports.SupportedAlgorithm || (exports.SupportedAlgorithm = {}));
+	})(SupportedAlgorithm || (exports.SupportedAlgorithm = SupportedAlgorithm = {}));
 	;
 
 	});
@@ -21071,7 +21073,7 @@
 	    if (typeof (index) !== "number" || index < 0 || index >= HardenedBit || index % 1) {
 	        logger.throwArgumentError("invalid account index", "index", index);
 	    }
-	    return "m/44'/60'/" + index + "'/0/0";
+	    return "m/44'/60'/".concat(index, "'/0/0");
 	}
 	exports.getAccountPath = getAccountPath;
 	function getShardAddressChildNode(hdnode, path, startingIndex, shard) {
@@ -22751,7 +22753,7 @@
 	    function verb(n) { return function (v) { return step([n, v]); }; }
 	    function step(op) {
 	        if (f) throw new TypeError("Generator is already executing.");
-	        while (_) try {
+	        while (g && (g = 0, op[0] && (_ = 0)), _) try {
 	            if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
 	            if (y = 0, t) op = [op[0] & 2, t.value];
 	            switch (op[0]) {
@@ -23192,7 +23194,7 @@
 	    function verb(n) { return function (v) { return step([n, v]); }; }
 	    function step(op) {
 	        if (f) throw new TypeError("Generator is already executing.");
-	        while (_) try {
+	        while (g && (g = 0, op[0] && (_ = 0)), _) try {
 	            if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
 	            if (y = 0, t) op = [op[0] & 2, t.value];
 	            switch (op[0]) {
@@ -23706,7 +23708,7 @@
 	    function verb(n) { return function (v) { return step([n, v]); }; }
 	    function step(op) {
 	        if (f) throw new TypeError("Generator is already executing.");
-	        while (_) try {
+	        while (g && (g = 0, op[0] && (_ = 0)), _) try {
 	            if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
 	            if (y = 0, t) op = [op[0] & 2, t.value];
 	            switch (op[0]) {
@@ -23820,7 +23822,7 @@
 	    function verb(n) { return function (v) { return step([n, v]); }; }
 	    function step(op) {
 	        if (f) throw new TypeError("Generator is already executing.");
-	        while (_) try {
+	        while (g && (g = 0, op[0] && (_ = 0)), _) try {
 	            if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
 	            if (y = 0, t) op = [op[0] & 2, t.value];
 	            switch (op[0]) {
@@ -24305,41 +24307,44 @@
 	        var address = this.address.bind(this);
 	        var bigNumber = this.bigNumber.bind(this);
 	        var bigNumberArray = this.bigNumberArray.bind(this);
+	        var numberArray = this.numberArray.bind(this);
 	        var blockTag = this.blockTag.bind(this);
 	        var data = this.data.bind(this);
 	        var hash = this.hash.bind(this);
 	        var hashArray = this.hashArray.bind(this);
+	        var hashArrayAnyLength = this.hashArrayAnyLength.bind(this);
 	        var hex = this.hex.bind(this);
 	        var number = this.number.bind(this);
-	        var type = this.type.bind(this);
+	        var etxs = this.etxs.bind(this);
 	        var strictData = function (v) { return _this.data(v, true); };
 	        formats.transaction = {
 	            hash: hash,
-	            type: type,
+	            type: hex,
 	            accessList: Formatter.allowNull(this.accessList.bind(this), null),
 	            blockHash: Formatter.allowNull(hash, null),
 	            blockNumber: Formatter.allowNull(number, null),
 	            transactionIndex: Formatter.allowNull(number, null),
-	            confirmations: Formatter.allowNull(number, null),
 	            from: address,
 	            // either (gasPrice) or (maxPriorityFeePerGas + maxFeePerGas)
 	            // must be set
 	            gasPrice: Formatter.allowNull(bigNumber),
 	            maxPriorityFeePerGas: Formatter.allowNull(bigNumber),
 	            maxFeePerGas: Formatter.allowNull(bigNumber),
-	            gasLimit: bigNumber,
 	            to: Formatter.allowNull(address, null),
 	            value: bigNumber,
 	            nonce: number,
-	            data: data,
-	            r: Formatter.allowNull(this.uint256),
-	            s: Formatter.allowNull(this.uint256),
-	            v: Formatter.allowNull(number),
-	            creates: Formatter.allowNull(address, null),
+	            data: Formatter.allowNull(data),
+	            r: Formatter.allowNull(hex),
+	            s: Formatter.allowNull(hex),
+	            v: Formatter.allowNull(hex),
 	            raw: Formatter.allowNull(data),
 	            gas: Formatter.allowNull(bigNumber),
-	            input: Formatter.allowNull(data),
-	            sender: Formatter.allowNull(address),
+	            //EXT TRANSACTIONS
+	            etxGasLimit: Formatter.allowNull(bigNumber),
+	            etxGasPrice: Formatter.allowNull(bigNumber),
+	            etxGasTip: Formatter.allowNull(bigNumber),
+	            etxData: Formatter.allowNull(data),
+	            etxAccessList: Formatter.allowNull(this.accessList.bind(this), null),
 	        };
 	        formats.transactionRequest = {
 	            from: Formatter.allowNull(address),
@@ -24376,31 +24381,48 @@
 	            // should be allowNull(hash), but broken-EIP-658 support is handled in receipt
 	            root: Formatter.allowNull(hex),
 	            gasUsed: bigNumber,
-	            logsBloom: Formatter.allowNull(data),
+	            logsBloom: Formatter.allowNull(hex),
 	            blockHash: hash,
 	            transactionHash: hash,
-	            etxs: Formatter.allowNull(this.etx, null),
+	            etxs: Formatter.allowNull(etxs, null),
 	            logs: Formatter.arrayOf(this.receiptLog.bind(this)),
 	            blockNumber: number,
 	            confirmations: Formatter.allowNull(number, null),
 	            cumulativeGasUsed: bigNumber,
 	            effectiveGasPrice: Formatter.allowNull(bigNumber),
-	            status: Formatter.allowNull(number),
-	            type: type
+	            status: hex,
+	            type: hex,
 	        };
 	        formats.block = {
 	            hash: Formatter.allowNull(hash),
 	            parentHash: hashArray,
-	            number: bigNumberArray,
+	            parentEntropy: bigNumberArray,
+	            number: numberArray,
 	            timestamp: number,
 	            nonce: Formatter.allowNull(hex),
 	            difficulty: bigNumber,
 	            gasLimit: bigNumber,
 	            gasUsed: bigNumber,
+	            baseFeePerGas: Formatter.allowNull(bigNumber),
 	            miner: Formatter.allowNull(address),
 	            extraData: data,
 	            transactions: Formatter.allowNull(Formatter.arrayOf(hash)),
-	            baseFeePerGas: Formatter.allowNull(bigNumber)
+	            transactionsRoot: hash,
+	            extTransactions: Formatter.allowNull(Formatter.arrayOf(hash)),
+	            extRollupRoot: Formatter.allowNull(hash),
+	            extTransactionsRoot: Formatter.allowNull(hash),
+	            location: Formatter.allowNull(hex),
+	            manifestHash: hashArrayAnyLength,
+	            mixHash: hash,
+	            order: Number,
+	            parentDeltaS: bigNumberArray,
+	            receiptsRoot: hash,
+	            sha3Uncles: hash,
+	            size: bigNumber,
+	            stateRoot: hash,
+	            uncles: Formatter.allowNull(Formatter.arrayOf(hash)),
+	            subManifest: Formatter.allowNull(Formatter.arrayOf(hash)),
+	            totalEntropy: bigNumber,
 	        };
 	        formats.blockWithTransactions = (0, lib$3.shallowCopy)(formats.block);
 	        formats.blockWithTransactions.transactions = Formatter.allowNull(Formatter.arrayOf(this.transactionResponse.bind(this)));
@@ -24415,7 +24437,6 @@
 	            blockNumber: Formatter.allowNull(number),
 	            blockHash: Formatter.allowNull(hash),
 	            transactionIndex: number,
-	            removed: Formatter.allowNull(this.boolean.bind(this)),
 	            address: address,
 	            data: Formatter.allowFalsish(data, "0x"),
 	            topics: Formatter.arrayOf(hash),
@@ -24435,19 +24456,16 @@
 	        }
 	        return lib$2.BigNumber.from(number).toNumber();
 	    };
-	    Formatter.prototype.type = function (number) {
-	        if (number === "0x" || number == null) {
-	            return 0;
-	        }
-	        return lib$2.BigNumber.from(number).toNumber();
-	    };
 	    // Strict! Used on input.
 	    Formatter.prototype.bigNumber = function (value) {
 	        return lib$2.BigNumber.from(value);
 	    };
+	    Formatter.prototype.numberArray = function (value) {
+	        return Array.from(value, function (item) { return (Number(item)); });
+	    };
 	    // Strict! Used on input.
 	    Formatter.prototype.bigNumberArray = function (value) {
-	        return Array.from(value);
+	        return Array.from(value, function (item) { return (lib$2.BigNumber.from(item)); });
 	    };
 	    // Requires a boolean, "true" or  "false"; returns a boolean
 	    Formatter.prototype.boolean = function (value) {
@@ -24488,8 +24506,30 @@
 	    Formatter.prototype.address = function (value) {
 	        return (0, lib$6.getAddress)(value);
 	    };
-	    Formatter.prototype.etx = function (value) {
-	        return value;
+	    Formatter.prototype.etxs = function (value) {
+	        if (!Array.isArray(value)) {
+	            throw new Error("Value must be an array.");
+	        }
+	        var formattedEtxs = [];
+	        for (var i = 0; i < value.length; i++) {
+	            var etx = value[i];
+	            formattedEtxs.push({
+	                type: etx.type,
+	                nonce: Number(etx.nonce),
+	                gasPrice: Formatter.allowNull(this.bigNumber, null)(etx.gasPrice),
+	                maxPriorityFeePerGas: this.bigNumber(etx.maxPriorityFeePerGas),
+	                maxFeePerGas: this.bigNumber(etx.maxFeePerGas),
+	                gas: this.bigNumber(etx.gas),
+	                value: this.bigNumber(etx.value),
+	                data: this.data(etx.input),
+	                to: this.address(etx.to),
+	                accessList: Formatter.allowNull(this.accessList, null)(etx.accessList),
+	                chainId: Number(etx.chainId),
+	                from: this.address(etx.sender),
+	                hash: this.hash(etx.hash)
+	            });
+	        }
+	        return formattedEtxs;
 	    };
 	    Formatter.prototype.callAddress = function (value) {
 	        if (!(0, lib$1.isHexString)(value, 32)) {
@@ -24546,6 +24586,18 @@
 	        }
 	        return results;
 	    };
+	    Formatter.prototype.hashArrayAnyLength = function (value, strict) {
+	        if (value.length != HIERARCHY_DEPTH) {
+	            return logger.throwArgumentError("invalid hash array", "value", value);
+	        }
+	        var results = [];
+	        for (var _i = 0, value_2 = value; _i < value_2.length; _i++) {
+	            var hash = value_2[_i];
+	            var result = this.hex(hash, strict);
+	            results.push(result);
+	        }
+	        return results;
+	    };
 	    // Returns the difficulty as a number, or if too large (i.e. PoA network) null
 	    Formatter.prototype.difficulty = function (value) {
 	        if (value == null) {
@@ -24585,21 +24637,35 @@
 	    };
 	    Formatter.prototype.contextBlock = function (value, context) {
 	        var contextBlock = {
-	            number: value.number[context],
+	            number: value.number,
 	            transactions: value.transactions,
 	            hash: value.hash,
-	            parentHash: value.parentHash[context],
+	            parentHash: value.parentHash,
+	            parentEntropy: value.parentEntropy,
+	            extTransactions: value.extTransactions,
 	            timestamp: value.timestamp,
 	            nonce: value.nonce,
 	            difficulty: value.difficulty,
-	            _difficulty: value._difficulty,
 	            gasLimit: value.gasLimit,
 	            gasUsed: value.gasUsed,
 	            miner: value.miner,
-	            extraData: value.data,
+	            extraData: value.extraData,
 	            transactionsRoot: value.transactionsRoot,
 	            stateRoot: value.stateRoot,
-	            receiptsRoot: value.receiptsRoot
+	            receiptsRoot: value.receiptsRoot,
+	            baseFeePerGas: value.baseFeePerGas,
+	            extRollupRoot: value.extRollupRoot,
+	            extTransactionsRoot: value.extTransactionsRoot,
+	            location: value.location,
+	            manifestHash: value.manifestHash,
+	            mixHash: value.mixHash,
+	            order: value.order,
+	            parentDeltaS: value.parentDeltaS,
+	            sha3Uncles: value.sha3Uncles,
+	            size: value.size,
+	            uncles: value.uncles,
+	            subManifest: value.subManifest,
+	            totalEntropy: value.totalEntropy,
 	        };
 	        return contextBlock;
 	    };
@@ -24610,7 +24676,7 @@
 	    Formatter.prototype.transactionResponse = function (transaction) {
 	        // Rename gas to gasLimit
 	        if (transaction.gas != null && transaction.gasLimit == null) {
-	            transaction.gasLimit = transaction.gas;
+	            transaction.gas = transaction.gas;
 	        }
 	        // Some clients (TestRPC) do strange things like return 0x0 for the
 	        // 0 address; correct this to be a real address
@@ -24621,11 +24687,11 @@
 	        if (transaction.input != null && transaction.data == null) {
 	            transaction.data = transaction.input;
 	        }
-	        // If to and creates are empty, populate the creates from the transaction
-	        if (transaction.to == null && transaction.creates == null) {
-	            transaction.creates = this.contractAddress(transaction);
+	        if (transaction.type == '0x1') {
+	            transaction.from = transaction.sender;
+	            delete transaction.sender;
 	        }
-	        if ((transaction.type === 1 || transaction.type === 2) && transaction.accessList == null) {
+	        if ((transaction.type === '0x1' || transaction.type === '0x2') && transaction.accessList == null) {
 	            transaction.accessList = [];
 	        }
 	        var result = Formatter.check(this.formats.transaction, transaction);
@@ -24675,13 +24741,13 @@
 	        if (result.root != null) {
 	            if (result.root.length <= 4) {
 	                // Could be 0x00, 0x0, 0x01 or 0x1
-	                var value_2 = lib$2.BigNumber.from(result.root).toNumber();
-	                if (value_2 === 0 || value_2 === 1) {
+	                var value_3 = lib$2.BigNumber.from(result.root).toNumber();
+	                if (value_3 === 0 || value_3 === 1) {
 	                    // Make sure if both are specified, they match
-	                    if (result.status != null && (result.status !== value_2)) {
+	                    if (result.status != null && (result.status !== value_3)) {
 	                        logger.throwArgumentError("alt-root-status/status mismatch", "value", { root: result.root, status: result.status });
 	                    }
-	                    result.status = value_2;
+	                    result.status = value_3;
 	                    delete result.root;
 	                }
 	                else {
@@ -24692,9 +24758,6 @@
 	                // Must be a valid bytes32
 	                logger.throwArgumentError("invalid root hash", "value.root", result.root);
 	            }
-	        }
-	        if (result.status != null) {
-	            result.byzantium = true;
 	        }
 	        return result;
 	    };
@@ -24831,7 +24894,7 @@
 	    function verb(n) { return function (v) { return step([n, v]); }; }
 	    function step(op) {
 	        if (f) throw new TypeError("Generator is already executing.");
-	        while (_) try {
+	        while (g && (g = 0, op[0] && (_ = 0)), _) try {
 	            if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
 	            if (y = 0, t) op = [op[0] & 2, t.value];
 	            switch (op[0]) {
@@ -25081,7 +25144,7 @@
 	    else {
 	        logger.throwArgumentError("unsupported IPFS format", "link", link);
 	    }
-	    return "https://gateway.ipfs.io/ipfs/" + link;
+	    return "https://gateway.ipfs.io/ipfs/".concat(link);
 	}
 	function numPad(value) {
 	    var result = (0, lib$1.arrayify)(value);
@@ -25212,8 +25275,8 @@
 	    Resolver.prototype._getAddress = function (coinType, hexBytes) {
 	        var coinInfo = coinInfos[String(coinType)];
 	        if (coinInfo == null) {
-	            logger.throwError("unsupported coin type: " + coinType, lib.Logger.errors.UNSUPPORTED_OPERATION, {
-	                operation: "getAddress(" + coinType + ")"
+	            logger.throwError("unsupported coin type: ".concat(coinType), lib.Logger.errors.UNSUPPORTED_OPERATION, {
+	                operation: "getAddress(".concat(coinType, ")")
 	            });
 	        }
 	        if (coinInfo.ilk === "eth") {
@@ -25293,7 +25356,7 @@
 	                        address = this._getAddress(coinType, hexBytes);
 	                        if (address == null) {
 	                            logger.throwError("invalid or unsupported coin data", lib.Logger.errors.UNSUPPORTED_OPERATION, {
-	                                operation: "getAddress(" + coinType + ")",
+	                                operation: "getAddress(".concat(coinType, ")"),
 	                                coinType: coinType,
 	                                data: hexBytes
 	                            });
@@ -25687,7 +25750,7 @@
 	                        errorMessage = (result.message || "unknown error");
 	                        // 4xx indicates the result is not present; stop
 	                        if (result.status >= 400 && result.status < 500) {
-	                            return [2 /*return*/, logger.throwError("response not found during CCIP fetch: " + errorMessage, lib.Logger.errors.SERVER_ERROR, { url: url, errorMessage: errorMessage })];
+	                            return [2 /*return*/, logger.throwError("response not found during CCIP fetch: ".concat(errorMessage), lib.Logger.errors.SERVER_ERROR, { url: url, errorMessage: errorMessage })];
 	                        }
 	                        // 5xx indicates server issue; try the next url
 	                        errorMessages.push(errorMessage);
@@ -25695,7 +25758,7 @@
 	                    case 3:
 	                        i++;
 	                        return [3 /*break*/, 1];
-	                    case 4: return [2 /*return*/, logger.throwError("error encountered during CCIP fetch: " + errorMessages.map(function (m) { return JSON.stringify(m); }).join(", "), lib.Logger.errors.SERVER_ERROR, {
+	                    case 4: return [2 /*return*/, logger.throwError("error encountered during CCIP fetch: ".concat(errorMessages.map(function (m) { return JSON.stringify(m); }).join(", ")), lib.Logger.errors.SERVER_ERROR, {
 	                            urls: urls,
 	                            errorMessages: errorMessages
 	                        })];
@@ -25811,7 +25874,7 @@
 	                            this._emitted.block = blockNumber - 1;
 	                        }
 	                        if (Math.abs((this._emitted.block) - blockNumber) > 1000) {
-	                            logger.warn("network block skew detected; skipping block events (emitted=" + this._emitted.block + " blockNumber" + blockNumber + ")");
+	                            logger.warn("network block skew detected; skipping block events (emitted=".concat(this._emitted.block, " blockNumber").concat(blockNumber, ")"));
 	                            this.emit("error", logger.makeError("network block skew detected", lib.Logger.errors.NETWORK_ERROR, {
 	                                blockNumber: blockNumber,
 	                                event: "blockSkew",
@@ -26795,7 +26858,7 @@
 	                        address = _a.sent();
 	                        if (address == null) {
 	                            logger.throwError("ENS name not configured", lib.Logger.errors.UNSUPPORTED_OPERATION, {
-	                                operation: "resolveName(" + JSON.stringify(addressOrName) + ")"
+	                                operation: "resolveName(".concat(JSON.stringify(addressOrName), ")")
 	                            });
 	                        }
 	                        return [2 /*return*/, address];
@@ -26856,7 +26919,7 @@
 	                                            }
 	                                            // For block tags, if we are asking for a future block, we return null
 	                                            if (params.blockTag != null) {
-	                                                if (blockNumber > this._emitted.block) {
+	                                                if (blockNumber > Number(this._emitted.block)) {
 	                                                    return [2 /*return*/, null];
 	                                                }
 	                                            }
@@ -27436,7 +27499,7 @@
 	    function verb(n) { return function (v) { return step([n, v]); }; }
 	    function step(op) {
 	        if (f) throw new TypeError("Generator is already executing.");
-	        while (_) try {
+	        while (g && (g = 0, op[0] && (_ = 0)), _) try {
 	            if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
 	            if (y = 0, t) op = [op[0] & 2, t.value];
 	            switch (op[0]) {
@@ -28366,7 +28429,7 @@
 	    function verb(n) { return function (v) { return step([n, v]); }; }
 	    function step(op) {
 	        if (f) throw new TypeError("Generator is already executing.");
-	        while (_) try {
+	        while (g && (g = 0, op[0] && (_ = 0)), _) try {
 	            if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
 	            if (y = 0, t) op = [op[0] & 2, t.value];
 	            switch (op[0]) {
@@ -28755,7 +28818,7 @@
 	    function verb(n) { return function (v) { return step([n, v]); }; }
 	    function step(op) {
 	        if (f) throw new TypeError("Generator is already executing.");
-	        while (_) try {
+	        while (g && (g = 0, op[0] && (_ = 0)), _) try {
 	            if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
 	            if (y = 0, t) op = [op[0] & 2, t.value];
 	            switch (op[0]) {
@@ -28831,8 +28894,8 @@
 	var UrlJsonRpcProvider = /** @class */ (function (_super) {
 	    __extends(UrlJsonRpcProvider, _super);
 	    function UrlJsonRpcProvider(network, apiKey) {
-	        var _newTarget = this.constructor;
 	        var _this = this;
+	        var _newTarget = this.constructor;
 	        logger.checkAbstract(_newTarget, UrlJsonRpcProvider);
 	        // Normalize the Network and API Key
 	        network = (0, lib$3.getStatic)(_newTarget, "getNetwork")(network);
@@ -29114,7 +29177,7 @@
 	    function verb(n) { return function (v) { return step([n, v]); }; }
 	    function step(op) {
 	        if (f) throw new TypeError("Generator is already executing.");
-	        while (_) try {
+	        while (g && (g = 0, op[0] && (_ = 0)), _) try {
 	            if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
 	            if (y = 0, t) op = [op[0] & 2, t.value];
 	            switch (op[0]) {
@@ -29219,7 +29282,7 @@
 	    function verb(n) { return function (v) { return step([n, v]); }; }
 	    function step(op) {
 	        if (f) throw new TypeError("Generator is already executing.");
-	        while (_) try {
+	        while (g && (g = 0, op[0] && (_ = 0)), _) try {
 	            if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
 	            if (y = 0, t) op = [op[0] & 2, t.value];
 	            switch (op[0]) {
@@ -29268,7 +29331,7 @@
 	        }
 	        else if (key === "accessList") {
 	            value = "[" + (0, lib$h.accessListify)(value).map(function (set) {
-	                return "{address:\"" + set.address + "\",storageKeys:[\"" + set.storageKeys.join('","') + "\"]}";
+	                return "{address:\"".concat(set.address, "\",storageKeys:[\"").concat(set.storageKeys.join('","'), "\"]}");
 	            }).join(",") + "]";
 	        }
 	        else {
@@ -29434,15 +29497,15 @@
 	        var query = Object.keys(params).reduce(function (accum, key) {
 	            var value = params[key];
 	            if (value != null) {
-	                accum += "&" + key + "=" + value;
+	                accum += "&".concat(key, "=").concat(value);
 	            }
 	            return accum;
 	        }, "");
-	        var apiKey = ((this.apiKey) ? "&apikey=" + this.apiKey : "");
-	        return this.baseUrl + "/api?module=" + module + query + apiKey;
+	        var apiKey = ((this.apiKey) ? "&apikey=".concat(this.apiKey) : "");
+	        return "".concat(this.baseUrl, "/api?module=").concat(module).concat(query).concat(apiKey);
 	    };
 	    EtherscanProvider.prototype.getPostUrl = function () {
-	        return this.baseUrl + "/api";
+	        return "".concat(this.baseUrl, "/api");
 	    };
 	    EtherscanProvider.prototype.getPostData = function (module, params) {
 	        params.module = module;
@@ -29478,7 +29541,7 @@
 	                        if (payload) {
 	                            connection.headers = { "content-type": "application/x-www-form-urlencoded; charset=UTF-8" };
 	                            payloadStr = Object.keys(payload).map(function (key) {
-	                                return key + "=" + payload[key];
+	                                return "".concat(key, "=").concat(payload[key]);
 	                            }).join("&");
 	                        }
 	                        return [4 /*yield*/, (0, lib$s.fetchJson)(connection, payloadStr, procFunc || getJsonResult)];
@@ -29752,7 +29815,7 @@
 	    function verb(n) { return function (v) { return step([n, v]); }; }
 	    function step(op) {
 	        if (f) throw new TypeError("Generator is already executing.");
-	        while (_) try {
+	        while (g && (g = 0, op[0] && (_ = 0)), _) try {
 	            if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
 	            if (y = 0, t) op = [op[0] & 2, t.value];
 	            switch (op[0]) {
@@ -30169,7 +30232,7 @@
 	            }
 	            var weight = config.weight;
 	            if (weight % 1 || weight > 512 || weight < 1) {
-	                logger.throwArgumentError("invalid weight; must be integer in [1, 512]", "providers[" + index + "].weight", weight);
+	                logger.throwArgumentError("invalid weight; must be integer in [1, 512]", "providers[".concat(index, "].weight"), weight);
 	            }
 	            return Object.freeze(config);
 	        });
@@ -30838,7 +30901,7 @@
 	                    value: network
 	                });
 	        }
-	        var url = "https://" + host + "/v1/lb/" + apiKey.applicationId;
+	        var url = "https://".concat(host, "/v1/lb/").concat(apiKey.applicationId);
 	        var connection = { headers: {}, url: url };
 	        if (apiKey.applicationSecretKey != null) {
 	            connection.user = "";
@@ -31183,7 +31246,7 @@
 	            logger.throwArgumentError("invalid bytes type", "type", type);
 	        }
 	        if ((0, lib$1.arrayify)(value).byteLength !== size) {
-	            logger.throwArgumentError("invalid value for " + type, "value", value);
+	            logger.throwArgumentError("invalid value for ".concat(type), "value", value);
 	        }
 	        if (isArray) {
 	            return (0, lib$1.arrayify)((value + Zeros).substring(0, 66));
@@ -31195,7 +31258,7 @@
 	        var baseType_1 = match[1];
 	        var count = parseInt(match[2] || String(value.length));
 	        if (count != value.length) {
-	            logger.throwArgumentError("invalid array length for " + type, "value", value);
+	            logger.throwArgumentError("invalid array length for ".concat(type), "value", value);
 	        }
 	        var result_1 = [];
 	        value.forEach(function (value) {
@@ -31340,7 +31403,11 @@
 	"use strict";
 	var __createBinding = (commonjsGlobal && commonjsGlobal.__createBinding) || (Object.create ? (function(o, m, k, k2) {
 	    if (k2 === undefined) k2 = k;
-	    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
+	    var desc = Object.getOwnPropertyDescriptor(m, k);
+	    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+	      desc = { enumerable: true, get: function() { return m[k]; } };
+	    }
+	    Object.defineProperty(o, k2, desc);
 	}) : (function(o, m, k, k2) {
 	    if (k2 === undefined) k2 = k;
 	    o[k2] = m[k];
@@ -31507,7 +31574,11 @@
 	"use strict";
 	var __createBinding = (commonjsGlobal && commonjsGlobal.__createBinding) || (Object.create ? (function(o, m, k, k2) {
 	    if (k2 === undefined) k2 = k;
-	    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
+	    var desc = Object.getOwnPropertyDescriptor(m, k);
+	    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+	      desc = { enumerable: true, get: function() { return m[k]; } };
+	    }
+	    Object.defineProperty(o, k2, desc);
 	}) : (function(o, m, k, k2) {
 	    if (k2 === undefined) k2 = k;
 	    o[k2] = m[k];
@@ -31567,7 +31638,11 @@
 	"use strict";
 	var __createBinding = (commonjsGlobal && commonjsGlobal.__createBinding) || (Object.create ? (function(o, m, k, k2) {
 	    if (k2 === undefined) k2 = k;
-	    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
+	    var desc = Object.getOwnPropertyDescriptor(m, k);
+	    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+	      desc = { enumerable: true, get: function() { return m[k]; } };
+	    }
+	    Object.defineProperty(o, k2, desc);
 	}) : (function(o, m, k, k2) {
 	    if (k2 === undefined) k2 = k;
 	    o[k2] = m[k];

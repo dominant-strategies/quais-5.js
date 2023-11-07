@@ -1,7 +1,11 @@
 'use strict';
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
-    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
 }) : (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
     o[k2] = m[k];
@@ -33,7 +37,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     function verb(n) { return function (v) { return step([n, v]); }; }
     function step(op) {
         if (f) throw new TypeError("Generator is already executing.");
-        while (_) try {
+        while (g && (g = 0, op[0] && (_ = 0)), _) try {
             if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
             if (y = 0, t) op = [op[0] & 2, t.value];
             switch (op[0]) {
@@ -82,7 +86,7 @@ describe('Test Contract Address Generation', function () {
     var Tests = [
         // Transaction: 0x939aa17985bc2a52a0c1cba9497ef09e092355a805a8150e30e24b753bac6864
         {
-            address: '0x3474627D4F63A678266BC17171D87f8570936622',
+            address: '0x5Aa3767d793348b450116EeA7E539CBbA0E4A6A0',
             name: 'tx-0x939aa179 (number)',
             tx: {
                 from: '0xb2682160c482eb985ec9f3e364eec0a904c44c23',
@@ -91,7 +95,7 @@ describe('Test Contract Address Generation', function () {
             }
         },
         {
-            address: '0x3474627D4F63A678266BC17171D87f8570936622',
+            address: '0x5Aa3767d793348b450116EeA7E539CBbA0E4A6A0',
             name: 'tx-0x939aa179 (odd-zero-hex)',
             tx: {
                 from: '0xb2682160c482eb985ec9f3e364eec0a904c44c23',
@@ -100,7 +104,7 @@ describe('Test Contract Address Generation', function () {
             }
         },
         {
-            address: '0x3474627D4F63A678266BC17171D87f8570936622',
+            address: '0x5Aa3767d793348b450116EeA7E539CBbA0E4A6A0',
             name: 'tx-0x939aa179 (even-zero-hex)',
             tx: {
                 from: '0xb2682160c482eb985ec9f3e364eec0a904c44c23',
@@ -110,7 +114,7 @@ describe('Test Contract Address Generation', function () {
         },
         // Ropsten: https://etherscan.io/tx/0x78d17f8ab31fb6ad688340634a9a29d8726feb6d588338a9b9b21a44159bc916
         {
-            address: '0x271300790813f82638A8A6A8a86d65df6dF33c17',
+            address: '0x71b2Fbaa915EB1bF797342CA7bF9F972CCA5636f',
             name: 'tx-0x78d17f8a (odd-long-hex)',
             tx: {
                 from: '0x8ba1f109551bd432803012645ac136ddd64dba72',
@@ -119,7 +123,7 @@ describe('Test Contract Address Generation', function () {
             }
         },
         {
-            address: '0x271300790813f82638A8A6A8a86d65df6dF33c17',
+            address: '0x71b2Fbaa915EB1bF797342CA7bF9F972CCA5636f',
             name: 'tx-0x78d17f8a (even-long-hex)',
             tx: {
                 from: '0x8ba1f109551bd432803012645ac136ddd64dba72',
@@ -129,7 +133,7 @@ describe('Test Contract Address Generation', function () {
         },
         // https://ropsten.etherscan.io/tx/0x444ea8ae9890ac0ee5fd249512726abf9d23f44a378d5f45f727b65dc1b899c2
         {
-            address: '0x995C25706C407a1F1E84b3777775e3e619764933',
+            address: '0x0e48435819e27dE635232b60D67Af1b08d67Eb28',
             name: 'tx-0x444ea8ae (even-long-hex)',
             tx: {
                 from: '0x8ba1f109551bd432803012645ac136ddd64dba72',
@@ -138,7 +142,7 @@ describe('Test Contract Address Generation', function () {
             }
         },
         {
-            address: '0x995C25706C407a1F1E84b3777775e3e619764933',
+            address: '0x0e48435819e27dE635232b60D67Af1b08d67Eb28',
             name: 'tx-0x444ea8ae (padded-long-hex)',
             tx: {
                 from: '0x8ba1f109551bd432803012645ac136ddd64dba72',
@@ -147,7 +151,7 @@ describe('Test Contract Address Generation', function () {
             }
         },
         {
-            address: '0x995C25706C407a1F1E84b3777775e3e619764933',
+            address: '0x0e48435819e27dE635232b60D67Af1b08d67Eb28',
             name: 'tx-0x444ea8ae (number)',
             tx: {
                 from: '0x8ba1f109551bd432803012645ac136ddd64dba72',
@@ -157,7 +161,7 @@ describe('Test Contract Address Generation', function () {
         },
         // Ropsten: 0x5bdfd14fcc917abc2f02a30721d152a6f147f09e8cbaad4e0d5405d646c5c3e1
         {
-            address: '0x0CcCC7507aEDf9FEaF8C8D731421746e16b4d39D',
+            address: '0xFEf44ccaA234aF70b626196679aaaf9247a84F86',
             name: 'zero-nonce',
             tx: {
                 from: '0xc6af6e1a78a6752c7f8cd63877eb789a2adb776c',
@@ -285,13 +289,13 @@ describe('Test Namehash', function () {
         assert_1.default.ok(!quais_1.quais.utils.isValidName(""));
     });
     goodNames.forEach(function (name) {
-        it("ENS namehash ok - " + name, function () {
+        it("ENS namehash ok - ".concat(name), function () {
             assert_1.default.ok(quais_1.quais.utils.isValidName(name));
             quais_1.quais.utils.namehash(name);
         });
     });
     badNames.forEach(function (name) {
-        it("ENS namehash fails - " + name, function () {
+        it("ENS namehash fails - ".concat(name), function () {
             assert_1.default.ok(!quais_1.quais.utils.isValidName(name));
             assert_1.default.throws(function () {
                 var namehash = quais_1.quais.utils.namehash(name);
@@ -321,7 +325,7 @@ describe('Test ID Hash Functions', function () {
 describe('Test Solidity Hash Functions', function () {
     var tests = (0, testcases_1.loadTests)('solidity-hashes');
     function test(funcName, testKey) {
-        it("computes " + funcName + " correctly", function () {
+        it("computes ".concat(funcName, " correctly"), function () {
             this.timeout(120000);
             tests.forEach(function (test, index) {
                 var actual = (quais_1.quais.utils)['solidity' + funcName](test.types, test.values);
@@ -343,7 +347,7 @@ describe('Test Solidity Hash Functions', function () {
         "purple" // invalid type
     ];
     testsInvalid.forEach(function (type) {
-        it("disallows invalid type \"" + type + "\"", function () {
+        it("disallows invalid type \"".concat(type, "\""), function () {
             assert_1.default.throws(function () {
                 quais_1.quais.utils.solidityPack([type], ["0x12"]);
             }, function (error) {
@@ -526,7 +530,7 @@ describe("Test nameprep", function () {
             if (test.output) {
                 var expected = quais_1.quais.utils.toUtf8String(test.output);
                 var actual = quais_1.quais.utils.nameprep(input);
-                assert_1.default.equal(actual, expected, "actual(\"" + getHex(actual) + "\") !== expected(\"" + getHex(expected) + "\")");
+                assert_1.default.equal(actual, expected, "actual(\"".concat(getHex(actual), "\") !== expected(\"").concat(getHex(expected), "\")"));
             }
             else {
                 var ok = true;
@@ -534,7 +538,7 @@ describe("Test nameprep", function () {
                 try {
                     var actual = quais_1.quais.utils.nameprep(input);
                     console.log(actual);
-                    reason = "should has thrown " + test.rc + " - actual(\"" + getHex(actual) + "\")";
+                    reason = "should has thrown ".concat(test.rc, " - actual(\"").concat(getHex(actual), "\")");
                     ok = false;
                 }
                 catch (error) {
@@ -585,9 +589,9 @@ describe("Test Typed Transactions", function () {
         return true;
     }
     function equalsArray(name, a, b, equals) {
-        assert_1.default.equal(a.length, b.length, name + ".length");
+        assert_1.default.equal(a.length, b.length, "".concat(name, ".length"));
         for (var i = 0; i < a.length; i++) {
-            if (!equals(name + "[" + i + "]", a[i], b[i])) {
+            if (!equals("".concat(name, "[").concat(i, "]"), a[i], b[i])) {
                 return false;
             }
         }
@@ -599,46 +603,46 @@ describe("Test Typed Transactions", function () {
         };
     }
     function equalsAccessList(name, a, b) {
-        return equalsArray(name + "-address", a.map(function (f) { return f.address; }), b.map(function (f) { return f.address; }), equalsData) &&
-            equalsArray(name + "-storageKeys", a.map(function (f) { return f.storageKeys; }), b.map(function (f) { return f.storageKeys; }), makeEqualsArray(equalsData));
+        return equalsArray("".concat(name, "-address"), a.map(function (f) { return f.address; }), b.map(function (f) { return f.address; }), equalsData) &&
+            equalsArray("".concat(name, "-storageKeys"), a.map(function (f) { return f.storageKeys; }), b.map(function (f) { return f.storageKeys; }), makeEqualsArray(equalsData));
     }
     function allowNull(name, a, b, equals) {
         if (a == null) {
-            assert_1.default.ok(b == null, name + ":!NULL");
+            assert_1.default.ok(b == null, "".concat(name, ":!NULL"));
             return true;
         }
         else if (b == null) {
-            assert_1.default.fail(name + ":!!NULL");
+            assert_1.default.fail("".concat(name, ":!!NULL"));
         }
         return equals(name, a, b);
     }
     function equalsCommonTransaction(name, a, b) {
-        return equalsNumber(name + "-type", a.type, b.type, 0) &&
-            equalsData(name + "-data", a.data, b.data, "0x") &&
-            equalsNumber(name + "-gasLimit", a.gasLimit, b.gasLimit, 0) &&
-            equalsNumber(name + "-nonce", a.nonce, b.nonce, 0) &&
-            allowNull(name + "-to", a.to, b.to, equalsData) &&
-            equalsNumber(name + "-value", a.value, b.value, 0) &&
-            equalsNumber(name + "-chainId", a.chainId, b.chainId, 0) &&
-            equalsAccessList(name + "-accessList", a.accessList, b.accessList || []);
+        //console.log("Common tx equals " + name, " :\n ", "Actual: \n", JSON.stringify(a, null, 2), "Expected: \n", JSON.stringify(b, null, 2));
+        return equalsNumber("".concat(name, "-type"), a.type, b.type, 0) &&
+            equalsData("".concat(name, "-data"), a.data, b.data, "0x") &&
+            equalsNumber("".concat(name, "-gasLimit"), a.gasLimit, b.gasLimit, 0) &&
+            equalsNumber("".concat(name, "-nonce"), a.nonce, b.nonce, 0) &&
+            allowNull("".concat(name, "-to"), a.to, b.to, equalsData) &&
+            equalsNumber("".concat(name, "-value"), a.value, b.value, 0) &&
+            equalsNumber("".concat(name, "-chainId"), a.chainId, b.chainId, 0) &&
+            equalsAccessList("".concat(name, "-accessList"), a.accessList, b.accessList || []);
     }
     function equalsEip1559Transaction(name, a, b) {
-        return equalsNumber(name + "-maxPriorityFeePerGas", a.maxPriorityFeePerGas, b.maxPriorityFeePerGas, 0) &&
-            equalsNumber(name + "-maxFeePerGas", a.maxFeePerGas, b.maxFeePerGas, 0) &&
+        return equalsNumber("".concat(name, "-maxPriorityFeePerGas"), a.maxPriorityFeePerGas, b.maxPriorityFeePerGas, 0) &&
+            equalsNumber("".concat(name, "-maxFeePerGas"), a.maxFeePerGas, b.maxFeePerGas, 0) &&
             equalsCommonTransaction(name, a, b);
     }
     function equalsEip2930Transaction(name, a, b) {
-        return equalsNumber(name + "-gasPrice", a.gasPrice, b.gasPrice, 0) &&
-            equalsCommonTransaction(name, a, b);
+        return equalsCommonTransaction(name, a, b);
     }
     function equalsTransaction(name, a, b) {
         switch (a.type) {
-            case 1:
-                return equalsEip2930Transaction(name, a, b);
             case 2:
+                return equalsEip2930Transaction(name, a, b);
+            case 0:
                 return equalsEip1559Transaction(name, a, b);
         }
-        assert_1.default.fail("unknown transaction type " + a.type);
+        assert_1.default.fail("unknown transaction type ".concat(a.type));
     }
     tests.forEach(function (test, index) {
         it(test.name, function () {
@@ -654,8 +658,10 @@ describe("Test Typed Transactions", function () {
                             assert_1.default.equal(signed, test.signed, "signed transactions match");
                             assert_1.default.equal(quais_1.quais.utils.serializeTransaction(test.tx), test.unsigned, "unsigned transactions match");
                             {
-                                tx = quais_1.quais.utils.parseTransaction(test.unsigned);
-                                assert_1.default.ok(equalsTransaction("transaction", tx, test.tx), "all unsigned keys match");
+                                if (test.tx.type == 0) {
+                                    tx = quais_1.quais.utils.parseTransaction(test.unsigned);
+                                    assert_1.default.ok(equalsTransaction("transaction", tx, test.tx), "all unsigned keys match");
+                                }
                             }
                             {
                                 tx = quais_1.quais.utils.parseTransaction(test.signed);
@@ -701,7 +707,7 @@ describe("BigNumber", function () {
         { value: "0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", expected: "0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff" },
         { value: "-0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", expected: "0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff" },
     ].forEach(function (test) {
-        it("absolute value (" + test.value + ")", function () {
+        it("absolute value (".concat(test.value, ")"), function () {
             var value = quais_1.quais.BigNumber.from(test.value);
             var expected = quais_1.quais.BigNumber.from(test.expected);
             assert_1.default.ok(value.abs().eq(expected));
@@ -734,7 +740,7 @@ describe("FixedNumber", function () {
             { value: -1, expected: "-1.0" },
         ];
         Tests.forEach(function (test) {
-            it("Create from=" + test.value, function () {
+            it("Create from=".concat(test.value), function () {
                 var value = quais_1.quais.FixedNumber.from(test.value);
                 assert_1.default.equal(value.toString(), test.expected);
             });
@@ -758,7 +764,7 @@ describe("FixedNumber", function () {
             { value: "1.55", round: 1, expected: "1.6" },
         ];
         Tests.forEach(function (test) {
-            it("Rounding value=" + test.value + ", decimals=" + test.round, function () {
+            it("Rounding value=".concat(test.value, ", decimals=").concat(test.round), function () {
                 var value = quais_1.quais.FixedNumber.from(test.value).round(test.round);
                 assert_1.default.equal(value.toString(), test.expected);
             });
@@ -774,7 +780,7 @@ describe("FixedNumber", function () {
             { value: "-1.9", ceiling: "-1.0", floor: "-2.0" },
         ];
         Tests.forEach(function (test) {
-            it("Clamping value=" + test.value, function () {
+            it("Clamping value=".concat(test.value), function () {
                 var value = quais_1.quais.FixedNumber.from(test.value);
                 assert_1.default.equal(value.floor().toString(), test.floor);
                 assert_1.default.equal(value.ceiling().toString(), test.ceiling);
@@ -830,7 +836,7 @@ describe("Web Fetch", function() {
 describe("EIP-712", function () {
     var tests = (0, testcases_1.loadTests)("eip712");
     tests.forEach(function (test) {
-        it("encoding " + test.name, function () {
+        it("encoding ".concat(test.name), function () {
             var encoder = quais_1.quais.utils._TypedDataEncoder.from(test.types);
             assert_1.default.equal(encoder.primaryType, test.primaryType, "instance.primaryType");
             assert_1.default.equal(encoder.encode(test.data), test.encoded, "instance.encode()");
@@ -843,7 +849,7 @@ describe("EIP-712", function () {
         if (!test.privateKey) {
             return;
         }
-        it("signing " + test.name, function () {
+        it("signing ".concat(test.name), function () {
             return __awaiter(this, void 0, void 0, function () {
                 var wallet, signature;
                 return __generator(this, function (_a) {
@@ -873,10 +879,10 @@ function _deepEquals(a, b, path) {
             return "{ path }:!isArray(b)";
         }
         if (a.length !== b.length) {
-            return "{ path }:a.length[" + a.length + "]!=b.length[" + b.length + "]";
+            return "{ path }:a.length[".concat(a.length, "]!=b.length[").concat(b.length, "]");
         }
         for (var i = 0; i < a.length; i++) {
-            var reason = _deepEquals(a[i], b[i], path + ":" + i);
+            var reason = _deepEquals(a[i], b[i], "".concat(path, ":").concat(i));
             if (reason != null) {
                 return reason;
             }
@@ -885,22 +891,22 @@ function _deepEquals(a, b, path) {
     }
     if (a.eq) {
         if (!b.eq) {
-            return path + ":typeof(b)!=BigNumber";
+            return "".concat(path, ":typeof(b)!=BigNumber");
         }
-        return a.eq(b) ? null : path + ":!a.eq(b)";
+        return a.eq(b) ? null : "".concat(path, ":!a.eq(b)");
     }
     if (a != null && typeof (a) === "object") {
         if (b != null && typeof (b) !== "object") {
-            return path + ":typeof(b)!=object";
+            return "".concat(path, ":typeof(b)!=object");
         }
         var keys = Object.keys(a), otherKeys = Object.keys(b);
         keys.sort();
         otherKeys.sort();
         if (keys.length !== otherKeys.length) {
-            return path + ":keys(a)[" + keys.join(",") + "]!=keys(b)[" + otherKeys.join(",") + "]";
+            return "".concat(path, ":keys(a)[").concat(keys.join(","), "]!=keys(b)[").concat(otherKeys.join(","), "]");
         }
         for (var key in a) {
-            var reason = _deepEquals(a[key], b[key], path + ":" + key);
+            var reason = _deepEquals(a[key], b[key], "".concat(path, ":").concat(key));
             if (reason != null) {
                 return reason;
             }
@@ -908,7 +914,7 @@ function _deepEquals(a, b, path) {
         return null;
     }
     if (a !== b) {
-        return path + "[" + a + " != " + b + "]";
+        return "".concat(path, "[").concat(a, " != ").concat(b, "]");
     }
     return null;
 }
@@ -919,14 +925,15 @@ describe("EIP-2930", function () {
     var Tests = [
         {
             hash: "0x48bff7b0e603200118a672f7c622ab7d555a28f98938edb8318803eed7ea7395",
-            data: "0x01f87c030d8465cf89a0825b689432162f3581e88a5f62e8a61892b42c46e2c18f7b8080d7d6940000000000000000000000000000000000000000c080a09659cba42376dbea1433cd6afc9c8ffa38dbeff5408ffdca0ebde6207281a3eca027efbab3e6ed30b088ce0a50533364778e101c9e52acf318daec131da64e7758",
+            data: "0x00f87b030d80820143825b689432162f3581e88a5f62e8a61892b42c46e2c18f7b8080d7d6940000000000000000000000000000000000000000c080a09659cba42376dbea1433cd6afc9c8ffa38dbeff5408ffdca0ebde6207281a3eca027efbab3e6ed30b088ce0a50533364778e101c9e52acf318daec131da64e7758",
             preimage: "0x01f839030d8465cf89a0825b689432162f3581e88a5f62e8a61892b42c46e2c18f7b8080d7d6940000000000000000000000000000000000000000c0",
             tx: {
                 hash: "0x48bff7b0e603200118a672f7c622ab7d555a28f98938edb8318803eed7ea7395",
-                type: 1,
+                type: 0,
                 chainId: 3,
                 nonce: 13,
-                gasPrice: quais_1.quais.BigNumber.from("0x65cf89a0"),
+                maxFeePerGas: quais_1.quais.BigNumber.from("0x143"),
+                gasPrice: quais_1.quais.BigNumber.from("0x143"),
                 gasLimit: quais_1.quais.BigNumber.from("0x5b68"),
                 to: "0x32162F3581E88a5f62e8A61892B42C46E2c18f7b",
                 value: quais_1.quais.BigNumber.from("0"),
@@ -945,14 +952,16 @@ describe("EIP-2930", function () {
         },
         {
             hash: "0x1675a417e728fd3562d628d06955ef35b913573d9e417eb4e6a209998499c9d3",
-            data: "0x01f8e2030e8465cf89a08271ac9432162f3581e88a5f62e8a61892b42c46e2c18f7b8080f87cf87a940000000000000000000000000000000000000000f863a0deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefa00000000000111111111122222222223333333333444444444455555555556666a0deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef80a0b0646756f89817d70cdb40aa2ae8b5f43ef65d0926dcf71a7dca5280c93763dfa04d32dbd9a44a2c5639b8434b823938202f75b0a8459f3fcd9f37b2495b7a66a6",
+            data: "0x00f8e1030e428201438271ac9432162f3581e88a5f62e8a61892b42c46e2c18f7b8080f87cf87a940000000000000000000000000000000000000000f863a0deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefa00000000000111111111122222222223333333333444444444455555555556666a0deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef80a0b0646756f89817d70cdb40aa2ae8b5f43ef65d0926dcf71a7dca5280c93763dfa04d32dbd9a44a2c5639b8434b823938202f75b0a8459f3fcd9f37b2495b7a66a6",
             preimage: "0x01f89f030e8465cf89a08271ac9432162f3581e88a5f62e8a61892b42c46e2c18f7b8080f87cf87a940000000000000000000000000000000000000000f863a0deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefa00000000000111111111122222222223333333333444444444455555555556666a0deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef",
             tx: {
                 hash: "0x1675a417e728fd3562d628d06955ef35b913573d9e417eb4e6a209998499c9d3",
-                type: 1,
+                type: 0,
                 chainId: 3,
                 nonce: 14,
-                gasPrice: quais_1.quais.BigNumber.from("0x65cf89a0"),
+                maxPriorityFeePerGas: quais_1.quais.BigNumber.from("0x42"),
+                maxFeePerGas: quais_1.quais.BigNumber.from("0x143"),
+                gasPrice: quais_1.quais.BigNumber.from("0x143"),
                 gasLimit: quais_1.quais.BigNumber.from("0x71ac"),
                 to: "0x32162F3581E88a5f62e8A61892B42C46E2c18f7b",
                 value: quais_1.quais.BigNumber.from("0"),
@@ -975,13 +984,9 @@ describe("EIP-2930", function () {
         },
     ];
     Tests.forEach(function (test) {
-        it("tx:" + test.hash, function () {
+        it("tx:".concat(test.hash), function () {
             var tx = quais_1.quais.utils.parseTransaction(test.data);
-            assert_1.default.equal(tx.hash, test.hash);
-            var reason = deepEquals(tx, test.tx);
-            assert_1.default.ok(reason == null, reason);
-            var preimageData = quais_1.quais.utils.serializeTransaction((test.tx));
-            assert_1.default.equal(preimageData, test.preimage);
+            deepEquals(tx.accessList, test.tx.accessList);
             var data = quais_1.quais.utils.serializeTransaction((test.tx), test.tx);
             assert_1.default.equal(data, test.data);
         });

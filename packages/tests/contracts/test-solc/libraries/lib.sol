@@ -1,7 +1,8 @@
-pragma solidity ^0.7.1;
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
 
 library Lib {
-  function f() internal returns (uint) {
-    return 7;
-  }
+    function f() internal pure returns (uint) {
+        return 7;
+    }
 }

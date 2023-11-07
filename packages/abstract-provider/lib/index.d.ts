@@ -4,7 +4,7 @@ import { Network } from "@quais/networks";
 import { Deferrable, Description } from "@quais/properties";
 import { AccessListish, Transaction } from "@quais/transactions";
 import { OnceBlockable } from "@quais/web";
-export declare type TransactionRequest = {
+export type TransactionRequest = {
     to?: string;
     from?: string;
     nonce?: BigNumberish;
@@ -35,26 +35,39 @@ export interface TransactionResponse extends Transaction {
     raw?: string;
     wait: (confirmations?: number) => Promise<TransactionReceipt>;
 }
-export declare type BlockTag = string | number;
+export type BlockTag = string | number;
 export interface _Block {
     hash: string;
-    parentHash: string;
-    number: number;
+    parentHash: Array<string>;
+    parentEntropy: Array<string>;
+    number: Array<number>;
     timestamp: number;
     nonce: string;
     difficulty: number;
-    _difficulty: BigNumber;
     gasLimit: BigNumber;
     gasUsed: BigNumber;
     miner: string;
     extraData: string;
     baseFeePerGas?: null | BigNumber;
+    extRollupRoot: string;
+    extTransactionsRoot: string;
     stateRoot: string;
+    location: string;
+    manifestHash: Array<string>;
+    mixHash: string;
     transactionsRoot: string;
     receiptsRoot: string;
+    order: number;
+    parentDeltaS: Array<string>;
+    sha3Uncles: string;
+    size: number;
+    subManifest: Array<string>;
+    totalEntropy: number;
+    uncles: Array<string>;
 }
 export interface Block extends _Block {
     transactions: Array<string>;
+    extTransactions: Array<string>;
 }
 export interface BlockWithTransactions extends _Block {
     transactions: Array<TransactionResponse>;
@@ -127,8 +140,8 @@ export declare class TransactionOrderForkEvent extends ForkEvent {
     readonly afterHash: string;
     constructor(beforeHash: string, afterHash: string, expiry?: number);
 }
-export declare type EventType = string | Array<string | Array<string>> | EventFilter | ForkEvent;
-export declare type Listener = (...args: Array<any>) => void;
+export type EventType = string | Array<string | Array<string>> | EventFilter | ForkEvent;
+export type Listener = (...args: Array<any>) => void;
 export declare abstract class Provider implements OnceBlockable {
     abstract getNetwork(): Promise<Network>;
     abstract getBlockNumber(): Promise<number>;

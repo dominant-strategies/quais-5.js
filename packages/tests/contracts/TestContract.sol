@@ -1,5 +1,5 @@
-pragma solidity ^0.4.20;
-pragma experimental ABIEncoderV2;
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
 
 contract TestContract {
     struct TestStruct {
@@ -26,27 +26,18 @@ contract TestContract {
     event TestV2(TestStruct indexed p0, TestStruct p1);
     event TestV2Nested(TestStructParent indexed p0, TestStructParent p1);
 
-    /*
-    event TestV2Array(TestStruct indexed p0[2], TestStruct p1[2]);
-    event TestV2NestedArray(TestStructParent indexed p0[2], TestStructParent p1[2]);
-
-    event TestV2DynamicArray(TestStruct indexed p0[], TestStruct p1[]);
-    event TestV2NestedDynamicArray(TestStructParent indexed p0[], TestStructParent p1[]);
-    */
-
     event TestHash(string name, bytes32 hash);
 
-    function testEvents(address p0, uint256 p1, string p2) public {
+    function testEvents(address p0, uint256 p1, string memory p2) public {
+        emit Test(p0, p1);
+        emit TestP0(p0, p1);
+        emit TestP0P1(p0, p1);
 
-        Test(p0, p1);
-        TestP0(p0, p1);
-        TestP0P1(p0, p1);
+        emit TestAnon(p0, p1);
+        emit TestAnonP0(p0, p1);
+        emit TestAnonP0P1(p0, p1);
 
-        TestAnon(p0, p1);
-        TestAnonP0(p0, p1);
-        TestAnonP0P1(p0, p1);
-
-        TestIndexedString(p2, p1);
+        emit TestIndexedString(p2, p1);
 
         TestStruct memory testStruct;
         testStruct.p0 = p0;
@@ -57,14 +48,19 @@ contract TestContract {
         testStructParent.p1 = p1 + 1;
         testStructParent.child = testStruct;
 
-        TestV2(testStruct, testStruct);
-        TestV2Nested(testStructParent, testStructParent);
+        emit TestV2(testStruct, testStruct);
+        emit TestV2Nested(testStructParent, testStructParent);
 
-        TestHash("TestStructKeccak256", keccak256(testStruct));
-        TestHash("TestStructParentKeccak256", keccak256(testStructParent));
+        emit TestHash("TestStructKeccak256", keccak256(abi.encode(testStruct)));
+        emit TestHash(
+            "TestStructParentKeccak256",
+            keccak256(abi.encode(testStructParent))
+        );
     }
 
-    function testV2(TestStructParent p0) public pure returns (TestStructParent result) {
+    function testV2(
+        TestStructParent memory p0
+    ) public pure returns (TestStructParent memory) {
         p0.p0 = address(uint160(p0.p0) + 0xf0);
         p0.p1 += 0xf0;
         p0.child.p0 = address(uint160(p0.child.p0) + 0x0f);
@@ -77,7 +73,9 @@ contract TestContract {
         r0 = p0 + 1;
     }
 
-    function testMultiResult(uint32 p0) public pure returns (uint32 r0, uint32 r1) {
+    function testMultiResult(
+        uint32 p0
+    ) public pure returns (uint32 r0, uint32 r1) {
         r0 = p0 + 1;
         r1 = p0 + 2;
     }
