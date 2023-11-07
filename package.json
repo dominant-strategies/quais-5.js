@@ -1,5 +1,7 @@
 {
   "name": "quais",
+  "version": "1.0.0",
+  "main": "./packages/quais/lib/quais.js",
   "common": {
     "funding": [
       {
