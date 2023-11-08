@@ -329,6 +329,19 @@ describe("Test Providers", function () {
                 equals("Block by Hash", responseBlock, block);
             });
         });
+        it('should fetch a simplified block', function () {
+            return __awaiter(this, void 0, void 0, function* () {
+                const responseBlockHash = yield globalCyprus1Provider.getBlock(block.hash, true);
+                const responseBlockNumber = yield globalCyprus1Provider.getBlock(block.number[2], true);
+                block.number = block.number[2];
+                block.parentEntropy = block.parentEntropy[2];
+                block.parentDeltaS = block.parentDeltaS[2];
+                block.parentHash = block.parentHash[2];
+                block.manifestHash = block.manifestHash[2];
+                equals("Simplified Block by Hash", responseBlockHash, block);
+                equals("Simplified Block by Number", responseBlockNumber, block);
+            });
+        });
         it('should get transaction receipt for internal tx', function () {
             return __awaiter(this, void 0, void 0, function* () {
                 const receipt = yield fetchRPCTxReceipt(internalTx.hash, process.env.CYPRUS1URL || "http://localhost:8610");

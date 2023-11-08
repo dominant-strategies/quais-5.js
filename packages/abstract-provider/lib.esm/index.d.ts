@@ -38,9 +38,9 @@ export interface TransactionResponse extends Transaction {
 export type BlockTag = string | number;
 export interface _Block {
     hash: string;
-    parentHash: Array<string>;
-    parentEntropy: Array<string>;
-    number: Array<number>;
+    parentHash: Array<string> | string;
+    parentEntropy: Array<string> | string;
+    number: Array<number> | number;
     timestamp: number;
     nonce: string;
     difficulty: number;
@@ -48,17 +48,17 @@ export interface _Block {
     gasUsed: BigNumber;
     miner: string;
     extraData: string;
+    transactionsRoot: string;
     baseFeePerGas?: null | BigNumber;
     extRollupRoot: string;
     extTransactionsRoot: string;
     stateRoot: string;
     location: string;
-    manifestHash: Array<string>;
+    manifestHash: Array<string> | string;
     mixHash: string;
-    transactionsRoot: string;
     receiptsRoot: string;
     order: number;
-    parentDeltaS: Array<string>;
+    parentDeltaS: Array<string> | string;
     sha3Uncles: string;
     size: number;
     subManifest: Array<string>;
@@ -155,7 +155,7 @@ export declare abstract class Provider implements OnceBlockable {
     abstract sendTransaction(signedTransaction: string | Promise<string>): Promise<TransactionResponse>;
     abstract call(transaction: Deferrable<TransactionRequest>, blockTag?: BlockTag | Promise<BlockTag>): Promise<string>;
     abstract estimateGas(transaction: Deferrable<TransactionRequest>): Promise<BigNumber>;
-    abstract getBlock(blockHashOrBlockTag: BlockTag | string | Promise<BlockTag | string>): Promise<Block>;
+    abstract getBlock(blockHashOrBlockTag: BlockTag | string | Promise<BlockTag | string>, simplify?: boolean): Promise<Block>;
     abstract getBlockWithTransactions(blockHashOrBlockTag: BlockTag | string | Promise<BlockTag | string>): Promise<BlockWithTransactions>;
     abstract getTransaction(transactionHash: string): Promise<TransactionResponse>;
     abstract getTransactionReceipt(transactionHash: string): Promise<TransactionReceipt>;
