@@ -17,7 +17,7 @@
   "private": true,
   "repository": {
     "type": "git",
-    "url": "git://github.com:dominant-strategies/quais.js.git"
+    "url": "git://github.com:dominant-strategies/quais-5.js.git"
   },
   "scripts": {
     "preinstall": "npm run bootstrap-hoist",
