@@ -2,7 +2,7 @@ The Quais Project
 ==================
 
 [![npm (tag)](https://img.shields.io/npm/v/quais)](https://www.npmjs.com/package/quais)
-[![Node.js CI](https://github.com/dominant-strategies/quais.js/actions/workflows/nodejs.yml/badge.svg)](https://github.com/dominant-strategies/quais.js/actions/workflows/nodejs.yml)
+[![Node.js CI](https://github.com/dominant-strategies/quais-5.js/actions/workflows/nodejs.yml/badge.svg)](https://github.com/dominant-strategies/quais-5.js/actions/workflows/nodejs.yml)
 
 A complete Quai wallet implementation and utilities in JavaScript (and TypeScript). Quais is a downstream fork of Ethers v5.7.2.
 
@@ -10,15 +10,15 @@ A complete Quai wallet implementation and utilities in JavaScript (and TypeScrip
 IMPORTANT: These features are in beta and may not be 1:1 compatible with Quai Network as it stands.
 
 - Keep your private keys in your client, **safe** and sound
-- Import and export **JSON wallets** (Geth, Parity and crowdsale)
 - Import and export BIP 39 **mnemonic phrases** (12 word backup phrases) and **HD Wallets** (English as well as Czech, French, Italian, Japanese, Korean, Simplified Chinese, Spanish, Traditional Chinese)
 - Meta-classes create JavaScript objects from any contract ABI, including **ABIv2** and **Human-Readable ABI**
-- Connect to Ethereum nodes over [JSON-RPC](https://github.com/ethereum/wiki/wiki/JSON-RPC), [INFURA](https://infura.io), [Etherscan](https://etherscan.io), [Alchemy](https://alchemyapi.io), [Ankr](https://ankr.com) or [MetaMask](https://metamask.io)
-- **QNS names** are first-class citizens; they can be used anywhere an Quai addresses can be used. QNS names are in progress.
+- Connect to Quai nodes over [JSON-RPC](https://qu.ai/docs/develop/apis/json-rpc-api/) or [Pelagus](https://pelaguswallet.io)
+- General overview of package functionality can be found in the Quai Network Javascript API [docs](https://qu.ai/docs/develop/apis/javascript-apis/)
+- **QNS** functionality is under development
 - **Tiny** (~104kb compressed; 322kb uncompressed)
 - **Modular** packages; include only what you need
 - **Complete** functionality for all your Quai desires
-- Extensive [documentation](https://docs.ethers.io/v5/)
+- Documentation based on: [ethers-v5](https://docs.ethers.io/v5/). Quai specific documentation is under development
 - Large collection of **test cases** which are maintained and added to
 - Fully **TypeScript** ready, with definition files and full TypeScript source
 - **MIT License** (including ALL dependencies); completely open source to do with as you please
@@ -32,7 +32,7 @@ For the latest news and advisories, please follow the
 non-marketing, important information only) as well as watch this GitHub project.
 
 For the latest changes, see the
-[CHANGELOG](https://github.com/dominant-strategies/quais.js/blob/master/CHANGELOG.md).
+[CHANGELOG](https://github.com/dominant-strategies/quais-5.js/blob/master/CHANGELOG.md).
 
 
 Installing
@@ -44,18 +44,11 @@ Installing
 /home/ricmoo/some_project> npm install --save quais
 ```
 
-**browser (UMD)**
-
-```
-<script src="https://cdn.quais.io/lib/quais-1.0.4.umd.min.js" type="text/javascript">
-</script>
-```
-
 **browser (ESM)**
 
 ```
 <script type="module">
-    import { quais } from "https://cdn.quais.io/lib/quais-1.0.4.esm.min.js";
+    import { quais } from "quais";
 </script>
 ```
 
@@ -63,27 +56,14 @@ Installing
 Documentation
 -------------
 
-Browse the [documentation](https://docs.ethers.io/v5/) online:
+Browse the [ethers based documentation](https://docs.ethers.io/v5/) online:
 
 - [Getting Started](https://docs.ethers.io/v5/getting-started/)
 - [Full API Documentation](https://docs.ethers.io/v5/api/)
-- [Various Ethereum Articles](https://blog.ricmoo.com/)
 
 Ancillary Packages
 ------------------
-
-These are a number of packages not included in the umbrella `ethers` npm package, and
-additional packages are always being added. Often these packages are for specific
-use-cases, so rather than adding them to the umbrella package, they are added as
-ancillary packages, which can be included by those who need them, while not bloating
-everyone else with packages they do not need.
-
-We will keep a list of useful packages here.
-
-- `@quais/experimental` ([documentation](https://docs.ethers.io/v5/api/experimental/))
-- `@quais/cli` ([documentation](https://docs.ethers.io/v5/cli/))
-- `@quais/hardware-wallets` ([documentation](https://docs.ethers.io/v5/api/other/hardware/))
-
+**Polling Disabled in Quais:** In an effort to optimize performance, polling has been disabled in the Quais project. For users who require polling functionality, the `quais-polling` npm package is available. This package acts as a shim, reintroducing polling capabilities in a manner that is easy to integrate for those who need it. You can find more information and installation instructions for `quais-polling` in the [package repository](https://www.npmjs.com/package/quais-polling)
 
 License
 -------
