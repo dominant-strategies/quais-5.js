@@ -1,3 +1,4 @@
+/// <reference path="../thirdparty.d.ts" />
 import u2f from "@ledgerhq/hw-transport-u2f";
 export type TransportCreator = {
     create: () => Promise<u2f.Transport>;

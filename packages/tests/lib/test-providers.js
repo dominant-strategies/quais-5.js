@@ -197,7 +197,7 @@ describe("Test Providers", function () {
                             _a = {
                                 from: walletWithProvider.address,
                                 to: to,
-                                value: quais_1.quais.utils.parseEther('0.01'),
+                                value: quais_1.quais.utils.parseEther('0.01'), // Sending 0.1 ether
                                 gasPrice: gas,
                                 maxFeePerGas: gas,
                                 maxPriorityFeePerGas: quais_1.quais.utils.parseUnits('1', 'gwei')
@@ -540,7 +540,7 @@ describe("Test Providers", function () {
                                     logsBloom: receipt.logsBloom,
                                     status: receipt.status,
                                     to: receipt.to,
-                                    confirmations: 1,
+                                    confirmations: 1, //only one block has been mined
                                     from: receipt.from,
                                     transactionHash: receipt.transactionHash,
                                     transactionIndex: Number(receipt.transactionIndex),

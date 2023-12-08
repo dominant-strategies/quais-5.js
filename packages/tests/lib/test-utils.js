@@ -337,13 +337,13 @@ describe('Test Solidity Hash Functions', function () {
     test('Keccak256', 'keccak256');
     test('Sha256', 'sha256');
     var testsInvalid = [
-        "uint0",
-        "uint1",
-        "uint08",
-        "uint266",
-        "bytes0",
-        "bytes02",
-        "bytes33",
+        "uint0", // number - null length
+        "uint1", // number - not byte-aligned
+        "uint08", // number - leading zeros
+        "uint266", // number - out-of-range
+        "bytes0", // bytes - null length
+        "bytes02", // bytes - leading zeros
+        "bytes33", // bytes - out-of-range
         "purple" // invalid type
     ];
     testsInvalid.forEach(function (type) {

@@ -626,8 +626,8 @@ var WildcardRunningEvent = /** @class */ (function (_super) {
 }(RunningEvent));
 var BaseContract = /** @class */ (function () {
     function BaseContract(addressOrName, contractInterface, signerOrProvider) {
-        var _this = this;
         var _newTarget = this.constructor;
+        var _this = this;
         // @TODO: Maybe still check the addressOrName looks like a valid address or name?
         //address = getAddress(address);
         (0, properties_1.defineReadOnly)(this, "interface", (0, properties_1.getStatic)(_newTarget, "getInterface")(contractInterface));

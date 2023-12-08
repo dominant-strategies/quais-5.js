@@ -42,8 +42,7 @@ var MetamaskProvider = /** @class */ (function (_super) {
             _this.emit("account", account, _account);
             _account = account;
         });
-        _this = _super.call(this, ethereum) || this;
-        return _this;
+        return _this = _super.call(this, ethereum) || this;
     }
     MetamaskProvider.prototype.getSigner = function (addressOrIndex) {
         if (!this.enabled) {

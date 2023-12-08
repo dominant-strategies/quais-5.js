@@ -1,3 +1,4 @@
+/// <reference path="../thirdparty.d.ts" />
 import { quais } from "quais";
 import Eth from "@ledgerhq/hw-app-eth";
 export declare class LedgerSigner extends quais.Signer {

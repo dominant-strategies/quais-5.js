@@ -372,7 +372,7 @@ export class JsonRpcProvider extends BaseProvider {
         }
         return this._eventLoopCache;
     }
-    constructor(url, network, context) {
+    constructor(url, network) {
         let networkOrReady = network;
         // The network is unknown, query the JSON-RPC for it
         if (networkOrReady == null) {
@@ -386,15 +386,6 @@ export class JsonRpcProvider extends BaseProvider {
                 }, 0);
             });
         }
-        new Promise((resolve, reject) => {
-            setTimeout(() => {
-                this.detectContext().then((context) => {
-                    resolve(context);
-                }, (error) => {
-                    reject(error);
-                });
-            }, 0);
-        });
         super(networkOrReady);
         // Default URL
         if (!url) {
@@ -450,24 +441,6 @@ export class JsonRpcProvider extends BaseProvider {
                 }
             }
             return logger.throwError("could not detect network", Logger.errors.NETWORK_ERROR, {
-                event: "noNetwork"
-            });
-        });
-    }
-    detectContext() {
-        return __awaiter(this, void 0, void 0, function* () {
-            yield timer(0);
-            let location = null;
-            try {
-                location = yield this.send("quai_nodeLocation", []);
-            }
-            catch (error) {
-            }
-            if (location != null) {
-                this._context = location.length;
-                return this._context;
-            }
-            return logger.throwError("could not detect context", Logger.errors.NETWORK_ERROR, {
                 event: "noNetwork"
             });
         });

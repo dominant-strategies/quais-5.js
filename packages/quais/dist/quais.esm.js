@@ -18850,7 +18850,7 @@ class Formatter {
                 value: this.bigNumber(etx.value),
                 data: this.data(etx.input),
                 to: this.address(etx.to),
-                accessList: Formatter.allowNull(this.accessList, null)(etx.accessList),
+                accessList: Formatter.allowNull(this.accessList, null)(etx.accessList), // Add more detailed parsing if needed
                 chainId: Number(etx.chainId),
                 from: this.address(etx.sender),
                 hash: this.hash(etx.hash)
@@ -18941,7 +18941,7 @@ class Formatter {
         }
         return hexZeroPad(value, 32);
     }
-    _block(value, format, context, simplify) {
+    _block(value, format, simplify) {
         if (value.author != null && value.miner == null) {
             value.miner = value.author;
         }
@@ -18949,18 +18949,15 @@ class Formatter {
         const difficulty = (value._difficulty != null) ? value._difficulty : value.difficulty;
         const result = Formatter.check(format, value);
         result._difficulty = ((difficulty == null) ? null : difficulty);
-        if (context) {
-            return this.contextBlock(result, context, simplify);
-        }
-        return result;
+        return this.contextBlock(result, simplify);
     }
-    block(value, context, simplify) {
-        return this._block(value, this.formats.block, context, simplify);
+    block(value, simplify) {
+        return this._block(value, this.formats.block, simplify);
     }
     blockWithTransactions(value) {
         return this._block(value, this.formats.blockWithTransactions);
     }
-    contextBlock(value, context, simplify = false) {
+    contextBlock(value, simplify = false) {
         let contextBlock = {
             number: simplify ? value.number[2] : value.number,
             transactions: value.transactions,
@@ -20818,7 +20815,7 @@ class BaseProvider extends Provider {
                     blockWithTxs.transactions = blockWithTxs.transactions.map((tx) => this._wrapTransaction(tx));
                     return blockWithTxs;
                 }
-                return this.formatter.block(block, this._context, simplify);
+                return this.formatter.block(block, simplify);
             }), { oncePoll: this });
         });
     }
@@ -21544,7 +21541,7 @@ class JsonRpcProvider extends BaseProvider {
         }
         return this._eventLoopCache;
     }
-    constructor(url, network, context) {
+    constructor(url, network) {
         let networkOrReady = network;
         // The network is unknown, query the JSON-RPC for it
         if (networkOrReady == null) {
@@ -21558,15 +21555,6 @@ class JsonRpcProvider extends BaseProvider {
                 }, 0);
             });
         }
-        new Promise((resolve, reject) => {
-            setTimeout(() => {
-                this.detectContext().then((context) => {
-                    resolve(context);
-                }, (error) => {
-                    reject(error);
-                });
-            }, 0);
-        });
         super(networkOrReady);
         // Default URL
         if (!url) {
@@ -21622,24 +21610,6 @@ class JsonRpcProvider extends BaseProvider {
                 }
             }
             return logger$u.throwError("could not detect network", Logger.errors.NETWORK_ERROR, {
-                event: "noNetwork"
-            });
-        });
-    }
-    detectContext() {
-        return __awaiter$a(this, void 0, void 0, function* () {
-            yield timer(0);
-            let location = null;
-            try {
-                location = yield this.send("quai_nodeLocation", []);
-            }
-            catch (error) {
-            }
-            if (location != null) {
-                this._context = location.length;
-                return this._context;
-            }
-            return logger$u.throwError("could not detect context", Logger.errors.NETWORK_ERROR, {
                 event: "noNetwork"
             });
         });
@@ -22088,7 +22058,7 @@ class WebSocketProvider extends JsonRpcProvider {
         switch (event.type) {
             case "block":
                 this._subscribe("block", ["newHeads"], (result) => {
-                    const blockNumber = BigNumber.from(result.number).toNumber();
+                    const blockNumber = BigNumber.from(result.number[2]).toNumber();
                     this._emitted.block = blockNumber;
                     this.emit("block", blockNumber);
                 });

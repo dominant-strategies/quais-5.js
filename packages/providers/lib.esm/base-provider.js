@@ -1654,7 +1654,7 @@ export class BaseProvider extends Provider {
                     blockWithTxs.transactions = blockWithTxs.transactions.map((tx) => this._wrapTransaction(tx));
                     return blockWithTxs;
                 }
-                return this.formatter.block(block, this._context, simplify);
+                return this.formatter.block(block, simplify);
             }), { oncePoll: this });
         });
     }

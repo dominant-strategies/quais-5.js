@@ -234,7 +234,7 @@ export class Formatter {
                 value: this.bigNumber(etx.value),
                 data: this.data(etx.input),
                 to: this.address(etx.to),
-                accessList: Formatter.allowNull(this.accessList, null)(etx.accessList),
+                accessList: Formatter.allowNull(this.accessList, null)(etx.accessList), // Add more detailed parsing if needed
                 chainId: Number(etx.chainId),
                 from: this.address(etx.sender),
                 hash: this.hash(etx.hash)
@@ -325,7 +325,7 @@ export class Formatter {
         }
         return hexZeroPad(value, 32);
     }
-    _block(value, format, context, simplify) {
+    _block(value, format, simplify) {
         if (value.author != null && value.miner == null) {
             value.miner = value.author;
         }
@@ -333,18 +333,15 @@ export class Formatter {
         const difficulty = (value._difficulty != null) ? value._difficulty : value.difficulty;
         const result = Formatter.check(format, value);
         result._difficulty = ((difficulty == null) ? null : difficulty);
-        if (context) {
-            return this.contextBlock(result, context, simplify);
-        }
-        return result;
+        return this.contextBlock(result, simplify);
     }
-    block(value, context, simplify) {
-        return this._block(value, this.formats.block, context, simplify);
+    block(value, simplify) {
+        return this._block(value, this.formats.block, simplify);
     }
     blockWithTransactions(value) {
         return this._block(value, this.formats.blockWithTransactions);
     }
-    contextBlock(value, context, simplify = false) {
+    contextBlock(value, simplify = false) {
         let contextBlock = {
             number: simplify ? value.number[2] : value.number,
             transactions: value.transactions,

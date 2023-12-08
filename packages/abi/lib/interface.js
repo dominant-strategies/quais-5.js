@@ -88,8 +88,8 @@ function checkNames(fragment: Fragment, type: "input" | "output", params: Array<
 */
 var Interface = /** @class */ (function () {
     function Interface(fragments) {
-        var _this = this;
         var _newTarget = this.constructor;
+        var _this = this;
         var abi = [];
         if (typeof (fragments) === "string") {
             abi = JSON.parse(fragments);

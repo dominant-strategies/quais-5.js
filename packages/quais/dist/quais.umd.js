@@ -10058,8 +10058,8 @@
 	*/
 	var Interface = /** @class */ (function () {
 	    function Interface(fragments$1) {
-	        var _this = this;
 	        var _newTarget = this.constructor;
+	        var _this = this;
 	        var abi = [];
 	        if (typeof (fragments$1) === "string") {
 	            abi = JSON.parse(fragments$1);
@@ -19646,8 +19646,8 @@
 	}(RunningEvent));
 	var BaseContract = /** @class */ (function () {
 	    function BaseContract(addressOrName, contractInterface, signerOrProvider) {
-	        var _this = this;
 	        var _newTarget = this.constructor;
+	        var _this = this;
 	        // @TODO: Maybe still check the addressOrName looks like a valid address or name?
 	        //address = getAddress(address);
 	        (0, lib$3.defineReadOnly)(this, "interface", (0, lib$3.getStatic)(_newTarget, "getInterface")(contractInterface));
@@ -24523,7 +24523,7 @@
 	                value: this.bigNumber(etx.value),
 	                data: this.data(etx.input),
 	                to: this.address(etx.to),
-	                accessList: Formatter.allowNull(this.accessList, null)(etx.accessList),
+	                accessList: Formatter.allowNull(this.accessList, null)(etx.accessList), // Add more detailed parsing if needed
 	                chainId: Number(etx.chainId),
 	                from: this.address(etx.sender),
 	                hash: this.hash(etx.hash)
@@ -24616,7 +24616,7 @@
 	        }
 	        return (0, lib$1.hexZeroPad)(value, 32);
 	    };
-	    Formatter.prototype._block = function (value, format, context, simplify) {
+	    Formatter.prototype._block = function (value, format, simplify) {
 	        if (value.author != null && value.miner == null) {
 	            value.miner = value.author;
 	        }
@@ -24624,18 +24624,15 @@
 	        var difficulty = (value._difficulty != null) ? value._difficulty : value.difficulty;
 	        var result = Formatter.check(format, value);
 	        result._difficulty = ((difficulty == null) ? null : difficulty);
-	        if (context) {
-	            return this.contextBlock(result, context, simplify);
-	        }
-	        return result;
+	        return this.contextBlock(result, simplify);
 	    };
-	    Formatter.prototype.block = function (value, context, simplify) {
-	        return this._block(value, this.formats.block, context, simplify);
+	    Formatter.prototype.block = function (value, simplify) {
+	        return this._block(value, this.formats.block, simplify);
 	    };
 	    Formatter.prototype.blockWithTransactions = function (value) {
 	        return this._block(value, this.formats.blockWithTransactions);
 	    };
-	    Formatter.prototype.contextBlock = function (value, context, simplify) {
+	    Formatter.prototype.contextBlock = function (value, simplify) {
 	        if (simplify === void 0) { simplify = false; }
 	        var contextBlock = {
 	            number: simplify ? value.number[2] : value.number,
@@ -26959,7 +26956,7 @@
 	                                        blockWithTxs = this.formatter.blockWithTransactions(block);
 	                                        blockWithTxs.transactions = blockWithTxs.transactions.map(function (tx) { return _this._wrapTransaction(tx); });
 	                                        return [2 /*return*/, blockWithTxs];
-	                                    case 8: return [2 /*return*/, this.formatter.block(block, this._context, simplify)];
+	                                    case 8: return [2 /*return*/, this.formatter.block(block, simplify)];
 	                                }
 	                            });
 	                        }); }, { oncePoll: this })];
@@ -27983,7 +27980,7 @@
 	};
 	var JsonRpcProvider = /** @class */ (function (_super) {
 	    __extends(JsonRpcProvider, _super);
-	    function JsonRpcProvider(url, network, context) {
+	    function JsonRpcProvider(url, network) {
 	        var _this = this;
 	        var networkOrReady = network;
 	        // The network is unknown, query the JSON-RPC for it
@@ -27998,15 +27995,6 @@
 	                }, 0);
 	            });
 	        }
-	        new Promise(function (resolve, reject) {
-	            setTimeout(function () {
-	                _this.detectContext().then(function (context) {
-	                    resolve(context);
-	                }, function (error) {
-	                    reject(error);
-	                });
-	            }, 0);
-	        });
 	        _this = _super.call(this, networkOrReady) || this;
 	        // Default URL
 	        if (!url) {
@@ -28091,37 +28079,6 @@
 	                            }
 	                        }
 	                        return [2 /*return*/, logger.throwError("could not detect network", lib.Logger.errors.NETWORK_ERROR, {
-	                                event: "noNetwork"
-	                            })];
-	                }
-	            });
-	        });
-	    };
-	    JsonRpcProvider.prototype.detectContext = function () {
-	        return __awaiter(this, void 0, void 0, function () {
-	            var location, error_7;
-	            return __generator(this, function (_a) {
-	                switch (_a.label) {
-	                    case 0: return [4 /*yield*/, timer(0)];
-	                    case 1:
-	                        _a.sent();
-	                        location = null;
-	                        _a.label = 2;
-	                    case 2:
-	                        _a.trys.push([2, 4, , 5]);
-	                        return [4 /*yield*/, this.send("quai_nodeLocation", [])];
-	                    case 3:
-	                        location = _a.sent();
-	                        return [3 /*break*/, 5];
-	                    case 4:
-	                        error_7 = _a.sent();
-	                        return [3 /*break*/, 5];
-	                    case 5:
-	                        if (location != null) {
-	                            this._context = location.length;
-	                            return [2 /*return*/, this._context];
-	                        }
-	                        return [2 /*return*/, logger.throwError("could not detect context", lib.Logger.errors.NETWORK_ERROR, {
 	                                event: "noNetwork"
 	                            })];
 	                }
@@ -28235,7 +28192,7 @@
 	    };
 	    JsonRpcProvider.prototype.perform = function (method, params) {
 	        return __awaiter(this, void 0, void 0, function () {
-	            var tx, feeData, args, error_8;
+	            var tx, feeData, args, error_7;
 	            return __generator(this, function (_a) {
 	                switch (_a.label) {
 	                    case 0:
@@ -28264,8 +28221,8 @@
 	                        return [4 /*yield*/, this.send(args[0], args[1])];
 	                    case 4: return [2 /*return*/, _a.sent()];
 	                    case 5:
-	                        error_8 = _a.sent();
-	                        return [2 /*return*/, checkError(method, error_8, params)];
+	                        error_7 = _a.sent();
+	                        return [2 /*return*/, checkError(method, error_7, params)];
 	                    case 6: return [2 /*return*/];
 	                }
 	            });
@@ -28677,7 +28634,7 @@
 	        switch (event.type) {
 	            case "block":
 	                this._subscribe("block", ["newHeads"], function (result) {
-	                    var blockNumber = lib$2.BigNumber.from(result.number).toNumber();
+	                    var blockNumber = lib$2.BigNumber.from(result.number[2]).toNumber();
 	                    _this._emitted.block = blockNumber;
 	                    _this.emit("block", blockNumber);
 	                });
@@ -28898,8 +28855,8 @@
 	var UrlJsonRpcProvider = /** @class */ (function (_super) {
 	    __extends(UrlJsonRpcProvider, _super);
 	    function UrlJsonRpcProvider(network, apiKey) {
-	        var _this = this;
 	        var _newTarget = this.constructor;
+	        var _this = this;
 	        logger.checkAbstract(_newTarget, UrlJsonRpcProvider);
 	        // Normalize the Network and API Key
 	        network = (0, lib$3.getStatic)(_newTarget, "getNetwork")(network);
