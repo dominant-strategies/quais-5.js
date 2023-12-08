@@ -237,7 +237,7 @@ var Formatter = /** @class */ (function () {
                 value: this.bigNumber(etx.value),
                 data: this.data(etx.input),
                 to: this.address(etx.to),
-                accessList: Formatter.allowNull(this.accessList, null)(etx.accessList),
+                accessList: Formatter.allowNull(this.accessList, null)(etx.accessList), // Add more detailed parsing if needed
                 chainId: Number(etx.chainId),
                 from: this.address(etx.sender),
                 hash: this.hash(etx.hash)
@@ -330,7 +330,7 @@ var Formatter = /** @class */ (function () {
         }
         return (0, bytes_1.hexZeroPad)(value, 32);
     };
-    Formatter.prototype._block = function (value, format, context, simplify) {
+    Formatter.prototype._block = function (value, format, simplify) {
         if (value.author != null && value.miner == null) {
             value.miner = value.author;
         }
@@ -338,18 +338,15 @@ var Formatter = /** @class */ (function () {
         var difficulty = (value._difficulty != null) ? value._difficulty : value.difficulty;
         var result = Formatter.check(format, value);
         result._difficulty = ((difficulty == null) ? null : difficulty);
-        if (context) {
-            return this.contextBlock(result, context, simplify);
-        }
-        return result;
+        return this.contextBlock(result, simplify);
     };
-    Formatter.prototype.block = function (value, context, simplify) {
-        return this._block(value, this.formats.block, context, simplify);
+    Formatter.prototype.block = function (value, simplify) {
+        return this._block(value, this.formats.block, simplify);
     };
     Formatter.prototype.blockWithTransactions = function (value) {
         return this._block(value, this.formats.blockWithTransactions);
     };
-    Formatter.prototype.contextBlock = function (value, context, simplify) {
+    Formatter.prototype.contextBlock = function (value, simplify) {
         if (simplify === void 0) { simplify = false; }
         var contextBlock = {
             number: simplify ? value.number[2] : value.number,

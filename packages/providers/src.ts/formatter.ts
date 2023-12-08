@@ -388,7 +388,7 @@ export class Formatter {
         return hexZeroPad(value, 32);
     }
 
-    _block(value: any, format: any, context?: number, simplify?: boolean): Block {
+    _block(value: any, format: any, simplify?: boolean): Block {
         if (value.author != null && value.miner == null) {
             value.miner = value.author;
         }
@@ -396,21 +396,18 @@ export class Formatter {
         const difficulty = (value._difficulty != null) ? value._difficulty: value.difficulty;
         const result = Formatter.check(format, value);
         result._difficulty = ((difficulty == null) ? null: difficulty);
-        if(context){
-            return this.contextBlock(result, context, simplify);
+        return this.contextBlock(result, simplify);
         }
-        return result;
-    }
 
-    block(value: any, context?: number, simplify?: boolean): Block {
-        return this._block(value, this.formats.block, context, simplify);
+    block(value: any, simplify?: boolean): Block {
+        return this._block(value, this.formats.block, simplify);
     }
 
     blockWithTransactions(value: any): Block {
         return this._block(value, this.formats.blockWithTransactions);
     }
 
-    contextBlock(value: any, context: number, simplify: boolean = false): Block{
+    contextBlock(value: any, simplify: boolean = false): Block{
         
         let contextBlock: Block = {
             number: simplify ? value.number[2] : value.number,

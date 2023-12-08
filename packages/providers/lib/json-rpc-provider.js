@@ -509,7 +509,7 @@ var allowedTransactionKeys = {
 };
 var JsonRpcProvider = /** @class */ (function (_super) {
     __extends(JsonRpcProvider, _super);
-    function JsonRpcProvider(url, network, context) {
+    function JsonRpcProvider(url, network) {
         var _this = this;
         var networkOrReady = network;
         // The network is unknown, query the JSON-RPC for it
@@ -524,15 +524,6 @@ var JsonRpcProvider = /** @class */ (function (_super) {
                 }, 0);
             });
         }
-        new Promise(function (resolve, reject) {
-            setTimeout(function () {
-                _this.detectContext().then(function (context) {
-                    resolve(context);
-                }, function (error) {
-                    reject(error);
-                });
-            }, 0);
-        });
         _this = _super.call(this, networkOrReady) || this;
         // Default URL
         if (!url) {
@@ -617,37 +608,6 @@ var JsonRpcProvider = /** @class */ (function (_super) {
                             }
                         }
                         return [2 /*return*/, logger.throwError("could not detect network", logger_1.Logger.errors.NETWORK_ERROR, {
-                                event: "noNetwork"
-                            })];
-                }
-            });
-        });
-    };
-    JsonRpcProvider.prototype.detectContext = function () {
-        return __awaiter(this, void 0, void 0, function () {
-            var location, error_7;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0: return [4 /*yield*/, timer(0)];
-                    case 1:
-                        _a.sent();
-                        location = null;
-                        _a.label = 2;
-                    case 2:
-                        _a.trys.push([2, 4, , 5]);
-                        return [4 /*yield*/, this.send("quai_nodeLocation", [])];
-                    case 3:
-                        location = _a.sent();
-                        return [3 /*break*/, 5];
-                    case 4:
-                        error_7 = _a.sent();
-                        return [3 /*break*/, 5];
-                    case 5:
-                        if (location != null) {
-                            this._context = location.length;
-                            return [2 /*return*/, this._context];
-                        }
-                        return [2 /*return*/, logger.throwError("could not detect context", logger_1.Logger.errors.NETWORK_ERROR, {
                                 event: "noNetwork"
                             })];
                 }
@@ -761,7 +721,7 @@ var JsonRpcProvider = /** @class */ (function (_super) {
     };
     JsonRpcProvider.prototype.perform = function (method, params) {
         return __awaiter(this, void 0, void 0, function () {
-            var tx, feeData, args, error_8;
+            var tx, feeData, args, error_7;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
@@ -790,8 +750,8 @@ var JsonRpcProvider = /** @class */ (function (_super) {
                         return [4 /*yield*/, this.send(args[0], args[1])];
                     case 4: return [2 /*return*/, _a.sent()];
                     case 5:
-                        error_8 = _a.sent();
-                        return [2 /*return*/, checkError(method, error_8, params)];
+                        error_7 = _a.sent();
+                        return [2 /*return*/, checkError(method, error_7, params)];
                     case 6: return [2 /*return*/];
                 }
             });

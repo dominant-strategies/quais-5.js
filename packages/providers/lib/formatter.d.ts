@@ -37,10 +37,10 @@ export declare class Formatter {
     hashArrayAnyLength(value: any, strict?: boolean): string[];
     difficulty(value: any): number;
     uint256(value: any): string;
-    _block(value: any, format: any, context?: number, simplify?: boolean): Block;
-    block(value: any, context?: number, simplify?: boolean): Block;
+    _block(value: any, format: any, simplify?: boolean): Block;
+    block(value: any, simplify?: boolean): Block;
     blockWithTransactions(value: any): Block;
-    contextBlock(value: any, context: number, simplify?: boolean): Block;
+    contextBlock(value: any, simplify?: boolean): Block;
     transactionRequest(value: any): any;
     transactionResponse(transaction: any): TransactionResponse;
     transaction(value: any): any;

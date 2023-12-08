@@ -2093,7 +2093,7 @@ var BaseProvider = /** @class */ (function (_super) {
                                         blockWithTxs = this.formatter.blockWithTransactions(block);
                                         blockWithTxs.transactions = blockWithTxs.transactions.map(function (tx) { return _this._wrapTransaction(tx); });
                                         return [2 /*return*/, blockWithTxs];
-                                    case 8: return [2 /*return*/, this.formatter.block(block, this._context, simplify)];
+                                    case 8: return [2 /*return*/, this.formatter.block(block, simplify)];
                                 }
                             });
                         }); }, { oncePoll: this })];

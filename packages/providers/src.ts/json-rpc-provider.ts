@@ -408,7 +408,7 @@ export class JsonRpcProvider extends BaseProvider {
         return this._eventLoopCache;
     }
 
-    constructor(url?: ConnectionInfo | string, network?: Networkish, context?: number) {
+    constructor(url?: ConnectionInfo | string, network?: Networkish) {
         let networkOrReady: Networkish | Promise<Network> = network;
 
         // The network is unknown, query the JSON-RPC for it
@@ -423,16 +423,6 @@ export class JsonRpcProvider extends BaseProvider {
                 }, 0);
             });
         }
-        
-        new Promise((resolve, reject) => {
-        setTimeout(() => {
-                this.detectContext().then((context) => {
-                    resolve(context)
-                }, (error) => {
-                    reject(error);
-                });
-            }, 0);
-        })
 
         super(networkOrReady);
 
@@ -494,26 +484,6 @@ export class JsonRpcProvider extends BaseProvider {
         return logger.throwError("could not detect network", Logger.errors.NETWORK_ERROR, {
             event: "noNetwork"
         });
-    }
-
-    async detectContext(): Promise<number> {
-        await timer(0);
-
-        let location = null;
-        try {
-            location = await this.send("quai_nodeLocation", [ ]);
-        } catch (error) {
-        }
-
-        if (location != null){
-            this._context = location.length
-            return this._context 
-        }
-
-        return logger.throwError("could not detect context", Logger.errors.NETWORK_ERROR, {
-            event: "noNetwork"
-        });
-
     }
 
     getSigner(addressOrIndex?: string | number): JsonRpcSigner {

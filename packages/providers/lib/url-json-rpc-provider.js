@@ -105,8 +105,8 @@ exports.StaticJsonRpcProvider = StaticJsonRpcProvider;
 var UrlJsonRpcProvider = /** @class */ (function (_super) {
     __extends(UrlJsonRpcProvider, _super);
     function UrlJsonRpcProvider(network, apiKey) {
-        var _this = this;
         var _newTarget = this.constructor;
+        var _this = this;
         logger.checkAbstract(_newTarget, UrlJsonRpcProvider);
         // Normalize the Network and API Key
         network = (0, properties_1.getStatic)(_newTarget, "getNetwork")(network);

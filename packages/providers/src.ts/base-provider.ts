@@ -1842,7 +1842,7 @@ export class BaseProvider extends Provider implements EnsProvider {
                blockWithTxs.transactions = blockWithTxs.transactions.map((tx: TransactionResponse) => this._wrapTransaction(tx));
                return blockWithTxs;
            }
-           return this.formatter.block(block, this._context, simplify);
+           return this.formatter.block(block, simplify);
 
        }, { oncePoll: this });
    }
