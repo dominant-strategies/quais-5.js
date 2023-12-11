@@ -24,6 +24,7 @@ export type TransactionRequest = {
     externalGasTip?: BigNumberish;
     externalData?: BytesLike;
     externalAccessList?: AccessListish;
+    contractAddress?: string;
 };
 export interface TransactionResponse extends Transaction {
     hash: string;
