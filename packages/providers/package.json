@@ -14,7 +14,7 @@
     "net": "./lib/browser-net.js"
   },
   "dependencies": {
-    "@quais/abstract-provider": "^0.1.0",
+    "@quais/abstract-provider": "^0.1.6",
     "@quais/abstract-signer": "^0.1.0",
     "@quais/address": "^0.1.1",
     "@quais/base64": "^0.1.0",

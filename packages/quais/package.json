@@ -3,7 +3,7 @@
   "browser-old": "./dist/quais.umd.js",
   "dependencies": {
     "@quais/abi": "0.1.0",
-    "@quais/abstract-provider": "0.1.5",
+    "@quais/abstract-provider": "0.1.6",
     "@quais/abstract-signer": "0.1.0",
     "@quais/address": "0.1.2",
     "@quais/base64": "0.1.0",
@@ -11,7 +11,7 @@
     "@quais/bignumber": "0.1.0",
     "@quais/bytes": "0.1.0",
     "@quais/constants": "0.1.2",
-    "@quais/contracts": "0.1.2",
+    "@quais/contracts": "0.1.3",
     "@quais/hash": "0.1.0",
     "@quais/hdnode": "0.1.1",
     "@quais/json-wallets": "0.1.0",

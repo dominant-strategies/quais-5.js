@@ -2,7 +2,7 @@
   "author": "",
   "dependencies": {
     "@quais/abi": "^0.1.0",
-    "@quais/abstract-provider": "^0.1.0",
+    "@quais/abstract-provider": "^0.1.6",
     "@quais/abstract-signer": "^0.1.0",
     "@quais/address": "^0.1.1",
     "@quais/bignumber": "^0.1.0",
@@ -35,5 +35,5 @@
   "sideEffects": false,
   "tarballHash": "0x186a0093d358545fe0bf9282147dc719ccce205447b02766489e395d0b8af9fc",
   "types": "./lib/index.d.ts",
-  "version": "0.1.2"
+  "version": "0.1.3"
 }
